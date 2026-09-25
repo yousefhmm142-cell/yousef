@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>شكوى رسمية - مروان حمدان</title>
+<style>
+  @font-face { font-family: "Amiri"; font-weight: 400; src: url(fonts/amiri-arabic-400-normal.woff2) format("woff2");
+    unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+200C-200E, U+FB50-FDFF, U+FE70-FEFC; }
+  @font-face { font-family: "Amiri"; font-weight: 700; src: url(fonts/amiri-arabic-700-normal.woff2) format("woff2");
+    unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+200C-200E, U+FB50-FDFF, U+FE70-FEFC; }
+  @font-face { font-family: "Amiri"; font-weight: 400; src: url(fonts/amiri-latin-400-normal.woff2) format("woff2");
+    unicode-range: U+0000-00FF, U+2000-206F; }
+  @font-face { font-family: "Amiri"; font-weight: 700; src: url(fonts/amiri-latin-700-normal.woff2) format("woff2");
+    unicode-range: U+0000-00FF, U+2000-206F; }
+  @font-face { font-family: "Aref Ruqaa"; font-weight: 700; src: url(fonts/aref-ruqaa-arabic-700-normal.woff2) format("woff2"); }
+
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #fff; }
+  body { font-family: "Amiri", serif; color: #111; font-size: 12.8pt; line-height: 1.5; }
+
+  .page {
+    width: 210mm; height: 297mm; padding: 9mm; position: relative;
+  }
+  .frame {
+    height: 100%; border: 2.2pt solid #1b2a4a; padding: 2.2mm;
+  }
+  .inner {
+    height: 100%; border: 0.7pt solid #1b2a4a; padding: 4mm 12mm 4mm; position: relative;
+    display: flex; flex-direction: column;
+  }
+
+  .basmala {
+    text-align: center; font-family: "Aref Ruqaa", "Amiri", serif; font-weight: 700;
+    font-size: 19pt; color: #1b2a4a; line-height: 1.3; margin-bottom: 1mm;
+  }
+  .title-bar {
+    display: flex; align-items: center; gap: 4mm; margin: 0 0 2mm;
+  }
+  .title-bar .line { flex: 1; height: 0; border-top: 0.8pt solid #1b2a4a; border-bottom: 0.8pt solid #1b2a4a; padding-top: 1.2pt; }
+  .title-bar h1 {
+    margin: 0; font-size: 18pt; font-weight: 700; color: #1b2a4a; letter-spacing: 0;
+    padding: 0 2mm;
+  }
+
+  .meta { display: flex; justify-content: flex-end; font-size: 12.5pt; margin-bottom: 1mm; }
+  .fill { display: inline-block; min-width: 32mm; border-bottom: 0.6pt dotted #333; }
+
+  .addressee { font-weight: 700; font-size: 15pt; margin: 1mm 0 0; }
+  .addressee .resp { float: left; }
+  .greeting { margin: 0 0 2.5mm; }
+
+  .subject {
+    text-align: center; font-weight: 700; margin: 0 0 3mm; font-size: 14pt;
+  }
+  .subject span { border-bottom: 1pt solid #111; padding-bottom: 0.5mm; }
+
+  table.parties { width: 100%; border-collapse: collapse; font-size: 12pt; line-height: 1.4; margin-bottom: 3mm; }
+  table.parties th, table.parties td { border: 0.7pt solid #1b2a4a; padding: 1mm 2.5mm; text-align: right; vertical-align: middle; }
+  table.parties th.head { background: #1b2a4a; color: #fff; text-align: center; font-size: 12.5pt; }
+  table.parties td.k { width: 15%; white-space: nowrap; background: #eef1f6; font-weight: 700; }
+  .num { direction: ltr; unicode-bidi: embed; letter-spacing: 0.5pt; font-weight: 700; }
+
+  p { margin: 0 0 2mm; text-align: justify; }
+  ol.facts { margin: 0 0 1.5mm; padding-right: 7mm; }
+  ol.facts li { margin-bottom: 0.3mm; text-align: justify; padding-right: 1mm; }
+
+  table.amounts { width: 72%; margin: 0 auto 2mm; border-collapse: collapse; font-size: 12pt; line-height: 1.4; }
+  table.amounts td { border: 0.7pt solid #1b2a4a; padding: 1mm 3mm; }
+  table.amounts td.v { text-align: center; width: 34%; }
+  table.amounts tr.total td { background: #1b2a4a; color: #fff; font-weight: 700; }
+
+  .closing { text-align: center; font-weight: 700; margin: 2mm 0 0; }
+
+  .sign {
+    margin-top: auto; padding-top: 1mm; display: flex; justify-content: flex-start; padding-left: 4mm;
+  }
+  .sign-box { width: 78mm; text-align: center; font-size: 13pt; line-height: 1.6; margin-right: auto; }
+  .sign-box .lbl { font-weight: 700; }
+  .sign-box img { height: 16mm; mix-blend-mode: multiply; display: block; margin: 0 auto -1mm; }
+  .sign-box .sig-line { border-top: 0.6pt solid #333; width: 60mm; margin: 0 auto; padding-top: 0.5mm; font-size: 12pt; }
+</style>
+</head>
+<body>
+<div class="page"><div class="frame"><div class="inner">
+
+  <div class="basmala">بسم الله الرحمن الرحيم</div>
+
+  <div class="title-bar"><div class="line"></div><h1>شكوى رسمية</h1><div class="line"></div></div>
+
+  <div class="meta">
+    <div>التاريخ: <span class="fill"></span></div>
+  </div>
+
+  <div class="addressee">السيد/ رئيس جهاز القضاء العسكري <span class="resp">المحترم</span></div>
+  <p class="greeting">تحية طيبة وبعد،،،</p>
+
+  <div class="subject"><span>الموضوع: شكوى نصب واحتيال والمطالبة باسترداد مبلغ مالي</span></div>
+
+  <table class="parties">
+    <tr><th class="head" colspan="2">بيانات المشتكي</th><th class="head" colspan="2">بيانات المشتكى عليه</th></tr>
+    <tr>
+      <td class="k">الاسم</td><td>مروان عبد الفتاح محمد حمدان</td>
+      <td class="k">الاسم</td><td>عبد الرحمن محمد أحمد أبو عودة</td>
+    </tr>
+    <tr>
+      <td class="k">رقم الهوية</td><td><span class="num">959095399</span></td>
+      <td class="k">رقم الهوية</td><td><span class="num">800347718</span></td>
+    </tr>
+    <tr>
+      <td class="k">مكان السكن</td><td>النصيرات</td>
+      <td class="k">جهة العمل</td><td>جهاز الشرطة الفلسطينية – رام الله</td>
+    </tr>
+  </table>
+
+  <p>
+    أتقدم إلى سيادتكم أنا المواطن/ <b>مروان عبد الفتاح محمد حمدان</b>، من سكان النصيرات، وأحمل هوية رقم
+    (<span class="num">959095399</span>)، بهذه الشكوى ضد المواطن/ <b>عبد الرحمن محمد أحمد أبو عودة</b>، ويحمل هوية رقم (<span class="num">800347718</span>)،
+    والذي يعمل في جهاز الشرطة الفلسطينية التابع للسلطة الوطنية الفلسطينية في رام الله،
+    وذلك لقيامه بعملية نصب واحتيال بحقي، وتفصيل ذلك على النحو الآتي:
+  </p>
+
+  <ol class="facts">
+    <li>قمت بتحويل مبلغ وقدره (<span class="num">4200</span>) أربعة آلاف ومئتا شيكل للمشتكى عليه، مقابل أغراض ومستلزمات تتعلق بالطاقة الشمسية.</li>
+    <li>لم يلتزم المشتكى عليه بما تم الاتفاق عليه، ورفض إرجاع المبلغ المذكور.</li>
+    <li>توجهت إلى مختار عائلة أبو عودة لحل الموضوع ودياً، إلا أنهم لم يعترفوا به، وأفادوا بأنه معروف بأعمال النصب في غزة، وأن والده قد أعلن تخليه عنه وعدم اعترافه به.</li>
+    <li>بالإضافة إلى ما سبق، فقد اشتريت منه بطارية واتضح لاحقاً أنها لا تعمل على الإطلاق.</li>
+    <li>ولم يقم المشتكى عليه بإرسال المبلغ لي حتى تاريخه.</li>
+  </ol>
+
+  <p>وعليه، فإن المبلغ المستحق لي في ذمة المشتكى عليه بالكامل هو على النحو الآتي:</p>
+
+  <table class="amounts">
+    <tr><td>المبلغ المحوَّل مقابل أغراض الطاقة الشمسية</td><td class="v"><span class="num">4200</span> شيكل</td></tr>
+    <tr><td>ثمن البطارية التي تبيّن أنها لا تعمل</td><td class="v"><span class="num">1800</span> شيكل</td></tr>
+    <tr class="total"><td>إجمالي المبلغ المستحق</td><td class="v"><span class="num">6000</span> شيكل</td></tr>
+  </table>
+
+  <p>
+    لذا، أرجو من سيادتكم التكرم بمساعدتي في هذا الموضوع، واتخاذ الإجراءات القانونية اللازمة بحق المشتكى عليه،
+    وإلزامه بإعادة كامل المبلغ المستحق وقدره (<span class="num">6000</span>) ستة آلاف شيكل، وإرجاع الحق إلى صاحبه.
+  </p>
+
+  <div class="closing">ولكم مني جزيل الشكر ووافر الاحترام والتقدير</div>
+
+  <div class="sign">
+    <div class="sign-box">
+      <div class="lbl">مقدم الشكوى</div>
+      <div>مروان عبد الفتاح محمد حمدان</div>
+      <img src="signature.png" alt="التوقيع">
+      <div class="sig-line">التوقيع</div>
+    </div>
+  </div>
+
+</div></div></div>
+</body>
+</html>
