@@ -268,17 +268,17 @@ svg.i{width:18px;height:18px;flex:none}
       <div>
         <div class="lbl"><span>طريقة الدفع <span class="req">*</span></span></div>
         <div class="tiles" role="radiogroup" aria-label="طريقة الدفع">
-          <button type="button" class="tile" role="radio" aria-checked="true" data-m="cash">
-            <span class="ti"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg></span>
-            <span><b>نقد</b><small>استلمت المبلغ كاش</small></span><span class="dot"></span>
-          </button>
-          <button type="button" class="tile" role="radio" aria-checked="false" data-m="bank">
+          <button type="button" class="tile" role="radio" aria-checked="true" data-m="bank">
             <span class="ti"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-6 9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/></svg></span>
             <span><b>تحويل بنكي أو محفظة</b><small>بنك، جوال باي، بال باي</small></span><span class="dot"></span>
           </button>
+          <button type="button" class="tile" role="radio" aria-checked="false" data-m="cash">
+            <span class="ti"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg></span>
+            <span><b>نقد</b><small>استلمت المبلغ كاش</small></span><span class="dot"></span>
+          </button>
         </div>
 
-        <div class="reveal" id="bankReveal"><div>
+        <div class="reveal on" id="bankReveal"><div>
           <div class="bank-card" style="margin-top:12px">
             <div>
               <div class="lbl"><span>البنك أو المحفظة <span class="req">*</span></span></div>
@@ -342,7 +342,7 @@ svg.i{width:18px;height:18px;flex:none}
       <div class="bar"><i id="sBar" style="width:0"></i></div>
     </div>
     <div class="meta">
-      <div><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>الطريقة: <b id="sMethod">نقد</b></div>
+      <div><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>الطريقة: <b id="sMethod">تحويل · بنك فلسطين</b></div>
       <div><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>المحصّل: <b>Christine King</b></div>
       <div><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="sTime"></span></div>
     </div>
@@ -374,7 +374,7 @@ const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const BAL=-377;            // الرصيد الحالي بالشيكل: سالب = عليه، موجب = له
 const MONTHLY=200;         // الفاتورة الشهرية للتغطية
 const RATES={ILS:1,USD:3.72,JOD:5.24},SYM={ILS:'₪',USD:'$',JOD:'JD'},NAME={ILS:'شيكل',USD:'دولار',JOD:'دينار'};
-let cur='ILS',method='cash';
+let cur='ILS',method='bank';
 const fmt=n=>Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 const side=n=>n<0?'عليه':n>0?'له':'';
 function balHTML(n){return `${fmt(n)} ₪ ${side(n)}`}
@@ -415,7 +415,7 @@ $('#sTime').innerHTML='اليوم، <b class="num">'+now.toLocaleTimeString('en-
 document.addEventListener('keydown',e=>{
   if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();$('#m').requestSubmit()}
   const typing=['INPUT','TEXTAREA'].includes(document.activeElement.tagName);
-  if(!typing&&(e.key==='1'||e.key==='2'))setMethod(e.key==='1'?'cash':'bank');
+  if(!typing&&(e.key==='1'||e.key==='2'))setMethod(e.key==='1'?'bank':'cash');
 });
 $('#m').onsubmit=e=>{e.preventDefault();
   if(!val()){$('#amtBox').classList.add('err');amt.focus();return}
