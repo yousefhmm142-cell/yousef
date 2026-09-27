@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تسجيل دفعة · AF PowerCollect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@500;600;700;800&family=El+Messiri:wght@600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --page:#eff1f4;--surface:#fff;--raised:#f7f8fa;--sunken:#f2f3f5;
+  --line:#e2e5e9;--line2:#eceef1;--ink:#111820;--ink2:#353c46;--muted:#4c5460;--faint:#5e6773;
+  --brand:#a51d26;--brand-hi:#b8232c;--brand-lo:#7d121b;--brand-tint:#a51d2612;
+  --success:#047857;--success-tint:#0478571a;--info:#1d5bcc;--warn:#b45309;--danger:#c81e1e;
+  --focus:#111820;--shadow:0 40px 80px -30px #10182866,0 2px 6px #1018280d;
+  --hero:linear-gradient(135deg,#262c34,#1c2127 55%,#111418);
+}
+:root[data-theme=navy]{
+  --page:#1b2640;--surface:#2d3c5a;--raised:#34445f;--sunken:#24324c;
+  --line:#4a5d82;--line2:#3a4b6b;--ink:#f6f8fc;--ink2:#e2e8f2;--muted:#b8c6de;--faint:#a9b8d2;
+  --brand-tint:#e0707a22;--success:#34d399;--success-tint:#34d3991f;--info:#96c0fc;--warn:#fbbf24;--danger:#ff9696;
+  --focus:#dfe7f5;--shadow:0 40px 80px -30px #0008;
+  --hero:linear-gradient(135deg,#2f3e5c,#25324d 55%,#1b2640);
+}
+:root[data-theme=dark]{
+  --page:#0b0d10;--surface:#14171c;--raised:#1b1f25;--sunken:#101317;
+  --line:#343a44;--line2:#252a32;--ink:#f4f5f7;--ink2:#e0e3e7;--muted:#9ea6b1;--faint:#8b94a0;
+  --brand-tint:#e0707a1f;--success:#34d399;--success-tint:#34d3991a;--info:#7dafe8;--warn:#fbbf24;--danger:#fc7d7d;
+  --focus:#c9ced5;--shadow:0 40px 80px -30px #000;
+  --hero:linear-gradient(135deg,#1c2127,#161a1f 55%,#0b0d10);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{min-height:100vh;background:var(--page);color:var(--ink);font:16px/1.6 'IBM Plex Sans Arabic',system-ui,sans-serif;-webkit-font-smoothing:antialiased;transition:background .3s}
+button,input,select,textarea{font:inherit;color:inherit}
+.num{font-family:Alexandria,'IBM Plex Sans Arabic',sans-serif;font-variant-numeric:tabular-nums}
+svg.i{width:18px;height:18px;flex:none}
+
+/* demo chrome */
+.demo-bar{position:fixed;inset-inline:0;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 20px;background:color-mix(in srgb,var(--page) 80%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line2);font-size:14px;color:var(--muted)}
+.demo-bar b{color:var(--ink);font-family:'El Messiri',serif;font-size:17px}
+.seg{display:inline-flex;gap:2px;padding:3px;border-radius:12px;background:var(--sunken);border:1px solid var(--line2)}
+.seg button{border:0;background:transparent;padding:5px 12px;border-radius:9px;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed=true]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px #10182822}
+.stage{min-height:100vh;display:grid;place-items:center;padding:78px 16px 32px;background:
+  radial-gradient(50rem 30rem at 85% -10%,#a51d2614,transparent 70%),
+  radial-gradient(40rem 26rem at 0% 110%,#48505a14,transparent 70%)}
+
+/* modal */
+.modal{width:min(1040px,100%);background:var(--surface);border:1px solid var(--line2);border-radius:28px;box-shadow:var(--shadow);overflow:hidden;display:grid;grid-template-columns:minmax(0,1fr) 360px;animation:rise .42s cubic-bezier(.22,1,.36,1)}
+@keyframes rise{from{opacity:0;transform:translateY(14px) scale(.985)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.main{display:flex;flex-direction:column;min-width:0}
+.mh{display:flex;align-items:center;gap:14px;padding:20px 26px;border-bottom:1px solid var(--line2)}
+.mh .ic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--hero);color:#fff;box-shadow:inset 0 1px 0 #ffffff1a}
+.mh h1{margin:0;font:700 22px/1.2 'El Messiri',serif}
+.mh p{margin:2px 0 0;font-size:13.5px;color:var(--faint)}
+.x{margin-inline-start:auto;width:40px;height:40px;border-radius:12px;border:1px solid var(--line2);background:transparent;display:grid;place-items:center;cursor:pointer;color:var(--muted)}
+.x:hover{background:var(--sunken);color:var(--ink)}
+.body{padding:22px 26px 8px;display:grid;gap:22px}
+
+/* subscriber */
+.who{display:flex;align-items:center;gap:14px;padding:12px 14px;border:1px solid var(--line2);border-radius:18px;background:var(--raised)}
+.av{position:relative;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,#4a525d,#161a1f);color:#fff;font:700 15px Alexandria}
+.av i{position:absolute;bottom:-2px;left:-2px;width:13px;height:13px;border-radius:50%;background:#10b981;border:2.5px solid var(--raised)}
+.who b{display:block;font-size:16.5px}
+.who small{color:var(--faint);font-size:13.5px}
+.who .chip{margin-inline-start:auto;display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.who .chip small{font-size:12.5px}
+.bal{white-space:nowrap;font:700 17px Alexandria;padding:3px 10px;border-radius:10px}
+.bal.cr{color:var(--success);background:var(--success-tint)}
+.bal.db{color:var(--danger);background:#c81e1e14}
+
+/* field basics */
+.lbl{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px;font-size:14.5px;font-weight:600;color:var(--ink2)}
+.lbl small{font-weight:500;color:var(--faint);font-size:13px}
+.req{color:var(--brand)}
+.inp{width:100%;height:50px;border:1.5px solid var(--line);border-radius:14px;background:var(--surface);padding:0 16px;font-size:16px;transition:border-color .18s,box-shadow .18s}
+.inp:hover{border-color:color-mix(in srgb,var(--line) 60%,var(--faint))}
+.inp:focus{outline:none;border-color:var(--focus);box-shadow:0 0 0 4px color-mix(in srgb,var(--focus) 12%,transparent)}
+.hint{margin-top:6px;font-size:13px;color:var(--faint)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+
+/* amount hero */
+.amount{border:1.5px solid var(--line);border-radius:22px;padding:16px 18px 14px;background:var(--surface);transition:border-color .18s,box-shadow .18s}
+.amount:focus-within{border-color:var(--focus);box-shadow:0 0 0 5px color-mix(in srgb,var(--focus) 10%,transparent)}
+.amount.err{border-color:var(--danger);box-shadow:0 0 0 5px #c81e1e14}
+.amt-row{display:flex;align-items:center;gap:14px}
+.amt-row input{flex:1;min-width:0;width:100%;border:0;background:transparent;font:800 44px/1.1 Alexandria,sans-serif;letter-spacing:-.01em;padding:0;direction:ltr;text-align:right;color:var(--ink)}
+.amt-row input:focus{outline:none}
+.amt-row input::placeholder{color:color-mix(in srgb,var(--faint) 45%,transparent)}
+.cur{display:inline-flex;gap:2px;padding:4px;border-radius:14px;background:var(--sunken);border:1px solid var(--line2)}
+.cur button{border:0;background:transparent;cursor:pointer;padding:7px 12px;border-radius:10px;font-weight:700;font-size:14.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.cur button .num{font-size:15px}
+.cur button[aria-pressed=true]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px #10182826,0 0 0 1px var(--line2)}
+.amt-foot{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
+.q{border:1px solid var(--line2);background:var(--raised);border-radius:999px;padding:4px 12px;font-size:13.5px;font-weight:600;cursor:pointer;color:var(--ink2);transition:.15s}
+.q:hover{border-color:var(--line);background:var(--surface);color:var(--ink)}
+.q.full{border-color:color-mix(in srgb,var(--success) 40%,transparent);color:var(--success);background:var(--success-tint)}
+.fx{margin-inline-start:auto;font-size:13.5px;color:var(--faint);display:flex;align-items:center;gap:6px}
+.fx b{color:var(--ink);font-family:Alexandria}
+.fx input{width:74px;height:30px;border:1px solid var(--line);border-radius:9px;background:var(--surface);text-align:center;font:600 14px Alexandria;direction:ltr}
+.err-msg{display:none;margin-top:8px;font-size:13.5px;color:var(--danger);align-items:center;gap:6px}
+.amount.err + .err-msg{display:flex}
+
+/* method tiles */
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.tile{position:relative;display:flex;align-items:center;gap:12px;padding:14px 16px;border:1.5px solid var(--line);border-radius:18px;background:var(--surface);cursor:pointer;text-align:start;transition:.18s}
+.tile:hover{border-color:color-mix(in srgb,var(--line) 50%,var(--faint))}
+.tile .ti{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:var(--sunken);color:var(--ink2);transition:.18s}
+.tile b{display:block;font-size:15.5px}
+.tile small{color:var(--faint);font-size:13px}
+.tile .dot{margin-inline-start:auto;width:22px;height:22px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;transition:.18s}
+.tile[aria-checked=true]{border-color:var(--ink);box-shadow:0 0 0 4px color-mix(in srgb,var(--ink) 7%,transparent)}
+.tile[aria-checked=true] .ti{background:var(--hero);color:#fff}
+.tile[aria-checked=true] .dot{background:var(--ink);border-color:var(--ink)}
+.tile[aria-checked=true] .dot::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--surface)}
+.tile kbd{position:absolute;top:8px;inset-inline-end:10px;font:600 11px Alexandria;color:var(--faint);border:1px solid var(--line2);border-radius:6px;padding:0 5px;opacity:.8}
+
+/* bank reveal */
+.reveal{display:grid;grid-template-rows:0fr;transition:grid-template-rows .32s cubic-bezier(.22,1,.36,1),opacity .25s;opacity:0}
+.reveal.on{grid-template-rows:1fr;opacity:1}
+.reveal>div{overflow:hidden}
+.bank-card{margin-top:2px;padding:16px;border:1px solid var(--line2);border-radius:20px;background:var(--raised);display:grid;gap:16px}
+.banks{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.bank{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--line2);border-radius:14px;background:var(--surface);cursor:pointer;font-weight:600;font-size:14.5px;transition:.15s}
+.bank .lg{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;color:#fff;font:700 12px Alexandria;flex:none}
+.bank small{display:block;font-weight:500;font-size:12px;color:var(--faint)}
+.bank[aria-checked=true]{border-color:var(--ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--ink) 7%,transparent)}
+.payer{display:flex;align-items:center;gap:8px}
+.toggle{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;color:var(--muted);cursor:pointer;user-select:none}
+.sw{width:36px;height:20px;border-radius:99px;background:var(--line);position:relative;transition:.18s;flex:none}
+.sw::after{content:"";position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px #0003;transition:.18s}
+.toggle input{display:none}
+.toggle input:checked + .sw{background:var(--ink)}
+.toggle input:checked + .sw::after{right:18px}
+.inp[readonly]{background:var(--sunken);color:var(--muted)}
+
+.more-toggle{display:flex;align-items:center;gap:8px;border:0;background:transparent;cursor:pointer;color:var(--muted);font-weight:600;font-size:14.5px;padding:0}
+.more-toggle svg{transition:transform .2s}
+.more-toggle[aria-expanded=true] svg{transform:rotate(180deg)}
+
+/* footer */
+.foot{margin-top:auto;display:flex;align-items:center;gap:12px;padding:16px 26px;border-top:1px solid var(--line2);background:var(--raised)}
+.kb{font-size:13px;color:var(--faint);display:flex;align-items:center;gap:6px}
+.kb kbd{font:600 11.5px Alexandria;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:1px 6px;background:var(--surface);color:var(--muted)}
+.btn{height:48px;border-radius:14px;padding:0 20px;font-weight:700;font-size:15.5px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink2);transition:.18s}
+.btn:hover{background:var(--sunken)}
+.btn.pr{margin-inline-start:auto;border:0;color:#fff;background:linear-gradient(180deg,var(--brand-hi),var(--brand-lo));box-shadow:0 12px 26px -12px #a51d26,inset 0 1px 0 #ffffff33;min-width:230px;justify-content:center}
+.btn.pr:hover{filter:brightness(1.07)}
+.btn.pr:disabled{filter:grayscale(.6);opacity:.55;cursor:not-allowed;box-shadow:none}
+.btn:focus-visible,.tile:focus-visible,.bank:focus-visible,.q:focus-visible,.cur button:focus-visible,.x:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+/* summary / receipt */
+.side{background:var(--hero);color:#fff;padding:24px 24px 20px;display:flex;flex-direction:column;gap:18px;position:relative;overflow:hidden}
+.side::before{content:"";position:absolute;inset:auto -80px -120px auto;width:320px;height:320px;border-radius:50%;background:radial-gradient(closest-side,#a51d2640,transparent)}
+.side::after{content:"";position:absolute;inset-inline:0;top:0;height:3px;background:linear-gradient(90deg,#5c0d14,#a51d26 40%,#9aa3ae 75%,#dfe3e8)}
+.side h2{margin:0;font:700 18px 'El Messiri',serif;display:flex;align-items:center;gap:8px}
+.side .tag{margin-inline-start:auto;font:600 11.5px 'IBM Plex Sans Arabic';padding:2px 9px;border-radius:99px;background:#ffffff14;color:#dfe3e8}
+.big{position:relative}
+.big small{color:#aeb6c1;font-size:13px}
+.big .v{font:800 40px/1.15 Alexandria;letter-spacing:-.01em;direction:ltr;text-align:right}
+.big .v span{font-size:18px;font-weight:600;color:#c9ced5;margin-inline-start:6px}
+.big .conv{font-size:13px;color:#aeb6c1;margin-top:2px}
+.ledger{position:relative;display:grid;gap:10px;padding:14px;border-radius:18px;background:#ffffff0d;border:1px solid #ffffff14}
+.ledger div{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;color:#c9ced5}
+.ledger div b{font:600 15px Alexandria;color:#fff;direction:ltr}
+.ledger .sep{height:1px;background:#ffffff1f;margin:2px 0}
+.ledger .after b{font-size:18px}
+.ledger .after b.cr{color:#5eead4}.ledger .after b.db{color:#fca5a5}
+.bar{position:relative;height:8px;border-radius:99px;background:#ffffff14;overflow:hidden}
+.bar i{position:absolute;inset-block:0;right:0;border-radius:99px;background:linear-gradient(90deg,#34d399,#10b981);transition:width .4s cubic-bezier(.22,1,.36,1)}
+.meta{position:relative;display:grid;gap:8px;font-size:13.5px;color:#c9ced5}
+.meta div{display:flex;align-items:center;gap:8px}
+.meta svg{color:#9aa3ae}
+.meta b{color:#fff;font-weight:600}
+.after-save{position:relative;margin-top:auto;padding-top:14px;border-top:1px dashed #ffffff26;font-size:13px;color:#aeb6c1;display:grid;gap:8px}
+.after-save label{display:flex;align-items:center;gap:8px;color:#e6e9ed;cursor:pointer}
+.after-save input{accent-color:#a51d26;width:16px;height:16px}
+
+/* success */
+.done{display:none;grid-column:1/-1;padding:44px 32px 34px;text-align:center}
+.modal.saved .main,.modal.saved .side{display:none}
+.modal.saved .done{display:block}
+.check{width:76px;height:76px;margin:0 auto 14px;border-radius:24px;display:grid;place-items:center;background:var(--success-tint);color:var(--success)}
+.check svg{width:38px;height:38px;stroke-dasharray:40;stroke-dashoffset:40;animation:draw .5s .15s ease forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.done h2{margin:0;font:700 26px 'El Messiri',serif}
+.done p{color:var(--muted);margin:6px 0 0}
+.receipt{width:min(420px,100%);margin:22px auto 0;border:1px solid var(--line2);border-radius:20px;background:var(--raised);padding:6px 18px;text-align:start}
+.receipt div{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px dashed var(--line);font-size:14.5px;color:var(--muted)}
+.receipt div:last-child{border:0}
+.receipt b{color:var(--ink)}
+.done .acts{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin-top:22px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,20px);opacity:0;display:flex;align-items:center;gap:12px;background:#111820;color:#fff;border-radius:16px;padding:10px 12px 10px 16px;box-shadow:0 20px 40px -18px #000a;font-size:14.5px;transition:.3s;z-index:9}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.toast button{border:0;background:#ffffff1a;color:#fff;border-radius:10px;padding:5px 12px;font-weight:700;cursor:pointer}
+
+/* responsive */
+@media (max-width:900px){
+  .modal{display:flex;flex-direction:column;border-radius:24px}
+  .main{display:contents}.mh{order:0}.body{order:1}.side{order:2}.foot{order:3}
+  .side{padding:20px}
+  .side .meta{display:none}
+  .side .big .v{font-size:32px}
+}
+@media (max-width:560px){
+  .stage{padding:64px 0 0;place-items:end center}
+  .modal{border-radius:24px 24px 0 0}
+  .body{padding:18px 16px 8px}.mh{padding:16px}.foot{padding:12px 16px;position:sticky;bottom:0}
+  .two,.tiles{grid-template-columns:1fr}.banks{grid-template-columns:1fr 1fr 1fr}
+  .bank{flex-direction:column;text-align:center;gap:6px;padding:10px 6px}
+  .amt-row{flex-direction:column;align-items:stretch}.amt-row input{font-size:38px}
+  .kb{display:none}.btn.pr{min-width:0;flex:1}
+  .fx{margin-inline-start:0;width:100%}
+}
+</style>
+</head>
+<body>
+<div class="demo-bar">
+  <div><b>تسجيل دفعة</b> · نموذج تفاعلي</div>
+  <div class="seg" role="group" aria-label="الوضع">
+    <button data-theme="light" aria-pressed="true">نهاري</button>
+    <button data-theme="navy" aria-pressed="false">كحلي</button>
+    <button data-theme="dark" aria-pressed="false">ليلي</button>
+  </div>
+</div>
+
+<div class="stage">
+<form class="modal" id="m" role="dialog" aria-labelledby="t" novalidate>
+  <div class="main">
+    <div class="mh">
+      <span class="ic"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20M6 15h4"/></svg></span>
+      <div><h1 id="t">تسجيل دفعة</h1><p>سجّل المبلغ اللي استلمته، والرصيد بيتحدث لحاله.</p></div>
+      <button type="button" class="x" aria-label="إغلاق"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+
+    <div class="body">
+      <div class="who">
+        <span class="av">AC<i></i></span>
+        <div><b>Alf Carroll</b><small>حساب <span class="num">202600041</span> · فرع المنصور</small></div>
+        <div class="chip"><small>الرصيد الحالي</small><span class="bal num" id="balNow"></span></div>
+      </div>
+
+      <div>
+        <div class="lbl"><span>المبلغ المستلم <span class="req">*</span></span><small>اكتب المبلغ بالعملة اللي استلمتها</small></div>
+        <div class="amount" id="amtBox">
+          <div class="amt-row">
+            <input id="amt" inputmode="decimal" autocomplete="off" placeholder="0.00" aria-label="المبلغ">
+            <div class="cur" role="radiogroup" aria-label="العملة" id="cur">
+              <button type="button" data-c="ILS" aria-pressed="true"><span class="num">₪</span>شيكل</button>
+              <button type="button" data-c="USD" aria-pressed="false"><span class="num">$</span>دولار</button>
+              <button type="button" data-c="JOD" aria-pressed="false"><span class="num">JD</span>دينار</button>
+            </div>
+          </div>
+          <div class="amt-foot">
+            <button type="button" class="q" data-q="50">50</button>
+            <button type="button" class="q" data-q="100">100</button>
+            <button type="button" class="q" data-q="200">200</button>
+            <button type="button" class="q full" id="qFull" hidden>تسديد كامل الدين</button>
+            <span class="fx" id="fx"></span>
+          </div>
+        </div>
+        <div class="err-msg" role="alert"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>اكتب مبلغ أكبر من صفر.</div>
+      </div>
+
+      <div>
+        <div class="lbl"><span>طريقة الدفع <span class="req">*</span></span></div>
+        <div class="tiles" role="radiogroup" aria-label="طريقة الدفع">
+          <button type="button" class="tile" role="radio" aria-checked="true" data-m="cash">
+            <span class="ti"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg></span>
+            <span><b>نقد</b><small>استلمت المبلغ كاش</small></span><span class="dot"></span>
+          </button>
+          <button type="button" class="tile" role="radio" aria-checked="false" data-m="bank">
+            <span class="ti"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-6 9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/></svg></span>
+            <span><b>تحويل بنكي أو محفظة</b><small>بنك، جوال باي، بال باي</small></span><span class="dot"></span>
+          </button>
+        </div>
+
+        <div class="reveal" id="bankReveal"><div>
+          <div class="bank-card" style="margin-top:12px">
+            <div>
+              <div class="lbl"><span>البنك أو المحفظة <span class="req">*</span></span></div>
+              <div class="banks" role="radiogroup" aria-label="البنك أو المحفظة">
+                <button type="button" class="bank" role="radio" aria-checked="true"><span class="lg" style="background:#0f5c3a">BOP</span><span>بنك فلسطين<small>تحويل بنكي</small></span></button>
+                <button type="button" class="bank" role="radio" aria-checked="false"><span class="lg" style="background:#1d4fb0">JP</span><span>جوال باي<small>محفظة</small></span></button>
+                <button type="button" class="bank" role="radio" aria-checked="false"><span class="lg" style="background:#6d28d9">PP</span><span>بال باي<small>محفظة</small></span></button>
+              </div>
+            </div>
+            <div class="two">
+              <div>
+                <div class="lbl"><span>اسم المحوِّل</span>
+                  <label class="toggle"><input type="checkbox" id="self" checked><span class="sw"></span>المشترك نفسه</label></div>
+                <input class="inp" id="payer" value="Alf Carroll" readonly>
+              </div>
+              <div>
+                <div class="lbl"><span>الرقم المرجعي</span><small>من إشعار الحوالة</small></div>
+                <input class="inp num" placeholder="مثال: TRX-48213" dir="ltr" style="text-align:right">
+              </div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+
+      <div>
+        <button type="button" class="more-toggle" id="moreBtn" aria-expanded="false" aria-controls="more">
+          <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+          تفاصيل إضافية <span style="font-weight:500;color:var(--faint)">(اختياري: السند اليدوي، التاريخ، ملاحظة)</span>
+        </button>
+        <div class="reveal" id="more"><div>
+          <div class="two" style="margin-top:14px">
+            <div><div class="lbl"><span>رقم السند اليدوي</span><small>إذا في وصل ورقي</small></div><input class="inp num" placeholder="مثال: 00412" dir="ltr" style="text-align:right"></div>
+            <div><div class="lbl"><span>تاريخ الاستلام</span></div><input class="inp" type="date" id="date"></div>
+          </div>
+          <div style="margin-top:14px"><div class="lbl"><span>ملاحظة</span></div><input class="inp" placeholder="أي تفصيل بدك يضل محفوظ مع الدفعة"></div>
+        </div></div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <button type="button" class="btn">إلغاء</button>
+      <span class="kb"><kbd>Ctrl</kbd>+<kbd>Enter</kbd> للحفظ · <kbd>1</kbd> <kbd>2</kbd> للطريقة</span>
+      <button type="submit" class="btn pr" id="save" disabled>
+        <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>
+        <span id="saveLbl">تسجيل الدفعة</span>
+      </button>
+    </div>
+  </div>
+
+  <aside class="side" aria-live="polite">
+    <h2><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg>ملخص الدفعة<span class="tag">قبل الحفظ</span></h2>
+    <div class="big"><small>المبلغ</small><div class="v" id="sAmt">0.00<span>₪</span></div><div class="conv" id="sConv">&nbsp;</div></div>
+    <div class="ledger">
+      <div><span>الرصيد الحالي</span><b id="sBefore"></b></div>
+      <div><span>هاي الدفعة</span><b id="sPay">+0.00</b></div>
+      <div class="sep"></div>
+      <div class="after"><span>الرصيد بعد الدفعة</span><b id="sAfter"></b></div>
+    </div>
+    <div>
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;color:#aeb6c1;margin-bottom:6px"><span>تغطية الفاتورة الشهرية</span><span class="num" id="sCov">0%</span></div>
+      <div class="bar"><i id="sBar" style="width:0"></i></div>
+    </div>
+    <div class="meta">
+      <div><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>الطريقة: <b id="sMethod">نقد</b></div>
+      <div><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>المحصّل: <b>Christine King</b></div>
+      <div><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="sTime"></span></div>
+    </div>
+    <div class="after-save">
+      بعد الحفظ:
+      <label><input type="checkbox" checked>اطبع الإيصال</label>
+      <label><input type="checkbox" checked>ابعت SMS تأكيد للمشترك</label>
+    </div>
+  </aside>
+
+  <div class="done">
+    <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></div>
+    <h2>انسجلت الدفعة</h2>
+    <p id="dMsg"></p>
+    <div class="receipt" id="rcpt"></div>
+    <div class="acts">
+      <button type="button" class="btn"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/></svg>طباعة الإيصال</button>
+      <button type="button" class="btn" id="again"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>دفعة جديدة</button>
+      <button type="button" class="btn pr" style="margin:0;min-width:0">تم</button>
+    </div>
+  </div>
+</form>
+</div>
+
+<div class="toast" id="toast"><span>انسجلت الدفعة وانبعت SMS للمشترك</span><button type="button" id="undo">تراجع</button></div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const BAL=-377;            // الرصيد الحالي بالشيكل: سالب = عليه، موجب = له
+const MONTHLY=200;         // الفاتورة الشهرية للتغطية
+const RATES={ILS:1,USD:3.72,JOD:5.24},SYM={ILS:'₪',USD:'$',JOD:'JD'},NAME={ILS:'شيكل',USD:'دولار',JOD:'دينار'};
+let cur='ILS',method='cash';
+const fmt=n=>Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const side=n=>n<0?'عليه':n>0?'له':'';
+function balHTML(n){return `${fmt(n)} ₪ ${side(n)}`}
+$('#balNow').className='bal num '+(BAL<0?'db':'cr');$('#balNow').textContent=balHTML(BAL);
+$('#sBefore').textContent=balHTML(BAL);
+if(BAL<0){$('#qFull').hidden=false}
+const amt=$('#amt');
+function val(){const v=parseFloat(amt.value.replace(/,/g,''));return isFinite(v)&&v>0?v:0}
+function render(){
+  const a=val(),r=+($('#rate')?.value||RATES[cur]),ils=a*r,after=BAL+ils;
+  $('#fx').innerHTML=cur==='ILS'?'':`سعر الصرف <input id="rate" class="num" value="${r}" aria-label="سعر الصرف"> · بيتسجل <b>${fmt(ils)} ₪</b>`;
+  if(cur!=='ILS'){const ri=$('#rate');ri.oninput=()=>{renderNums()};}
+  renderNums();
+}
+function renderNums(){
+  const a=val(),r=cur==='ILS'?1:(+$('#rate').value||RATES[cur]),ils=a*r,after=BAL+ils;
+  if(cur!=='ILS'){const b=$('#fx b');if(b)b.textContent=fmt(ils)+' ₪'}
+  $('#sAmt').innerHTML=`${fmt(a)}<span>${SYM[cur]}</span>`;
+  $('#sConv').textContent=cur==='ILS'?' ':`= ${fmt(ils)} شيكل على سعر ${r}`;
+  $('#sPay').textContent='+'+fmt(ils)+' ₪';
+  const af=$('#sAfter');af.textContent=balHTML(after);af.className=after<0?'db':'cr';
+  const cov=Math.min(100,Math.round(ils/MONTHLY*100));$('#sCov').textContent=cov+'%';$('#sBar').style.width=cov+'%';
+  $('#save').disabled=!a;
+  $('#saveLbl').textContent=a?`تسجيل ${fmt(a)} ${NAME[cur]}`:'تسجيل الدفعة';
+  $('#amtBox').classList.remove('err');
+}
+amt.addEventListener('input',()=>{amt.value=amt.value.replace(/[^\d.,]/g,'');renderNums()});
+$$('.q[data-q]').forEach(b=>b.onclick=()=>{amt.value=b.dataset.q;renderNums();amt.focus()});
+$('#qFull').onclick=()=>{const r=cur==='ILS'?1:(+$('#rate').value||RATES[cur]);amt.value=(Math.abs(BAL)/r).toFixed(2);renderNums()};
+$$('#cur button').forEach(b=>b.onclick=()=>{$$('#cur button').forEach(x=>x.setAttribute('aria-pressed',x===b));cur=b.dataset.c;render();amt.focus()});
+function setMethod(m){method=m;$$('.tile').forEach(t=>t.setAttribute('aria-checked',t.dataset.m===m));$('#bankReveal').classList.toggle('on',m==='bank');$('#sMethod').textContent=m==='bank'?'تحويل · '+$('.bank[aria-checked=true] span:last-child').firstChild.textContent:'نقد'}
+$$('.tile').forEach(t=>t.onclick=()=>setMethod(t.dataset.m));
+$$('.bank').forEach(b=>b.onclick=()=>{$$('.bank').forEach(x=>x.setAttribute('aria-checked',x===b));setMethod('bank')});
+$('#self').onchange=e=>{const p=$('#payer');p.readOnly=e.target.checked;if(e.target.checked)p.value='Alf Carroll';else{p.value='';p.focus()}};
+$('#moreBtn').onclick=e=>{const on=e.currentTarget.getAttribute('aria-expanded')!=='true';e.currentTarget.setAttribute('aria-expanded',on);$('#more').classList.toggle('on',on)};
+const now=new Date();$('#date').valueAsDate=now;
+$('#sTime').innerHTML='اليوم، <b class="num">'+now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+'</b>';
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();$('#m').requestSubmit()}
+  const typing=['INPUT','TEXTAREA'].includes(document.activeElement.tagName);
+  if(!typing&&(e.key==='1'||e.key==='2'))setMethod(e.key==='1'?'cash':'bank');
+});
+$('#m').onsubmit=e=>{e.preventDefault();
+  if(!val()){$('#amtBox').classList.add('err');amt.focus();return}
+  const a=val(),r=cur==='ILS'?1:(+$('#rate').value||RATES[cur]),ils=a*r,after=BAL+ils;
+  $('#dMsg').textContent=`${fmt(a)} ${NAME[cur]} من Alf Carroll · الرصيد الجديد ${balHTML(after)}`;
+  $('#rcpt').innerHTML=[['رقم الإيصال','<span class="num">R-2026-08814</span>'],['المبلغ',`<span class="num">${fmt(a)} ${SYM[cur]}</span>`],['بالشيكل',`<span class="num">${fmt(ils)} ₪</span>`],['الطريقة',$('#sMethod').textContent],['الرصيد بعد الدفعة',`<span class="num">${balHTML(after)}</span>`]].map(([k,v])=>`<div><span>${k}</span><b>${v}</b></div>`).join('');
+  $('#m').classList.add('saved');const t=$('#toast');t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),5000)};
+$('#undo').onclick=()=>{$('#m').classList.remove('saved');$('#toast').classList.remove('on')};
+$('#again').onclick=()=>{$('#m').classList.remove('saved');amt.value='';renderNums();amt.focus()};
+$$('.seg button').forEach(b=>b.onclick=()=>{$$('.seg button').forEach(x=>x.setAttribute('aria-pressed',x===b));document.documentElement.dataset.theme=b.dataset.theme});
+render();amt.focus();
+</script>
+</body>
+</html>
