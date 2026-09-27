@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>المستخدمون · AF PowerCollect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@500;600;700;800&family=El+Messiri:wght@600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+
+:root{
+  --page:#eff1f4;--surface:#fff;--raised:#f7f8fa;--sunken:#f2f3f5;
+  --line:#e2e5e9;--line2:#eceef1;--ink:#111820;--ink2:#353c46;--muted:#4c5460;--faint:#5e6773;
+  --brand:#a51d26;--brand-hi:#b8232c;--brand-lo:#7d121b;
+  --success:#047857;--success-t:#0478571a;--info:#1d5bcc;--info-t:#1d5bcc14;--warn:#b45309;--warn-t:#b453091a;--danger:#c81e1e;--danger-t:#c81e1e14;
+  --focus:#111820;--shadow:0 1px 2px #10182808,0 14px 34px -18px #1018282e;--pop:0 30px 60px -24px #10182866,0 2px 6px #1018280d;
+  --hero:linear-gradient(135deg,#262c34,#1c2127 55%,#111418);
+}
+:root[data-theme=dark]{
+  --page:#0b0d10;--surface:#14171c;--raised:#1b1f25;--sunken:#101317;
+  --line:#343a44;--line2:#252a32;--ink:#f4f5f7;--ink2:#e0e3e7;--muted:#9ea6b1;--faint:#8b94a0;
+  --success:#34d399;--success-t:#34d3991a;--info:#7dafe8;--info-t:#7dafe81a;--warn:#fbbf24;--warn-t:#fbbf241a;--danger:#fc7d7d;--danger-t:#fc7d7d1a;
+  --focus:#c9ced5;--shadow:0 20px 40px -24px #000;--pop:0 30px 60px -20px #000;
+  --hero:linear-gradient(135deg,#1c2127,#161a1f 55%,#0b0d10);
+}
+*{box-sizing:border-box}html,body{margin:0}
+body{min-height:100vh;background:var(--page);color:var(--ink);font:16px/1.6 'IBM Plex Sans Arabic',system-ui,sans-serif;-webkit-font-smoothing:antialiased;transition:background .3s}
+button,input,select{font:inherit;color:inherit}
+.num{font-family:Alexandria,'IBM Plex Sans Arabic',sans-serif;font-variant-numeric:tabular-nums}
+svg.i{width:18px;height:18px;flex:none}
+kbd{font:600 11.5px Alexandria;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:0 6px;background:var(--surface);color:var(--muted)}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+.demo-bar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 24px;background:color-mix(in srgb,var(--page) 82%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line2);font-size:14px;color:var(--muted)}
+.demo-bar b{color:var(--ink);font-family:'El Messiri',serif;font-size:17px}
+.seg{display:inline-flex;gap:2px;padding:3px;border-radius:12px;background:var(--sunken);border:1px solid var(--line2)}
+.seg button{border:0;background:transparent;padding:5px 12px;border-radius:9px;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed=true]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px #10182822}
+
+.wrap{max-width:1320px;margin:0 auto;padding:26px 24px 120px}
+.ph{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.ph h1{margin:0;font:700 34px/1.2 'El Messiri',serif}
+.ph p{margin:4px 0 0;color:var(--faint);font-size:14.5px}
+.ph .acts{margin-inline-start:auto;display:flex;gap:10px}
+.btn{height:44px;border-radius:13px;padding:0 16px;font-weight:700;font-size:15px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink2);transition:.18s}
+.btn:hover{background:var(--sunken)}
+.btn.pr{border:0;color:#fff;background:linear-gradient(180deg,var(--brand-hi),var(--brand-lo));box-shadow:0 12px 26px -12px #a51d26,inset 0 1px 0 #ffffff33}
+.btn.pr:hover{filter:brightness(1.07)}
+
+/* KPI filter cards */
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:22px}
+.kpi{position:relative;text-align:start;border:1px solid var(--line2);background:var(--surface);border-radius:20px;padding:14px 16px;cursor:pointer;box-shadow:var(--shadow);transition:.18s;overflow:hidden}
+.kpi:hover{transform:translateY(-1px);border-color:var(--line)}
+.kpi small{display:flex;align-items:center;gap:8px;color:var(--faint);font-size:13.5px;font-weight:600}
+.kpi small i{width:8px;height:8px;border-radius:50%}
+.kpi b{display:block;font:800 28px/1.2 Alexandria;margin-top:6px}
+.kpi span{font-size:12.5px;color:var(--faint)}
+.kpi[aria-pressed=true]{border-color:var(--ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--ink) 8%,transparent),var(--shadow)}
+.kpi.debt{background:var(--hero);color:#fff;border-color:transparent;cursor:default}
+.kpi.debt small{color:#aeb6c1}.kpi.debt span{color:#aeb6c1}
+.kpi.debt::after{content:"";position:absolute;inset-inline:0;top:0;height:3px;background:linear-gradient(90deg,#5c0d14,#a51d26 40%,#9aa3ae 75%,#dfe3e8)}
+.kpi .spark{position:absolute;inset-inline-end:16px;bottom:16px;display:flex;align-items:flex-end;gap:3px;height:26px;opacity:.9}
+.kpi .spark i{width:5px;border-radius:2px;background:#a51d26}
+
+/* card + toolbar */
+.card{margin-top:18px;background:var(--surface);border:1px solid var(--line2);border-radius:24px;box-shadow:var(--shadow)}
+.tb{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:16px 18px;border-bottom:1px solid var(--line2)}
+.search{position:relative;flex:1;min-width:240px;max-width:420px}
+.search svg{position:absolute;inset-inline-start:14px;top:50%;transform:translateY(-50%);color:var(--faint)}
+.search input{width:100%;height:46px;border:1.5px solid var(--line);border-radius:14px;background:var(--raised);padding:0 44px;font-size:15.5px;transition:.18s}
+.search input:focus{outline:none;background:var(--surface);border-color:var(--focus);box-shadow:0 0 0 4px color-mix(in srgb,var(--focus) 10%,transparent)}
+.search kbd{position:absolute;inset-inline-end:12px;top:50%;transform:translateY(-50%)}
+.chip-f{height:40px;display:inline-flex;align-items:center;gap:8px;border:1px dashed var(--line);border-radius:12px;padding:0 12px;background:transparent;cursor:pointer;font-size:14.5px;font-weight:600;color:var(--muted);position:relative}
+.chip-f.on{border-style:solid;border-color:var(--ink);color:var(--ink);background:var(--sunken)}
+.chip-f .n{font:700 12px Alexandria;background:var(--ink);color:var(--surface);border-radius:7px;padding:0 6px}
+.dd{position:absolute;top:calc(100% + 6px);inset-inline-start:0;z-index:15;min-width:220px;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--pop);padding:6px;display:none}
+.dd.open{display:block;animation:pop .14s ease}
+@keyframes pop{from{opacity:0;transform:translateY(-4px) scale(.97)}}
+.dd label{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;cursor:pointer;font-size:14.5px;font-weight:500;color:var(--ink2)}
+.dd label:hover{background:var(--sunken)}
+.dd input{accent-color:#a51d26;width:16px;height:16px}
+.dd .c{margin-inline-start:auto;font:600 12.5px Alexandria;color:var(--faint)}
+.tb .sp{margin-inline-start:auto;display:flex;align-items:center;gap:10px}
+.clear{border:0;background:transparent;color:var(--brand);font-weight:700;cursor:pointer;font-size:14px}
+.dens{display:inline-flex;gap:2px;padding:3px;border-radius:12px;background:var(--sunken);border:1px solid var(--line2)}
+.dens button{border:0;background:transparent;width:34px;height:32px;border-radius:9px;display:grid;place-items:center;cursor:pointer;color:var(--faint)}
+.dens button[aria-pressed=true]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px #10182822}
+
+/* table */
+.tw{overflow-x:auto;padding:4px 12px 8px}
+table{width:100%;border-collapse:separate;border-spacing:0 8px;font-size:15.5px}
+th{position:sticky;top:0;text-align:start;font-size:14px;font-weight:600;color:var(--muted);padding:10px 14px 4px;white-space:nowrap;user-select:none}
+th button{border:0;background:transparent;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-weight:600;color:inherit;padding:4px 8px;margin:-4px -8px;border-radius:9px}
+th button:hover{background:var(--sunken);color:var(--ink)}
+th button .ar{display:inline-flex;flex-direction:column;line-height:0;opacity:.35}
+th button[data-dir] {color:var(--ink);background:color-mix(in srgb,var(--brand) 8%,transparent)}
+th button[data-dir] .ar{opacity:1;color:var(--brand)}
+td{background:var(--surface);padding:14px;border-block:1px solid var(--line2);white-space:nowrap;vertical-align:middle;transition:background .15s,border-color .15s}
+td:first-child{border-inline-start:1px solid var(--line2);border-start-start-radius:16px;border-end-start-radius:16px;width:44px;padding-inline-end:4px}
+td:last-child{border-inline-end:1px solid var(--line2);border-start-end-radius:16px;border-end-end-radius:16px}
+tbody tr{cursor:pointer;animation:rowin .3s both}
+@keyframes rowin{from{opacity:0;transform:translateY(4px)}}
+tbody tr:hover td,tbody tr.kb td{border-color:var(--line);background:color-mix(in srgb,var(--surface) 96%,var(--ink))}
+tbody tr:hover td:first-child,tbody tr.kb td:first-child{box-shadow:inset -3px 0 0 var(--brand)}
+tbody tr.sel td{background:color-mix(in srgb,var(--brand) 5%,var(--surface));border-color:color-mix(in srgb,var(--brand) 22%,var(--line2))}
+[data-density=compact] td{padding-block:8px}[data-density=compact] .av{width:32px;height:32px;border-radius:10px;font-size:12px}
+.ck{width:20px;height:20px;border-radius:7px;border:1.5px solid color-mix(in srgb,var(--line) 50%,var(--faint));display:grid;place-items:center;cursor:pointer;background:var(--surface);transition:.15s}
+.ck svg{width:13px;height:13px;stroke-width:3;opacity:0}
+.ck[aria-checked=true],.ck[aria-checked=mixed]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.ck[aria-checked=true] svg,.ck[aria-checked=mixed] svg{opacity:1}
+.id{display:flex;align-items:center;gap:12px}
+.av{position:relative;width:40px;height:40px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(135deg,#4a525d,#161a1f);color:#fff;font:700 13px Alexandria;flex:none}
+.av i{position:absolute;bottom:-2px;left:-2px;width:12px;height:12px;border-radius:50%;border:2.5px solid var(--surface)}
+.id b{display:block;font-weight:700;font-size:15.5px}
+.id small{display:block;color:var(--faint);font:500 13.5px Alexandria;direction:ltr;text-align:right}
+mark{background:#f5c04a55;color:inherit;border-radius:4px;padding:0 1px}
+.box{font:600 13.5px ui-monospace,monospace;background:var(--sunken);border:1px solid var(--line2);border-radius:9px;padding:3px 9px;color:var(--ink2)}
+.muted{color:var(--faint)}
+.type{display:inline-flex;align-items:center;gap:7px;color:var(--ink2)}
+.type svg{color:var(--faint);width:16px;height:16px}
+.bal{display:flex;flex-direction:column;gap:5px;min-width:130px}
+.bal b{font:700 15.5px Alexandria;direction:ltr;text-align:right}
+.bal b.db{color:var(--danger)}.bal b.cr{color:var(--success)}.bal b.z{color:var(--faint)}
+.bal b em{font:600 12.5px 'IBM Plex Sans Arabic';font-style:normal;margin-inline-end:4px}
+.bal .m{height:4px;border-radius:99px;background:var(--sunken);overflow:hidden}
+.bal .m i{display:block;height:100%;border-radius:99px;background:var(--danger);opacity:.75}
+.pill{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:700;border-radius:99px;padding:3px 11px;border:1px solid}
+.pill i{width:7px;height:7px;border-radius:50%;background:currentColor}
+.p-active{color:var(--success);background:var(--success-t);border-color:color-mix(in srgb,var(--success) 25%,transparent)}
+.p-active i{box-shadow:0 0 0 3px color-mix(in srgb,var(--success) 20%,transparent)}
+.p-susp{color:var(--warn);background:var(--warn-t);border-color:color-mix(in srgb,var(--warn) 25%,transparent)}
+.p-cut{color:var(--danger);background:var(--danger-t);border-color:color-mix(in srgb,var(--danger) 28%,transparent)}
+.d-active{background:#10b981}.d-susp{background:#f59e0b}.d-cut{background:#dc2626}
+.when{font-size:14.5px;color:var(--ink2)}.when small{display:block;font-size:12.5px;color:var(--faint)}
+
+/* row actions */
+.ra{display:flex;align-items:center;justify-content:flex-end;gap:6px}
+.split{display:inline-flex;height:36px;border-radius:11px;background:var(--hero);color:#fff;box-shadow:0 8px 16px -8px #111820b3,inset 0 1px 0 #ffffff1f;overflow:hidden}
+.split button{border:0;background:transparent;color:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:0 12px;font-weight:700;font-size:14px}
+.split button+button{padding:0 8px;border-inline-start:1px solid #ffffff26}
+.split button svg{width:16px;height:16px}
+tbody tr:hover .split,tbody tr.kb .split{background:linear-gradient(180deg,var(--brand-hi),var(--brand-lo));box-shadow:0 10px 20px -8px #a51d26cc,inset 0 1px 0 #ffffff33}
+:root[data-theme=dark] .split{background:linear-gradient(180deg,#f4f5f7,#c9ced5);color:#111820}
+:root[data-theme=dark] .split button+button{border-color:#11182022}
+.ib{width:36px;height:36px;border-radius:11px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer;color:var(--ink2);transition:.15s}
+.ib svg{width:17px;height:17px}
+.ib:hover{background:var(--sunken)}
+.ib.ed{color:var(--info)}.ib.ed:hover{background:var(--info-t);border-color:color-mix(in srgb,var(--info) 35%,transparent)}
+.ib.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+
+/* more menu */
+.menu{position:fixed;z-index:30;width:320px;background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:var(--pop);overflow:hidden;display:none;font-size:14.5px}
+.menu.open{display:block;animation:pop .14s ease}
+.menu .mh{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line2)}
+.menu .mh b{display:block;font-size:14.5px}.menu .mh small{color:var(--faint);font:500 12.5px Alexandria}
+.menu .ms{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--line2);color:var(--faint)}
+.menu .ms input{flex:1;border:0;background:transparent;height:34px;font-size:14.5px}
+.menu .ms input:focus{outline:none}
+.menu .mb{max-height:330px;overflow:auto;padding:6px}
+.mg{font-size:12px;font-weight:700;color:var(--faint);padding:8px 10px 3px}
+.mi{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:12px;cursor:pointer;color:var(--ink2)}
+.mi .mic{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;background:var(--sunken);flex:none}
+.mi .mic svg{width:16px;height:16px}
+.mi .t{flex:1}
+.mi:hover,.mi.act{background:var(--sunken);color:var(--ink)}
+.mi:hover .mic,.mi.act .mic{background:linear-gradient(180deg,var(--brand-hi),var(--brand-lo));color:#fff}
+.mi.lk{opacity:.5;cursor:not-allowed}.mi.lk:hover .mic{background:var(--sunken);color:inherit}
+.mi .s{font-size:12px;color:var(--faint);display:inline-flex;align-items:center;gap:4px}
+.menu .mf{display:flex;gap:12px;padding:8px 14px;border-top:1px solid var(--line2);background:var(--raised);font-size:12px;color:var(--faint)}
+
+/* footer + pagination */
+.tf{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 18px 16px;border-top:1px solid var(--line2);font-size:14.5px;color:var(--faint)}
+.pg{margin-inline-start:auto;display:flex;align-items:center;gap:4px}
+.pg button{min-width:38px;height:38px;border-radius:11px;border:1px solid transparent;background:transparent;cursor:pointer;font:600 14.5px Alexandria;color:var(--ink2)}
+.pg button:hover{background:var(--sunken)}
+.pg button[aria-current=page]{background:var(--ink);color:var(--surface)}
+.pg button:disabled{opacity:.35;cursor:default}
+.per{display:inline-flex;gap:2px;padding:3px;border-radius:12px;background:var(--sunken);border:1px solid var(--line2)}
+.per button{border:0;background:transparent;min-width:36px;height:30px;border-radius:9px;cursor:pointer;font:600 13px Alexandria;color:var(--faint)}
+.per button[aria-pressed=true]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px #10182822}
+.empty{text-align:center;padding:56px 20px;color:var(--faint)}
+.empty .e{width:64px;height:64px;margin:0 auto 12px;border-radius:20px;display:grid;place-items:center;background:var(--sunken);color:var(--muted)}
+.empty b{display:block;color:var(--ink);font-size:18px;font-family:'El Messiri',serif}
+
+/* bulk bar */
+.bulk{position:fixed;bottom:22px;left:50%;transform:translate(-50%,120%);opacity:0;z-index:25;display:flex;align-items:center;gap:4px;background:#111820;color:#fff;border-radius:18px;padding:7px;box-shadow:0 24px 50px -18px #000c;transition:.28s cubic-bezier(.22,1,.36,1)}
+.bulk.on{transform:translate(-50%,0);opacity:1}
+.bulk .n{display:flex;align-items:center;gap:8px;padding:0 12px 0 14px;border-inline-end:1px solid #ffffff26;margin-inline-end:4px;font-weight:600}
+.bulk .n b{font:700 13px Alexandria;background:#fff;color:#111820;border-radius:8px;padding:1px 8px}
+.bulk button{border:0;background:transparent;color:#e6e9ed;cursor:pointer;display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:12px;font-weight:600;font-size:14.5px}
+.bulk button:hover{background:#ffffff14;color:#fff}
+.bulk button svg{width:16px;height:16px}
+
+/* drawer */
+.scrim{position:fixed;inset:0;z-index:40;background:#0b0d1066;backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:.25s}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;inset-block:12px;left:12px;z-index:41;width:min(440px,calc(100% - 24px));background:var(--surface);border:1px solid var(--line2);border-radius:26px;box-shadow:var(--pop);display:flex;flex-direction:column;overflow:hidden;transform:translateX(-110%);transition:transform .3s cubic-bezier(.22,1,.36,1)}
+.drawer.on{transform:none}
+.dhero{background:var(--hero);color:#fff;padding:18px 20px 20px;position:relative}
+.dhero::after{content:"";position:absolute;inset-inline:0;bottom:0;height:3px;background:linear-gradient(90deg,#5c0d14,#a51d26 40%,#9aa3ae 75%,#dfe3e8)}
+.dtop{display:flex;align-items:center;gap:6px}
+.dtop .ib{background:#ffffff14;border-color:#ffffff1f;color:#fff}
+.dtop .ib:hover{background:#ffffff26}
+.dtop small{margin-inline-end:auto;color:#aeb6c1;font:600 13px Alexandria}
+.dwho{display:flex;align-items:center;gap:14px;margin-top:14px}
+.dwho .av{width:56px;height:56px;border-radius:18px;font-size:18px;background:linear-gradient(135deg,#5a636f,#1c2127);box-shadow:inset 0 1px 0 #ffffff26}
+.dwho .av i{border-color:#1c2127}
+.dwho b{display:block;font:700 22px 'El Messiri',serif}
+.dwho small{color:#c9ced5;font-size:13.5px}
+.dk{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+.dk div{background:#ffffff0f;border:1px solid #ffffff17;border-radius:14px;padding:9px 11px}
+.dk small{display:block;color:#aeb6c1;font-size:12px}
+.dk b{font:700 17px Alexandria;direction:ltr;display:block;text-align:right}
+.dtabs{display:flex;gap:4px;padding:0 18px;border-bottom:1px solid var(--line2)}
+.dtabs button{border:0;background:transparent;padding:12px 10px;font-weight:600;color:var(--faint);cursor:pointer;font-size:14.5px}
+.dtabs button[aria-selected=true]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--brand)}
+.dbody{flex:1;overflow:auto;padding:14px 20px}
+.tl{position:relative;display:grid;gap:4px}
+.tl::before{content:"";position:absolute;inset-block:10px;inset-inline-start:15px;width:2px;background:var(--line2)}
+.tl div{position:relative;display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;padding:8px 0;font-size:14.5px}
+.tl .d{width:32px;height:32px;border-radius:11px;display:grid;place-items:center;background:var(--sunken);color:var(--muted);z-index:1}
+.tl .d svg{width:15px;height:15px}
+.tl .d.pay{background:var(--success-t);color:var(--success)}
+.tl b{font-weight:600}.tl small{display:block;color:var(--faint);font-size:12.5px}
+.tl .amt{font:700 14.5px Alexandria;direction:ltr}
+.info{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.info div{background:var(--raised);border:1px solid var(--line2);border-radius:14px;padding:10px 12px}
+.info small{display:block;font-size:12.5px;color:var(--faint)}.info b{font-size:14.5px}
+.dfoot{display:flex;gap:8px;padding:14px 18px;border-top:1px solid var(--line2);background:var(--raised)}
+.dfoot .btn{height:44px;flex:1;justify-content:center;padding:0 10px}
+.dfoot .btn.pay{flex:1.4;border:0;color:#fff;background:linear-gradient(180deg,#0f9f76,#047857);box-shadow:0 12px 24px -12px #047857}
+
+.toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,20px);opacity:0;z-index:50;display:flex;align-items:center;gap:12px;background:#111820;color:#fff;border-radius:16px;padding:10px 12px 10px 16px;box-shadow:0 20px 40px -18px #000a;font-size:14.5px;transition:.3s;pointer-events:none}
+.toast.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast .ok{width:26px;height:26px;border-radius:9px;background:#34d3992b;color:#34d399;display:grid;place-items:center}
+.toast button{border:0;background:#ffffff1a;color:#fff;border-radius:10px;padding:5px 12px;font-weight:700;cursor:pointer}
+.hintbar{margin-top:14px;display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--faint)}
+.hintbar span{display:inline-flex;align-items:center;gap:6px}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}.kpi.debt{grid-column:span 3}.col-branch,.col-when{display:none}}
+@media (max-width:760px){
+  .wrap{padding:18px 14px 120px}.ph h1{font-size:28px}.ph .acts{width:100%}.ph .acts .btn{flex:1;justify-content:center}
+  .kpis{grid-template-columns:1fr 1fr}.kpi.debt{grid-column:span 2}
+  .search{max-width:none;min-width:100%}
+  thead{display:none}table,tbody,tr,td{display:block}
+  table{border-spacing:0}.tw{padding:8px 12px}
+  tbody tr{position:relative;background:var(--surface);border:1px solid var(--line2);border-radius:18px;padding:12px 14px 12px 14px;margin-bottom:10px;display:grid;grid-template-columns:auto 1fr auto;gap:10px 12px;align-items:center}
+  td,td:first-child,td:last-child{border:0!important;padding:0;background:transparent!important;border-radius:0;width:auto;box-shadow:none!important}
+  td.c-id{grid-column:2}td.c-status{grid-column:3;grid-row:1}
+  td.c-box,td.c-type,td.col-branch,td.col-when{display:none}
+  td.c-bal{grid-column:1/-1}td.c-act{grid-column:1/-1}
+  .ra{justify-content:stretch}.split{flex:1}.split button:first-child{flex:1;justify-content:center}
+  .hintbar{display:none}.tf{justify-content:center}.pg{margin:0}
+  .bulk{width:calc(100% - 24px);overflow-x:auto}.bulk button span{display:none}
+}
+
+/* ---- users page ---- */
+:root{--r-super:#a51d26;--r-branch:#353c46;--r-col:#047857;--r-data:#1d5bcc;--r-aud:#7c3aed}
+:root[data-theme=dark]{--r-super:#f07a82;--r-branch:#c9ced5;--r-col:#34d399;--r-data:#7dafe8;--r-aud:#b69cf7}
+.ov{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.5fr);gap:14px;margin-top:22px}
+.hero{display:flex;flex-direction:column;position:relative;overflow:hidden;background:var(--hero);color:#fff;border-radius:26px;padding:22px 24px;box-shadow:0 30px 60px -30px #111820aa}
+.hero::after{content:"";position:absolute;inset-inline:0;top:0;height:3px;background:linear-gradient(90deg,#5c0d14,#a51d26 40%,#9aa3ae 75%,#dfe3e8)}
+.hero::before{content:"";position:absolute;inset:auto auto -140px -60px;width:320px;height:320px;border-radius:50%;background:radial-gradient(closest-side,#a51d2640,transparent)}
+.hero small{color:#aeb6c1;font-size:14px}
+.hero .big{font:800 46px/1.1 Alexandria;margin-top:4px}
+.hero .big span{font-size:20px;color:#aeb6c1;font-weight:600}
+.online{position:relative;display:flex;align-items:center;gap:12px;margin-top:16px;padding:12px 14px;background:#ffffff0d;border:1px solid #ffffff17;border-radius:16px}
+.stack{display:flex}
+.stack span{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;font:700 11.5px Alexandria;color:#fff;background:linear-gradient(135deg,#5a636f,#1c2127);border:2px solid #1c2127;margin-inline-start:-8px;position:relative}
+.stack span:first-child{margin:0}
+.stack span i{position:absolute;bottom:-3px;left:-3px;width:10px;height:10px;border-radius:50%;background:#10b981;border:2px solid #1c2127}
+.online b{font-weight:700}.online p{margin:0;color:#aeb6c1;font-size:13px}
+.pulse{width:9px;height:9px;border-radius:50%;background:#34d399;box-shadow:0 0 0 0 #34d39988;animation:pulse 1.8s infinite;flex:none}
+@keyframes pulse{70%{box-shadow:0 0 0 8px #34d39900}100%{box-shadow:0 0 0 0 #34d39900}}
+.dist{position:relative;margin-top:16px}
+.today{position:relative;margin-top:auto;padding-top:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.today div{background:#ffffff0d;border:1px solid #ffffff17;border-radius:14px;padding:10px 12px}.today small{display:block;color:#aeb6c1;font-size:12.5px}.today b{font:800 22px Alexandria}
+.dist .bar{display:flex;height:10px;border-radius:99px;overflow:hidden;gap:2px}
+.dist .bar i{display:block;height:100%}
+.dist .lg{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:12.5px;color:#c9ced5}
+.dist .lg span{display:inline-flex;align-items:center;gap:6px}
+.dist .lg i{width:8px;height:8px;border-radius:3px}
+.roles{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.role{position:relative;text-align:start;border:1px solid var(--line2);background:var(--surface);border-radius:20px;padding:14px;cursor:pointer;box-shadow:var(--shadow);transition:.18s;display:flex;flex-direction:column;gap:4px}
+.role:hover{transform:translateY(-1px);border-color:var(--line)}
+.role .ri{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:#fff;margin-bottom:6px}
+.role .ri svg{width:19px;height:19px}
+.role b{font:800 26px/1.1 Alexandria}
+.role small{font-size:13.5px;font-weight:700;color:var(--ink2)}
+.role span{font-size:12px;color:var(--faint);line-height:1.5}
+.role[aria-pressed=true]{border-color:var(--rc);box-shadow:0 0 0 3px color-mix(in srgb,var(--rc) 16%,transparent),var(--shadow)}
+.perf{margin-top:14px;background:var(--surface);border:1px solid var(--line2);border-radius:22px;padding:14px 16px;box-shadow:var(--shadow)}
+.perf h3{margin:0 0 6px;font:700 16px 'El Messiri',serif;display:flex;align-items:center;gap:8px}
+.perf h3 small{margin-inline-start:auto;font:500 12.5px 'IBM Plex Sans Arabic';color:var(--faint)}
+.lb{display:grid;gap:6px}
+.lb>div{display:grid;grid-template-columns:22px 30px 1fr auto;gap:10px;align-items:center;font-size:14px}
+.lb .rk{font:800 13px Alexandria;color:var(--faint);text-align:center}
+.lb>div:first-child .rk{color:#b8860b}
+.lb .av{width:30px;height:30px;border-radius:10px;font-size:11px}
+.lb .br{height:7px;border-radius:99px;background:var(--sunken);overflow:hidden}
+.lb .br i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#10b981,#047857)}
+.lb .nm{display:flex;justify-content:space-between;margin-bottom:3px;font-weight:600}
+.lb .nm span{font:600 12px Alexandria;color:var(--faint)}
+.lb b{font:700 14px Alexandria;min-width:76px;text-align:left}
+.status{display:inline-flex;gap:2px;padding:3px;border-radius:13px;background:var(--sunken);border:1px solid var(--line2)}
+.status button{border:0;background:transparent;cursor:pointer;padding:7px 12px;border-radius:10px;font-weight:600;font-size:14px;color:var(--muted)}
+.status button span{font:600 12px Alexandria;color:var(--faint);margin-inline-start:4px}
+.status button[aria-pressed=true]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px #10182822}
+.rpill{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:700;border-radius:10px;padding:4px 10px;color:var(--rc);background:color-mix(in srgb,var(--rc) 11%,transparent);border:1px solid color-mix(in srgb,var(--rc) 22%,transparent)}
+.rpill svg{width:15px;height:15px}
+.user small.u{direction:ltr;text-align:right;font:500 13px Alexandria}
+.seen{font-size:14.5px;color:var(--ink2);display:inline-flex;align-items:center;gap:8px}
+.seen.on{color:var(--success);font-weight:700}
+.seen small{display:block;font-size:12.5px;color:var(--faint);font-weight:500}
+.kpiu{display:flex;flex-direction:column;gap:4px;min-width:130px}
+.kpiu b{font:700 15px Alexandria}
+.kpiu small{font-size:12.5px;color:var(--faint)}
+.spark{height:22px;display:flex;align-items:flex-end;gap:2px;direction:ltr}
+.spark i{width:5px;border-radius:2px;background:color-mix(in srgb,var(--success) 55%,transparent)}
+.spark i:last-child{background:var(--success)}
+.perm{display:inline-flex;align-items:center;gap:8px;font:600 13.5px Alexandria;color:var(--ink2)}
+.perm .ring{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--rc) calc(var(--p)*1%),var(--sunken) 0)}
+.perm .ring::after{content:"";width:22px;height:22px;border-radius:50%;background:var(--surface)}
+.sw{position:relative;width:42px;height:24px;border-radius:99px;background:var(--line);border:0;cursor:pointer;transition:.18s;flex:none}
+.sw::after{content:"";position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px #0003;transition:.18s}
+.sw[aria-checked=true]{background:var(--success)}
+.sw[aria-checked=true]::after{right:21px}
+tbody tr.off td{opacity:.62}
+tbody tr.off td.c-act,tbody tr.off td.c-sw{opacity:1}
+.ib.key{color:var(--warn)}.ib.key:hover{background:var(--warn-t);border-color:color-mix(in srgb,var(--warn) 35%,transparent)}
+.mi.dg{color:var(--danger)}.mi.dg:hover .mic{background:var(--danger);color:#fff}
+.msep{height:1px;background:var(--line2);margin:4px 6px}
+.matrix{width:100%;border-collapse:separate;border-spacing:0;font-size:14px;margin-top:4px}
+.matrix th{position:static;padding:8px 6px;font-size:12.5px;color:var(--faint);text-align:center}
+.matrix th:first-child{text-align:start}
+.matrix td{background:transparent;border:0;border-bottom:1px solid var(--line2);padding:7px 6px;text-align:center;border-radius:0!important;width:auto}
+.matrix td:first-child{text-align:start;font-weight:600;color:var(--ink2);border:0;border-bottom:1px solid var(--line2);padding-inline-end:6px}
+.matrix tr:last-child td{border:0}
+.pc{width:26px;height:26px;border-radius:8px;display:inline-grid;place-items:center;border:1.5px solid var(--line);color:transparent;cursor:pointer;transition:.15s;background:var(--surface)}
+.pc svg{width:14px;height:14px;stroke-width:3}
+.pc[aria-checked=true]{background:var(--rc);border-color:var(--rc);color:#fff}
+.pc:disabled{cursor:not-allowed;opacity:.8}
+.note{margin-top:10px;font-size:12.5px;color:var(--faint);display:flex;gap:6px;align-items:flex-start}
+.dev{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px dashed var(--line)}
+.dev:last-child{border:0}
+.dev .d{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;background:var(--sunken);color:var(--muted)}
+.dev b{display:block;font-size:14.5px}.dev small{color:var(--faint);font-size:12.5px}
+.dev .now{margin-inline-start:auto;font-size:12px;font-weight:700;color:var(--success);background:var(--success-t);border-radius:99px;padding:2px 9px}
+.dfoot .btn.key{color:var(--warn)}
+.dfoot .btn.dg{flex:0 0 auto;color:var(--danger)}
+.dhero .rpill{background:#ffffff17;border-color:#ffffff26;color:#fff}
+@media (max-width:1100px){.ov{grid-template-columns:1fr}.roles{grid-template-columns:repeat(3,1fr)}.col-perm,.col-branch{display:none}}
+@media (max-width:760px){
+  .roles{grid-template-columns:1fr 1fr}.hero .big{font-size:38px}
+  td.c-role{grid-column:1/-1}td.c-seen{grid-column:1/-1}td.c-kpi,td.col-perm{display:none}
+  td.c-sw{grid-column:3;grid-row:1}
+}
+</style>
+</head>
+<body>
+<div class="demo-bar">
+  <div><b>المستخدمون</b> · نموذج تفاعلي</div>
+  <div class="seg" role="group" aria-label="الوضع"><button data-theme="light" aria-pressed="true">نهاري</button><button data-theme="dark" aria-pressed="false">ليلي</button></div>
+</div>
+
+<main class="wrap">
+  <div class="ph">
+    <div><h1>المستخدمون</h1><p>فريق العمل بكل الفروع: مين متصل، شو دوره، وشو بيقدر يعمل.</p></div>
+    <div class="acts">
+      <button class="btn" id="permsBtn"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="M9 12l2 2 4-4"/></svg>الأدوار والصلاحيات</button>
+      <button class="btn pr" id="newUser"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>مستخدم جديد</button>
+    </div>
+  </div>
+
+  <div class="ov">
+    <section class="hero" aria-label="ملخص الفريق" id="hero"></section>
+    <div>
+      <div class="roles" id="roles"></div>
+      <section class="perf"><h3>أفضل المحصّلين<small>تحصيل هذا الشهر</small></h3><div class="lb" id="lb"></div></section>
+    </div>
+  </div>
+
+  <section class="card">
+    <div class="tb">
+      <div class="search">
+        <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input id="q" placeholder="بحث بالاسم أو اسم المستخدم..." aria-label="بحث"><kbd>/</kbd>
+      </div>
+      <div class="status" role="group" aria-label="الحالة" id="status"></div>
+      <div style="position:relative"><button class="chip-f" id="fBranchBtn"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21"/><circle cx="12" cy="9.5" r="2.5"/></svg>الفرع<span class="n" hidden></span></button><div class="dd" id="fBranch"></div></div>
+      <button class="clear" id="clear" hidden>مسح الفلاتر</button>
+      <div class="sp"><span class="num" id="count" style="font-size:14.5px;color:var(--faint)"></span></div>
+    </div>
+    <div class="tw">
+      <table aria-label="المستخدمون">
+        <thead><tr>
+          <th><span class="ck" role="checkbox" aria-checked="false" id="ckAll" tabindex="0" aria-label="تحديد الكل"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M5 12l5 5 9-10"/></svg></span></th>
+          <th><button data-k="name">المستخدم<span class="ar">▲▼</span></button></th>
+          <th><button data-k="role">الدور<span class="ar">▲▼</span></button></th>
+          <th class="col-branch"><button data-k="branch">الفرع<span class="ar">▲▼</span></button></th>
+          <th><button data-k="seen">آخر نشاط<span class="ar">▲▼</span></button></th>
+          <th><button data-k="kpi">إنجاز الشهر<span class="ar">▲▼</span></button></th>
+          <th class="col-perm">الصلاحيات</th>
+          <th>مفعّل</th>
+          <th style="text-align:end">الإجراءات</th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div class="empty" id="empty" hidden><div class="e"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></div><b>ما في نتائج</b>جرّب كلمة ثانية، أو امسح الفلاتر.</div>
+    </div>
+  </section>
+  <div class="hintbar"><span><kbd>/</kbd> بحث</span><span><kbd>J</kbd><kbd>K</kbd> تنقّل</span><span><kbd>Enter</kbd> الملف الشخصي</span><span><kbd>X</kbd> تحديد</span><span><kbd>Esc</kbd> إغلاق</span></div>
+</main>
+
+<div class="menu" id="menu" role="menu"></div>
+<div class="bulk" id="bulk" role="toolbar" aria-label="إجراءات جماعية">
+  <span class="n"><b class="num" id="bn">0</b>محددين</span>
+  <button data-bulk="branch"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21"/><circle cx="12" cy="9.5" r="2.5"/></svg><span>نقل لفرع</span></button>
+  <button data-bulk="logout"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg><span>تسجيل خروج</span></button>
+  <button data-bulk="off"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg><span>إيقاف</span></button>
+  <button id="bulkClear" aria-label="إلغاء التحديد"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+</div>
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-label="الملف الشخصي"></aside>
+<div class="toast" id="toast"><span class="ok"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span id="tmsg"></span><button id="undo">تراجع</button></div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const ic=p=>`<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+const I={crown:'<path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/>',branch:'<path d="M3 21h18M5 21V8l7-5 7 5v13"/><path d="M9 21v-6h6v6"/>',cash:'<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/>',kb:'<rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/>',audit:'<path d="M9 11l2 2 4-4"/><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>',eye:'<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',down:'<path d="M6 9l6 6 6-6"/>',up:'<path d="M18 15l-6-6-6 6"/>',more:'<circle cx="5" cy="12" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/><circle cx="19" cy="12" r="1.3" fill="currentColor"/>',pen:'<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/>',key:'<circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3L21 2M16 7l3 3M18 5l2 2"/>',shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="M9 12l2 2 4-4"/>',logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',history:'<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/>',ban:'<circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>',check:'<path d="M5 12l5 5 9-10"/>',phone:'<rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/>',laptop:'<rect x="4" y="4" width="16" height="11" rx="2"/><path d="M2 19h20"/>',info:'<circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/>',users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',plus:'<path d="M12 5v14M5 12h14"/>',doc:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>'};
+const ROLES={super:{n:'مدير عام',d:'كل الصلاحيات بكل الفروع',i:'crown',v:'--r-super'},branch:{n:'مدير فرع',d:'بيدير فرعه وموظفينه',i:'branch',v:'--r-branch'},col:{n:'محصّل',d:'بيسجّل الدفعات ميدانياً',i:'cash',v:'--r-col'},data:{n:'مدخل بيانات',d:'بيضيف المشتركين والقراءات',i:'kb',v:'--r-data'},aud:{n:'مدقق مالي',d:'بيراجع السجل المالي',i:'audit',v:'--r-aud'}};
+const MODS=['الفروع','المستخدمون','المشتركون','التعرفات','القواطع','الطبلونات','المناطق','المحافظات','التحصيل'];
+const COLS=['عرض','إضافة','تعديل'];
+const ROLE_PERMS={super:MODS.map(()=>[1,1,1]),branch:[[1,0,0],[1,1,1],[1,1,1],[1,0,0],[1,1,1],[1,1,1],[1,1,1],[1,0,0],[1,1,1]],col:[[0,0,0],[0,0,0],[1,0,0],[0,0,0],[0,0,0],[1,0,0],[1,0,0],[0,0,0],[1,1,0]],data:[[0,0,0],[0,0,0],[1,1,1],[1,0,0],[1,0,0],[1,1,1],[1,1,0],[1,0,0],[0,0,0]],aud:[[1,0,0],[1,0,0],[1,0,0],[1,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[1,0,1]]};
+const BR=['فرع المنصور','فرع الكرادة','فرع الشعار'];
+const RAW=[['Super Admin','admin','super',null],['Kaitlyn Lueilwitz','kaitlyn','branch',0],['Omar Haddad','omar.h','branch',1],['Lina Khoury','lina.k','branch',2],['Christine King','christine','col',0],['Timothy Okuneva','timothy','col',0],['Karim Nassar','karim.n','col',1],['Yara Saleh','yara','col',1],['Issa Barakat','issa.b','col',2],['Rami Awad','rami','col',2],['Hana Qasem','hana.q','data',0],['Tareq Odeh','tareq','data',1],['Salma Mansour','salma','data',2],['Dalia Hamdan','dalia','aud',null],['George Haddad','george','col',1],['Nadia Khoury','nadia','data',0]];
+let seed=5;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+const ONLINE=[0,4,6,10,1];const U=RAW.map(([name,u,role,b],i)=>{const seen=ONLINE.includes(i)?0:[7,20,35,3,12,45,90,180,300,720,1500,2900][Math.floor(rnd()*12)];
+  const spark=Array.from({length:8},()=>Math.round(4+rnd()*18));
+  const kpi=role==='col'?Math.round(2500+rnd()*6500):role==='data'?Math.round(20+rnd()*90):role==='aud'?Math.round(40+rnd()*160):null;
+  return{id:i+1,name,user:u,role,branch:b===null?'كل الفروع':BR[b],seen,active:!(i===12||i===15),kpi,spark,perms:ROLE_PERMS[role].map(r=>[...r]),devices:1+Math.floor(rnd()*2)}});
+const S={role:null,st:'all',branch:new Set(),q:'',sort:{k:'role',dir:1},sel:new Set(),kb:-1};
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const ini=n=>n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+const fmt0=n=>Math.round(n).toLocaleString('en-US');
+function hl(t){t=String(t);if(!S.q)return esc(t);const i=t.toLowerCase().indexOf(S.q.toLowerCase());return i<0?esc(t):esc(t.slice(0,i))+'<mark>'+esc(t.slice(i,i+S.q.length))+'</mark>'+esc(t.slice(i+S.q.length))}
+function seenTxt(m){if(m<5)return'متصل الآن';if(m<60)return`قبل ${m} دقيقة`;const h=Math.round(m/60);if(h<24)return h===1?'قبل ساعة':h===2?'قبل ساعتين':`قبل ${h} ساعات`;const d=Math.round(h/24);return d===1?'أمس':d===2?'قبل يومين':`قبل ${d} أيام`}
+const rv=r=>`var(${ROLES[r].v})`;
+const permPct=u=>Math.round(u.perms.flat().filter(Boolean).length/(MODS.length*3)*100);
+const kpiTxt=u=>u.role==='col'?[fmt0(u.kpi)+' ₪','تحصيل']:u.role==='data'?[u.kpi,'إدخال']:u.role==='aud'?[u.kpi,'قيد مراجَع']:null;
+
+function overview(){
+  const act=U.filter(u=>u.active),on=U.filter(u=>u.active&&u.seen<5);
+  $('#hero').innerHTML=`<small>الفريق</small><div class="big num">${act.length}<span> مفعّل من ${U.length}</span></div>
+  <div class="online"><span class="pulse"></span><div><b>${on.length} متصلين الآن</b><p>${on.map(u=>u.name.split(' ')[0]).join('، ')}</p></div><div class="stack" style="margin-inline-start:auto">${on.slice(0,5).map(u=>`<span>${ini(u.name)}<i></i></span>`).join('')}</div></div>
+  <div class="dist"><div class="bar">${Object.keys(ROLES).map(r=>`<i style="flex:${U.filter(u=>u.role===r).length};background:${getComputedStyle(document.documentElement).getPropertyValue(ROLES[r].v)}"></i>`).join('')}</div>
+  <div class="lg">${Object.keys(ROLES).map(r=>`<span><i style="background:${getComputedStyle(document.documentElement).getPropertyValue(ROLES[r].v)}"></i>${ROLES[r].n} ${U.filter(u=>u.role===r).length}</span>`).join('')}</div></div>
+  <div class="today"><div><small>دفعات اليوم</small><b class="num">38</b></div><div><small>مشتركين جداد</small><b class="num">5</b></div><div><small>تسجيلات دخول</small><b class="num">12</b></div></div>`;
+  $('#roles').innerHTML=Object.entries(ROLES).map(([k,r])=>`<button class="role" data-r="${k}" aria-pressed="${S.role===k}" style="--rc:${rv(k)}"><span class="ri" style="background:${rv(k)}">${ic(I[r.i])}</span><b class="num">${U.filter(u=>u.role===k).length}</b><small>${r.n}</small><span>${r.d}</span></button>`).join('');
+  $$('.role').forEach(b=>b.onclick=()=>{S.role=S.role===b.dataset.r?null:b.dataset.r;render()});
+  const top=U.filter(u=>u.role==='col').sort((a,b)=>b.kpi-a.kpi).slice(0,4),mx=top[0].kpi;
+  $('#lb').innerHTML=top.map((u,i)=>`<div><span class="rk">${i+1}</span><span class="av">${ini(u.name)}</span><div><div class="nm">${esc(u.name)}<span>${u.branch}</span></div><div class="br"><i style="width:${u.kpi/mx*100}%"></i></div></div><b>${fmt0(u.kpi)} ₪</b></div>`).join('');
+}
+function list(){
+  let r=U.filter(u=>(!S.role||u.role===S.role)&&(S.st==='all'||(S.st==='on'?u.active:!u.active))&&(!S.branch.size||S.branch.has(u.branch)));
+  if(S.q){const q=S.q.toLowerCase();r=r.filter(u=>u.name.toLowerCase().includes(q)||u.user.includes(q))}
+  const ord=Object.keys(ROLES),{k,dir}=S.sort;
+  r.sort((a,b)=>{let x=a[k],y=b[k];if(k==='role'){x=ord.indexOf(x);y=ord.indexOf(y)}if(k==='kpi'){x=x??-1;y=y??-1}return(typeof x==='string'?x.localeCompare(y):x-y)*dir||a.name.localeCompare(b.name)});
+  return r;
+}
+let view=[];
+function render(){
+  overview();view=list();
+  const c=s=>U.filter(u=>s==='all'||(s==='on'?u.active:!u.active)).length;
+  $('#status').innerHTML=[['all','الكل'],['on','مفعّل'],['off','موقوف']].map(([k,n])=>`<button data-s="${k}" aria-pressed="${S.st===k}">${n}<span>${c(k)}</span></button>`).join('');
+  $$('#status button').forEach(b=>b.onclick=()=>{S.st=b.dataset.s;render()});
+  $('#rows').innerHTML=view.map((u,i)=>{const R=ROLES[u.role],sel=S.sel.has(u.id),kt=kpiTxt(u),on=u.active&&u.seen<5;
+    return`<tr data-id="${u.id}" class="${sel?'sel':''} ${u.active?'':'off'} ${i===S.kb?'kb':''}" style="animation-delay:${i*18}ms;--rc:${rv(u.role)}">
+    <td><span class="ck" role="checkbox" aria-checked="${sel}" tabindex="0" aria-label="تحديد"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M5 12l5 5 9-10"/></svg></span></td>
+    <td class="c-id"><div class="id user"><span class="av">${ini(u.name)}${u.active?`<i class="${on?'d-active':''}" style="${on?'':'background:#9aa3ae'}"></i>`:''}</span><div><b>${hl(u.name)}</b><small class="u">@${hl(u.user)}</small></div></div></td>
+    <td class="c-role"><span class="rpill">${ic(I[R.i])}${R.n}</span></td>
+    <td class="col-branch">${u.branch}</td>
+    <td class="c-seen"><span class="seen ${on?'on':''}">${on?'<span class="pulse"></span>':''}<span>${u.active?seenTxt(u.seen):'موقوف'}${u.active&&!on?`<small>${u.devices} ${u.devices===1?'جهاز':'جهازين'}</small>`:''}</span></span></td>
+    <td class="c-kpi">${kt?`<div class="kpiu"><div style="display:flex;align-items:center;gap:10px"><b>${kt[0]}</b><span class="spark">${u.spark.map(h=>`<i style="height:${h}px"></i>`).join('')}</span></div><small>${kt[1]} هذا الشهر</small></div>`:'<span class="muted">—</span>'}</td>
+    <td class="col-perm"><span class="perm"><span class="ring" style="--p:${permPct(u)}"></span>${permPct(u)}%</span></td>
+    <td class="c-sw"><button class="sw" role="switch" aria-checked="${u.active}" aria-label="تفعيل الحساب" ${u.role==='super'?'disabled title="ما بتقدر توقف المدير العام"':''}></button></td>
+    <td class="c-act"><div class="ra">
+      <button class="ib" data-more aria-label="إجراءات أخرى">${ic(I.more)}</button>
+      <button class="ib key" data-perm aria-label="الصلاحيات" title="الصلاحيات">${ic(I.shield)}</button>
+      <span class="split"><button data-view>${ic(I.eye)}عرض</button><button data-more aria-label="إجراءات سريعة">${ic(I.down)}</button></span>
+    </div></td></tr>`}).join('');
+  $('#empty').hidden=!!view.length;$('#count').textContent=view.length+' مستخدم';
+  $$('th button[data-k]').forEach(b=>{if(b.dataset.k===S.sort.k){b.dataset.dir=S.sort.dir;b.querySelector('.ar').textContent=S.sort.dir>0?'▲':'▼'}else{delete b.dataset.dir;b.querySelector('.ar').textContent='▲▼'}});
+  const fb=$('#fBranchBtn');fb.classList.toggle('on',!!S.branch.size);fb.querySelector('.n').hidden=!S.branch.size;fb.querySelector('.n').textContent=S.branch.size;
+  $('#clear').hidden=!(S.role||S.st!=='all'||S.branch.size||S.q);
+  const ids=view.map(u=>u.id),n=ids.filter(i=>S.sel.has(i)).length;
+  $('#ckAll').setAttribute('aria-checked',n&&n===ids.length?'true':n?'mixed':'false');
+  $('#bn').textContent=S.sel.size;$('#bulk').classList.toggle('on',S.sel.size>0);
+}
+$('#fBranch').innerHTML=[...BR,'كل الفروع'].map(b=>`<label><input type="checkbox" value="${b}">${b}<span class="c">${U.filter(u=>u.branch===b).length}</span></label>`).join('');
+$('#fBranch').onchange=e=>{e.target.checked?S.branch.add(e.target.value):S.branch.delete(e.target.value);render()};
+$('#fBranchBtn').onclick=e=>{e.stopPropagation();$('#fBranch').classList.toggle('open')};
+document.addEventListener('click',e=>{if(!e.target.closest('.dd'))$('#fBranch').classList.remove('open');if(!e.target.closest('#menu')&&!e.target.closest('[data-more]'))closeMenu()});
+$('#clear').onclick=()=>{S.role=null;S.st='all';S.branch.clear();S.q='';$('#q').value='';$$('#fBranch input').forEach(i=>i.checked=false);render()};
+$('#q').oninput=e=>{S.q=e.target.value.trim();S.kb=-1;render()};
+$$('th button[data-k]').forEach(b=>b.onclick=()=>{const k=b.dataset.k;S.sort=S.sort.k===k?{k,dir:-S.sort.dir}:{k,dir:k==='kpi'?-1:1};render()});
+$('#ckAll').onclick=()=>{const all=view.every(u=>S.sel.has(u.id));view.forEach(u=>all?S.sel.delete(u.id):S.sel.add(u.id));render()};
+$('#bulkClear').onclick=()=>{S.sel.clear();render()};
+$$('[data-bulk]').forEach(b=>b.onclick=()=>{const n=S.sel.size;if(b.dataset.bulk==='off'){const was=U.filter(u=>S.sel.has(u.id)&&u.role!=='super').map(u=>[u,u.active]);was.forEach(([u])=>u.active=false);render();toast(`انوقف ${was.length} حساب`,()=>{was.forEach(([u,a])=>u.active=a);render()})}else toast(b.dataset.bulk==='branch'?`اختار الفرع الجديد لـ ${n} مستخدم`:`انعمل تسجيل خروج لـ ${n} مستخدم من كل الأجهزة`)});
+function setActive(u,val){const was=u.active;u.active=val;render();if($('#drawer').classList.contains('on'))openDrawer(u,curTab);toast(val?`انفعّل حساب ${u.name}`:`انوقف حساب ${u.name}، وانعمل تسجيل خروج من أجهزته`,()=>{u.active=was;render();if($('#drawer').classList.contains('on'))openDrawer(u,curTab)})}
+$('#rows').addEventListener('click',e=>{
+  const tr=e.target.closest('tr');if(!tr)return;const u=U.find(x=>x.id==tr.dataset.id);
+  if(e.target.closest('.ck')){S.sel.has(u.id)?S.sel.delete(u.id):S.sel.add(u.id);render();return}
+  if(e.target.closest('.sw')){if(u.role!=='super')setActive(u,!u.active);return}
+  const m=e.target.closest('[data-more]');if(m){e.stopPropagation();openMenu(m,u);return}
+  if(e.target.closest('[data-perm]')){openDrawer(u,'perm');return}
+  openDrawer(u,'act');
+});
+
+let mBtn=null;
+function openMenu(btn,u){
+  if(mBtn===btn){closeMenu();return}closeMenu();mBtn=btn;btn.classList.add('on');
+  const it=[['pen','تعديل البيانات'],['shield','إدارة الصلاحيات'],['key','إعادة تعيين كلمة المرور'],['logout','تسجيل خروج من كل الأجهزة'],['history','سجل النشاط'],null,u.role==='super'?['lock','المدير العام ما بينوقف',1]:u.active?['ban','إيقاف الحساب','dg']:['check','تفعيل الحساب']];
+  I.lock=I.lock||'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>';
+  const m=$('#menu');m.style.width='290px';m.innerHTML=`<div class="mh"><span class="av" style="width:36px;height:36px;font-size:12px">${ini(u.name)}</span><div><b>${esc(u.name)}</b><small>@${u.user}</small></div></div><div class="mb" style="padding:6px">`+it.map(x=>x?`<div class="mi ${x[2]==='dg'?'dg':''} ${x[2]===1?'lk':''}" data-a="${x[1]}"><span class="mic">${ic(I[x[0]])}</span><span class="t">${x[1]}</span></div>`:'<div class="msep"></div>').join('')+'</div>';
+  $$('#menu .mi').forEach(el=>el.onclick=()=>{if(el.classList.contains('lk'))return;closeMenu();const a=el.dataset.a;
+    if(a==='إيقاف الحساب')setActive(u,false);else if(a==='تفعيل الحساب')setActive(u,true);else if(a==='إدارة الصلاحيات')openDrawer(u,'perm');else if(a==='سجل النشاط')openDrawer(u,'act');else toast(a+' · '+u.name)});
+  const r=btn.getBoundingClientRect();m.classList.add('open');const h=m.offsetHeight;let top=r.bottom+8;if(top+h>innerHeight-10)top=Math.max(10,r.top-h-8);
+  m.style.top=top+'px';m.style.left=Math.max(10,Math.min(r.left,innerWidth-300))+'px';
+}
+function closeMenu(){$('#menu').classList.remove('open');mBtn?.classList.remove('on');mBtn=null}
+
+let dIdx=-1,curTab='act';
+function openDrawer(u,tab='act'){
+  closeMenu();curTab=tab;dIdx=view.indexOf(u);const R=ROLES[u.role],on=u.active&&u.seen<5,kt=kpiTxt(u),locked=u.role==='super';
+  const tabs={act:'النشاط',perm:'الصلاحيات',dev:'الأجهزة'};
+  let body='';
+  if(tab==='perm'){body=`<table class="matrix"><thead><tr><th>القسم</th>${COLS.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${MODS.map((m,i)=>`<tr><td>${m}</td>${COLS.map((c,j)=>`<td><button class="pc" role="checkbox" aria-checked="${!!u.perms[i][j]}" data-i="${i}" data-j="${j}" aria-label="${m} ${c}" ${locked?'disabled':''}>${ic(I.check)}</button></td>`).join('')}</tr>`).join('')}</tbody></table>
+    <div class="note">${ic(I.info)}<span>${locked?'المدير العام إله كل الصلاحيات دايماً، وما بتتعدّل.':'الصلاحيات الأساسية جاية من دور "'+R.n+'". أي تغيير هون بيخص هاد المستخدم بس.'}</span></div>`}
+  else if(tab==='dev'){body=[[I.laptop,'Chrome · Windows','رام الله · '+(on?'الآن':seenTxt(u.seen)),on],[I.phone,'تطبيق الجوال · Android','آخر مرة قبل 3 أيام',false]].slice(0,u.devices).map(([i,n,s,now])=>`<div class="dev"><span class="d">${ic(i)}</span><div><b>${n}</b><small>${s}</small></div>${now?'<span class="now">الجهاز الحالي</span>':''}</div>`).join('')+`<button class="btn" style="width:100%;justify-content:center;margin-top:12px" id="dLogout">${ic(I.logout)}تسجيل خروج من كل الأجهزة</button>`}
+  else{const acts=u.role==='col'?[[I.cash,'سجّل دفعة 200 ₪','Alf Carroll · قبل ساعة','pay'],[I.cash,'سجّل دفعة 80 ₪','Abbey Morar · قبل 3 ساعات','pay'],[I.logout,'سجّل دخول','اليوم 08:12']]:u.role==='data'?[[I.plus,'أضاف مشترك جديد','Jana Odeh · قبل ساعتين'],[I.pen,'عدّل قراءة طبلون','BOX-4797 · أمس']]:[[I.pen,'عدّل صلاحيات','Omar Haddad · أمس'],[I.doc,'راجع السجل المالي','قبل يومين']];
+    body=`<div class="tl">${acts.map(([i,t,s,k])=>`<div><span class="d ${k||''}">${ic(i)}</span><span><b>${t}</b><small>${s}</small></span><span></span></div>`).join('')}</div>`}
+  $('#drawer').innerHTML=`<div class="dhero"><div class="dtop"><small class="num">@${u.user}</small>
+    <button class="ib" id="dPrev" aria-label="السابق">${ic(I.up)}</button><button class="ib" id="dNext" aria-label="التالي">${ic(I.down)}</button><button class="ib" id="dClose" aria-label="إغلاق">${ic(I.x)}</button></div>
+    <div class="dwho"><span class="av">${ini(u.name)}${u.active?`<i style="background:${on?'#10b981':'#9aa3ae'}"></i>`:''}</span><div><b>${esc(u.name)}</b><small><span class="rpill" style="--rc:#fff;padding:2px 8px;font-size:12.5px">${ic(I[R.i])}${R.n}</span> · ${u.branch}</small></div></div>
+    <div class="dk"><div><small>الحالة</small><b style="font:700 14px 'IBM Plex Sans Arabic';color:${u.active?'#5eead4':'#fca5a5'}">${u.active?(on?'متصل الآن':'مفعّل'):'موقوف'}</b></div><div><small>${kt?kt[1]+' الشهر':'الصلاحيات'}</small><b>${kt?kt[0]:permPct(u)+'%'}</b></div><div><small>آخر نشاط</small><b style="font:700 13.5px 'IBM Plex Sans Arabic'">${u.active?seenTxt(u.seen):'—'}</b></div></div></div>
+  <div class="dtabs" role="tablist">${Object.entries(tabs).map(([k,n])=>`<button role="tab" data-tab="${k}" aria-selected="${k===tab}">${n}</button>`).join('')}</div>
+  <div class="dbody" style="--rc:${rv(u.role)}">${body}</div>
+  <div class="dfoot"><button class="btn" id="dEdit">${ic(I.pen)}تعديل</button><button class="btn key" id="dKey">${ic(I.key)}كلمة المرور</button>${locked?'':`<button class="btn ${u.active?'dg':''}" id="dToggle" title="${u.active?'إيقاف الحساب':'تفعيل الحساب'}">${ic(u.active?I.ban:I.check)}${u.active?'':'تفعيل'}</button>`}</div>`;
+  $('#drawer').classList.add('on');$('#scrim').classList.add('on');
+  $('#dClose').onclick=closeDrawer;$('#dPrev').onclick=()=>step(-1);$('#dNext').onclick=()=>step(1);
+  $$('.dtabs button').forEach(b=>b.onclick=()=>openDrawer(u,b.dataset.tab));
+  $$('.pc').forEach(p=>p.onclick=()=>{const i=+p.dataset.i,j=+p.dataset.j;u.perms[i][j]=u.perms[i][j]?0:1;if(j>0&&u.perms[i][j])u.perms[i][0]=1;if(j===0&&!u.perms[i][0]){u.perms[i][1]=0;u.perms[i][2]=0}openDrawer(u,'perm');render();toast(`انحفظت صلاحيات ${u.name}`)});
+  $('#dEdit').onclick=()=>toast('فتح نموذج تعديل '+u.name);$('#dKey').onclick=()=>toast('انبعت رابط تعيين كلمة مرور جديدة لـ '+u.name);
+  $('#dToggle')&&($('#dToggle').onclick=()=>setActive(u,!u.active));$('#dLogout')&&($('#dLogout').onclick=()=>toast('انعمل تسجيل خروج من كل أجهزة '+u.name));
+  S.kb=dIdx;$$('#rows tr').forEach((tr,i)=>tr.classList.toggle('kb',i===dIdx));
+}
+function step(n){const v=view[dIdx+n];if(v)openDrawer(v,curTab)}
+function closeDrawer(){$('#drawer').classList.remove('on');$('#scrim').classList.remove('on')}
+$('#scrim').onclick=closeDrawer;
+let undoFn=null;
+function toast(m,undo){const t=$('#toast');$('#tmsg').textContent=m;undoFn=undo||null;$('#undo').hidden=!undo;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),5000)}
+$('#undo').onclick=()=>{undoFn&&undoFn();$('#toast').classList.remove('on')};
+document.addEventListener('keydown',e=>{
+  const typing=['INPUT','TEXTAREA'].includes(document.activeElement.tagName);
+  if(e.key==='Escape'){if($('#menu').classList.contains('open'))closeMenu();else if($('#drawer').classList.contains('on'))closeDrawer();else if(typing)document.activeElement.blur();return}
+  if(typing)return;
+  if(e.key==='/'){e.preventDefault();$('#q').focus();return}
+  const dn=e.key==='j'||e.key==='ArrowDown',up=e.key==='k'||e.key==='ArrowUp';
+  if(dn||up){e.preventDefault();if($('#drawer').classList.contains('on')){step(dn?1:-1);return}S.kb=Math.max(0,Math.min(view.length-1,S.kb+(dn?1:-1)));$$('#rows tr').forEach((tr,i)=>tr.classList.toggle('kb',i===S.kb));$$('#rows tr')[S.kb]?.scrollIntoView({block:'nearest'})}
+  if(e.key==='Enter'&&view[S.kb])openDrawer(view[S.kb]);
+  if(e.key==='x'&&view[S.kb]){const id=view[S.kb].id;S.sel.has(id)?S.sel.delete(id):S.sel.add(id);render()}
+});
+window.addEventListener('scroll',closeMenu,{passive:true});
+$$('.seg button').forEach(b=>b.onclick=()=>{$$('.seg button').forEach(x=>x.setAttribute('aria-pressed',x===b));document.documentElement.dataset.theme=b.dataset.theme;render()});
+$('#newUser').onclick=()=>toast('فتح نموذج إضافة مستخدم');$('#permsBtn').onclick=()=>toast('فتح صفحة الأدوار والصلاحيات');
+render();
+</script>
+</body>
+</html>
