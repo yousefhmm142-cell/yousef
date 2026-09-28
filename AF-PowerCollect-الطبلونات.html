@@ -257,6 +257,25 @@ tbody tr:hover .split,tbody tr.kb .split{background:linear-gradient(180deg,var(-
 }
 
 [hidden]{display:none!important}
+.dbr{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.atile{cursor:pointer}
+.atile rect.tb{stroke:var(--road-o);stroke-width:2;transition:stroke .15s,filter .15s}
+.atile:hover rect.tb,.atile.hov rect.tb{stroke:var(--brand);stroke-width:3;filter:drop-shadow(0 10px 16px #10182833)}
+.atile .an{font:700 29px 'El Messiri',serif;fill:var(--ink);text-anchor:middle;pointer-events:none}
+.atile .as{font:600 15px 'IBM Plex Sans Arabic';fill:var(--muted);text-anchor:middle;pointer-events:none}
+.atile .acb text{font:700 12.5px 'IBM Plex Sans Arabic';fill:#fff;text-anchor:middle;dominant-baseline:central}
+.wadi{fill:none;stroke:var(--sea2);stroke-width:7;stroke-linecap:round}
+.wlbl{font:600 13px 'IBM Plex Sans Arabic';fill:var(--lbl);text-anchor:middle}
+.ovnote{font:600 12.5px 'IBM Plex Sans Arabic';fill:var(--faint);text-anchor:middle}
+.hbar{display:flex;height:8px;border-radius:99px;overflow:hidden;background:var(--sunken);width:100%;max-width:240px;gap:1px}
+.hbar i{display:block}.hbar i.a{background:#10b981}.hbar i.s{background:#f59e0b}.hbar i.c{background:#dc2626}
+.brow .ic2 svg{width:20px;height:20px}
+.it .ic2.ar{background:linear-gradient(180deg,var(--brand-hi),var(--brand-lo));color:#fff}
+.pick>button.dis{opacity:.45}
+#pAreaI{display:inline-flex}
+.mapc svg.fade{animation:fadeIn .4s ease}
+@keyframes fadeIn{from{opacity:.15}}
+.mapgrid.ov .mleg{display:none}
 :root{--land:#eef0ea;--d0:#e5ece2;--d1:#ece8df;--d2:#e3e9f0;--d3:#efe6e4;--bld:#d9dcd3;--road:#ffffff;--road-o:#cfd3ca;--main:#fff7e6;--main-o:#e3cf9f;--sea:#cfe3ee;--sea2:#bcd7e6;--lbl:#5e6773;--dlbl:#8b94a0}
 :root[data-theme=dark]{--land:#15191e;--d0:#171d1a;--d1:#1c1a17;--d2:#161b22;--d3:#1d1718;--bld:#232830;--road:#2c323b;--road-o:#0e1115;--main:#3a3325;--main-o:#12100b;--sea:#0f2230;--sea2:#123047;--lbl:#9ea6b1;--dlbl:#5e6773}
 
@@ -485,7 +504,7 @@ tbody tr:hover .split,tbody tr.kb .split{background:linear-gradient(180deg,var(-
 
 [data-theme=dark] .bx{filter:brightness(.9) saturate(.95)}
 @media (max-width:1100px){.mapgrid{grid-template-columns:1fr}.side{height:auto;max-height:420px}.bpanel{grid-template-columns:1fr}.caps{grid-template-columns:repeat(2,1fr)}}
-@media (max-width:760px){.mleg .lnote{display:none}.srch{min-width:100%;margin:8px 0 0}.stats{margin:6px 0 0}.mapc{height:420px}
+@media (max-width:760px){.mapgrid.ov .mapc{display:none}.mapgrid.ov .side{max-height:none}.mleg .lnote{display:none}.srch{min-width:100%;margin:8px 0 0}.stats{margin:6px 0 0}.mapc{height:420px}
   .bxscroll{overflow:visible;margin:0;padding:0}.bx{width:100%;padding:40px 10px 52px}.slot{padding:10px 7px}.rail{height:20px}
   .mods,.tapes{grid-template-columns:repeat(var(--cols),minmax(0,1fr));gap:5px}.tapes{margin:8px 7px 0}
   .mtr{width:auto;height:84px}.mtr .brand{font-size:7px}.mtr .lcd{width:calc(100% - 8px);height:20px;font-size:10px;letter-spacing:0}.mtr .row{font-size:8.5px;gap:3px}.mtr .led{width:7px;height:7px}.mtr .term{bottom:5px;left:6px;right:6px}.mtr .term i{width:7px;height:7px}.mtr.c::after{top:32px;font-size:9px}
@@ -496,11 +515,11 @@ tbody tr:hover .split,tbody tr.kb .split{background:linear-gradient(180deg,var(-
 <body>
 <div class="demo-bar">
   <div><b>خريطة الطبلونات</b> · نموذج تفاعلي</div>
-  <div class="seg" role="group" aria-label="الوضع"><button data-theme="light" aria-pressed="true">نهاري</button><button data-theme="dark" aria-pressed="false">ليلي</button></div>
+  <div class="dbr"><div class="seg" id="roleSeg" role="group" aria-label="الدخول كـ"><button data-role="admin" aria-pressed="true">مدير عام</button><button data-role="branch" aria-pressed="false">مدير فرع النصيرات</button></div><div class="seg" id="themeSeg" role="group" aria-label="الوضع"><button data-theme="light" aria-pressed="true">نهاري</button><button data-theme="dark" aria-pressed="false">ليلي</button></div></div>
 </div>
 <main class="wrap">
   <div class="ph">
-    <div><h1>الطبلونات</h1><p>المنطقة، بعدين الشارع، بعدين الطبلون. أو اكتب اسم المشترك وبنوصلك لساعته فوراً.</p></div>
+    <div><h1>الطبلونات</h1><p>المنطقة، بعدين الحي، بعدين الشارع، بعدين الطبلون. أو اكتب اسم المشترك وبنوصلك لساعته فوراً.</p></div>
     <div class="acts">
       <div class="seg" role="group" aria-label="طريقة العرض" id="viewTg"><button data-v="map" aria-pressed="true">خريطة</button><button data-v="list" aria-pressed="false">قائمة</button></div>
       <button class="btn pr" id="newBtn"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>طبلون جديد</button>
@@ -509,9 +528,9 @@ tbody tr:hover .split,tbody tr.kb .split{background:linear-gradient(180deg,var(-
 
   <section class="ctl" aria-label="الفلاتر">
     <div class="crumbs">
-      <div class="pick"><button id="pArea" class="set"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span class="lbls"><small>المنطقة الرئيسية</small>النصيرات</span></button></div>
+      <div class="pick"><button id="pArea"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span class="lbls"><small>المنطقة</small><span id="pAreaT">كل المناطق</span></span><span id="pAreaI"></span></button><div class="dd" id="ddArea"></div></div>
       <span class="sep">‹</span>
-      <div class="pick"><button id="pDist"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3 6.5v13.5l6-2.5 6 2.5 6-2.5V4l-6 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg><span class="lbls"><small>المنطقة</small><span id="pDistT">كل المناطق</span></span><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button><div class="dd" id="ddDist"></div></div>
+      <div class="pick"><button id="pDist"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3 6.5v13.5l6-2.5 6 2.5 6-2.5V4l-6 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg><span class="lbls"><small>الحي</small><span id="pDistT">كل الأحياء</span></span><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button><div class="dd" id="ddDist"></div></div>
       <span class="sep">‹</span>
       <div class="pick"><button id="pStr"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 5 21M16 3l3 18M12 4v3M12 11v3M12 18v2"/></svg><span class="lbls"><small>الشارع</small><span id="pStrT">كل الشوارع</span></span><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button><div class="dd" id="ddStr"></div></div>
       <div class="srch"><svg class="i si" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" placeholder="ابحث: اسم مشترك، رقم طبلون، شارع، أو معلم (مثلاً: نادي الأهلي)" aria-label="بحث" autocomplete="off"><kbd>/</kbd><div class="res" id="res" role="listbox"></div></div>
@@ -545,14 +564,28 @@ tbody tr:hover .split,tbody tr.kb .split{background:linear-gradient(180deg,var(-
 <script>
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const ic=p=>`<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
-const I={box:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M9 13h6M9 17h6"/>',road:'<path d="M4 21 9 3M20 21 15 3M12 5v2M12 11v2M12 17v2"/>',map:'<path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15"/>',pin:'<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21"/><circle cx="12" cy="9.5" r="2.5"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',back:'<path d="M9 18l6-6-6-6"/>',down:'<path d="M6 9l6 6 6-6"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>',gauge:'<path d="M12 14l4-4"/><path d="M3.3 17a9 9 0 1 1 17.4 0"/>',cash:'<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/>',file:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>',sms:'<path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',pen:'<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/>',link:'<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',hand:'<path d="M18 11V6a2 2 0 0 0-4 0M14 10V4a2 2 0 0 0-4 0v2M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.9-6-2.4l-3.6-3.6a2 2 0 0 1 2.8-2.8L7 15"/>',nav:'<path d="M3 11l19-9-9 19-2-8-8-2z"/>'};
-/* ---------- geography ---------- */
-const DIST=[
+const I={lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',box:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M9 13h6M9 17h6"/>',road:'<path d="M4 21 9 3M20 21 15 3M12 5v2M12 11v2M12 17v2"/>',map:'<path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15"/>',pin:'<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21"/><circle cx="12" cy="9.5" r="2.5"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',back:'<path d="M9 18l6-6-6-6"/>',down:'<path d="M6 9l6 6 6-6"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>',gauge:'<path d="M12 14l4-4"/><path d="M3.3 17a9 9 0 1 1 17.4 0"/>',cash:'<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/>',file:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>',sms:'<path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',pen:'<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/>',link:'<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',hand:'<path d="M18 11V6a2 2 0 0 0-4 0M14 10V4a2 2 0 0 0-4 0v2M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.9-6-2.4l-3.6-3.6a2 2 0 0 1 2.8-2.8L7 15"/>',nav:'<path d="M3 11l19-9-9 19-2-8-8-2z"/>'};
+/* ---------- geography: 9 areas (branches) ---------- */
+const LANDM=['مسجد الهدى','صيدلية الشفاء','مدرسة ذكور النصيرات','مخبز العائلات','بقالة أبو حسن','دوار المخيم','البلدية','عيادة الوكالة','محطة أبو صرار','سوق الخضار','مسجد الفاروق','ملعب النصيرات','بنك فلسطين','مطعم الأمل','مدرسة البنات'];
+const FN=['فهد','بهاء','حمزة','بلال','عامر','مجدي','محمد','أحمد','خالد','يوسف','إياد','سامي','رامي','نضال','وسيم','تامر','عماد','أشرف','ماهر','جهاد','سعيد','حسام','ناصر','زياد','منى','سهى','هبة','رنا'];
+const LN=['عمران','دخان','العطار','أبو العون','أبو كويك','العايدي','الشاعر','أبو شمالة','النجار','الحلو','أبو زايد','البرعصي','الهمص','عاشور','أبو دقة','الفرا','مهنا','أبو سمرة','الكحلوت','عوض'];
+const CAPS=[2,4,4,6,6,7,10,10,4,6];
+const STPOOL=['شارع المدارس','شارع الجامع','شارع البلدية','شارع السوق','شارع الشهداء','شارع النخيل','شارع العيادة','شارع المحطة','شارع الوادي','شارع البركة','شارع الاستقلال','شارع 10','شارع 20','شارع 30','شارع الكرامة','شارع النور','شارع الوحدة','شارع البيارات'];
+/* overview tiles are a rough schematic (north up, sea on the left), not a survey map */
+const AREAS=[
+ {k:'البريج',sea:0,base:2000,cls:'d1',t:[685,250,300,175]},
+ {k:'المغازي',sea:0,base:3000,cls:'d0',t:[760,445,300,150]},
+ {k:'دير البلح',sea:1,base:6000,cls:'d2',t:[150,630,850,115]},
+ {k:'السوارحة',sea:1,base:4000,cls:'d3',t:[150,505,230,105]},
+ {k:'الزوايدة',sea:1,base:5000,cls:'d1',t:[395,505,345,105]},
+ {k:'مخيم 2',sea:1,base:7000,cls:'d0',t:[150,315,170,170]},
+ {k:'النصيرات',sea:1,base:0,cls:'d3',t:[335,315,330,170],
+  DIST:[
  {k:'الشاطئ',hw:62,cls:'d2',poly:[[110,0],[360,0],[360,760],[110,760]],lbl:[292,150]},
  {k:'المعسكر',hw:76,cls:'d1',poly:[[360,0],[770,0],[770,385],[360,385]],lbl:[702,215]},
  {k:'البلوك الجديد',hw:94,cls:'d0',poly:[[360,385],[770,385],[770,760],[360,760]],lbl:[622,560]},
- {k:'السوق',hw:54,cls:'d3',poly:[[770,0],[1200,0],[1200,760],[770,760]],lbl:[1094,332]}];
-const STREETS=[
+ {k:'السوق',hw:54,cls:'d3',poly:[[770,0],[1200,0],[1200,760],[770,760]],lbl:[1094,332]}],
+STREETS:[
  {k:'شارع البحر',lt:0.2,d:'الشاطئ',pts:[[205,30],[205,730]],w:26,main:1},
  {k:'شارع الحكر',lt:0.72,d:'الشاطئ',pts:[[120,540],[355,540]],w:16},
  {k:'شارع النادي',lt:0.25,d:'المعسكر',pts:[[370,110],[760,110]],w:18},
@@ -563,35 +596,55 @@ const STREETS=[
  {k:'شارع الشهداء',d:'البلوك الجديد',pts:[[370,650],[560,640],[760,605]],w:16},
  {k:'شارع صلاح الدين',lt:0.26,d:'السوق',pts:[[985,20],[985,740]],w:30,main:1},
  {k:'شارع السوق',lt:0.75,d:'السوق',pts:[[780,195],[1190,195]],w:18},
- {k:'شارع البلدية',lt:0.8,d:'السوق',pts:[[780,520],[900,520],[985,462],[1190,462]],w:16}];
-const MINOR=[[[205,300],[370,285]],[[760,110],[985,110]],[[760,470],[985,470]],[[355,540],[470,540]],[[760,318],[780,318],[780,195]],[[985,640],[1190,640]]];
-const LANDM=['مسجد الهدى','صيدلية الشفاء','مدرسة ذكور النصيرات','مخبز العائلات','بقالة أبو حسن','دوار المخيم','البلدية','عيادة الوكالة','محطة أبو صرار','سوق الخضار','مسجد الفاروق','ملعب النصيرات','بنك فلسطين','مطعم الأمل','مدرسة البنات'];
-const FN=['فهد','بهاء','حمزة','بلال','عامر','مجدي','محمد','أحمد','خالد','يوسف','إياد','سامي','رامي','نضال','وسيم','تامر','عماد','أشرف','ماهر','جهاد','سعيد','حسام','ناصر','زياد','منى','سهى','هبة','رنا'];
-const LN=['عمران','دخان','العطار','أبو العون','أبو كويك','العايدي','الشاعر','أبو شمالة','النجار','الحلو','أبو زايد','البرعصي','الهمص','عاشور','أبو دقة','الفرا','مهنا','أبو سمرة','الكحلوت','عوض'];
+ {k:'شارع البلدية',lt:0.8,d:'السوق',pts:[[780,520],[900,520],[985,462],[1190,462]],w:16}],
+MINOR:[[[205,300],[370,285]],[[760,110],[985,110]],[[760,470],[985,470]],[[355,540],[470,540]],[[760,318],[780,318],[780,195]],[[985,640],[1190,640]]]},
+ {k:'المخيم الجديد',sea:0,base:8000,cls:'d2',t:[330,190,330,105]},
+ {k:'غزة',sea:1,base:9000,cls:'d0',t:[150,20,900,125]}];
+const AREA_BY=Object.fromEntries(AREAS.map(a=>[a.k,a]));
 let seed=77;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647,pick=a=>a[Math.floor(rnd()*a.length)];
+const shuf=arr=>{const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 function along(pts,t){let L=0;const seg=[];for(let i=1;i<pts.length;i++){const d=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);seg.push(d);L+=d}let s=t*L;for(let i=0;i<seg.length;i++){if(s<=seg[i]){const f=s/seg[i],a=pts[i],b=pts[i+1];const nx=-(b[1]-a[1])/seg[i],ny=(b[0]-a[0])/seg[i];return{x:a[0]+(b[0]-a[0])*f,y:a[1]+(b[1]-a[1])*f,nx,ny}}s-=seg[i]}const a=pts[pts.length-2],b=pts[pts.length-1],d=seg[seg.length-1];return{x:b[0],y:b[1],nx:-(b[1]-a[1])/d,ny:(b[0]-a[0])/d}}
-const CAPS=[2,4,4,6,6,7,10,10,4,6];let num=0,lmi=0;
-const BOXES=[];
-STREETS.forEach((st,si)=>{const n=3+Math.floor(rnd()*3)+(st.main?2:0);for(let i=0;i<n;i++){const t=(i+.6)/(n+.2),p=along(st.pts,t),side=i%2?1:-1,off=st.w/2+16;
+function genGeo(a){const x0=a.sea?112:0,xm=Math.round(x0+(1200-x0)*(.44+rnd()*.12)),ya=Math.round(300+rnd()*140),yb=Math.round(320+rnd()*140);
+  const hs=[pick(a.sea?['البحر','الحي الشمالي']:['الحي الشمالي','الحي الغربي']),pick(['البلد','الوسط','المحطة']),pick(['الحي الشرقي','السوق','البركة']),pick(['الحي الجنوبي','حي المدارس','الجامع'])],sp=shuf(STPOOL);let si=0;
+  const R=[[x0,0,xm,ya],[x0,ya,xm,760],[xm,0,1200,yb],[xm,yb,1200,760]];
+  a.DIST=R.map((r,i)=>({k:hs[i],cls:'d'+((i+a.base/1000)%4),hw:hs[i].length*7+8,poly:[[r[0],r[1]],[r[2],r[1]],[r[2],r[3]],[r[0],r[3]]],lbl:[Math.round(r[0]+(r[2]-r[0])*.64),Math.round(r[1]+(r[3]-r[1])*.8)]}));
+  const st=[];if(a.sea)st.push({k:'شارع الرشيد',d:hs[0],pts:[[x0+48,20],[x0+48,740]],w:24,main:1,lt:.62});
+  st.push({k:'شارع صلاح الدين',d:hs[2],pts:[[xm,15],[xm,745]],w:28,main:1,lt:.5});
+  R.forEach(([l,t,rr,b],i)=>{const w=rr-l,h=b-t,y=Math.round(t+h*.36),bend=rnd()<.5;
+    st.push({k:sp[si++],d:hs[i],pts:(bend?[[l+12,y],[l+w*.5,y],[l+w*.62,y+24],[rr-12,y+24]]:[[l+12,y],[rr-12,y]]).map(p=>p.map(Math.round)),w:rnd()<.4?18:16,lt:.72});
+    const x=Math.round(l+w*.3);st.push({k:sp[si++],d:hs[i],pts:[[x,t+12],[x,b-12]],w:16,lt:.3})});
+  const xl=Math.round(x0+(xm-x0)*.3),xr=Math.round(xm+(1200-xm)*.3);
+  a.STREETS=st;a.MINOR=[[[xl,ya-12],[xl,ya+12]],[[xr,yb-12],[xr,yb+12]]]}
+function genBoxes(a,idb){let num=a.base,lmi=0;a.BOXES=[];
+  a.STREETS.forEach(st=>{const n=3+Math.floor(rnd()*3)+(st.main?2:0);for(let i=0;i<n;i++){const t=(i+.6)/(n+.2),p=along(st.pts,t),side=i%2?1:-1,off=st.w/2+16;
   const cap=pick(CAPS),used=Math.min(cap,Math.max(0,cap-Math.floor(rnd()*3)-(rnd()<.12?cap:0)));num+=Math.floor(3+rnd()*40);
-  const seen=new Set();const meters=Array.from({length:cap},(_,j)=>{if(j>=used)return null;const r=rnd();let nm;do nm=pick(FN)+' '+pick(LN);while(seen.has(nm));seen.add(nm);return{name:nm,id:202600041+Math.floor(rnd()*950),st:r<.68?'a':r<.84?'s':'c',read:Math.floor(900+rnd()*6000),bal:Math.round((rnd()-.6)*480)}});
+  const seen=new Set();const meters=Array.from({length:cap},(_,j)=>{if(j>=used)return null;const r=rnd();let nm;do nm=pick(FN)+' '+pick(LN);while(seen.has(nm));seen.add(nm);return{name:nm,id:idb+Math.floor(rnd()*950),st:r<.68?'a':r<.84?'s':'c',read:Math.floor(900+rnd()*6000),bal:Math.round((rnd()-.6)*480)}});
   for(let j=meters.length-1;j>0;j--){if(rnd()<.25){const k=Math.floor(rnd()*(j+1));[meters[j],meters[k]]=[meters[k],meters[j]]}}
-  BOXES.push({id:'b'+BOXES.length,num:String(num),street:st.k,dist:st.d,lm:(['','مقابل ','جنب ','قرب '][Math.floor(lmi/LANDM.length)%4])+LANDM[(lmi++)%LANDM.length],cap,meters,x:p.x+p.nx*off*side,y:p.y+p.ny*off*side})}});
-/* famous box from the photo */
-Object.assign(BOXES[3],{num:'455',lm:'نادي الأهلي',cap:10,meters:['بهاء دخان','حمزة العطار','بلال أبو العون','عامر أبو كويك','فهد عمران','مجدي العايدي',null,'تامر الشاعر','سهى الحلو',null].map((n,j)=>n&&{name:n,id:202600100+j*7,st:j===2?'c':j===5?'s':'a',read:2400+j*311,bal:[-120,40,-560,0,85,-210,0,-35,60,0][j]})});
-/* keep markers apart, off the roads and off the area names */
-(function(){const segs=[];STREETS.forEach(s=>{for(let i=1;i<s.pts.length;i++)segs.push([s.pts[i-1],s.pts[i],s.w/2+17])});MINOR.forEach(p=>{for(let i=1;i<p.length;i++)segs.push([p[i-1],p[i],22])});
-  const LB=DIST.map(d=>[d.lbl[0],d.lbl[1]-10,d.hw,16]);
+  a.BOXES.push({id:a.code+a.BOXES.length,area:a.k,num:String(num),street:st.k,dist:st.d,lm:(['','مقابل ','جنب ','قرب '][Math.floor(lmi/LANDM.length)%4])+LANDM[(lmi++)%LANDM.length],cap,meters,x:p.x+p.nx*off*side,y:p.y+p.ny*off*side})}})}
+function relax(A){const segs=[];A.STREETS.forEach(s=>{for(let i=1;i<s.pts.length;i++)segs.push([s.pts[i-1],s.pts[i],s.w/2+17])});A.MINOR.forEach(p=>{for(let i=1;i<p.length;i++)segs.push([p[i-1],p[i],22])});
+  const LB=A.DIST.map(d=>[d.lbl[0],d.lbl[1]-10,d.hw,16]);
   for(let it=0;it<90;it++){
-    for(let i=0;i<BOXES.length;i++)for(let j=i+1;j<BOXES.length;j++){const a=BOXES[i],b=BOXES[j],dx=b.x-a.x,dy=b.y-a.y,ox=38-Math.abs(dx),oy=30-Math.abs(dy);if(ox>0&&oy>0){if(ox<oy){const s=(dx>=0?1:-1)*ox/2;a.x-=s;b.x+=s}else{const s=(dy>=0?1:-1)*oy/2;a.y-=s;b.y+=s}}}
-    BOXES.forEach(b=>{LB.forEach(([cx,cy,hw,hh])=>{const dx=b.x-cx,dy=b.y-cy,ox=hw+17-Math.abs(dx),oy=hh+13-Math.abs(dy);if(ox>0&&oy>0){if(ox<oy)b.x+=(dx>=0?1:-1)*ox;else b.y+=(dy>=0?1:-1)*oy}});
+    for(let i=0;i<A.BOXES.length;i++)for(let j=i+1;j<A.BOXES.length;j++){const a=A.BOXES[i],b=A.BOXES[j],dx=b.x-a.x,dy=b.y-a.y,ox=38-Math.abs(dx),oy=30-Math.abs(dy);if(ox>0&&oy>0){if(ox<oy){const s=(dx>=0?1:-1)*ox/2;a.x-=s;b.x+=s}else{const s=(dy>=0?1:-1)*oy/2;a.y-=s;b.y+=s}}}
+    A.BOXES.forEach(b=>{LB.forEach(([cx,cy,hw,hh])=>{const dx=b.x-cx,dy=b.y-cy,ox=hw+17-Math.abs(dx),oy=hh+13-Math.abs(dy);if(ox>0&&oy>0){if(ox<oy)b.x+=(dx>=0?1:-1)*ox;else b.y+=(dy>=0?1:-1)*oy}});
       segs.forEach(([p,q,r])=>{const dx=q[0]-p[0],dy=q[1]-p[1],l=dx*dx+dy*dy,t=Math.max(0,Math.min(1,((b.x-p[0])*dx+(b.y-p[1])*dy)/l)),cx=p[0]+t*dx,cy=p[1]+t*dy,ex=b.x-cx,ey=b.y-cy,d=Math.hypot(ex,ey)||.01;if(d<r){b.x=cx+ex/d*r;b.y=cy+ey/d*r}});
       
-      b.x=Math.max(132,Math.min(1182,b.x));b.y=Math.max(16,Math.min(744,b.y))})}})();
+      b.x=Math.max(A.sea?132:16,Math.min(1182,b.x));b.y=Math.max(16,Math.min(744,b.y))})}}
+function genBld(a){let s='';const segs=[];[...a.STREETS.map(s=>[s.pts,s.w]),...a.MINOR.map(p=>[p,12])].forEach(([pts,w])=>{for(let i=1;i<pts.length;i++)segs.push([pts[i-1],pts[i],w])});
+  const dseg=(p,a,b)=>{const dx=b[0]-a[0],dy=b[1]-a[1],l=dx*dx+dy*dy,t=Math.max(0,Math.min(1,((p[0]-a[0])*dx+(p[1]-a[1])*dy)/l));return Math.hypot(p[0]-a[0]-t*dx,p[1]-a[1]-t*dy)};
+  for(let x=a.sea?125:8;x<1195;x+=34)for(let y=12;y<752;y+=30){if(rnd()<.18)continue;const w=18+rnd()*12,h=14+rnd()*10,c=[x+w/2,y+h/2];if(segs.some(([a,b,sw])=>dseg(c,a,b)<sw/2+18))continue;s+=`<rect class="bld" x="${x.toFixed(0)}" y="${y.toFixed(0)}" width="${w.toFixed(0)}" height="${h.toFixed(0)}" rx="3"/>`}return s}
+AREAS.forEach((a,ai)=>{a.code=a.k==='النصيرات'?'b':'a'+ai+'_';a.STREETS&&a.STREETS.forEach(s=>s.a=a.k)});
+/* النصيرات first, with its hand-drawn streets and the real box 455 from the photos */
+(()=>{const a=AREA_BY['النصيرات'];seed=77;genBoxes(a,202600041);
+  Object.assign(a.BOXES[3],{num:'455',lm:'نادي الأهلي',cap:10,meters:['بهاء دخان','حمزة العطار','بلال أبو العون','عامر أبو كويك','فهد عمران','مجدي العايدي',null,'تامر الشاعر','سهى الحلو',null].map((n,j)=>n&&{name:n,id:202600100+j*7,st:j===2?'c':j===5?'s':'a',read:2400+j*311,bal:[-120,40,-560,0,85,-210,0,-35,60,0][j]})});
+  relax(a);a.bld=genBld(a)})();
+AREAS.forEach((a,ai)=>{if(a.BOXES)return;seed=1009+ai*7919;genGeo(a);a.STREETS.forEach(s=>s.a=a.k);genBoxes(a,202610000+ai*1000);relax(a);a.bld=genBld(a)});
+const ALLB=AREAS.flatMap(a=>a.BOXES),ALLST=AREAS.flatMap(a=>a.STREETS),BYID=new Map(ALLB.map(b=>[b.id,b]));
+let DIST=[],STREETS=[],MINOR=[],BOXES=ALLB,bld='',AREA=null,ROLE='admin';const BRANCH='النصيرات';
+function useArea(){AREA=S.area?AREA_BY[S.area]:null;if(AREA){({DIST,STREETS,MINOR,BOXES,bld}=AREA)}else{DIST=[];STREETS=[];MINOR=[];BOXES=ALLB;bld=''}}
 const stat=b=>{const m=b.meters.filter(Boolean);if(!m.length)return'empty';if(m.some(x=>x.st==='c'))return'cut';if(m.some(x=>x.st==='s'))return'susp';return'ok'};
 const used=b=>b.meters.filter(Boolean).length;
 /* ---------- state ---------- */
-const S={dist:null,street:null,box:null,meter:null,q:'',f:new Set(),cap:0,view:'map',hitName:null};
+const S={area:null,dist:null,street:null,box:null,meter:null,q:'',f:new Set(),cap:0,view:'map',hitName:null};
 const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 const f0=n=>Math.round(n).toLocaleString('en-US');
 const ago=id=>{const d=(id*7)%38;return d===0?'اليوم':d===1?'أمس':d===2?'قبل يومين':d<=10?`قبل ${d} أيام`:`قبل ${d} يوم`};
@@ -605,22 +658,19 @@ let SL=false;const upp=(vb,r)=>SL?Math.min(vb[2]/r.width,vb[3]/r.height):Math.ma
 function calcKS(){const m=$('#map'),r=m.getBoundingClientRect();if(!r.width)return;SL=innerWidth<=760;m.setAttribute('preserveAspectRatio',SL?'xMidYMid slice':'xMidYMid meet');const s=SL?Math.max(r.width/1200,r.height/760):Math.min(r.width/1200,r.height/760);KS=Math.min(1.8,Math.max(1,.74/s))}
 addEventListener('resize',()=>{calcKS();setVB(VB)});
 const mkT=b=>`translate(${b.x.toFixed(1)},${b.y.toFixed(1)}) scale(${K().toFixed(3)})`;
-function setVB(v){VB=v;const m=$('#map');m.setAttribute('viewBox',v.map(n=>n.toFixed(1)).join(' '));m.style.setProperty('--k',K().toFixed(3));m.querySelectorAll('.mk').forEach(g=>g.setAttribute('transform',mkT(BOXES[+g.dataset.b.slice(1)])))}
+function setVB(v){VB=v;const m=$('#map');m.setAttribute('viewBox',v.map(n=>n.toFixed(1)).join(' '));m.style.setProperty('--k',K().toFixed(3));m.querySelectorAll('.mk').forEach(g=>g.setAttribute('transform',mkT(BYID.get(g.dataset.b))))}
 function flyTo(t){const from=[...VB],t0=performance.now(),D=520;cancelAnimationFrame(flyTo.r);const step=now=>{const k=Math.min(1,(now-t0)/D),e=1-Math.pow(1-k,3);setVB(from.map((v,i)=>v+(t[i]-v)*e));if(k<1)flyTo.r=requestAnimationFrame(step)};flyTo.r=requestAnimationFrame(step)}
 function fitBox(x0,y0,x1,y1,pad=60){let w=x1-x0+pad*2,h=y1-y0+pad*2;const ar=1200/760;if(w/h>ar)h=w/ar;else w=h*ar;w=Math.max(w,360);h=w/ar;const cx=(x0+x1)/2,cy=(y0+y1)/2;return[cx-w/2,cy-h/2,w,h]}
 function bboxPts(pts){const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);return[Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)]}
 function focusView(){if(S.box){const b=BOXES.find(x=>x.id===S.box);return fitBox(b.x-200,b.y-120,b.x+200,b.y+120,40)}
   if(S.street){const st=STREETS.find(s=>s.k===S.street);const[a,b,c,d]=bboxPts(st.pts);return fitBox(a,b,c,d,70)}
   if(S.dist){const d=DIST.find(x=>x.k===S.dist);const[a,b,c,e]=bboxPts(d.poly);return fitBox(a,b,c,e,10)}return[...VB0]}
-let bld='';(function(){const segs=[];[...STREETS.map(s=>[s.pts,s.w]),...MINOR.map(p=>[p,12])].forEach(([pts,w])=>{for(let i=1;i<pts.length;i++)segs.push([pts[i-1],pts[i],w])});
-  const dseg=(p,a,b)=>{const dx=b[0]-a[0],dy=b[1]-a[1],l=dx*dx+dy*dy,t=Math.max(0,Math.min(1,((p[0]-a[0])*dx+(p[1]-a[1])*dy)/l));return Math.hypot(p[0]-a[0]-t*dx,p[1]-a[1]-t*dy)};
-  for(let x=125;x<1195;x+=34)for(let y=12;y<752;y+=30){if(rnd()<.18)continue;const w=18+rnd()*12,h=14+rnd()*10,c=[x+w/2,y+h/2];if(segs.some(([a,b,sw])=>dseg(c,a,b)<sw/2+18))continue;bld+=`<rect class="bld" x="${x.toFixed(0)}" y="${y.toFixed(0)}" width="${w.toFixed(0)}" height="${h.toFixed(0)}" rx="3"/>`}})();
 const pathD=pts=>pts.map((p,i)=>(i?'L':'M')+p[0]+','+p[1]).join('');
-function drawMap(){calcKS();$('#map').style.setProperty('--k',K().toFixed(3));
+function drawMap(){calcKS();$('#map').style.setProperty('--k',K().toFixed(3));if(!S.area){drawOverview();return}$('#map').setAttribute('aria-label','خريطة طبلونات '+S.area);
   const sc=new Set(scope().map(b=>b.id));
-  let s=`<rect class="sea" x="0" y="0" width="112" height="760"/>`;
+  let s='';if(AREA.sea){s+=`<rect class="sea" x="0" y="0" width="112" height="760"/>`;
   for(let y=30;y<760;y+=46)s+=`<path class="wave" d="M${14+(y%3)*6},${y} q10,-7 20,0 t20,0"/>`;
-  s+=`<text class="dname" x="56" y="380" text-anchor="middle" transform="rotate(-90 56 380)" style="font-size:calc(22px * var(--k,1))">البحر المتوسط</text>`;
+  s+=`<text class="dname" x="56" y="380" text-anchor="middle" transform="rotate(-90 56 380)" style="font-size:calc(22px * var(--k,1))">البحر المتوسط</text>`}
   s+=DIST.map(d=>`<g class="dist ${S.dist&&S.dist!==d.k?'dim':''}"><path class="${d.cls}" d="${pathD(d.poly)}Z"/></g>`).join('');
   s+=`<g>${bld}</g>`;
   s+=MINOR.map(p=>`<path class="rdo" d="${pathD(p)}" style="--w:14"/><path class="rd minor" d="${pathD(p)}" style="--w:10"/>`).join('');
@@ -634,6 +684,27 @@ function drawMap(){calcKS();$('#map').style.setProperty('--k',K().toFixed(3));
   $$('#map .street').forEach(g=>g.addEventListener('click',e=>{if(moved)return;const k=g.dataset.st;const st=STREETS.find(x=>x.k===k);S.dist=st.d;S.street=k;S.box=null;S.meter=null;update(true)}));
   $$('#map .mk').forEach(g=>{g.addEventListener('click',e=>{e.stopPropagation();if(moved)return;selectBox(g.dataset.b)});g.addEventListener('mouseenter',()=>tip(g,true));g.addEventListener('mouseleave',()=>tip(g,false))});
 }
+function drawOverview(){const m=$('#map');m.setAttribute('aria-label','خريطة المناطق');
+  let s=`<rect class="sea" x="0" y="0" width="112" height="760"/>`;for(let y=30;y<760;y+=46)s+=`<path class="wave" d="M${14+(y%3)*6},${y} q10,-7 20,0 t20,0"/>`;
+  s+=`<text class="dname" x="56" y="380" text-anchor="middle" transform="rotate(-90 56 380)" style="font-size:22px">البحر المتوسط</text>`;
+  s+=`<path class="wadi" d="M112,168 C260,156 380,182 540,168 S820,152 1000,170 S1130,176 1195,164"/><text class="wlbl" x="1085" y="196">وادي غزة</text>`;
+  s+=AREAS.map(a=>{const bs=a.BOXES.filter(matchF),ms=bs.flatMap(b=>b.meters.filter(Boolean)),cap=bs.reduce((x,b)=>x+b.cap,0),n=k=>ms.filter(m=>m.st===k).length,cut=n('c');
+    const[x,y,w,h]=a.t,cx=x+w/2,cy=y+h/2,bw=Math.min(w-48,230),bx=cx-bw/2,by=y+h-17;let hb='',ox=bx;
+    [['a','#10b981'],['s','#f59e0b'],['c','#dc2626']].forEach(([k,c])=>{const ww=cap?bw*n(k)/cap:0;if(ww>.5){hb+=`<rect x="${ox.toFixed(1)}" y="${by}" width="${ww.toFixed(1)}" height="5" fill="${c}"/>`;ox+=ww}});
+    const cw=cut>99?84:76;
+    return`<g class="atile ${S.hov===a.k?'hov':''}" data-a="${a.k}"><title>${a.k}: ${bs.length} طبلون، ${ms.length} ساعة، ${cut} مقطوع</title><rect class="tb ${a.cls}" x="${x}" y="${y}" width="${w}" height="${h}" rx="20"/>
+      <text class="an" x="${cx}" y="${cy+2}">${a.k}</text><text class="as" x="${cx}" y="${cy+25}">${bs.length} طبلون · ${ms.length} ساعة</text>
+      <rect x="${bx}" y="${by}" width="${bw}" height="5" rx="2.5" fill="var(--bld)"/>${hb}
+      ${cut?`<g class="acb"><rect x="${x+10}" y="${y+10}" width="${cw}" height="21" rx="10.5" fill="#dc2626"/><text x="${x+10+cw/2}" y="${y+21}">${cut} مقطوع</text></g>`:''}</g>`}).join('');
+  s+=`<text class="ovnote" x="1105" y="742">مخطط تقريبي</text>`;
+  m.innerHTML=s;$$('#map .atile').forEach(g=>g.addEventListener('click',()=>{if(moved)return;enterArea(g.dataset.a)}))}
+function fade(){const m=$('#map');m.classList.remove('fade');void m.getBoundingClientRect();m.classList.add('fade')}
+function enterArea(k){closeDD();const a=AREA_BY[k],reset=()=>{S.area=k;S.dist=null;S.street=null;S.box=null;S.meter=null;S.hitName=null};
+  if(S.area||S.view!=='map'){reset();cancelAnimationFrame(flyTo.r);update(false);setVB([...VB0]);fade();return}
+  const[x,y,w,h]=a.t;flyTo(fitBox(x,y,x+w,y+h,10));setTimeout(()=>{cancelAnimationFrame(flyTo.r);reset();update(false);setVB([...VB0]);fade()},440)}
+function toOverview(){if(ROLE!=='admin')return;const a=AREA_BY[S.area];S.area=null;S.dist=null;S.street=null;S.box=null;S.meter=null;S.hitName=null;update(false);
+  if(a&&S.view==='map'){const[x,y,w,h]=a.t;setVB(fitBox(x,y,x+w,y+h,10));flyTo([...VB0])}}
+function tilesHov(k){S.hov=k;$$('#map .atile').forEach(g=>g.classList.toggle('hov',g.dataset.a===k))}
 function tip(g,on){const t=$('#mtip');if(!on){t.style.opacity=0;return}const b=BOXES.find(x=>x.id===g.dataset.b),r=g.getBoundingClientRect(),c=$('#mapc').getBoundingClientRect();
   t.innerHTML=`<b>طبلون ${b.num}</b>${b.street} · ${b.lm}<div class="dots">${b.meters.map(m=>`<i style="background:${!m?'#ffffff26':m.st==='a'?'#10b981':m.st==='s'?'#f59e0b':'#dc2626'}"></i>`).join('')}</div>`;
   t.style.opacity=1;const x=r.left-c.left+r.width/2,y=r.top-c.top;t.style.left=Math.max(8,Math.min(c.width-t.offsetWidth-8,x-t.offsetWidth/2))+'px';t.style.top=Math.max(8,y-t.offsetHeight-10)+'px'}
@@ -649,12 +720,15 @@ $('#zIn').onclick=()=>zoom(1/1.3);$('#zOut').onclick=()=>zoom(1.3);$('#zFit').on
 /* ---------- side list ---------- */
 function mdots(b){return`<span class="mdots">${b.meters.map(m=>`<i class="${m?m.st:''}"></i>`).join('')}</span>`}
 function side(){const sc=scope();let h='',title,sub,back=false;
+  if(!S.area){h=AREAS.map(a=>{const bs=a.BOXES.filter(matchF),u=bs.reduce((x,b)=>x+used(b),0),cut=bs.reduce((x,b)=>x+b.meters.filter(m=>m&&m.st==='c').length,0);return`<button class="it" data-a="${a.k}"><span class="ic2 ar">${ic(I.pin)}</span><span><b>${a.k}</b><small>${a.DIST.length} أحياء · ${bs.length} طبلون · ${u} ساعة</small></span><span class="cnt">${cut?`<span class="cutn">${cut} مقطوع</span>`:''}</span></button>`}).join('');
+    $('#side').innerHTML=`<div class="sh"><small>الشركة · ${AREAS.length} مناطق</small><b>كل المناطق</b></div><div class="sl">${h}</div><div class="sf"><span>${sc.length} طبلون بالفلتر</span><span>${sc.reduce((a,b)=>a+used(b),0)} ساعة</span></div>`;
+    $$('#side [data-a]').forEach(x=>{x.onclick=()=>enterArea(x.dataset.a);x.onmouseenter=()=>tilesHov(x.dataset.a);x.onmouseleave=()=>tilesHov(null)});return}
   if(S.street){back=true;title=S.street;sub=S.dist;const bs=sc.filter(b=>b.street===S.street);
     h=bs.map(b=>`<button class="it ${S.box===b.id?'on':''}" data-b="${b.id}"><span class="ic2 bn">${b.num}</span><span style="min-width:0"><b>${b.lm}</b>${mdots(b)}</span><span class="cnt"><b>${used(b)}/${b.cap}</b><small>ساعات</small></span></button>`).join('')||'<div class="empty2"><b>ما في طبلونات</b>غيّر الفلاتر.</div>'}
-  else if(S.dist){back=true;title=S.dist;sub='النصيرات';h=STREETS.filter(s=>s.d===S.dist).map(s=>{const bs=sc.filter(b=>b.street===s.k);return`<button class="it" data-s="${s.k}"><span class="ic2">${ic(I.road)}</span><span><b>${s.k}</b><small>${bs.length} طبلون · ${bs.reduce((a,b)=>a+used(b),0)} ساعة</small></span><span class="cnt">${(n=>n?`<span class="cutn">${n} مقطوع</span>`:'')(bs.reduce((a,b)=>a+b.meters.filter(m=>m&&m.st==='c').length,0))}</span></button>`}).join('')}
-  else{title='النصيرات';sub='اختار منطقة';h=DIST.map(d=>{const bs=sc.filter(b=>b.dist===d.k);return`<button class="it" data-d="${d.k}"><span class="ic2">${ic(I.map)}</span><span><b>${d.k}</b><small>${STREETS.filter(s=>s.d===d.k).length} شوارع · ${bs.length} طبلون</small></span><span class="cnt"><b>${bs.reduce((a,b)=>a+used(b),0)}</b><small>ساعة</small></span></button>`}).join('')}
+  else if(S.dist){back=true;title=S.dist;sub=S.area;h=STREETS.filter(s=>s.d===S.dist).map(s=>{const bs=sc.filter(b=>b.street===s.k);return`<button class="it" data-s="${s.k}"><span class="ic2">${ic(I.road)}</span><span><b>${s.k}</b><small>${bs.length} طبلون · ${bs.reduce((a,b)=>a+used(b),0)} ساعة</small></span><span class="cnt">${(n=>n?`<span class="cutn">${n} مقطوع</span>`:'')(bs.reduce((a,b)=>a+b.meters.filter(m=>m&&m.st==='c').length,0))}</span></button>`}).join('')}
+  else{back=ROLE==='admin';title=S.area;sub=ROLE==='admin'?'اختار حي':'فرعك · اختار حي';h=DIST.map(d=>{const bs=sc.filter(b=>b.dist===d.k);return`<button class="it" data-d="${d.k}"><span class="ic2">${ic(I.map)}</span><span><b>${d.k}</b><small>${STREETS.filter(s=>s.d===d.k).length} شوارع · ${bs.length} طبلون</small></span><span class="cnt"><b>${bs.reduce((a,b)=>a+used(b),0)}</b><small>ساعة</small></span></button>`}).join('')}
   $('#side').innerHTML=`<div class="sh"><small>${sub}</small><b>${back?`<button class="back" id="sBack" aria-label="رجوع">${ic(I.back)}</button>`:''}${title}</b></div><div class="sl">${h}</div><div class="sf"><span>${sc.length} طبلون بالفلتر</span><span>${sc.reduce((a,b)=>a+used(b),0)} ساعة</span></div>`;
-  $('#sBack')&&($('#sBack').onclick=()=>{if(S.box){S.box=null;S.meter=null}else if(S.street)S.street=null;else S.dist=null;update(true)});
+  $('#sBack')&&($('#sBack').onclick=()=>{if(S.box){S.box=null;S.meter=null}else if(S.street)S.street=null;else if(S.dist)S.dist=null;else{toOverview();return}update(true)});
   $$('#side [data-d]').forEach(x=>x.onclick=()=>{S.dist=x.dataset.d;update(true)});
   $$('#side [data-s]').forEach(x=>x.onclick=()=>{S.street=x.dataset.s;update(true)});
   $$('#side [data-b]').forEach(x=>x.onclick=()=>selectBox(x.dataset.b));
@@ -690,14 +764,22 @@ function bindPanel(){const p=$('#bpanel');if(!p)return;
   $('#bClose').onclick=()=>{S.box=null;S.meter=null;S.hitName=null;update(true)}}
 function renderPanel(){const b=BOXES.find(x=>x.id===S.box);if(S.view==='map'){$('#panelHost').innerHTML=b?renderBox(b):''}else list();bindPanel()}
 /* ---------- list view ---------- */
-function list(){const sc=scope();if(!sc.length){$('#listView').innerHTML='<div class="empty2 sg"><b>ما في طبلونات</b>غيّر الفلاتر أو امسحها.</div>';return}
+function listAreas(){$('#listView').innerHTML=`<section class="sg"><div class="sgh">${ic(I.pin)}<b>كل المناطق</b><small>· الشركة</small><span class="n">${AREAS.length} مناطق · ${scope().length} طبلون</span></div>${AREAS.map(a=>{const bs=a.BOXES.filter(matchF),ms=bs.flatMap(b=>b.meters.filter(Boolean)),cap=bs.reduce((x,b)=>x+b.cap,0),n=k=>ms.filter(m=>m.st===k).length,debt=-ms.filter(m=>m.bal<0).reduce((x,m)=>x+m.bal,0);
+    return`<div class="brow" data-a="${a.k}"><span class="ic2">${ic(I.pin)}</span><div><b>${a.k}</b><small>${a.DIST.length} أحياء · ${a.STREETS.length} شارع · ${bs.length} طبلون</small></div><div class="c3"><span class="hbar" title="شغالة ${n('a')} · مفصولة ${n('s')} · مقطوعة ${n('c')} · فاضي ${cap-ms.length}"><i class="a" style="flex:${n('a')}"></i><i class="s" style="flex:${n('s')}"></i><i class="c" style="flex:${n('c')}"></i><i style="flex:${cap-ms.length}"></i></span></div><div class="c4"><small>مقطوع</small><b>${n('c')}</b></div><div class="c5"><small>ديون</small><span class="dbt ${debt?'':'z'}">${debt?f0(debt)+' ₪':'—'}</span></div><span class="exp" style="transform:rotate(90deg)">${ic(I.down)}</span></div>`}).join('')}</section>`;
+  $$('#listView .brow[data-a]').forEach(r=>r.onclick=()=>enterArea(r.dataset.a))}
+function list(){if(!S.area){listAreas();return}const sc=scope();if(!sc.length){$('#listView').innerHTML='<div class="empty2 sg"><b>ما في طبلونات</b>غيّر الفلاتر أو امسحها.</div>';return}
   const by={};sc.forEach(b=>(by[b.street]=by[b.street]||[]).push(b));
   $('#listView').innerHTML=Object.entries(by).map(([st,bs])=>`<section class="sg"><div class="sgh">${ic(I.road)}<b>${st}</b><small>· ${bs[0].dist}</small><span class="n">${bs.length} طبلون · ${bs.reduce((a,b)=>a+used(b),0)} ساعة</span></div>
     ${bs.map(b=>{const debt=-b.meters.filter(m=>m&&m.bal<0).reduce((a,m)=>a+m.bal,0),on=S.box===b.id;return`<div class="brow ${on?'on':''}" data-b="${b.id}"><span class="ic2">${b.num}</span><div><b>${b.lm}</b><small>${used(b)} من ${b.cap} ساعات</small></div><div class="c3">${mdots(b)}</div><div class="c4"><small>مقطوع</small><b>${b.meters.filter(m=>m&&m.st==='c').length}</b></div><div class="c5"><small>ديون</small><span class="dbt ${debt?'':'z'}">${debt?f0(debt)+' ₪':'—'}</span></div><span class="exp">${ic(I.down)}</span></div>${on?renderBox(b):''}`}).join('')}</section>`).join('');
   $$('#listView .brow').forEach(r=>r.onclick=()=>{if(S.box===r.dataset.b){S.box=null;S.meter=null}else{S.box=r.dataset.b;S.meter=null}list();bindPanel()});bindPanel()}
 /* ---------- filters ui ---------- */
-function crumbs(){$('#pDistT').textContent=S.dist||'كل المناطق';$('#pDist').classList.toggle('set',!!S.dist);$('#pStrT').textContent=S.street||'كل الشوارع';$('#pStr').classList.toggle('set',!!S.street);
-  $('#ddDist').innerHTML=`<div class="opt ${!S.dist?'on':''}" data-d=""><b>كل المناطق</b><small>${BOXES.length}</small></div>`+DIST.map(d=>`<div class="opt ${S.dist===d.k?'on':''}" data-d="${d.k}">${ic(I.map)}<b>${d.k}</b><small>${BOXES.filter(b=>b.dist===d.k).length}</small></div>`).join('');
+function crumbs(){const adm=ROLE==='admin';$('#pAreaT').textContent=S.area||'كل المناطق';$('#pArea').classList.toggle('set',!!S.area);$('#pAreaI').innerHTML=adm?ic(I.down):ic(I.lock);$('#pArea').title=adm?'':'صلاحيتك على فرع '+BRANCH+' بس';
+  $('#ddArea').innerHTML=`<div class="opt ${!S.area?'on':''}" data-a=""><b>كل المناطق</b><small>${ALLB.length}</small></div>`+AREAS.map(a=>`<div class="opt ${S.area===a.k?'on':''}" data-a="${a.k}">${ic(I.pin)}<b>${a.k}</b><small>${a.BOXES.length}</small></div>`).join('');
+  $$('#ddArea .opt').forEach(o=>o.onclick=()=>{closeDD();o.dataset.a?enterArea(o.dataset.a):toOverview()});
+  $('#pDist').classList.toggle('dis',!S.area);$('#pStr').classList.toggle('dis',!S.area);
+  $('#q').placeholder=adm?'ابحث بكل المناطق: اسم مشترك، رقم طبلون، شارع، أو معلم (مثلاً: نادي الأهلي)':'ابحث بـ'+BRANCH+': اسم مشترك، رقم طبلون، شارع، أو معلم';
+  $('#pDistT').textContent=S.dist||'كل الأحياء';$('#pDist').classList.toggle('set',!!S.dist);$('#pStrT').textContent=S.street||'كل الشوارع';$('#pStr').classList.toggle('set',!!S.street);
+  $('#ddDist').innerHTML=`<div class="opt ${!S.dist?'on':''}" data-d=""><b>كل الأحياء</b><small>${BOXES.length}</small></div>`+DIST.map(d=>`<div class="opt ${S.dist===d.k?'on':''}" data-d="${d.k}">${ic(I.map)}<b>${d.k}</b><small>${BOXES.filter(b=>b.dist===d.k).length}</small></div>`).join('');
   const sts=STREETS.filter(s=>!S.dist||s.d===S.dist);const g={};sts.forEach(s=>(g[s.d]=g[s.d]||[]).push(s));
   $('#ddStr').innerHTML=`<div class="opt ${!S.street?'on':''}" data-s=""><b>كل الشوارع</b></div>`+Object.entries(g).map(([d,ss])=>`<div class="gh">${d}</div>`+ss.map(s=>`<div class="opt ${S.street===s.k?'on':''}" data-s="${s.k}">${ic(I.road)}<b>${s.k}</b><small>${BOXES.filter(b=>b.street===s.k).length}</small></div>`).join('')).join('');
   $$('#ddDist .opt').forEach(o=>o.onclick=()=>{S.dist=o.dataset.d||null;S.street=null;S.box=null;S.meter=null;closeDD();update(true)});
@@ -709,8 +791,7 @@ function crumbs(){$('#pDistT').textContent=S.dist||'كل المناطق';$('#pDi
   $('#stats').innerHTML=`<span>طبلونات<b>${sc.length}</b></span><span>ساعات<b>${u}/${cap}</b></span><span>أماكن فاضية<b>${cap-u}</b></span><span>مقطوع<b style="color:#fca5a5">${cut}</b></span>`;
   $('#clearx').hidden=!(S.dist||S.street||S.f.size||S.cap)}
 function closeDD(){$$('.pick .dd').forEach(d=>d.classList.remove('open'))}
-[['#pDist','#ddDist'],['#pStr','#ddStr']].forEach(([b,d])=>$(b).onclick=e=>{e.stopPropagation();const o=$(d).classList.contains('open');closeDD();closeRes();if(!o)$(d).classList.add('open')});
-$('#pArea').onclick=()=>{S.dist=null;S.street=null;S.box=null;S.meter=null;update(true)};
+[['#pArea','#ddArea'],['#pDist','#ddDist'],['#pStr','#ddStr']].forEach(([b,d])=>$(b).onclick=e=>{e.stopPropagation();if(b==='#pArea'&&ROLE!=='admin'){toast('صلاحيتك على فرع '+BRANCH+' بس. باقي المناطق بيشوفها المدير العام.');return}if(b!=='#pArea'&&!S.area){toast('اختار المنطقة أول');return}const o=$(d).classList.contains('open');closeDD();closeRes();if(!o)$(d).classList.add('open')});
 $$('.fchip').forEach(c=>c.onclick=()=>{const k=c.dataset.f;S.f.has(k)?S.f.delete(k):S.f.add(k);update(false)});
 $$('.capg button').forEach(c=>c.onclick=()=>{S.cap=+c.dataset.c;update(false)});
 $('#clearx').onclick=()=>{S.dist=null;S.street=null;S.f.clear();S.cap=0;S.box=null;S.meter=null;update(true)};
@@ -720,36 +801,39 @@ let RES=[],ri=0;
 function norm(s){return String(s).replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').toLowerCase()}
 function hl(t,q){const n=norm(t),i=n.indexOf(norm(q));return i<0?esc(t):esc(t.slice(0,i))+'<mark>'+esc(t.slice(i,i+q.length))+'</mark>'+esc(t.slice(i+q.length))}
 function search(q){q=q.trim();const box=$('#res');if(!q){closeRes();return}const nq=norm(q);RES=[];
-  const sts=STREETS.filter(s=>norm(s.k).includes(nq)).slice(0,4).map(s=>({t:'s',s}));
-  const bxs=BOXES.filter(b=>b.num.includes(q)||norm(b.lm).includes(nq)).slice(0,5).map(b=>({t:'b',b}));
-  const subs=[];BOXES.forEach(b=>b.meters.forEach((m,i)=>{if(m&&(norm(m.name).includes(nq)||String(m.id).includes(q)))subs.push({t:'m',b,m,i})}));
+  const adm=ROLE==='admin',PB=adm?ALLB:AREA_BY[BRANCH].BOXES,AR=b=>adm?b.area+' · ':'';
+  const sts=(adm?ALLST:AREA_BY[BRANCH].STREETS).filter(s=>norm(s.k).includes(nq)).slice(0,6).map(s=>({t:'s',s}));
+  const bxs=PB.filter(b=>b.num.includes(q)||norm(b.lm).includes(nq)).slice(0,5).map(b=>({t:'b',b}));
+  const subs=[];PB.forEach(b=>b.meters.forEach((m,i)=>{if(m&&(norm(m.name).includes(nq)||String(m.id).includes(q)))subs.push({t:'m',b,m,i})}));
   const groups=[['المشتركين',subs.slice(0,6),subs.length],['الطبلونات',bxs,bxs.length],['الشوارع',sts,sts.length]];
   let h='';groups.forEach(([g,items,n])=>{if(!items.length)return;h+=`<div class="gh"><span>${g}</span><span class="num">${n}</span></div>`;items.forEach(it=>{const k=RES.length;RES.push(it);
-    if(it.t==='m')h+=`<div class="ri" data-i="${k}"><span class="ic2">${ini(it.m.name)}</span><div><b>${hl(it.m.name,q)}</b><small>طبلون ${it.b.num} · ساعة ${it.i+1} · ${it.b.street}</small></div><span class="go">↵ روح لساعته</span></div>`;
-    else if(it.t==='b')h+=`<div class="ri" data-i="${k}"><span class="ic2">${it.b.num}</span><div><b>طبلون ${hl(it.b.num,q)} · ${hl(it.b.lm,q)}</b><small>${it.b.street} · ${used(it.b)}/${it.b.cap} ساعات</small></div><span class="go">↵ افتح</span></div>`;
-    else h+=`<div class="ri" data-i="${k}"><span class="ic2">${ic(I.road)}</span><div><b>${hl(it.s.k,q)}</b><small>${it.s.d} · ${BOXES.filter(b=>b.street===it.s.k).length} طبلون</small></div><span class="go">↵ عالخريطة</span></div>`})});
+    if(it.t==='m')h+=`<div class="ri" data-i="${k}"><span class="ic2">${ini(it.m.name)}</span><div><b>${hl(it.m.name,q)}</b><small>${AR(it.b)}طبلون ${it.b.num} · ساعة ${it.i+1} · ${it.b.street}</small></div><span class="go">↵ روح لساعته</span></div>`;
+    else if(it.t==='b')h+=`<div class="ri" data-i="${k}"><span class="ic2">${it.b.num}</span><div><b>طبلون ${hl(it.b.num,q)} · ${hl(it.b.lm,q)}</b><small>${AR(it.b)}${it.b.street} · ${used(it.b)}/${it.b.cap} ساعات</small></div><span class="go">↵ افتح</span></div>`;
+    else h+=`<div class="ri" data-i="${k}"><span class="ic2">${ic(I.road)}</span><div><b>${hl(it.s.k,q)}</b><small>${adm?it.s.a+' · ':''}${it.s.d} · ${AREA_BY[it.s.a].BOXES.filter(b=>b.street===it.s.k).length} طبلون</small></div><span class="go">↵ عالخريطة</span></div>`})});
   box.innerHTML=h||`<div class="none">ما لقينا "${esc(q)}". جرّب جزء من الاسم، أو رقم الطبلون.</div>`;box.classList.add('open');ri=0;markRi();
   $$('#res .ri').forEach(x=>x.onmouseenter=()=>{ri=+x.dataset.i;markRi()});$$('#res .ri').forEach(x=>x.onclick=()=>go(RES[+x.dataset.i]))}
 function markRi(){$$('#res .ri').forEach(x=>x.classList.toggle('act',+x.dataset.i===ri));$(`#res .ri[data-i="${ri}"]`)?.scrollIntoView({block:'nearest'})}
 function closeRes(){$('#res').classList.remove('open')}
 function go(it){closeRes();$('#q').blur();if(!it)return;
-  if(it.t==='s'){S.dist=it.s.d;S.street=it.s.k;S.box=null;S.meter=null;S.hitName=null;update(true);return}
-  S.dist=it.b.dist;S.street=it.b.street;S.box=it.b.id;S.meter=it.t==='m'?it.i:null;S.hitName=it.t==='m'?it.m.name:null;update(true);
+  const was=S.area;if(it.t==='s'){S.area=it.s.a;useArea();if(was!==S.area)setVB([...VB0]);S.dist=it.s.d;S.street=it.s.k;S.box=null;S.meter=null;S.hitName=null;update(true);return}
+  S.area=it.b.area;useArea();if(was!==S.area)setVB([...VB0]);S.dist=it.b.dist;S.street=it.b.street;S.box=it.b.id;S.meter=it.t==='m'?it.i:null;S.hitName=it.t==='m'?it.m.name:null;update(true);
   setTimeout(()=>(S.view==='map'?$('#bpanel'):$('#bpanel'))?.scrollIntoView({block:'start',behavior:'smooth'}),420)}
 $('#q').addEventListener('input',e=>search(e.target.value));
 $('#q').addEventListener('focus',e=>{if(e.target.value)search(e.target.value)});
 $('#q').addEventListener('keydown',e=>{if(!$('#res').classList.contains('open'))return;if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();ri=Math.max(0,Math.min(RES.length-1,ri+(e.key==='ArrowDown'?1:-1)));markRi()}if(e.key==='Enter'){e.preventDefault();go(RES[ri])}if(e.key==='Escape'){closeRes();e.target.blur()}});
 /* ---------- glue ---------- */
-function selectBox(id){S.box=id;S.meter=null;S.hitName=null;const b=BOXES.find(x=>x.id===id);S.dist=b.dist;S.street=b.street;update(true);setTimeout(()=>$('#bpanel')?.scrollIntoView({block:'nearest',behavior:'smooth'}),380)}
-function update(fly){if(S.box&&!matchF(BOXES.find(b=>b.id===S.box))){S.box=null;S.meter=null}crumbs();if(S.view==='map'){drawMap();side();if(fly)flyTo(focusView())}renderPanel()}
+function selectBox(id){S.box=id;S.meter=null;S.hitName=null;const b=BYID.get(id);S.area=b.area;useArea();S.dist=b.dist;S.street=b.street;update(true);setTimeout(()=>$('#bpanel')?.scrollIntoView({block:'nearest',behavior:'smooth'}),380)}
+function update(fly){useArea();$('.mapgrid').classList.toggle('ov',!S.area);if(S.box&&!matchF(BOXES.find(b=>b.id===S.box))){S.box=null;S.meter=null}crumbs();if(S.view==='map'){drawMap();side();if(fly)flyTo(focusView())}renderPanel()}
 $$('#viewTg button').forEach(b=>b.onclick=()=>{$$('#viewTg button').forEach(x=>x.setAttribute('aria-pressed',x===b));S.view=b.dataset.v;$('#mapView').hidden=S.view!=='map';$('#listView').hidden=S.view!=='list';if(S.view==='map'){$('#panelHost').innerHTML=''}update(false)});
-$('#newBtn').onclick=()=>toast('بيفتح نموذج طبلون جديد: الشارع، المعلم، وعدد الساعات');
+$('#newBtn').onclick=()=>toast('بيفتح نموذج طبلون جديد: المنطقة، الحي، الشارع، المعلم، وعدد الساعات');
 function toast(m){const t=$('#toast');$('#tmsg').textContent=m;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),3200)}
 document.addEventListener('keydown',e=>{const typing=['INPUT','TEXTAREA'].includes(document.activeElement.tagName);if(typing)return;
   if(e.key==='/'){e.preventDefault();$('#q').focus();return}
-  if(e.key==='Escape'){if(S.meter!=null){S.meter=null;renderPanel()}else if(S.box){S.box=null;update(true)}else if(S.street){S.street=null;update(true)}else if(S.dist){S.dist=null;update(true)}return}
+  if(e.key==='Escape'){if(S.meter!=null){S.meter=null;renderPanel()}else if(S.box){S.box=null;update(true)}else if(S.street){S.street=null;update(true)}else if(S.dist){S.dist=null;update(true)}else if(S.area&&ROLE==='admin')toOverview();return}
   if(S.box&&(e.key==='ArrowLeft'||e.key==='ArrowRight')){const b=BOXES.find(x=>x.id===S.box);S.meter=S.meter==null?0:(S.meter+(e.key==='ArrowLeft'?1:-1)+b.cap)%b.cap;S.hitName=null;renderPanel()}});
-$$('.demo-bar .seg button').forEach(b=>b.onclick=()=>{$$('.demo-bar .seg button').forEach(x=>x.setAttribute('aria-pressed',x===b));document.documentElement.dataset.theme=b.dataset.theme});
+$$('#themeSeg button').forEach(b=>b.onclick=()=>{$$('#themeSeg button').forEach(x=>x.setAttribute('aria-pressed',x===b));document.documentElement.dataset.theme=b.dataset.theme});
+$$('#roleSeg button').forEach(b=>b.onclick=()=>{$$('#roleSeg button').forEach(x=>x.setAttribute('aria-pressed',x===b));ROLE=b.dataset.role;closeRes();$('#q').value='';
+  if(ROLE==='branch'){const was=S.area;S.area=BRANCH;S.dist=null;S.street=null;S.box=null;S.meter=null;update(false);if(was!==BRANCH){setVB([...VB0]);fade()}toast('هيك بيشوفها مدير فرع '+BRANCH+': منطقته بس، والبحث جوّاها بس')}else{update(false);toast('المدير العام بيشوف كل المناطق')}});
 update(false);
 </script>
 </body>
