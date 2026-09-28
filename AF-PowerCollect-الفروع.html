@@ -1,0 +1,583 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>الفروع · AF PowerCollect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@500;600;700;800&family=El+Messiri:wght@600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+
+:root{
+  --page:#eff1f4;--surface:#fff;--raised:#f7f8fa;--sunken:#f2f3f5;
+  --line:#e2e5e9;--line2:#eceef1;--ink:#111820;--ink2:#353c46;--muted:#4c5460;--faint:#5e6773;
+  --brand:#a51d26;--brand-hi:#b8232c;--brand-lo:#7d121b;
+  --success:#047857;--success-t:#0478571a;--info:#1d5bcc;--info-t:#1d5bcc14;--warn:#b45309;--warn-t:#b453091a;--danger:#c81e1e;--danger-t:#c81e1e14;
+  --focus:#111820;--shadow:0 1px 2px #10182808,0 14px 34px -18px #1018282e;--pop:0 30px 60px -24px #10182866,0 2px 6px #1018280d;
+  --hero:linear-gradient(135deg,#262c34,#1c2127 55%,#111418);
+}
+:root[data-theme=dark]{
+  --page:#0b0d10;--surface:#14171c;--raised:#1b1f25;--sunken:#101317;
+  --line:#343a44;--line2:#252a32;--ink:#f4f5f7;--ink2:#e0e3e7;--muted:#9ea6b1;--faint:#8b94a0;
+  --success:#34d399;--success-t:#34d3991a;--info:#7dafe8;--info-t:#7dafe81a;--warn:#fbbf24;--warn-t:#fbbf241a;--danger:#fc7d7d;--danger-t:#fc7d7d1a;
+  --focus:#c9ced5;--shadow:0 20px 40px -24px #000;--pop:0 30px 60px -20px #000;
+  --hero:linear-gradient(135deg,#1c2127,#161a1f 55%,#0b0d10);
+}
+*{box-sizing:border-box}html,body{margin:0}
+body{min-height:100vh;background:var(--page);color:var(--ink);font:16px/1.6 'IBM Plex Sans Arabic',system-ui,sans-serif;-webkit-font-smoothing:antialiased;transition:background .3s}
+button,input,select{font:inherit;color:inherit}
+.num{font-family:Alexandria,'IBM Plex Sans Arabic',sans-serif;font-variant-numeric:tabular-nums}
+svg.i{width:18px;height:18px;flex:none}
+kbd{font:600 11.5px Alexandria;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:0 6px;background:var(--surface);color:var(--muted)}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+.demo-bar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 24px;background:color-mix(in srgb,var(--page) 82%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line2);font-size:14px;color:var(--muted)}
+.demo-bar b{color:var(--ink);font-family:'El Messiri',serif;font-size:17px}
+.seg{display:inline-flex;gap:2px;padding:3px;border-radius:12px;background:var(--sunken);border:1px solid var(--line2)}
+.seg button{border:0;background:transparent;padding:5px 12px;border-radius:9px;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed=true]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px #10182822}
+
+.wrap{max-width:1320px;margin:0 auto;padding:26px 24px 120px}
+.ph{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.ph h1{margin:0;font:700 34px/1.2 'El Messiri',serif}
+.ph p{margin:4px 0 0;color:var(--faint);font-size:14.5px}
+.ph .acts{margin-inline-start:auto;display:flex;gap:10px}
+.btn{height:44px;border-radius:13px;padding:0 16px;font-weight:700;font-size:15px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink2);transition:.18s}
+.btn:hover{background:var(--sunken)}
+.btn.pr{border:0;color:#fff;background:linear-gradient(180deg,var(--brand-hi),var(--brand-lo));box-shadow:0 12px 26px -12px #a51d26,inset 0 1px 0 #ffffff33}
+.btn.pr:hover{filter:brightness(1.07)}
+
+/* KPI filter cards */
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:22px}
+.kpi{position:relative;text-align:start;border:1px solid var(--line2);background:var(--surface);border-radius:20px;padding:14px 16px;cursor:pointer;box-shadow:var(--shadow);transition:.18s;overflow:hidden}
+.kpi:hover{transform:translateY(-1px);border-color:var(--line)}
+.kpi small{display:flex;align-items:center;gap:8px;color:var(--faint);font-size:13.5px;font-weight:600}
+.kpi small i{width:8px;height:8px;border-radius:50%}
+.kpi b{display:block;font:800 28px/1.2 Alexandria;margin-top:6px}
+.kpi span{font-size:12.5px;color:var(--faint)}
+.kpi[aria-pressed=true]{border-color:var(--ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--ink) 8%,transparent),var(--shadow)}
+.kpi.debt{background:var(--hero);color:#fff;border-color:transparent;cursor:default}
+.kpi.debt small{color:#aeb6c1}.kpi.debt span{color:#aeb6c1}
+.kpi.debt::after{content:"";position:absolute;inset-inline:0;top:0;height:3px;background:linear-gradient(90deg,#5c0d14,#a51d26 40%,#9aa3ae 75%,#dfe3e8)}
+.kpi .spark{position:absolute;inset-inline-end:16px;bottom:16px;display:flex;align-items:flex-end;gap:3px;height:26px;opacity:.9}
+.kpi .spark i{width:5px;border-radius:2px;background:#a51d26}
+
+/* card + toolbar */
+.card{margin-top:18px;background:var(--surface);border:1px solid var(--line2);border-radius:24px;box-shadow:var(--shadow)}
+.tb{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:16px 18px;border-bottom:1px solid var(--line2)}
+.search{position:relative;flex:1;min-width:240px;max-width:420px}
+.search svg{position:absolute;inset-inline-start:14px;top:50%;transform:translateY(-50%);color:var(--faint)}
+.search input{width:100%;height:46px;border:1.5px solid var(--line);border-radius:14px;background:var(--raised);padding:0 44px;font-size:15.5px;transition:.18s}
+.search input:focus{outline:none;background:var(--surface);border-color:var(--focus);box-shadow:0 0 0 4px color-mix(in srgb,var(--focus) 10%,transparent)}
+.search kbd{position:absolute;inset-inline-end:12px;top:50%;transform:translateY(-50%)}
+.chip-f{height:40px;display:inline-flex;align-items:center;gap:8px;border:1px dashed var(--line);border-radius:12px;padding:0 12px;background:transparent;cursor:pointer;font-size:14.5px;font-weight:600;color:var(--muted);position:relative}
+.chip-f.on{border-style:solid;border-color:var(--ink);color:var(--ink);background:var(--sunken)}
+.chip-f .n{font:700 12px Alexandria;background:var(--ink);color:var(--surface);border-radius:7px;padding:0 6px}
+.dd{position:absolute;top:calc(100% + 6px);inset-inline-start:0;z-index:15;min-width:220px;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--pop);padding:6px;display:none}
+.dd.open{display:block;animation:pop .14s ease}
+@keyframes pop{from{opacity:0;transform:translateY(-4px) scale(.97)}}
+.dd label{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;cursor:pointer;font-size:14.5px;font-weight:500;color:var(--ink2)}
+.dd label:hover{background:var(--sunken)}
+.dd input{accent-color:#a51d26;width:16px;height:16px}
+.dd .c{margin-inline-start:auto;font:600 12.5px Alexandria;color:var(--faint)}
+.tb .sp{margin-inline-start:auto;display:flex;align-items:center;gap:10px}
+.clear{border:0;background:transparent;color:var(--brand);font-weight:700;cursor:pointer;font-size:14px}
+.dens{display:inline-flex;gap:2px;padding:3px;border-radius:12px;background:var(--sunken);border:1px solid var(--line2)}
+.dens button{border:0;background:transparent;width:34px;height:32px;border-radius:9px;display:grid;place-items:center;cursor:pointer;color:var(--faint)}
+.dens button[aria-pressed=true]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px #10182822}
+
+/* table */
+.tw{overflow-x:auto;padding:4px 12px 8px}
+table{width:100%;border-collapse:separate;border-spacing:0 8px;font-size:15.5px}
+th{position:sticky;top:0;text-align:start;font-size:14px;font-weight:600;color:var(--muted);padding:10px 14px 4px;white-space:nowrap;user-select:none}
+th button{border:0;background:transparent;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-weight:600;color:inherit;padding:4px 8px;margin:-4px -8px;border-radius:9px}
+th button:hover{background:var(--sunken);color:var(--ink)}
+th button .ar{display:inline-flex;flex-direction:column;line-height:0;opacity:.35}
+th button[data-dir] {color:var(--ink);background:color-mix(in srgb,var(--brand) 8%,transparent)}
+th button[data-dir] .ar{opacity:1;color:var(--brand)}
+td{background:var(--surface);padding:14px;border-block:1px solid var(--line2);white-space:nowrap;vertical-align:middle;transition:background .15s,border-color .15s}
+td:first-child{border-inline-start:1px solid var(--line2);border-start-start-radius:16px;border-end-start-radius:16px;width:44px;padding-inline-end:4px}
+td:last-child{border-inline-end:1px solid var(--line2);border-start-end-radius:16px;border-end-end-radius:16px}
+tbody tr{cursor:pointer;animation:rowin .3s both}
+@keyframes rowin{from{opacity:0;transform:translateY(4px)}}
+tbody tr:hover td,tbody tr.kb td{border-color:var(--line);background:color-mix(in srgb,var(--surface) 96%,var(--ink))}
+tbody tr:hover td:first-child,tbody tr.kb td:first-child{box-shadow:inset -3px 0 0 var(--brand)}
+tbody tr.sel td{background:color-mix(in srgb,var(--brand) 5%,var(--surface));border-color:color-mix(in srgb,var(--brand) 22%,var(--line2))}
+[data-density=compact] td{padding-block:8px}[data-density=compact] .av{width:32px;height:32px;border-radius:10px;font-size:12px}
+.ck{width:20px;height:20px;border-radius:7px;border:1.5px solid color-mix(in srgb,var(--line) 50%,var(--faint));display:grid;place-items:center;cursor:pointer;background:var(--surface);transition:.15s}
+.ck svg{width:13px;height:13px;stroke-width:3;opacity:0}
+.ck[aria-checked=true],.ck[aria-checked=mixed]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.ck[aria-checked=true] svg,.ck[aria-checked=mixed] svg{opacity:1}
+.id{display:flex;align-items:center;gap:12px}
+.av{position:relative;width:40px;height:40px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(135deg,#4a525d,#161a1f);color:#fff;font:700 13px Alexandria;flex:none}
+.av i{position:absolute;bottom:-2px;left:-2px;width:12px;height:12px;border-radius:50%;border:2.5px solid var(--surface)}
+.id b{display:block;font-weight:700;font-size:15.5px}
+.id small{display:block;color:var(--faint);font:500 13.5px Alexandria;direction:ltr;text-align:right}
+mark{background:#f5c04a55;color:inherit;border-radius:4px;padding:0 1px}
+.box{font:600 13.5px ui-monospace,monospace;background:var(--sunken);border:1px solid var(--line2);border-radius:9px;padding:3px 9px;color:var(--ink2)}
+.muted{color:var(--faint)}
+.type{display:inline-flex;align-items:center;gap:7px;color:var(--ink2)}
+.type svg{color:var(--faint);width:16px;height:16px}
+.bal{display:flex;flex-direction:column;gap:5px;min-width:130px}
+.bal b{font:700 15.5px Alexandria;direction:ltr;text-align:right}
+.bal b.db{color:var(--danger)}.bal b.cr{color:var(--success)}.bal b.z{color:var(--faint)}
+.bal b em{font:600 12.5px 'IBM Plex Sans Arabic';font-style:normal;margin-inline-end:4px}
+.bal .m{height:4px;border-radius:99px;background:var(--sunken);overflow:hidden}
+.bal .m i{display:block;height:100%;border-radius:99px;background:var(--danger);opacity:.75}
+.pill{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:700;border-radius:99px;padding:3px 11px;border:1px solid}
+.pill i{width:7px;height:7px;border-radius:50%;background:currentColor}
+.p-active{color:var(--success);background:var(--success-t);border-color:color-mix(in srgb,var(--success) 25%,transparent)}
+.p-active i{box-shadow:0 0 0 3px color-mix(in srgb,var(--success) 20%,transparent)}
+.p-susp{color:var(--warn);background:var(--warn-t);border-color:color-mix(in srgb,var(--warn) 25%,transparent)}
+.p-cut{color:var(--danger);background:var(--danger-t);border-color:color-mix(in srgb,var(--danger) 28%,transparent)}
+.d-active{background:#10b981}.d-susp{background:#f59e0b}.d-cut{background:#dc2626}
+.when{font-size:14.5px;color:var(--ink2)}.when small{display:block;font-size:12.5px;color:var(--faint)}
+
+/* row actions */
+.ra{display:flex;align-items:center;justify-content:flex-end;gap:6px}
+.split{display:inline-flex;height:36px;border-radius:11px;background:var(--hero);color:#fff;box-shadow:0 8px 16px -8px #111820b3,inset 0 1px 0 #ffffff1f;overflow:hidden}
+.split button{border:0;background:transparent;color:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:0 12px;font-weight:700;font-size:14px}
+.split button+button{padding:0 8px;border-inline-start:1px solid #ffffff26}
+.split button svg{width:16px;height:16px}
+tbody tr:hover .split,tbody tr.kb .split{background:linear-gradient(180deg,var(--brand-hi),var(--brand-lo));box-shadow:0 10px 20px -8px #a51d26cc,inset 0 1px 0 #ffffff33}
+:root[data-theme=dark] .split{background:linear-gradient(180deg,#f4f5f7,#c9ced5);color:#111820}
+:root[data-theme=dark] .split button+button{border-color:#11182022}
+.ib{width:36px;height:36px;border-radius:11px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer;color:var(--ink2);transition:.15s}
+.ib svg{width:17px;height:17px}
+.ib:hover{background:var(--sunken)}
+.ib.ed{color:var(--info)}.ib.ed:hover{background:var(--info-t);border-color:color-mix(in srgb,var(--info) 35%,transparent)}
+.ib.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+
+/* more menu */
+.menu{position:fixed;z-index:30;width:320px;background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:var(--pop);overflow:hidden;display:none;font-size:14.5px}
+.menu.open{display:block;animation:pop .14s ease}
+.menu .mh{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line2)}
+.menu .mh b{display:block;font-size:14.5px}.menu .mh small{color:var(--faint);font:500 12.5px Alexandria}
+.menu .ms{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--line2);color:var(--faint)}
+.menu .ms input{flex:1;border:0;background:transparent;height:34px;font-size:14.5px}
+.menu .ms input:focus{outline:none}
+.menu .mb{max-height:330px;overflow:auto;padding:6px}
+.mg{font-size:12px;font-weight:700;color:var(--faint);padding:8px 10px 3px}
+.mi{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:12px;cursor:pointer;color:var(--ink2)}
+.mi .mic{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;background:var(--sunken);flex:none}
+.mi .mic svg{width:16px;height:16px}
+.mi .t{flex:1}
+.mi:hover,.mi.act{background:var(--sunken);color:var(--ink)}
+.mi:hover .mic,.mi.act .mic{background:linear-gradient(180deg,var(--brand-hi),var(--brand-lo));color:#fff}
+.mi.lk{opacity:.5;cursor:not-allowed}.mi.lk:hover .mic{background:var(--sunken);color:inherit}
+.mi .s{font-size:12px;color:var(--faint);display:inline-flex;align-items:center;gap:4px}
+.menu .mf{display:flex;gap:12px;padding:8px 14px;border-top:1px solid var(--line2);background:var(--raised);font-size:12px;color:var(--faint)}
+
+/* footer + pagination */
+.tf{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 18px 16px;border-top:1px solid var(--line2);font-size:14.5px;color:var(--faint)}
+.pg{margin-inline-start:auto;display:flex;align-items:center;gap:4px}
+.pg button{min-width:38px;height:38px;border-radius:11px;border:1px solid transparent;background:transparent;cursor:pointer;font:600 14.5px Alexandria;color:var(--ink2)}
+.pg button:hover{background:var(--sunken)}
+.pg button[aria-current=page]{background:var(--ink);color:var(--surface)}
+.pg button:disabled{opacity:.35;cursor:default}
+.per{display:inline-flex;gap:2px;padding:3px;border-radius:12px;background:var(--sunken);border:1px solid var(--line2)}
+.per button{border:0;background:transparent;min-width:36px;height:30px;border-radius:9px;cursor:pointer;font:600 13px Alexandria;color:var(--faint)}
+.per button[aria-pressed=true]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px #10182822}
+.empty{text-align:center;padding:56px 20px;color:var(--faint)}
+.empty .e{width:64px;height:64px;margin:0 auto 12px;border-radius:20px;display:grid;place-items:center;background:var(--sunken);color:var(--muted)}
+.empty b{display:block;color:var(--ink);font-size:18px;font-family:'El Messiri',serif}
+
+/* bulk bar */
+.bulk{position:fixed;bottom:22px;left:50%;transform:translate(-50%,120%);opacity:0;z-index:25;display:flex;align-items:center;gap:4px;background:#111820;color:#fff;border-radius:18px;padding:7px;box-shadow:0 24px 50px -18px #000c;transition:.28s cubic-bezier(.22,1,.36,1)}
+.bulk.on{transform:translate(-50%,0);opacity:1}
+.bulk .n{display:flex;align-items:center;gap:8px;padding:0 12px 0 14px;border-inline-end:1px solid #ffffff26;margin-inline-end:4px;font-weight:600}
+.bulk .n b{font:700 13px Alexandria;background:#fff;color:#111820;border-radius:8px;padding:1px 8px}
+.bulk button{border:0;background:transparent;color:#e6e9ed;cursor:pointer;display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:12px;font-weight:600;font-size:14.5px}
+.bulk button:hover{background:#ffffff14;color:#fff}
+.bulk button svg{width:16px;height:16px}
+
+/* drawer */
+.scrim{position:fixed;inset:0;z-index:40;background:#0b0d1066;backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:.25s}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;inset-block:12px;left:12px;z-index:41;width:min(440px,calc(100% - 24px));background:var(--surface);border:1px solid var(--line2);border-radius:26px;box-shadow:var(--pop);display:flex;flex-direction:column;overflow:hidden;transform:translateX(-110%);transition:transform .3s cubic-bezier(.22,1,.36,1)}
+.drawer.on{transform:none}
+.dhero{background:var(--hero);color:#fff;padding:18px 20px 20px;position:relative}
+.dhero::after{content:"";position:absolute;inset-inline:0;bottom:0;height:3px;background:linear-gradient(90deg,#5c0d14,#a51d26 40%,#9aa3ae 75%,#dfe3e8)}
+.dtop{display:flex;align-items:center;gap:6px}
+.dtop .ib{background:#ffffff14;border-color:#ffffff1f;color:#fff}
+.dtop .ib:hover{background:#ffffff26}
+.dtop small{margin-inline-end:auto;color:#aeb6c1;font:600 13px Alexandria}
+.dwho{display:flex;align-items:center;gap:14px;margin-top:14px}
+.dwho .av{width:56px;height:56px;border-radius:18px;font-size:18px;background:linear-gradient(135deg,#5a636f,#1c2127);box-shadow:inset 0 1px 0 #ffffff26}
+.dwho .av i{border-color:#1c2127}
+.dwho b{display:block;font:700 22px 'El Messiri',serif}
+.dwho small{color:#c9ced5;font-size:13.5px}
+.dk{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+.dk div{background:#ffffff0f;border:1px solid #ffffff17;border-radius:14px;padding:9px 11px}
+.dk small{display:block;color:#aeb6c1;font-size:12px}
+.dk b{font:700 17px Alexandria;direction:ltr;display:block;text-align:right}
+.dtabs{display:flex;gap:4px;padding:0 18px;border-bottom:1px solid var(--line2)}
+.dtabs button{border:0;background:transparent;padding:12px 10px;font-weight:600;color:var(--faint);cursor:pointer;font-size:14.5px}
+.dtabs button[aria-selected=true]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--brand)}
+.dbody{flex:1;overflow:auto;padding:14px 20px}
+.tl{position:relative;display:grid;gap:4px}
+.tl::before{content:"";position:absolute;inset-block:10px;inset-inline-start:15px;width:2px;background:var(--line2)}
+.tl div{position:relative;display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;padding:8px 0;font-size:14.5px}
+.tl .d{width:32px;height:32px;border-radius:11px;display:grid;place-items:center;background:var(--sunken);color:var(--muted);z-index:1}
+.tl .d svg{width:15px;height:15px}
+.tl .d.pay{background:var(--success-t);color:var(--success)}
+.tl b{font-weight:600}.tl small{display:block;color:var(--faint);font-size:12.5px}
+.tl .amt{font:700 14.5px Alexandria;direction:ltr}
+.info{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.info div{background:var(--raised);border:1px solid var(--line2);border-radius:14px;padding:10px 12px}
+.info small{display:block;font-size:12.5px;color:var(--faint)}.info b{font-size:14.5px}
+.dfoot{display:flex;gap:8px;padding:14px 18px;border-top:1px solid var(--line2);background:var(--raised)}
+.dfoot .btn{height:44px;flex:1;justify-content:center;padding:0 10px}
+.dfoot .btn.pay{flex:1.4;border:0;color:#fff;background:linear-gradient(180deg,#0f9f76,#047857);box-shadow:0 12px 24px -12px #047857}
+
+.toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,20px);opacity:0;z-index:50;display:flex;align-items:center;gap:12px;background:#111820;color:#fff;border-radius:16px;padding:10px 12px 10px 16px;box-shadow:0 20px 40px -18px #000a;font-size:14.5px;transition:.3s;pointer-events:none}
+.toast.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast .ok{width:26px;height:26px;border-radius:9px;background:#34d3992b;color:#34d399;display:grid;place-items:center}
+.toast button{border:0;background:#ffffff1a;color:#fff;border-radius:10px;padding:5px 12px;font-weight:700;cursor:pointer}
+.hintbar{margin-top:14px;display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--faint)}
+.hintbar span{display:inline-flex;align-items:center;gap:6px}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}.kpi.debt{grid-column:span 3}.col-branch,.col-when{display:none}}
+@media (max-width:760px){
+  .wrap{padding:18px 14px 120px}.ph h1{font-size:28px}.ph .acts{width:100%}.ph .acts .btn{flex:1;justify-content:center}
+  .kpis{grid-template-columns:1fr 1fr}.kpi.debt{grid-column:span 2}
+  .search{max-width:none;min-width:100%}
+  thead{display:none}table,tbody,tr,td{display:block}
+  table{border-spacing:0}.tw{padding:8px 12px}
+  tbody tr{position:relative;background:var(--surface);border:1px solid var(--line2);border-radius:18px;padding:12px 14px 12px 14px;margin-bottom:10px;display:grid;grid-template-columns:auto 1fr auto;gap:10px 12px;align-items:center}
+  td,td:first-child,td:last-child{border:0!important;padding:0;background:transparent!important;border-radius:0;width:auto;box-shadow:none!important}
+  td.c-id{grid-column:2}td.c-status{grid-column:3;grid-row:1}
+  td.c-box,td.c-type,td.col-branch,td.col-when{display:none}
+  td.c-bal{grid-column:1/-1}td.c-act{grid-column:1/-1}
+  .ra{justify-content:stretch}.split{flex:1}.split button:first-child{flex:1;justify-content:center}
+  .hintbar{display:none}.tf{justify-content:center}.pg{margin:0}
+  .bulk{width:calc(100% - 24px);overflow-x:auto}.bulk button span{display:none}
+}
+
+/* ---- branches ---- */
+[hidden]{display:none!important}
+.ov{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:14px;margin-top:22px}
+.hero{position:relative;overflow:hidden;background:var(--hero);color:#fff;border-radius:26px;padding:22px 24px;box-shadow:0 30px 60px -30px #111820aa}
+.hero::after{content:"";position:absolute;inset-inline:0;top:0;height:3px;background:linear-gradient(90deg,#5c0d14,#a51d26 40%,#9aa3ae 75%,#dfe3e8)}
+.hero::before{content:"";position:absolute;inset:auto auto -140px -60px;width:320px;height:320px;border-radius:50%;background:radial-gradient(closest-side,#a51d2640,transparent)}
+.hero small{color:#aeb6c1;font-size:14px}
+.h-row{position:relative;display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.h-big{font:800 44px/1.1 Alexandria;margin-top:4px;direction:ltr}
+.h-big span{font-size:19px;color:#c9ced5;font-weight:600;margin-inline-start:6px}
+.delta{display:inline-flex;align-items:center;gap:6px;font:700 13.5px Alexandria;padding:4px 10px;border-radius:99px;background:#34d39926;color:#5eead4;direction:ltr;margin-bottom:8px}
+.share{position:relative;margin-top:18px;display:grid;gap:10px}
+.share>div{display:grid;grid-template-columns:110px 1fr 90px;gap:12px;align-items:center;font-size:14px;color:#dfe3e8}
+.share .b{height:12px;border-radius:99px;background:#ffffff12;overflow:hidden}
+.share .b i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#d0555c,#7d121b);transition:width .5s cubic-bezier(.22,1,.36,1)}
+.share>div:first-child .b i{background:linear-gradient(90deg,#ef7a80,#a51d26)}
+.share b{font:700 14px Alexandria;text-align:left}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-content:start}
+.st{background:var(--surface);border:1px solid var(--line2);border-radius:20px;padding:14px 16px;box-shadow:var(--shadow)}
+.st .ic{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;background:var(--sunken);color:var(--ink2);margin-bottom:8px}
+.st .ic svg{width:18px;height:18px}
+.st small{display:block;color:var(--faint);font-size:13px;font-weight:600}
+.st b{font:800 26px/1.2 Alexandria}
+.st span{display:block;font-size:12.5px;color:var(--faint)}
+.st.wide{grid-column:span 2;display:flex;align-items:center;gap:14px}
+.st.wide .ring{--p:0;width:64px;height:64px;border-radius:50%;background:conic-gradient(var(--success) calc(var(--p)*1%),var(--sunken) 0);display:grid;place-items:center;flex:none}
+.st.wide .ring::after{content:attr(data-v);width:50px;height:50px;border-radius:50%;background:var(--surface);display:grid;place-items:center;font:800 15px Alexandria;color:var(--ink)}
+
+.viewtg{display:inline-flex;gap:2px;padding:3px;border-radius:12px;background:var(--sunken);border:1px solid var(--line2)}
+.viewtg button{border:0;background:transparent;height:34px;padding:0 12px;border-radius:9px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;color:var(--faint);font-weight:600;font-size:14px}
+.viewtg button[aria-pressed=true]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px #10182822}
+.govs{display:inline-flex;gap:6px;flex-wrap:wrap}
+.gov{height:38px;border:1px solid var(--line);background:var(--surface);border-radius:11px;padding:0 12px;cursor:pointer;font-weight:600;font-size:14px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+.gov span{font:600 12px Alexandria;color:var(--faint)}
+.gov[aria-pressed=true]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.gov[aria-pressed=true] span{color:inherit;opacity:.7}
+
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;padding:16px 18px 18px}
+.bc{position:relative;background:var(--surface);border:1px solid var(--line2);border-radius:22px;padding:16px;display:flex;flex-direction:column;gap:14px;cursor:pointer;transition:.2s;animation:rowin .3s both}
+.bc:hover,.bc.kb{border-color:var(--line);box-shadow:0 22px 40px -26px #10182866;transform:translateY(-2px)}
+.bc:hover::before,.bc.kb::before{content:"";position:absolute;inset-block:18px;inset-inline-start:-1px;width:3px;border-radius:3px;background:var(--brand)}
+.bc.sel{border-color:color-mix(in srgb,var(--brand) 40%,var(--line2));background:color-mix(in srgb,var(--brand) 3%,var(--surface))}
+.bc.off{opacity:.72}
+.bc-h{display:flex;align-items:flex-start;gap:12px}
+.bc-ic{width:46px;height:46px;border-radius:15px;display:grid;place-items:center;background:var(--hero);color:#fff;flex:none;box-shadow:inset 0 1px 0 #ffffff1a}
+.bc-ic svg{width:22px;height:22px}
+.bc-h b{display:block;font:700 19px/1.3 'El Messiri',serif}
+.bc-h small{color:var(--faint);font-size:13.5px;display:flex;align-items:center;gap:6px}
+.bc-h small svg{width:14px;height:14px}
+.bc-h .ck{margin-inline-start:auto}
+.mgr{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:14px;background:var(--raised);border:1px solid var(--line2);font-size:14px}
+.mgr .av{width:32px;height:32px;border-radius:10px;font-size:11px}
+.mgr>div>span{color:var(--faint);font-size:12.5px;display:block}.mgr .av{display:grid;place-items:center;color:#fff}
+.mgr .ph{margin-inline-start:auto;font:600 13px Alexandria;color:var(--ink2);direction:ltr}
+.m4{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.m4 div{padding:8px 10px;border-radius:12px;border:1px solid var(--line2)}
+.m4 small{display:block;color:var(--faint);font-size:12px}
+.m4 b{font:800 18px/1.3 Alexandria}
+.m4 b.g{color:var(--success)}.m4 b.r{color:var(--danger)}
+.subbar{display:flex;height:8px;border-radius:99px;overflow:hidden;gap:2px;background:var(--sunken)}
+.subbar i{display:block;height:100%}
+.sublg{display:flex;gap:12px;font-size:12.5px;color:var(--faint);margin-top:6px}
+.sublg span{display:inline-flex;align-items:center;gap:5px}.sublg i{width:7px;height:7px;border-radius:50%}
+.bc-f{display:flex;align-items:center;gap:8px;margin-top:auto;padding-top:12px;border-top:1px dashed var(--line)}
+.bc-f .spk{display:flex;align-items:flex-end;gap:2px;height:28px;direction:ltr}
+.bc-f .spk i{width:4px;border-radius:2px;background:color-mix(in srgb,var(--brand) 45%,transparent)}
+.bc-f .spk i:last-child{background:var(--brand)}
+.bc-f .ra{margin-inline-start:auto}
+.newb{border:2px dashed var(--line);background:transparent;border-radius:22px;display:grid;place-items:center;text-align:center;color:var(--faint);cursor:pointer;min-height:300px;transition:.2s;font-weight:600}
+.newb:hover{border-color:var(--brand);color:var(--brand);background:color-mix(in srgb,var(--brand) 3%,transparent)}
+.newb .p{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;margin:0 auto 10px;background:var(--sunken)}
+.rate{display:inline-flex;align-items:center;gap:8px;font:700 14px Alexandria}
+.rate .m{width:70px;height:6px;border-radius:99px;background:var(--sunken);overflow:hidden}.rate .m i{display:block;height:100%;background:var(--success);border-radius:99px}
+.cmp{width:100%;border-collapse:separate;border-spacing:0;font-size:14.5px}
+.cmp th{position:static;padding:10px 8px;font:700 14px 'El Messiri',serif;color:var(--ink);text-align:center;border-bottom:1px solid var(--line2)}
+.cmp th:first-child{text-align:start;font:600 12.5px 'IBM Plex Sans Arabic';color:var(--faint)}
+.cmp td{background:transparent;border:0;border-bottom:1px solid var(--line2);border-radius:0!important;padding:10px 8px;text-align:center;font:700 15px Alexandria;width:auto}
+.cmp td:first-child{text-align:start;font:600 13.5px 'IBM Plex Sans Arabic';color:var(--faint);border:0;border-bottom:1px solid var(--line2)}
+.cmp td.best{color:var(--success)}
+.cmp td.best::after{content:" ★";font-size:11px}
+.area{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dashed var(--line)}
+.area:last-child{border:0}
+.area .d{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:var(--sunken);color:var(--muted)}
+.area b{display:block;font-size:14.5px}.area small{color:var(--faint);font-size:12.5px}
+.area .n{margin-inline-start:auto;font:700 14px Alexandria}
+.team{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.team:last-child{border:0}
+.team .av{width:34px;height:34px;border-radius:11px;font-size:11.5px}
+.team b{display:block;font-size:14.5px}.team small{color:var(--faint);font-size:12.5px}
+.team .r{margin-inline-start:auto;font-size:12.5px;font-weight:700;padding:2px 9px;border-radius:99px;background:var(--sunken);color:var(--ink2)}
+.team .r.col{background:var(--success-t);color:var(--success)}
+.dchart{display:flex;align-items:flex-end;gap:3px;height:90px;direction:ltr;margin:6px 0 4px}
+.dchart i{flex:1;border-radius:4px 4px 1px 1px;background:linear-gradient(180deg,#d0555c,#7d121b);opacity:.6}
+.dchart i:last-child{opacity:1}
+.sec-t{font:700 15px 'El Messiri',serif;margin:14px 0 6px;display:flex;justify-content:space-between;align-items:baseline}
+.sec-t small{font:500 12.5px 'IBM Plex Sans Arabic';color:var(--faint)}
+@media (max-width:1180px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ov{grid-template-columns:1fr}}
+@media (max-width:760px){.grid{grid-template-columns:1fr;padding:12px}.share>div{grid-template-columns:90px 1fr 70px}.h-big{font-size:36px}.govs{width:100%;overflow-x:auto;flex-wrap:nowrap}
+  td.c-gov,td.c-rate{display:none}td.c-kpi{grid-column:1/-1}td.c-status{grid-column:3;grid-row:1}}
+</style>
+</head>
+<body>
+<div class="demo-bar">
+  <div><b>الفروع</b> · نموذج تفاعلي</div>
+  <div class="seg" role="group" aria-label="الوضع"><button data-theme="light" aria-pressed="true">نهاري</button><button data-theme="dark" aria-pressed="false">ليلي</button></div>
+</div>
+
+<main class="wrap">
+  <div class="ph">
+    <div><h1>الفروع</h1><p>كل فروع الشركة: مين بيديرها، قديش فيها مشتركين، وكيف ماشي التحصيل.</p></div>
+    <div class="acts">
+      <button class="btn" id="perfBtn"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>أداء الفروع</button>
+      <button class="btn pr" id="newBr"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>فرع جديد</button>
+    </div>
+  </div>
+
+  <div class="ov">
+    <section class="hero" id="hero" aria-label="ملخص الفروع"></section>
+    <div class="stats" id="stats"></div>
+  </div>
+
+  <section class="card">
+    <div class="tb">
+      <div class="search">
+        <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input id="q" placeholder="بحث باسم الفرع، الموقع، أو المدير..." aria-label="بحث"><kbd>/</kbd>
+      </div>
+      <div class="govs" id="govs" role="group" aria-label="المحافظة"></div>
+      <div class="status" role="group" aria-label="الحالة" id="status" style="display:inline-flex;gap:2px;padding:3px;border-radius:13px;background:var(--sunken);border:1px solid var(--line2)"></div>
+      <button class="clear" id="clear" hidden>مسح الفلاتر</button>
+      <div class="sp">
+        <span class="num" id="count" style="font-size:14.5px;color:var(--faint)"></span>
+        <div class="viewtg" role="group" aria-label="طريقة العرض">
+          <button data-v="cards" aria-pressed="true"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>بطاقات</button>
+          <button data-v="table" aria-pressed="false"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>جدول</button>
+        </div>
+      </div>
+    </div>
+    <div id="cards" class="grid"></div>
+    <div class="tw" id="tableWrap" hidden>
+      <table aria-label="الفروع">
+        <thead><tr>
+          <th><span class="ck" role="checkbox" aria-checked="false" id="ckAll" tabindex="0" aria-label="تحديد الكل"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M5 12l5 5 9-10"/></svg></span></th>
+          <th><button data-k="name">الفرع<span class="ar">▲▼</span></button></th>
+          <th>المحافظة</th>
+          <th><button data-k="subs">المشتركون<span class="ar">▲▼</span></button></th>
+          <th><button data-k="coll">تحصيل الشهر<span class="ar">▲▼</span></button></th>
+          <th><button data-k="rate">نسبة التحصيل<span class="ar">▲▼</span></button></th>
+          <th>الحالة</th>
+          <th style="text-align:end">الإجراءات</th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="empty" hidden><div class="e"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></div><b>ما في فروع</b>جرّب كلمة ثانية، أو امسح الفلاتر.</div>
+  </section>
+  <div class="hintbar"><span><kbd>/</kbd> بحث</span><span><kbd>J</kbd><kbd>K</kbd> تنقّل</span><span><kbd>Enter</kbd> تفاصيل الفرع</span><span><kbd>X</kbd> تحديد للمقارنة</span><span><kbd>Esc</kbd> إغلاق</span></div>
+</main>
+
+<div class="menu" id="menu" role="menu"></div>
+<div class="bulk" id="bulk" role="toolbar" aria-label="إجراءات جماعية">
+  <span class="n"><b class="num" id="bn">0</b>فروع محددة</span>
+  <button id="cmpBtn"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 8h4M5 12h4M15 8h4M15 12h4"/></svg><span>مقارنة</span></button>
+  <button data-bulk="xls"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 12l4 5M13 12l-4 5"/></svg><span>تصدير تقرير</span></button>
+  <button id="bulkClear" aria-label="إلغاء التحديد"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+</div>
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-label="تفاصيل الفرع"></aside>
+<div class="toast" id="toast"><span class="ok"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span id="tmsg"></span><button id="undo">تراجع</button></div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const ic=p=>`<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+const I={bld:'<path d="M3 21h18M5 21V8l7-5 7 5v13"/><path d="M9 21v-6h6v6"/>',pin:'<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21"/><circle cx="12" cy="9.5" r="2.5"/>',users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',team:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',cash:'<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/>',eye:'<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',down:'<path d="M6 9l6 6 6-6"/>',up:'<path d="M18 15l-6-6-6 6"/>',more:'<circle cx="5" cy="12" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/><circle cx="19" cy="12" r="1.3" fill="currentColor"/>',pen:'<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/>',chart:'<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>',ledger:'<path d="M4 4h16v16H4zM4 9h16M9 9v11M13 13h4M13 17h4"/>',ban:'<circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/>',check:'<path d="M5 12l5 5 9-10"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>',phone:'<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/>',debt:'<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',map:'<path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15"/>',bolt:'<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',plus:'<path d="M12 5v14M5 12h14"/>',copy:'<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>'};
+let seed=3;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+const B=[
+ {id:1,name:'فرع المنصور',gov:'بغداد',loc:'المنصور · شارع 14 رمضان',phone:'0599 361 229',mgr:'Kaitlyn Lueilwitz',subs:142,staff:6,coll:9120,debt:5480,split:[92,31,19],areas:['حي الأميرات','اليرموك','الداودي'],active:true,since:'2024'},
+ {id:2,name:'فرع الكرادة',gov:'بغداد',loc:'الكرادة داخل · قرب ساحة الحرية',phone:'0598 112 440',mgr:'Omar Haddad',subs:131,staff:5,coll:10480,debt:3910,split:[88,27,16],areas:['الكرادة داخل','الكرادة خارج','الجادرية','أبو نواس'],active:true,since:'2024'},
+ {id:3,name:'فرع الشعار',gov:'بغداد',loc:'الشعار · المنطقة الصناعية',phone:'0597 804 516',mgr:'Lina Khoury',subs:123,staff:5,coll:7650,debt:6120,split:[47,40,36],areas:['الشعار','البياع'],active:true,since:'2025'},
+ {id:4,name:'فرع العشار',gov:'البصرة',loc:'العشار · شارع الوطني',phone:'0569 220 781',mgr:'Rami Awad',subs:96,staff:4,coll:6230,debt:2840,split:[71,15,10],areas:['العشار','الجمهورية','البراضعية'],active:true,since:'2025'},
+ {id:5,name:'فرع الزبير',gov:'البصرة',loc:'الزبير · المركز',phone:'0569 440 102',mgr:'Issa Barakat',subs:58,staff:3,coll:3120,debt:2210,split:[35,14,9],areas:['الزبير','خور الزبير'],active:true,since:'2026',isNew:true},
+ {id:6,name:'فرع الحلة',gov:'بابل',loc:'الحلة · حي الجامعة',phone:'0592 017 663',mgr:'Tareq Odeh',subs:34,staff:2,coll:0,debt:1480,split:[0,21,13],areas:['حي الجامعة'],active:false,since:'2025'}
+].map(b=>({...b,spark:Array.from({length:14},()=>Math.round(6+rnd()*20)),prev:Math.round(b.coll*(.8+rnd()*.3)),rate:0}));
+B.forEach(b=>{b.rate=b.coll+b.debt?Math.round(b.coll/(b.coll+b.debt)*100):0});
+const GOVS=['بغداد','البصرة','بابل'];
+const STAFF={col:['Christine King','Timothy Okuneva','Karim Nassar','Yara Saleh','George Haddad'],data:['Hana Qasem','Salma Mansour','Nadia Khoury']};
+const S={gov:null,st:'all',q:'',view:'cards',sort:{k:'coll',dir:-1},sel:new Set(),kb:-1};
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const ini=n=>n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+const f0=n=>Math.round(n).toLocaleString('en-US');
+function hl(t){t=String(t);if(!S.q)return esc(t);const i=t.toLowerCase().indexOf(S.q.toLowerCase());return i<0?esc(t):esc(t.slice(0,i))+'<mark>'+esc(t.slice(i,i+S.q.length))+'</mark>'+esc(t.slice(i+S.q.length))}
+
+function overview(){
+  const act=B.filter(b=>b.active),tot=act.reduce((a,b)=>a+b.coll,0),prev=act.reduce((a,b)=>a+b.prev,0),ch=Math.round((tot-prev)/prev*100);
+  const sorted=[...act].sort((a,b)=>b.coll-a.coll),mx=sorted[0].coll;
+  $('#hero').innerHTML=`<small>تحصيل كل الفروع · هذا الشهر</small><div class="h-row"><div class="h-big">${f0(tot)}<span>₪</span></div><span class="delta">${ch>=0?'▲':'▼'} ${Math.abs(ch)}%</span></div>
+  <div class="share">${sorted.map(b=>`<div><span>${b.name}</span><span class="b"><i style="width:${b.coll/mx*100}%"></i></span><b>${f0(b.coll)} ₪</b></div>`).join('')}</div>`;
+  const subs=B.reduce((a,b)=>a+b.subs,0),staff=B.reduce((a,b)=>a+b.staff,0),debt=B.reduce((a,b)=>a+b.debt,0),rate=Math.round(tot/(tot+debt)*100);
+  $('#stats').innerHTML=`<div class="st"><span class="ic">${ic(I.bld)}</span><small>الفروع</small><b class="num">${act.length}</b><span>مفعّلة من ${B.length} · ${GOVS.length} محافظات</span></div>
+  <div class="st"><span class="ic">${ic(I.users)}</span><small>المشتركون</small><b class="num">${f0(subs)}</b><span>${staff} موظف بكل الفروع</span></div>
+  <div class="st wide"><span class="ring" style="--p:${rate}" data-v="${rate}%"></span><div><small>نسبة التحصيل العامة</small><b class="num" style="color:var(--danger)">${f0(debt)} ₪</b><span>ديون لسا ما انحصّلت · أعلى فرع: ${[...B].sort((a,b)=>b.rate-a.rate)[0].name}</span></div></div>`;
+}
+function list(){
+  let r=B.filter(b=>(!S.gov||b.gov===S.gov)&&(S.st==='all'||(S.st==='on'?b.active:!b.active)));
+  if(S.q){const q=S.q.toLowerCase();r=r.filter(b=>b.name.includes(S.q)||b.loc.includes(S.q)||b.mgr.toLowerCase().includes(q))}
+  const {k,dir}=S.sort;r.sort((a,b)=>(typeof a[k]==='string'?a[k].localeCompare(b[k]):a[k]-b[k])*dir);return r;
+}
+const statusPill=b=>b.active?(b.isNew?'<span class="pill p-susp" style="--x:0"><i></i>جديد</span>':'<span class="pill p-active"><i></i>نشط</span>'):'<span class="pill p-cut"><i></i>موقوف</span>';
+const actions=b=>`<div class="ra"><button class="ib" data-more aria-label="إجراءات أخرى">${ic(I.more)}</button><button class="ib ed" data-edit aria-label="تعديل">${ic(I.pen)}</button><span class="split"><button data-view>${ic(I.eye)}عرض</button><button data-more aria-label="إجراءات سريعة">${ic(I.down)}</button></span></div>`;
+let view=[];
+function render(){
+  overview();view=list();
+  $('#govs').innerHTML=`<button class="gov" data-g="" aria-pressed="${!S.gov}">كل المحافظات</button>`+GOVS.map(g=>`<button class="gov" data-g="${g}" aria-pressed="${S.gov===g}">${g}<span>${B.filter(b=>b.gov===g).length}</span></button>`).join('');
+  $$('.gov').forEach(b=>b.onclick=()=>{S.gov=b.dataset.g||null;render()});
+  const c=s=>B.filter(b=>s==='all'||(s==='on'?b.active:!b.active)).length;
+  $('#status').innerHTML=[['all','الكل'],['on','نشط'],['off','موقوف']].map(([k,n])=>`<button data-s="${k}" aria-pressed="${S.st===k}" style="border:0;cursor:pointer;padding:7px 12px;border-radius:10px;font-weight:600;font-size:14px;${S.st===k?'background:var(--surface);color:var(--ink);box-shadow:0 1px 3px #10182822':'background:transparent;color:var(--muted)'}">${n} <span class="num" style="font-size:12px;color:var(--faint)">${c(k)}</span></button>`).join('');
+  $$('#status button').forEach(b=>b.onclick=()=>{S.st=b.dataset.s;render()});
+  $('#cards').hidden=S.view!=='cards';$('#tableWrap').hidden=S.view!=='table';
+  const mxS=Math.max(...B.map(b=>Math.max(...b.spark)));
+  $('#cards').innerHTML=view.map((b,i)=>{const sel=S.sel.has(b.id),tot=b.split.reduce((a,x)=>a+x,0)||1;
+    return`<article class="bc ${sel?'sel':''} ${b.active?'':'off'} ${i===S.kb?'kb':''}" data-id="${b.id}" style="animation-delay:${i*40}ms">
+    <div class="bc-h"><span class="bc-ic">${ic(I.bld)}</span><div><b>${hl(b.name)}</b><small>${ic(I.pin)}${hl(b.loc)}</small></div><span class="ck" role="checkbox" aria-checked="${sel}" tabindex="0" aria-label="تحديد للمقارنة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M5 12l5 5 9-10"/></svg></span></div>
+    <div style="display:flex;gap:8px;align-items:center">${statusPill(b)}<span class="muted" style="font-size:13px">${b.gov} · منذ ${b.since}</span></div>
+    <div class="mgr"><span class="av">${ini(b.mgr)}</span><div><b style="font-weight:700">${hl(b.mgr)}</b><span>مدير الفرع</span></div><span class="ph">${b.phone}</span></div>
+    <div class="m4"><div><small>المشتركون</small><b>${b.subs}</b></div><div><small>الموظفون</small><b>${b.staff}</b></div><div><small>تحصيل الشهر</small><b class="g">${f0(b.coll)}</b></div><div><small>ديون</small><b class="r">${f0(b.debt)}</b></div></div>
+    <div><div class="subbar"><i style="flex:${b.split[0]};background:#10b981"></i><i style="flex:${b.split[1]};background:#f59e0b"></i><i style="flex:${b.split[2]};background:#dc2626"></i></div><div class="sublg"><span><i style="background:#10b981"></i>نشط ${b.split[0]}</span><span><i style="background:#f59e0b"></i>مفصول ${b.split[1]}</span><span><i style="background:#dc2626"></i>مقطوع ${b.split[2]}</span></div></div>
+    <div class="bc-f"><div><small class="muted" style="font-size:12px;display:block">نسبة التحصيل</small><span class="rate">${b.rate}%<span class="m"><i style="width:${b.rate}%"></i></span></span></div>${actions(b)}</div></article>`}).join('')+(S.view==='cards'&&!S.q?`<button class="newb" id="newCard"><div><span class="p">${ic(I.plus)}</span>إضافة فرع جديد<small style="display:block;font-weight:500;margin-top:4px">الاسم والموقع والمدير، وبس</small></div></button>`:'');
+  $('#rows').innerHTML=view.map((b,i)=>{const sel=S.sel.has(b.id);return`<tr data-id="${b.id}" class="${sel?'sel':''} ${i===S.kb?'kb':''}">
+    <td><span class="ck" role="checkbox" aria-checked="${sel}" tabindex="0" aria-label="تحديد"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M5 12l5 5 9-10"/></svg></span></td>
+    <td class="c-id"><div class="id"><span class="av" style="background:var(--hero)">${ic(I.bld)}</span><div><b>${hl(b.name)}</b><small style="direction:rtl;text-align:right;font-family:inherit">${hl(b.mgr)}</small></div></div></td>
+    <td class="c-gov">${b.gov}</td><td class="c-kpi"><b class="num">${b.subs}</b> <span class="muted" style="font-size:13px">· ${b.staff} موظف</span></td>
+    <td class="c-kpi"><b class="num" style="color:var(--success)">${f0(b.coll)} ₪</b></td>
+    <td class="c-rate"><span class="rate">${b.rate}%<span class="m"><i style="width:${b.rate}%"></i></span></span></td>
+    <td class="c-status">${statusPill(b)}</td><td class="c-act">${actions(b)}</td></tr>`}).join('');
+  $('#empty').hidden=!!view.length;$('#count').textContent=view.length+' فرع';
+  $$('th button[data-k]').forEach(b=>{if(b.dataset.k===S.sort.k){b.dataset.dir=S.sort.dir;b.querySelector('.ar').textContent=S.sort.dir>0?'▲':'▼'}else{delete b.dataset.dir;b.querySelector('.ar').textContent='▲▼'}});
+  $('#clear').hidden=!(S.gov||S.st!=='all'||S.q);
+  const ids=view.map(b=>b.id),n=ids.filter(i=>S.sel.has(i)).length;$('#ckAll').setAttribute('aria-checked',n&&n===ids.length?'true':n?'mixed':'false');
+  $('#bn').textContent=S.sel.size;$('#bulk').classList.toggle('on',S.sel.size>0);$('#cmpBtn').disabled=S.sel.size<2;$('#cmpBtn').style.opacity=S.sel.size<2?.45:1;
+  $('#newCard')&&($('#newCard').onclick=()=>toast('بيفتح نموذج إضافة فرع'));
+}
+function onItemClick(e){
+  const el=e.target.closest('[data-id]');if(!el)return;const b=B.find(x=>x.id==el.dataset.id);
+  if(e.target.closest('.ck')){S.sel.has(b.id)?S.sel.delete(b.id):S.sel.add(b.id);render();return}
+  const m=e.target.closest('[data-more]');if(m){e.stopPropagation();openMenu(m,b);return}
+  if(e.target.closest('[data-edit]')){toast('بيفتح نموذج تعديل '+b.name);return}
+  openDrawer(b);
+}
+$('#cards').addEventListener('click',onItemClick);$('#rows').addEventListener('click',onItemClick);
+$$('.viewtg button').forEach(b=>b.onclick=()=>{$$('.viewtg button').forEach(x=>x.setAttribute('aria-pressed',x===b));S.view=b.dataset.v;S.kb=-1;render()});
+$('#q').oninput=e=>{S.q=e.target.value.trim();S.kb=-1;render()};
+$('#clear').onclick=()=>{S.gov=null;S.st='all';S.q='';$('#q').value='';render()};
+$$('th button[data-k]').forEach(b=>b.onclick=()=>{const k=b.dataset.k;S.sort=S.sort.k===k?{k,dir:-S.sort.dir}:{k,dir:k==='name'?1:-1};render()});
+$('#ckAll').onclick=()=>{const all=view.every(b=>S.sel.has(b.id));view.forEach(b=>all?S.sel.delete(b.id):S.sel.add(b.id));render()};
+$('#bulkClear').onclick=()=>{S.sel.clear();render()};
+$('[data-bulk=xls]').onclick=()=>toast('تصدّر تقرير لـ '+S.sel.size+' فروع');
+$('#cmpBtn').onclick=()=>{if(S.sel.size>=2)openCompare()};
+document.addEventListener('click',e=>{if(!e.target.closest('#menu')&&!e.target.closest('[data-more]'))closeMenu()});
+
+let mBtn=null;
+function openMenu(btn,b){
+  if(mBtn===btn){closeMenu();return}closeMenu();mBtn=btn;btn.classList.add('on');
+  const it=[['chart','أداء الفرع'],['ledger','السجل المالي للفرع'],['users','مشتركو الفرع'],['team','موظفو الفرع'],['copy','نسخ رقم الهاتف'],null,b.active?['ban','إيقاف الفرع','dg']:['check','تفعيل الفرع']];
+  const m=$('#menu');m.style.width='280px';m.innerHTML=`<div class="mh"><span class="av" style="width:36px;height:36px;background:var(--hero)">${ic(I.bld)}</span><div><b>${b.name}</b><small style="font-family:inherit">${b.gov}</small></div></div><div class="mb" style="padding:6px">`+it.map(x=>x?`<div class="mi ${x[2]==='dg'?'dg':''}" data-a="${x[1]}" style="${x[2]==='dg'?'color:var(--danger)':''}"><span class="mic">${ic(I[x[0]])}</span><span class="t">${x[1]}</span></div>`:'<div style="height:1px;background:var(--line2);margin:4px 6px"></div>').join('')+'</div>';
+  $$('#menu .mi').forEach(el=>el.onclick=()=>{closeMenu();const a=el.dataset.a;if(a==='إيقاف الفرع'||a==='تفعيل الفرع'){const was=b.active;b.active=!was;render();toast((b.active?'انفعّل ':'انوقف ')+b.name+(b.active?'':'، والمشتركين والموظفين فيه ما تأثروا'),()=>{b.active=was;render()})}else toast(a+' · '+b.name)});
+  const r=btn.getBoundingClientRect();m.classList.add('open');const h=m.offsetHeight;let top=r.bottom+8;if(top+h>innerHeight-10)top=Math.max(10,r.top-h-8);
+  m.style.top=top+'px';m.style.left=Math.max(10,Math.min(r.left,innerWidth-290))+'px';
+}
+function closeMenu(){$('#menu').classList.remove('open');mBtn?.classList.remove('on');mBtn=null}
+
+let dIdx=-1,curTab='ov';
+function openDrawer(b,tab='ov'){
+  closeMenu();curTab=tab;dIdx=view.indexOf(b);
+  let body='';
+  if(tab==='ov'){body=`<div class="sec-t">التحصيل اليومي<small>آخر 14 يوم</small></div><div class="dchart">${b.spark.map(h=>`<i style="height:${h/26*100}%"></i>`).join('')}</div>
+    <div class="sec-t">حالة المشتركين<small>${b.subs} مشترك</small></div><div class="subbar" style="height:12px"><i style="flex:${b.split[0]};background:#10b981"></i><i style="flex:${b.split[1]};background:#f59e0b"></i><i style="flex:${b.split[2]};background:#dc2626"></i></div><div class="sublg"><span><i style="background:#10b981"></i>نشط ${b.split[0]}</span><span><i style="background:#f59e0b"></i>مفصول ${b.split[1]}</span><span><i style="background:#dc2626"></i>مقطوع ${b.split[2]}</span></div>
+    <div class="info"><div><small>الموقع</small><b>${b.loc}</b></div><div><small>الهاتف</small><b class="num">${b.phone}</b></div><div><small>مقارنة بالشهر الماضي</small><b class="num" style="color:${b.coll>=b.prev?'var(--success)':'var(--danger)'}">${b.prev?(b.coll>=b.prev?'▲ ':'▼ ')+Math.abs(Math.round((b.coll-b.prev)/b.prev*100))+'%':'—'}</b></div><div><small>تاريخ الافتتاح</small><b class="num">${b.since}</b></div></div>`}
+  else if(tab==='team'){const cols=STAFF.col.slice(0,Math.max(1,b.staff-2)),data=STAFF.data.slice(0,1);body=[[b.mgr,'مدير الفرع','',true]].concat(cols.map(n=>[n,'محصّل','col']),data.map(n=>[n,'مدخل بيانات',''])).slice(0,b.staff).map(([n,r,c,m])=>`<div class="team"><span class="av">${ini(n)}</span><div><b>${n}</b><small>${m?'مسؤول عن الفرع':c==='col'?'تحصيل الشهر '+f0(800+n.length*97)+' ₪':'إدخال بيانات'}</small></div><span class="r ${c}">${r}</span></div>`).join('')}
+  else{body=b.areas.map((a,i)=>`<div class="area"><span class="d">${ic(I.map)}</span><div><b>${a}</b><small>${2+i} مناطق فرعية · ${3+i*2} طبلونات</small></div><span class="n">${Math.round(b.subs/b.areas.length+(i?-3:5))} مشترك</span></div>`).join('')+`<button class="btn" style="width:100%;justify-content:center;margin-top:12px">${ic(I.plus)}إضافة منطقة</button>`}
+  $('#drawer').innerHTML=`<div class="dhero"><div class="dtop"><small>${b.gov} · منذ ${b.since}</small><button class="ib" id="dPrev" aria-label="السابق">${ic(I.up)}</button><button class="ib" id="dNext" aria-label="التالي">${ic(I.down)}</button><button class="ib" id="dClose" aria-label="إغلاق">${ic(I.x)}</button></div>
+    <div class="dwho"><span class="av">${ic(I.bld)}</span><div><b>${b.name}</b><small>${b.mgr} · <span class="num">${b.phone}</span></small></div></div>
+    <div class="dk"><div><small>تحصيل الشهر</small><b style="color:#5eead4">${f0(b.coll)} ₪</b></div><div><small>الديون</small><b style="color:#fca5a5">${f0(b.debt)} ₪</b></div><div><small>نسبة التحصيل</small><b>${b.rate}%</b></div></div></div>
+  <div class="dtabs" role="tablist">${[['ov','نظرة عامة'],['team','الفريق ('+b.staff+')'],['areas','المناطق ('+b.areas.length+')']].map(([k,n])=>`<button role="tab" data-tab="${k}" aria-selected="${k===tab}">${n}</button>`).join('')}</div>
+  <div class="dbody">${body}</div>
+  <div class="dfoot"><button class="btn pay" style="background:var(--hero);box-shadow:none" id="dPerf">${ic(I.chart)}أداء الفرع</button><button class="btn" id="dEdit">${ic(I.pen)}تعديل</button></div>`;
+  $('#drawer').classList.add('on');$('#scrim').classList.add('on');
+  $('#dClose').onclick=closeDrawer;$('#dPrev').onclick=()=>step(-1);$('#dNext').onclick=()=>step(1);
+  $$('.dtabs button').forEach(x=>x.onclick=()=>openDrawer(b,x.dataset.tab));
+  $('#dPerf').onclick=()=>toast('بيفتح صفحة أداء '+b.name);$('#dEdit').onclick=()=>toast('بيفتح نموذج تعديل '+b.name);
+  S.kb=dIdx;markKb();
+}
+function openCompare(){
+  const sel=B.filter(b=>S.sel.has(b.id));
+  const rows=[['المشتركون','subs',1],['الموظفون','staff',1],['تحصيل الشهر','coll',1],['الديون','debt',-1],['نسبة التحصيل','rate',1],['مشترك لكل موظف',null,-1]];
+  const val=(b,k)=>k?b[k]:Math.round(b.subs/b.staff);
+  $('#drawer').innerHTML=`<div class="dhero"><div class="dtop"><small>مقارنة</small><button class="ib" id="dClose" aria-label="إغلاق">${ic(I.x)}</button></div><div class="dwho"><div><b>مقارنة ${sel.length} فروع</b><small>النجمة على الأفضل بكل سطر</small></div></div></div>
+  <div class="dbody"><table class="cmp"><thead><tr><th></th>${sel.map(b=>`<th>${b.name.replace('فرع ','')}</th>`).join('')}</tr></thead><tbody>${rows.map(([n,k,dir])=>{const vs=sel.map(b=>val(b,k)),best=dir>0?Math.max(...vs):Math.min(...vs);return`<tr><td>${n}</td>${vs.map(v=>`<td class="${v===best?'best':''}">${k==='rate'?v+'%':f0(v)}</td>`).join('')}</tr>`}).join('')}</tbody></table>
+  <div class="note" style="margin-top:14px;font-size:13px;color:var(--faint)">"مشترك لكل موظف" أقل يعني ضغط أقل على الفريق.</div></div>
+  <div class="dfoot"><button class="btn" id="cmpX">${ic(I.ledger)}تصدير المقارنة</button></div>`;
+  $('#drawer').classList.add('on');$('#scrim').classList.add('on');$('#dClose').onclick=closeDrawer;$('#cmpX').onclick=()=>toast('تصدّرت المقارنة Excel');
+}
+function markKb(){$$('#cards .bc').forEach((c,i)=>c.classList.toggle('kb',i===S.kb&&S.view==='cards'));$$('#rows tr').forEach((t,i)=>t.classList.toggle('kb',i===S.kb&&S.view==='table'))}
+function step(n){const v=view[dIdx+n];if(v)openDrawer(v,curTab)}
+function closeDrawer(){$('#drawer').classList.remove('on');$('#scrim').classList.remove('on')}
+$('#scrim').onclick=closeDrawer;
+let undoFn=null;
+function toast(m,undo){const t=$('#toast');$('#tmsg').textContent=m;undoFn=undo||null;$('#undo').hidden=!undo;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),5000)}
+$('#undo').onclick=()=>{undoFn&&undoFn();$('#toast').classList.remove('on')};
+document.addEventListener('keydown',e=>{
+  const typing=['INPUT','TEXTAREA'].includes(document.activeElement.tagName);
+  if(e.key==='Escape'){if($('#menu').classList.contains('open'))closeMenu();else if($('#drawer').classList.contains('on'))closeDrawer();else if(typing)document.activeElement.blur();return}
+  if(typing)return;
+  if(e.key==='/'){e.preventDefault();$('#q').focus();return}
+  const dn=e.key==='j'||e.key==='ArrowDown',up=e.key==='k'||e.key==='ArrowUp';
+  if(dn||up){e.preventDefault();if($('#drawer').classList.contains('on')&&dIdx>=0){step(dn?1:-1);return}S.kb=Math.max(0,Math.min(view.length-1,S.kb+(dn?1:-1)));markKb();(S.view==='cards'?$$('#cards .bc'):$$('#rows tr'))[S.kb]?.scrollIntoView({block:'nearest'})}
+  if(e.key==='Enter'&&view[S.kb])openDrawer(view[S.kb]);
+  if(e.key==='x'&&view[S.kb]){const id=view[S.kb].id;S.sel.has(id)?S.sel.delete(id):S.sel.add(id);render()}
+});
+window.addEventListener('scroll',closeMenu,{passive:true});
+$$('.seg button').forEach(b=>b.onclick=()=>{$$('.seg button').forEach(x=>x.setAttribute('aria-pressed',x===b));document.documentElement.dataset.theme=b.dataset.theme});
+$('#newBr').onclick=()=>toast('بيفتح نموذج إضافة فرع');$('#perfBtn').onclick=()=>toast('بيفتح صفحة أداء الفروع');
+render();
+</script>
+</body>
+</html>
