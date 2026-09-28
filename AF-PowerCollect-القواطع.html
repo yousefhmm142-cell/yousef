@@ -353,7 +353,7 @@ tbody tr:hover .pencil,.pencil:focus-visible{opacity:1;border-color:var(--line);
 .sim .out small{display:block;font-size:12px;color:var(--faint)}.sim .out b{font:800 17px Alexandria}
 @media (max-width:1100px){.ov{grid-template-columns:1fr 1fr}.hero{grid-column:1/-1}.col-rev{display:none}}
 @media (max-width:760px){.ov{grid-template-columns:1fr}.dist{gap:5px}.col .n{font-size:11px}td.c-subs{grid-column:1/-1}td.c-price{grid-column:1/-1}td.col-rev,td.c-lvl{display:none}.addrow{margin:6px 0 12px}}
-</style>
+tbody tr{cursor:default}</style>
 </head>
 <body>
 <div class="demo-bar">
@@ -392,11 +392,9 @@ tbody tr:hover .pencil,.pencil:focus-visible{opacity:1;border-color:var(--line);
     </div>
     <div class="addrow" id="addrow"></div>
   </section>
-  <div class="hintbar"><span><kbd>/</kbd> بحث</span><span><kbd>N</kbd> قاطع جديد</span><span><kbd>J</kbd><kbd>K</kbd> تنقّل</span><span><kbd>E</kbd> تعديل السعر</span><span><kbd>Enter</kbd> حفظ</span><span><kbd>Esc</kbd> إلغاء</span></div>
+  <div class="hintbar"><span><kbd>/</kbd> بحث</span><span><kbd>N</kbd> قاطع جديد</span><span><kbd>J</kbd><kbd>K</kbd> تنقّل</span><span><kbd>E</kbd> تعديل السعر</span><span><kbd>Enter</kbd> حفظ السعر</span><span><kbd>Esc</kbd> إلغاء</span></div>
 </main>
 <div class="menu" id="menu" role="menu"></div>
-<div class="scrim" id="scrim"></div>
-<aside class="drawer" id="drawer" aria-label="تفاصيل القاطع"></aside>
 <div class="toast" id="toast"><span class="ok"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span><span id="tmsg"></span><button id="undo">تراجع</button></div>
 <div id="modal"></div>
 <script>
@@ -439,7 +437,7 @@ function render(){
     <td class="c-price">${ed?`<div class="pedit"><input id="pin" value="${b.min}" inputmode="decimal" aria-label="الحد الأدنى الجديد"><button class="ok" id="pok" aria-label="حفظ">${ic(I.check)}</button><button class="no" id="pno" aria-label="إلغاء">${ic(I.x)}</button></div><span class="impact" id="pimp"></span>`:`<div class="price"><span class="v num">${f2(b.min)}<small>₪</small></span><span class="per">${f2(b.min/b.amp)} ₪/أمبير</span><button class="pencil" data-pe aria-label="تعديل السعر">${ic(I.pen)}</button></div>`}</td>
     <td class="c-subs"><div class="subsn"><b>${b.subs} <span>مشترك</span></b><span class="m"><i style="width:${b.subs/mx*100}%"></i></span></div></td>
     <td class="col-rev"><span class="rev num">${f0(b.subs*b.min)} ₪<small>بالشهر كحد أدنى</small></span></td>
-    <td class="c-act"><div class="ra"><button class="ib" data-more aria-label="إجراءات أخرى">${ic(I.more)}</button><button class="ib ed" data-pe aria-label="تعديل السعر">${ic(I.pen)}</button><span class="split"><button data-view>${ic(I.eye)}عرض</button><button data-more aria-label="إجراءات سريعة">${ic(I.down)}</button></span></div></td></tr>`}).join('');
+    <td class="c-act"><div class="ra"><button class="ib" data-more aria-label="إجراءات أخرى">${ic(I.more)}</button><button class="ib ed" data-pe aria-label="تعديل السعر">${ic(I.pen)}</button></div></td></tr>`}).join('');
   $('#empty').hidden=!!view.length;$('#count').textContent=view.length+' قاطع';
   $$('th button[data-k]').forEach(b=>{if(b.dataset.k===S.sort.k){b.dataset.dir=S.sort.dir;b.querySelector('.ar').textContent=S.sort.dir>0?'▲':'▼'}else{delete b.dataset.dir;b.querySelector('.ar').textContent='▲▼'}});
   $('#clear').hidden=!(S.q||S.use!=='all');
@@ -480,7 +478,7 @@ function addRow(){
 $('#rows').addEventListener('click',e=>{const tr=e.target.closest('tr');if(!tr||e.target.closest('.pedit'))return;const b=B.find(x=>x.id==tr.dataset.id);
   if(e.target.closest('[data-pe]')){S.edit=b.id;render();return}
   const m=e.target.closest('[data-more]');if(m){e.stopPropagation();openMenu(m,b);return}
-  openDrawer(b)});
+});
 $('#q').oninput=e=>{S.q=e.target.value.trim();render()};
 $('#clear').onclick=()=>{S.q='';S.use='all';$('#q').value='';render()};
 $$('th button[data-k]').forEach(b=>b.onclick=()=>{const k=b.dataset.k;S.sort=S.sort.k===k?{k,dir:-S.sort.dir}:{k,dir:k==='amp'?1:-1};render()});
@@ -488,39 +486,15 @@ $('#newBtn').onclick=()=>{S.adding=true;render();$('#addrow').scrollIntoView({bl
 document.addEventListener('click',e=>{if(!e.target.closest('#menu')&&!e.target.closest('[data-more]'))closeMenu()});
 let mBtn=null;
 function openMenu(btn,b){if(mBtn===btn){closeMenu();return}closeMenu();mBtn=btn;btn.classList.add('on');
-  const it=[['pen','تعديل الحد الأدنى'],['users','مشتركو هاد القاطع'],['move','نقل مشتركين لقاطع ثاني'],['history','سجل الأسعار'],null,['trash','حذف القاطع','dg']];
+  const it=[['pen','تعديل الحد الأدنى'],['users','مشتركو هاد القاطع'],null,['trash','حذف القاطع','dg']];
   const m=$('#menu');m.style.width='270px';m.innerHTML=`<div class="mb" style="padding:6px">`+it.map(x=>x?`<div class="mi" data-a="${x[1]}" style="${x[2]?'color:var(--danger)':''}"><span class="mic">${ic(I[x[0]])}</span><span class="t">${x[1]}</span>${x[2]&&b.subs?'<span style="font-size:11.5px;color:var(--faint)">عليه مشتركين</span>':''}</div>`:'<div style="height:1px;background:var(--line2);margin:4px 6px"></div>').join('')+'</div>';
   $$('#menu .mi').forEach(el=>el.onclick=()=>{closeMenu();const a=el.dataset.a;
     if(a==='تعديل الحد الأدنى'){S.edit=b.id;render()}
-    else if(a==='حذف القاطع'){if(b.subs)confirmBox('ما بتقدر تحذفه هلأ',`في <b>${b.subs} مشترك</b> مربوطين بقاطع ${b.amp}A. انقلهم لقاطع ثاني أول، وبعدين احذفه.`,'نقل المشتركين',()=>openDrawer(b,'move'),true);else confirmBox(`حذف قاطع ${b.amp}A`,'ما حدا مربوط بهاد القاطع، فحذفه آمن.','حذف',()=>{const idx=B.indexOf(b);B.splice(idx,1);render();toast(`انحذف قاطع ${b.amp}A`,()=>{B.splice(idx,0,b);render()})})}
-    else if(a==='سجل الأسعار')openDrawer(b,'hist');else if(a==='نقل مشتركين لقاطع ثاني')openDrawer(b,'move');else openDrawer(b)});
+    else if(a==='حذف القاطع'){if(b.subs)confirmBox('ما بتقدر تحذفه هلأ',`في <b>${b.subs} مشترك</b> مربوطين بقاطع ${b.amp}A. غيّر قاطعهم من صفحة المشتركين أول، وبعدين احذفه.`,'فتح المشتركين',()=>toast('بيفتح جدول المشتركين مفلتر على قاطع '+b.amp+'A'),true);else confirmBox(`حذف قاطع ${b.amp}A`,'ما حدا مربوط بهاد القاطع، فحذفه آمن.','حذف',()=>{const idx=B.indexOf(b);B.splice(idx,1);render();toast(`انحذف قاطع ${b.amp}A`,()=>{B.splice(idx,0,b);render()})})}
+    else toast('بيفتح جدول المشتركين مفلتر على قاطع '+b.amp+'A')});
   const r=btn.getBoundingClientRect();m.classList.add('open');const h=m.offsetHeight;let top=r.bottom+8;if(top+h>innerHeight-10)top=Math.max(10,r.top-h-8);
   m.style.top=top+'px';m.style.left=Math.max(10,Math.min(r.left,innerWidth-280))+'px'}
 function closeMenu(){$('#menu').classList.remove('open');mBtn?.classList.remove('on');mBtn=null}
-let dIdx=-1;
-function openDrawer(b,tab='subs'){closeMenu();dIdx=view.indexOf(b);
-  let body='';
-  if(tab==='subs'){body=b.subs?`<div class="sublist">${NAMES.slice(0,Math.min(4,b.subs)).map((n,i)=>`<div class="s"><span class="av">${ini(n)}</span><div><b>${n}</b><small>${202600041+i*37}</small></div>${i===2?`<span class="mc" title="حد أدنى خاص بهاد المشترك">${f0(b.min*.8)} ₪ خاص</span>`:''}</div>`).join('')}</div>${b.subs>4?`<button class="btn" style="width:100%;justify-content:center;margin-top:10px">عرض كل الـ ${b.subs} مشترك</button>`:''}`:'<div class="empty" style="padding:30px 10px"><b>ما حدا مربوط</b>لما تضيف مشترك وتختار هاد القاطع، بيطلع هون.</div>'}
-  else if(tab==='hist'){body=`<div class="tl">${b.hist.map(([v,d,w],i)=>`<div><span class="d ${i?'':'pay'}">${ic(I.cash)}</span><span><b>${f2(v)} ₪</b><small>${d} · ${w}</small></span><span class="amt">${i?'':'الحالي'}</span></div>`).join('')}</div>`}
-  else{const others=sorted().filter(x=>x.id!==b.id);body=`<p style="margin:0 0 10px;color:var(--muted);font-size:14.5px">اختار القاطع الجديد للـ <b>${b.subs}</b> مشترك:</p><div class="sublist">${others.map(x=>`<div class="s" style="cursor:pointer" data-to="${x.id}"><span class="av" style="background:var(--hero)">${x.amp}</span><div><b>قاطع ${x.amp}A</b><small>${f2(x.min)} ₪ · ${x.subs} مشترك</small></div><span class="mc" style="color:${x.min>b.min?'var(--danger)':'var(--success)'};background:${x.min>b.min?'var(--danger-t)':'var(--success-t)'}">${x.min>b.min?'+':'−'}${f0(Math.abs(x.min-b.min))} ₪</span></div>`).join('')}</div>`}
-  $('#drawer').innerHTML=`<div class="dhero"><div class="dtop"><small>قاطع</small><button class="ib" id="dPrev" aria-label="السابق">${ic(I.up)}</button><button class="ib" id="dNext" aria-label="التالي">${ic(I.down)}</button><button class="ib" id="dClose" aria-label="إغلاق">${ic(I.x)}</button></div>
-    <div class="dwho"><span class="av" style="font-size:20px">${b.amp}<small style="position:absolute;bottom:4px;font:700 9px Alexandria;color:#aeb6c1">AMP</small></span><div><b>قاطع ${b.amp} أمبير</b><small>${f2(b.min/b.amp)} ₪ لكل أمبير</small></div></div>
-    <div class="dk"><div><small>الحد الأدنى</small><b>${f2(b.min)} ₪</b></div><div><small>المشتركون</small><b>${b.subs}</b></div><div><small>شهرياً</small><b style="color:#5eead4">${f0(b.subs*b.min)} ₪</b></div></div></div>
-  <div class="dtabs" role="tablist">${[['subs','المشتركون'],['hist','سجل الأسعار'],['move','نقل المشتركين']].map(([k,n])=>`<button role="tab" data-tab="${k}" aria-selected="${k===tab}">${n}</button>`).join('')}</div>
-  <div class="dbody">${body}
-   ${tab==='subs'&&b.subs?`<div class="sim"><h4>جرّب سعر جديد قبل ما تغيّره</h4><div class="row"><input type="range" id="simR" min="${Math.round(b.min*.5)}" max="${Math.round(b.min*1.6)}" value="${b.min}"><b class="num" id="simV">${b.min} ₪</b></div><div class="out"><div><small>الفرق الشهري</small><b id="simD">0 ₪</b></div><div><small>الحد الأدنى الشهري الجديد</small><b id="simT">${f0(b.min*b.subs)} ₪</b></div></div></div>`:''}</div>
-  <div class="dfoot"><button class="btn" id="dEdit" style="flex:1.4;justify-content:center">${ic(I.pen)}تعديل الحد الأدنى</button><button class="btn" id="dSubs">${ic(I.users)}كل المشتركين</button></div>`;
-  $('#drawer').classList.add('on');$('#scrim').classList.add('on');
-  $('#dClose').onclick=closeDrawer;$('#dPrev').onclick=()=>step(-1);$('#dNext').onclick=()=>step(1);
-  $$('.dtabs button').forEach(x=>x.onclick=()=>openDrawer(b,x.dataset.tab));
-  $('#dEdit').onclick=()=>{closeDrawer();S.edit=b.id;render()};$('#dSubs').onclick=()=>toast('بيفتح جدول المشتركين مفلتر على '+b.amp+'A');
-  const r=$('#simR');r&&(r.oninput=()=>{const v=+r.value;$('#simV').textContent=v+' ₪';const d=(v-b.min)*b.subs;$('#simD').textContent=(d>=0?'+':'−')+f0(Math.abs(d))+' ₪';$('#simD').style.color=d>0?'var(--success)':d<0?'var(--danger)':'';$('#simT').textContent=f0(v*b.subs)+' ₪'});
-  $$('[data-to]').forEach(el=>el.onclick=()=>{const to=B.find(x=>x.id==el.dataset.to),n=b.subs;confirmBox(`نقل ${n} مشترك`,`من قاطع ${b.amp}A لقاطع ${to.amp}A. الحد الأدنى إلهم بيصير ${f2(to.min)} ₪.`,'نقل',()=>{to.subs+=n;b.subs=0;closeDrawer();render();toast(`انتقل ${n} مشترك لقاطع ${to.amp}A`,()=>{b.subs=n;to.subs-=n;render()})})});
-  S.kb=dIdx;$$('#rows tr').forEach((t,i)=>t.classList.toggle('kb',i===dIdx));
-}
-function step(n){const v=view[dIdx+n];if(v)openDrawer(v)}
-function closeDrawer(){$('#drawer').classList.remove('on');$('#scrim').classList.remove('on')}
-$('#scrim').onclick=closeDrawer;
 function confirmBox(title,msg,okT,ok,warn){
   $('#modal').innerHTML=`<div style="position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:16px;background:#0b0d1066;backdrop-filter:blur(3px)" id="mBg"><div style="width:min(440px,100%);background:var(--surface);border-radius:24px;box-shadow:var(--pop);overflow:hidden"><div style="padding:20px 20px 8px;display:flex;gap:12px"><span style="width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--warn-t);color:var(--warn);flex:none">${ic(I.warn)}</span><div><b style="display:block;font:700 18px 'El Messiri',serif">${title}</b><p style="margin:4px 0 0;color:var(--muted);font-size:14.5px">${msg}</p></div></div><div style="display:flex;gap:8px;justify-content:flex-end;padding:14px 20px;background:var(--raised);border-top:1px solid var(--line2);margin-top:12px"><button class="btn" id="mNo">إلغاء</button><button class="btn pr" id="mOk">${okT}</button></div></div></div>`;
   const close=()=>$('#modal').innerHTML='';$('#mOk').onclick=()=>{close();ok()};$('#mNo').onclick=close;$('#mBg').onclick=e=>{if(e.target.id==='mBg')close()};$('#mOk').focus()}
@@ -528,14 +502,13 @@ let undoFn=null;
 function toast(m,undo){const t=$('#toast');$('#tmsg').textContent=m;undoFn=undo||null;$('#undo').hidden=!undo;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),5000)}
 $('#undo').onclick=()=>{undoFn&&undoFn();$('#toast').classList.remove('on')};
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){if($('#modal').innerHTML){$('#modal').innerHTML='';return}if($('#menu').classList.contains('open'))closeMenu();else if($('#drawer').classList.contains('on'))closeDrawer();return}
+  if(e.key==='Escape'){if($('#modal').innerHTML){$('#modal').innerHTML='';return}if($('#menu').classList.contains('open'))closeMenu();return}
   if(['INPUT','TEXTAREA'].includes(document.activeElement.tagName))return;
   if(e.key==='/'){e.preventDefault();$('#q').focus();return}
   if(e.key==='n'){e.preventDefault();$('#newBtn').click();return}
   const dn=e.key==='j'||e.key==='ArrowDown',up=e.key==='k'||e.key==='ArrowUp';
-  if(dn||up){e.preventDefault();if($('#drawer').classList.contains('on')){step(dn?1:-1);return}S.kb=Math.max(0,Math.min(view.length-1,S.kb+(dn?1:-1)));$$('#rows tr').forEach((t,i)=>t.classList.toggle('kb',i===S.kb))}
+  if(dn||up){e.preventDefault();S.kb=Math.max(0,Math.min(view.length-1,S.kb+(dn?1:-1)));$$('#rows tr').forEach((t,i)=>t.classList.toggle('kb',i===S.kb))}
   if(e.key==='e'&&view[S.kb]){S.edit=view[S.kb].id;render()}
-  if(e.key==='Enter'&&view[S.kb])openDrawer(view[S.kb]);
 });
 window.addEventListener('scroll',closeMenu,{passive:true});
 $$('.seg button').forEach(b=>b.onclick=()=>{$$('.seg button').forEach(x=>x.setAttribute('aria-pressed',x===b));document.documentElement.dataset.theme=b.dataset.theme});
