@@ -257,7 +257,7 @@ tbody tr:hover .split,tbody tr.kb .split{background:linear-gradient(180deg,var(-
 }
 
 [hidden]{display:none!important}
-.ov{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:14px;margin-top:22px}
+.ov{display:grid;grid-template-columns:minmax(0,1.5fr) repeat(3,minmax(0,1fr));gap:12px;margin-top:22px}
 .hero{position:relative;overflow:hidden;background:var(--hero);color:#fff;border-radius:26px;padding:22px 24px 18px;box-shadow:0 30px 60px -30px #111820aa}
 .hero::after{content:"";position:absolute;inset-inline:0;top:0;height:3px;background:linear-gradient(90deg,#5c0d14,#a51d26 40%,#9aa3ae 75%,#dfe3e8)}
 .hero::before{content:"";position:absolute;inset:auto auto -140px -60px;width:320px;height:320px;border-radius:50%;background:radial-gradient(closest-side,#a51d2640,transparent)}
@@ -274,10 +274,10 @@ tbody tr:hover .split,tbody tr.kb .split{background:linear-gradient(180deg,var(-
 .col.on .bar{box-shadow:0 0 0 2px #fff}
 .col .a{font:800 14px Alexandria;color:#fff}
 .col .a small{font-size:10px;color:#aeb6c1;font-weight:600}
-.hero .foot{position:relative;display:flex;gap:18px;margin-top:14px;padding-top:12px;border-top:1px solid #ffffff17;font-size:13px;color:#aeb6c1;flex-wrap:wrap}
+.hero .foot{position:relative;display:flex;gap:18px;margin-top:22px;padding-top:12px;border-top:1px solid #ffffff17;font-size:13px;color:#aeb6c1;flex-wrap:wrap}
 .hero .foot b{color:#fff;font:700 14px Alexandria;margin-inline-start:4px}
-.side{display:grid;gap:10px;align-content:start}
-.st{background:var(--surface);border:1px solid var(--line2);border-radius:20px;padding:14px 16px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px}
+.side{display:contents}
+.st{background:var(--surface);border:1px solid var(--line2);border-radius:22px;padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:flex-start;gap:10px}
 .st .ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--sunken);color:var(--ink2);flex:none}
 .st .ic svg{width:19px;height:19px}
 .st small{display:block;color:var(--faint);font-size:13px;font-weight:600}
@@ -351,8 +351,8 @@ tbody tr:hover .pencil,.pencil:focus-visible{opacity:1;border-color:var(--line);
 .sim .out{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
 .sim .out div{background:var(--surface);border:1px solid var(--line2);border-radius:12px;padding:8px 10px}
 .sim .out small{display:block;font-size:12px;color:var(--faint)}.sim .out b{font:800 17px Alexandria}
-@media (max-width:1100px){.ov{grid-template-columns:1fr}.col-rev{display:none}}
-@media (max-width:760px){.dist{gap:5px}.col .n{font-size:11px}td.c-subs{grid-column:1/-1}td.c-price{grid-column:1/-1}td.col-rev,td.c-lvl{display:none}.addrow{margin:6px 0 12px}}
+@media (max-width:1100px){.ov{grid-template-columns:1fr 1fr}.hero{grid-column:1/-1}.col-rev{display:none}}
+@media (max-width:760px){.ov{grid-template-columns:1fr}.dist{gap:5px}.col .n{font-size:11px}td.c-subs{grid-column:1/-1}td.c-price{grid-column:1/-1}td.col-rev,td.c-lvl{display:none}.addrow{margin:6px 0 12px}}
 </style>
 </head>
 <body>
@@ -366,7 +366,7 @@ tbody tr:hover .pencil,.pencil:focus-visible{opacity:1;border-color:var(--line);
     <div class="acts"><button class="btn pr" id="newBtn"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>قاطع جديد</button></div>
   </div>
   <div class="ov">
-    <section class="hero" id="hero" aria-label="توزيع المشتركين على القواطع"></section>
+    <section class="hero" id="hero" aria-label="ملخص القواطع"></section>
     <div class="side" id="side"></div>
   </div>
   <section class="card">
@@ -413,9 +413,7 @@ const sorted=()=>[...B].sort((a,b)=>a.amp-b.amp);
 function overview(){
   const tot=B.reduce((a,b)=>a+b.subs,0),rev=B.reduce((a,b)=>a+b.subs*b.min,0),mx=Math.max(...B.map(b=>b.subs)),top=[...B].sort((a,b)=>b.subs-a.subs)[0];
   $('#hero').innerHTML=`<div class="top"><div><small>الحد الأدنى المضمون كل شهر</small><div class="big num">${f0(rev)}<span>₪</span></div></div><span class="tag">${tot} مشترك على ${B.filter(b=>b.subs).length} قواطع</span></div>
-  <div class="dist">${sorted().map(b=>`<div class="col ${S.focusAmp===b.amp?'on':''}" data-amp="${b.amp}" title="${b.amp}A · ${b.subs} مشترك · ${b.min} ₪"><span class="n">${b.subs}</span><span class="bar" style="height:${Math.max(4,b.subs/mx*100)}px"></span><span class="a">${b.amp}<small>A</small></span></div>`).join('')}</div>
   <div class="foot"><span>الأكثر استخداماً:<b>${top.amp}A</b></span><span>متوسط الحد الأدنى:<b>${f0(rev/tot)} ₪</b></span><span>سعر الأمبير الواحد:<b>${f2(B.reduce((a,b)=>a+b.min/b.amp,0)/B.length)} ₪</b></span></div>`;
-  $$('.col').forEach(c=>c.onclick=()=>{const a=+c.dataset.amp;S.focusAmp=S.focusAmp===a?null:a;render();const b=B.find(x=>x.amp===a);if(S.focusAmp)$(`tr[data-id="${b.id}"]`)?.scrollIntoView({block:'center',behavior:'smooth'})});
   const unused=B.filter(b=>!b.subs),odd=sorted().filter((b,i,a)=>i&&b.min/b.amp>a[i-1].min/a[i-1].amp*1.25);
   $('#side').innerHTML=`<div class="st"><span class="ic">${ic(I.bolt)}</span><div><small>القواطع</small><b class="num">${B.length}</b><span>من ${Math.min(...B.map(b=>b.amp))}A لـ ${Math.max(...B.map(b=>b.amp))}A</span></div></div>
   <div class="st"><span class="ic">${ic(I.users)}</span><div><small>المشتركون المربوطون</small><b class="num">${tot}</b><span>كل مشترك إله قاطع واحد</span></div></div>
