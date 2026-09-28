@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>إضافة تحميل · AF PowerCollect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@500;600;700;800&family=El+Messiri:wght@600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --page:#eff1f4;--surface:#fff;--raised:#f7f8fa;--sunken:#f2f3f5;
+  --line:#e2e5e9;--line2:#eceef1;--ink:#111820;--ink2:#353c46;--muted:#4c5460;--faint:#5e6773;
+  --brand:#a51d26;--brand-hi:#b8232c;--brand-lo:#7d121b;--brand-tint:#a51d2612;
+  --success:#047857;--success-tint:#0478571a;--info:#1d5bcc;--warn:#b45309;--danger:#c81e1e;
+  --focus:#111820;--shadow:0 40px 80px -30px #10182866,0 2px 6px #1018280d;
+  --hero:linear-gradient(135deg,#262c34,#1c2127 55%,#111418);
+}
+:root[data-theme=dark]{
+  --page:#0b0d10;--surface:#14171c;--raised:#1b1f25;--sunken:#101317;
+  --line:#343a44;--line2:#252a32;--ink:#f4f5f7;--ink2:#e0e3e7;--muted:#9ea6b1;--faint:#8b94a0;
+  --brand-tint:#e0707a1f;--success:#34d399;--success-tint:#34d3991a;--info:#7dafe8;--warn:#fbbf24;--danger:#fc7d7d;
+  --focus:#c9ced5;--shadow:0 40px 80px -30px #000;
+  --hero:linear-gradient(135deg,#1c2127,#161a1f 55%,#0b0d10);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{min-height:100vh;background:var(--page);color:var(--ink);font:16px/1.6 'IBM Plex Sans Arabic',system-ui,sans-serif;-webkit-font-smoothing:antialiased;transition:background .3s}
+button,input,select,textarea{font:inherit;color:inherit}
+.num{font-family:Alexandria,'IBM Plex Sans Arabic',sans-serif;font-variant-numeric:tabular-nums}
+svg.i{width:18px;height:18px;flex:none}
+
+/* demo chrome */
+.demo-bar{position:fixed;inset-inline:0;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 20px;background:color-mix(in srgb,var(--page) 80%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line2);font-size:14px;color:var(--muted)}
+.demo-bar b{color:var(--ink);font-family:'El Messiri',serif;font-size:17px}
+.seg{display:inline-flex;gap:2px;padding:3px;border-radius:12px;background:var(--sunken);border:1px solid var(--line2)}
+.seg button{border:0;background:transparent;padding:5px 12px;border-radius:9px;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed=true]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px #10182822}
+.stage{min-height:100vh;display:grid;place-items:center;padding:78px 16px 32px;background:
+  radial-gradient(50rem 30rem at 85% -10%,#a51d2614,transparent 70%),
+  radial-gradient(40rem 26rem at 0% 110%,#48505a14,transparent 70%)}
+
+/* modal */
+.modal{width:min(1040px,100%);background:var(--surface);border:1px solid var(--line2);border-radius:28px;box-shadow:var(--shadow);overflow:hidden;display:grid;grid-template-columns:minmax(0,1fr) 360px;animation:rise .42s cubic-bezier(.22,1,.36,1)}
+@keyframes rise{from{opacity:0;transform:translateY(14px) scale(.985)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.main{display:flex;flex-direction:column;min-width:0}
+.mh{display:flex;align-items:center;gap:14px;padding:20px 26px;border-bottom:1px solid var(--line2)}
+.mh .ic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--hero);color:#fff;box-shadow:inset 0 1px 0 #ffffff1a}
+.mh h1{margin:0;font:700 22px/1.2 'El Messiri',serif}
+.mh p{margin:2px 0 0;font-size:13.5px;color:var(--faint)}
+.x{margin-inline-start:auto;width:40px;height:40px;border-radius:12px;border:1px solid var(--line2);background:transparent;display:grid;place-items:center;cursor:pointer;color:var(--muted)}
+.x:hover{background:var(--sunken);color:var(--ink)}
+.body{padding:22px 26px 8px;display:grid;gap:22px}
+
+/* subscriber */
+.who{display:flex;align-items:center;gap:14px;padding:12px 14px;border:1px solid var(--line2);border-radius:18px;background:var(--raised)}
+.av{position:relative;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,#4a525d,#161a1f);color:#fff;font:700 15px Alexandria}
+.av i{position:absolute;bottom:-2px;left:-2px;width:13px;height:13px;border-radius:50%;background:#10b981;border:2.5px solid var(--raised)}
+.who b{display:block;font-size:16.5px}
+.who small{color:var(--faint);font-size:13.5px}
+.who .chip{margin-inline-start:auto;display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.who .chip small{font-size:12.5px}
+.bal{white-space:nowrap;font:700 17px Alexandria;padding:3px 10px;border-radius:10px}
+.bal.cr{color:var(--success);background:var(--success-tint)}
+.bal.db{color:var(--danger);background:#c81e1e14}
+
+/* field basics */
+.lbl{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px;font-size:14.5px;font-weight:600;color:var(--ink2)}
+.lbl small{font-weight:500;color:var(--faint);font-size:13px}
+.req{color:var(--brand)}
+.inp{width:100%;height:50px;border:1.5px solid var(--line);border-radius:14px;background:var(--surface);padding:0 16px;font-size:16px;transition:border-color .18s,box-shadow .18s}
+.inp:hover{border-color:color-mix(in srgb,var(--line) 60%,var(--faint))}
+.inp:focus{outline:none;border-color:var(--focus);box-shadow:0 0 0 4px color-mix(in srgb,var(--focus) 12%,transparent)}
+.hint{margin-top:6px;font-size:13px;color:var(--faint)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+
+/* amount hero */
+.amount{border:1.5px solid var(--line);border-radius:22px;padding:16px 18px 14px;background:var(--surface);transition:border-color .18s,box-shadow .18s}
+.amount:focus-within{border-color:var(--focus);box-shadow:0 0 0 5px color-mix(in srgb,var(--focus) 10%,transparent)}
+.amount.err{border-color:var(--danger);box-shadow:0 0 0 5px #c81e1e14}
+.amt-row{display:flex;align-items:center;gap:14px}
+.amt-row input{flex:1;min-width:0;width:100%;border:0;background:transparent;font:800 44px/1.1 Alexandria,sans-serif;letter-spacing:-.01em;padding:0;direction:ltr;text-align:right;color:var(--ink)}
+.amt-row input:focus{outline:none}
+.amt-row input::placeholder{color:color-mix(in srgb,var(--faint) 45%,transparent)}
+.cur{display:inline-flex;gap:2px;padding:4px;border-radius:14px;background:var(--sunken);border:1px solid var(--line2)}
+.cur button{border:0;background:transparent;cursor:pointer;padding:7px 12px;border-radius:10px;font-weight:700;font-size:14.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.cur button .num{font-size:15px}
+.cur button[aria-pressed=true]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px #10182826,0 0 0 1px var(--line2)}
+.amt-foot{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
+.q{border:1px solid var(--line2);background:var(--raised);border-radius:999px;padding:4px 12px;font-size:13.5px;font-weight:600;cursor:pointer;color:var(--ink2);transition:.15s}
+.q:hover{border-color:var(--line);background:var(--surface);color:var(--ink)}
+.q.full{border-color:color-mix(in srgb,var(--success) 40%,transparent);color:var(--success);background:var(--success-tint)}
+.fx{margin-inline-start:auto;font-size:13.5px;color:var(--faint);display:flex;align-items:center;gap:6px}
+.fx b{color:var(--ink);font-family:Alexandria}
+.fx input{width:74px;height:30px;border:1px solid var(--line);border-radius:9px;background:var(--surface);text-align:center;font:600 14px Alexandria;direction:ltr}
+.err-msg{display:none;margin-top:8px;font-size:13.5px;color:var(--danger);align-items:center;gap:6px}
+.amount.err + .err-msg{display:flex}
+
+/* method tiles */
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.tile{position:relative;display:flex;align-items:center;gap:12px;padding:14px 16px;border:1.5px solid var(--line);border-radius:18px;background:var(--surface);cursor:pointer;text-align:start;transition:.18s}
+.tile:hover{border-color:color-mix(in srgb,var(--line) 50%,var(--faint))}
+.tile .ti{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:var(--sunken);color:var(--ink2);transition:.18s}
+.tile b{display:block;font-size:15.5px}
+.tile small{color:var(--faint);font-size:13px}
+.tile .dot{margin-inline-start:auto;width:22px;height:22px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;transition:.18s}
+.tile[aria-checked=true]{border-color:var(--ink);box-shadow:0 0 0 4px color-mix(in srgb,var(--ink) 7%,transparent)}
+.tile[aria-checked=true] .ti{background:var(--hero);color:#fff}
+.tile[aria-checked=true] .dot{background:var(--ink);border-color:var(--ink)}
+.tile[aria-checked=true] .dot::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--surface)}
+.tile kbd{position:absolute;top:8px;inset-inline-end:10px;font:600 11px Alexandria;color:var(--faint);border:1px solid var(--line2);border-radius:6px;padding:0 5px;opacity:.8}
+
+/* bank reveal */
+.reveal{display:grid;grid-template-rows:0fr;transition:grid-template-rows .32s cubic-bezier(.22,1,.36,1),opacity .25s;opacity:0}
+.reveal.on{grid-template-rows:1fr;opacity:1}
+.reveal>div{overflow:hidden}
+.bank-card{margin-top:2px;padding:16px;border:1px solid var(--line2);border-radius:20px;background:var(--raised);display:grid;gap:16px}
+.banks{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.bank{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--line2);border-radius:14px;background:var(--surface);cursor:pointer;font-weight:600;font-size:14.5px;transition:.15s}
+.bank .lg{width:40px;height:40px;border-radius:12px;object-fit:cover;flex:none;box-shadow:0 0 0 1px #0000000f,0 4px 10px -6px #0006}
+.bank small{display:block;font-weight:500;font-size:12px;color:var(--faint)}
+.bank[aria-checked=true]{border-color:var(--bc,var(--ink));box-shadow:0 0 0 3px color-mix(in srgb,var(--bc,var(--ink)) 16%,transparent);background:color-mix(in srgb,var(--bc,var(--ink)) 5%,var(--surface))}
+.payer{display:flex;align-items:center;gap:8px}
+.toggle{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;color:var(--muted);cursor:pointer;user-select:none}
+.sw{width:36px;height:20px;border-radius:99px;background:var(--line);position:relative;transition:.18s;flex:none}
+.sw::after{content:"";position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px #0003;transition:.18s}
+.toggle input{display:none}
+.toggle input:checked + .sw{background:var(--ink)}
+.toggle input:checked + .sw::after{right:18px}
+.inp[readonly]{background:var(--sunken);color:var(--muted)}
+
+.more-toggle{display:flex;align-items:center;gap:8px;border:0;background:transparent;cursor:pointer;color:var(--muted);font-weight:600;font-size:14.5px;padding:0}
+.more-toggle svg{transition:transform .2s}
+.more-toggle[aria-expanded=true] svg{transform:rotate(180deg)}
+
+/* footer */
+.foot{margin-top:auto;display:flex;align-items:center;gap:12px;padding:16px 26px;border-top:1px solid var(--line2);background:var(--raised)}
+.kb{font-size:13px;color:var(--faint);display:flex;align-items:center;gap:6px}
+.kb kbd{font:600 11.5px Alexandria;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:1px 6px;background:var(--surface);color:var(--muted)}
+.btn{height:48px;border-radius:14px;padding:0 20px;font-weight:700;font-size:15.5px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink2);transition:.18s}
+.btn:hover{background:var(--sunken)}
+.btn.pr{margin-inline-start:auto;border:0;color:#fff;background:linear-gradient(180deg,var(--brand-hi),var(--brand-lo));box-shadow:0 12px 26px -12px #a51d26,inset 0 1px 0 #ffffff33;min-width:230px;justify-content:center}
+.btn.pr:hover{filter:brightness(1.07)}
+.btn.pr:disabled{filter:grayscale(.6);opacity:.55;cursor:not-allowed;box-shadow:none}
+.btn:focus-visible,.tile:focus-visible,.bank:focus-visible,.q:focus-visible,.cur button:focus-visible,.x:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+/* summary / receipt */
+.side{background:var(--hero);color:#fff;padding:24px 24px 20px;display:flex;flex-direction:column;gap:18px;position:relative;overflow:hidden}
+.side::before{content:"";position:absolute;inset:auto -80px -120px auto;width:320px;height:320px;border-radius:50%;background:radial-gradient(closest-side,#a51d2640,transparent)}
+.side::after{content:"";position:absolute;inset-inline:0;top:0;height:3px;background:linear-gradient(90deg,#5c0d14,#a51d26 40%,#9aa3ae 75%,#dfe3e8)}
+.side h2{margin:0;font:700 18px 'El Messiri',serif;display:flex;align-items:center;gap:8px}
+.side .tag{margin-inline-start:auto;font:600 11.5px 'IBM Plex Sans Arabic';padding:2px 9px;border-radius:99px;background:#ffffff14;color:#dfe3e8}
+.big{position:relative}
+.big small{color:#aeb6c1;font-size:13px}
+.big .v{font:800 40px/1.15 Alexandria;letter-spacing:-.01em;direction:ltr;text-align:right}
+.big .v span{font-size:18px;font-weight:600;color:#c9ced5;margin-inline-start:6px}
+.big .conv{font-size:13px;color:#aeb6c1;margin-top:2px}
+.ledger{position:relative;display:grid;gap:10px;padding:14px;border-radius:18px;background:#ffffff0d;border:1px solid #ffffff14}
+.ledger div{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;color:#c9ced5}
+.ledger div b{font:600 15px Alexandria;color:#fff;direction:ltr}
+.ledger .sep{height:1px;background:#ffffff1f;margin:2px 0}
+.ledger .after b{font-size:18px}
+.ledger .after b.cr{color:#5eead4}.ledger .after b.db{color:#fca5a5}
+.bar{position:relative;height:8px;border-radius:99px;background:#ffffff14;overflow:hidden}
+.bar i{position:absolute;inset-block:0;right:0;border-radius:99px;background:linear-gradient(90deg,#34d399,#10b981);transition:width .4s cubic-bezier(.22,1,.36,1)}
+.meta{position:relative;display:grid;gap:8px;font-size:13.5px;color:#c9ced5}
+.meta div{display:flex;align-items:center;gap:8px}
+.meta svg{color:#9aa3ae}
+.meta b{color:#fff;font-weight:600}
+.after-save{position:relative;margin-top:auto;padding-top:14px;border-top:1px dashed #ffffff26;font-size:13px;color:#aeb6c1;display:grid;gap:8px}
+.after-save label{display:flex;align-items:center;gap:8px;color:#e6e9ed;cursor:pointer}
+.after-save input{accent-color:#a51d26;width:16px;height:16px}
+
+/* success */
+.done{display:none;grid-column:1/-1;padding:44px 32px 34px;text-align:center}
+.modal.saved .main,.modal.saved .side{display:none}
+.modal.saved .done{display:block}
+.check{width:76px;height:76px;margin:0 auto 14px;border-radius:24px;display:grid;place-items:center;background:var(--success-tint);color:var(--success)}
+.check svg{width:38px;height:38px;stroke-dasharray:40;stroke-dashoffset:40;animation:draw .5s .15s ease forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.done h2{margin:0;font:700 26px 'El Messiri',serif}
+.done p{color:var(--muted);margin:6px 0 0}
+.receipt{width:min(420px,100%);margin:22px auto 0;border:1px solid var(--line2);border-radius:20px;background:var(--raised);padding:6px 18px;text-align:start}
+.receipt div{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px dashed var(--line);font-size:14.5px;color:var(--muted)}
+.receipt div:last-child{border:0}
+.receipt b{color:var(--ink)}
+.done .acts{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin-top:22px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,20px);opacity:0;display:flex;align-items:center;gap:12px;background:#111820;color:#fff;border-radius:16px;padding:10px 12px 10px 16px;box-shadow:0 20px 40px -18px #000a;font-size:14.5px;transition:.3s;z-index:9}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.toast button{border:0;background:#ffffff1a;color:#fff;border-radius:10px;padding:5px 12px;font-weight:700;cursor:pointer}
+
+/* responsive */
+@media (max-width:900px){
+  .modal{display:flex;flex-direction:column;border-radius:24px}
+  .main{display:contents}.mh{order:0}.body{order:1}.side{order:2}.foot{order:3}
+  .side{padding:20px}
+  .side .meta{display:none}
+  .side .big .v{font-size:32px}
+}
+@media (max-width:560px){
+  .stage{padding:64px 0 0;place-items:end center}
+  .modal{border-radius:24px 24px 0 0}
+  .body{padding:18px 16px 8px}.mh{padding:16px}.foot{padding:12px 16px;position:sticky;bottom:0}
+  .two,.tiles{grid-template-columns:1fr}.banks{grid-template-columns:1fr 1fr 1fr}
+  .bank{flex-direction:column;text-align:center;gap:6px;padding:10px 6px}
+  .amt-row{flex-direction:column;align-items:stretch}.amt-row input{font-size:38px}
+  .kb{display:none}.btn.pr{min-width:0;flex:1}
+  .fx{margin-inline-start:0;width:100%}
+}
+
+/* ---------- adjust (charge / discount) additions ---------- */
+[hidden]{display:none!important}
+.mh .tabs{margin-inline-start:18px}
+.tabs{display:inline-flex;gap:3px;padding:4px;border-radius:15px;background:var(--sunken);border:1px solid var(--line2)}
+.tabs button{border:0;background:transparent;cursor:pointer;height:38px;padding:0 16px;border-radius:11px;font-weight:700;font-size:15px;color:var(--muted);display:inline-flex;align-items:center;gap:8px;transition:.15s}
+.tabs button svg{width:17px;height:17px}
+.tabs button[aria-selected=true]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px #10182826,0 0 0 1px var(--line2)}
+.tabs button[data-k=charge][aria-selected=true] svg{color:var(--danger)}
+.tabs button[data-k=discount][aria-selected=true] svg{color:var(--success)}
+.mh .ic.ch{background:linear-gradient(135deg,#b8232c,#7d121b)}
+.mh .ic.dc{background:linear-gradient(135deg,#0b8a63,#05573f)}
+.tiles.t3{grid-template-columns:repeat(3,1fr)}
+.tile.v{flex-direction:column;align-items:flex-start;gap:8px;padding:14px 14px 13px}
+.tile.v .dot{position:absolute;top:12px;inset-inline-end:12px;margin:0}
+.tile.v kbd{top:14px;inset-inline-end:42px}
+.tile.v small{line-height:1.45}
+.tile[data-tone=red][aria-checked=true]{border-color:var(--danger);box-shadow:0 0 0 4px color-mix(in srgb,var(--danger) 12%,transparent)}
+.tile[data-tone=red][aria-checked=true] .ti{background:linear-gradient(135deg,#b8232c,#7d121b)}
+.tile[data-tone=red][aria-checked=true] .dot{background:var(--danger);border-color:var(--danger)}
+.tile[data-tone=green][aria-checked=true]{border-color:var(--success);box-shadow:0 0 0 4px color-mix(in srgb,var(--success) 12%,transparent)}
+.tile[data-tone=green][aria-checked=true] .ti{background:linear-gradient(135deg,#0b8a63,#05573f)}
+.tile[data-tone=green][aria-checked=true] .dot{background:var(--success);border-color:var(--success)}
+.kind{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.unit{flex:none;min-width:64px;height:48px;padding:0 14px;border-radius:14px;background:var(--sunken);border:1px solid var(--line2);display:grid;place-items:center;font:800 20px Alexandria;color:var(--ink2)}
+.unit small{font:700 12px 'IBM Plex Sans Arabic';color:var(--faint);display:block;margin-top:-4px}
+.calc{margin-inline-start:auto;font-size:13.5px;color:var(--faint)}
+.calc b{font-family:Alexandria;color:var(--ink)}
+.calc b.g{color:var(--success)}.calc b.r{color:var(--danger)}
+.warn{display:flex;align-items:flex-start;gap:10px;margin-top:10px;padding:10px 12px;border-radius:14px;font-size:13.5px;line-height:1.55;background:color-mix(in srgb,var(--warn) 10%,transparent);color:color-mix(in srgb,var(--warn) 85%,var(--ink));border:1px solid color-mix(in srgb,var(--warn) 30%,transparent)}
+.warn svg{flex:none;margin-top:2px}
+.warn.bad{background:#c81e1e10;color:var(--danger);border-color:#c81e1e40}
+textarea.inp{height:auto;min-height:76px;padding:12px 16px;resize:vertical;line-height:1.6}
+.inp.need{border-color:color-mix(in srgb,var(--warn) 55%,var(--line))}
+.segs{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.segs .q.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.cur-std{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;border:1px dashed color-mix(in srgb,var(--success) 45%,var(--line));background:var(--success-tint);font-size:14px}
+.cur-std b{font-weight:700}
+.cur-std small{display:block;color:var(--faint);font-size:12.5px}
+.cur-std .btn{height:36px;padding:0 12px;font-size:13.5px;margin-inline-start:auto;color:var(--danger)}
+.ledger .adj b.r{color:#fca5a5}.ledger .adj b.g{color:#6ee7b7}
+.side .kpi2{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.side .kpi2 div{padding:12px;border-radius:16px;background:#ffffff0d;border:1px solid #ffffff14}
+.side .kpi2 small{display:block;color:#aeb6c1;font-size:12.5px}
+.side .kpi2 b{font:800 22px Alexandria;direction:ltr;display:block;text-align:right}
+.side .kpi2 b.g{color:#6ee7b7}
+.side .big .v.r{color:#fecaca}.side .big .v.g{color:#a7f3d0}
+.btn.pr.green{background:linear-gradient(180deg,#0e9a6f,#05573f);box-shadow:0 12px 26px -12px #047857,inset 0 1px 0 #ffffff33}
+.perm{font-size:12.5px;color:var(--faint);display:flex;align-items:center;gap:6px}
+.perm svg{width:15px;height:15px}
+.check.r{background:#c81e1e14;color:var(--danger)}
+@media (max-width:900px){.mh{flex-wrap:wrap}.mh .tabs{order:3;margin:10px 0 0;width:100%}.mh .tabs button{flex:1;justify-content:center}}
+@media (max-width:560px){#m .amt-row{flex-direction:row;align-items:center}#m .amt-row input{font-size:34px}.tile kbd{display:none}.mh .x{position:absolute;top:14px;left:14px}.mh{position:relative}.tiles.t3{grid-template-columns:1fr}.tile.v{flex-direction:row;align-items:center}.tile.v .dot{position:static;margin-inline-start:auto;order:3}.kind{grid-template-columns:1fr}.perm{display:none}}
+</style>
+</head>
+<body>
+<div class="demo-bar">
+  <div><b>إضافة تحميل</b> · نموذج تفاعلي</div>
+  <div class="seg" role="group" aria-label="الوضع">
+    <button data-theme="light" aria-pressed="true">نهاري</button>
+    <button data-theme="dark" aria-pressed="false">ليلي</button>
+  </div>
+</div>
+
+<div class="stage">
+<form class="modal" id="m" role="dialog" aria-labelledby="t" novalidate>
+  <div class="main">
+    <div class="mh">
+      <span class="ic ch" id="hIc"></span>
+      <div><h1 id="t">إضافة تحميل</h1><p id="tSub">مبلغ بيتضاف على حساب المشترك.</p></div>
+      
+      <button type="button" class="x" aria-label="إغلاق"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+
+    <div class="body">
+      <div class="who">
+        <span class="av">مش<i></i></span>
+        <div><b>محمد أحمد الشاعر</b><small>حساب <span class="num">202600114</span> · طبلون <span class="num">455</span> · النصيرات</small></div>
+        <div class="chip"><small>الرصيد الحالي</small><span class="bal num db" id="balNow"></span></div>
+      </div>
+
+      <!-- ================= CHARGE ================= -->
+      <section id="pCharge" role="tabpanel">
+        <div class="lbl"><span>نوع التحميل <span class="req">*</span></span><small>اختار بالأرقام 1 · 2 · 3</small></div>
+        <div class="tiles t3" role="radiogroup" aria-label="نوع التحميل" id="cType">
+          <button type="button" class="tile v" role="radio" data-tone="red" data-v="settlement" aria-checked="true"><kbd>1</kbd><span class="ti"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 21h14M4 7h16"/><path d="M4 7l-2.5 6a3 3 0 0 0 5 0zM20 7l-2.5 6a3 3 0 0 0 5 0z"/></svg></span><span class="dot"></span><span><b>تسوية</b><small>تصحيح فرق بالحساب</small></span></button>
+          <button type="button" class="tile v" role="radio" data-tone="red" data-v="penalty" aria-checked="false"><kbd>2</kbd><span class="ti"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/></svg></span><span class="dot"></span><span><b>غرامة مالية</b><small>مخالفة أو عبث بالساعة</small></span></button>
+          <button type="button" class="tile v" role="radio" data-tone="red" data-v="disconnection_fee" aria-checked="false"><kbd>3</kbd><span class="ti"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v5M15 2v5M6 7h12v4a6 6 0 0 1-12 0zM12 17v5"/><path d="M4 4l16 16"/></svg></span><span class="dot"></span><span><b>رسوم فصل خدمة</b><small>قطع الكهرباء أو إرجاعها</small></span></button>
+        </div>
+
+        <div style="margin-top:22px">
+          <div class="lbl"><span>المبلغ <span class="req">*</span></span><small>بالشيكل</small></div>
+          <div class="amount" id="cBox">
+            <div class="amt-row">
+              <input id="cAmt" inputmode="decimal" autocomplete="off" placeholder="0.00" aria-label="مبلغ التحميل">
+              <span class="unit">₪</span>
+            </div>
+            <div class="amt-foot" id="cQuick"></div>
+          </div>
+          <div class="err-msg" role="alert"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>اكتب مبلغ أكبر من صفر.</div>
+          <div class="warn" id="cBig" hidden><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/></svg><span>مبلغ كبير. تأكد إنه صح قبل ما تحفظ، لأنه بيطلع بكشف حساب المشترك.</span></div>
+        </div>
+
+        <div style="margin-top:22px">
+          <div class="lbl"><span id="cNoteL">ملاحظات</span><small id="cNoteS">اختياري</small></div>
+          <textarea class="inp" id="cNote" rows="2" placeholder="مثلاً: تسوية فرق قراءة شهر 8"></textarea>
+        </div>
+      </section>
+
+      <!-- ================= DISCOUNT ================= -->
+      <section id="pDisc" role="tabpanel" hidden>
+        <div class="kind" role="radiogroup" aria-label="نوع الخصم" id="dKind">
+          <button type="button" class="tile" role="radio" data-tone="green" data-v="once" aria-checked="true"><span class="ti"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></span><span><b>لمرة وحدة</b><small>بينخصم هلأ من اللي عليه</small></span><span class="dot"></span></button>
+          <button type="button" class="tile" role="radio" data-tone="green" data-v="standing" aria-checked="false"><span class="ti"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg></span><span><b>خصم دائم</b><small>من كل قراءة أسبوعية لحد ما توقفه</small></span><span class="dot"></span></button>
+        </div>
+
+        <div class="cur-std" id="curStd" hidden><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg><div><b>عنده خصم دائم: 10% · موظفو أبو زايد</b><small>من 12 أغسطس · أعطاه يوسف أبو زايد. الخصم الجديد بيحل محله.</small></div><button type="button" class="btn" id="stopStd">إيقاف</button></div>
+
+        <div style="margin-top:22px">
+          <div class="lbl"><span>طريقة الخصم <span class="req">*</span></span><small>اختار بالأرقام 1 · 2 · 3</small></div>
+          <div class="tiles t3" role="radiogroup" aria-label="طريقة الخصم" id="dMethod">
+            <button type="button" class="tile v" role="radio" data-tone="green" data-v="percentage" aria-checked="false"><kbd>1</kbd><span class="ti"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 5 5 19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/></svg></span><span class="dot"></span><span><b>نسبة</b><small data-h="percentage"></small></span></button>
+            <button type="button" class="tile v" role="radio" data-tone="green" data-v="kilowatt" aria-checked="false"><kbd>2</kbd><span class="ti"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></span><span class="dot"></span><span><b>كيلوات</b><small data-h="kilowatt"></small></span></button>
+            <button type="button" class="tile v" role="radio" data-tone="green" data-v="shekel" aria-checked="true"><kbd>3</kbd><span class="ti"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1-1.6-1.5-3-1.5-1.7 0-3 .9-3 2s1.3 1.7 3 2 3 .9 3 2-1.3 2-3 2c-1.4 0-2.5-.5-3-1.5M12 6v2M12 16v2"/></svg></span><span class="dot"></span><span><b data-t="shekel">شيكل</b><small data-h="shekel"></small></span></button>
+          </div>
+        </div>
+
+        <div style="margin-top:22px">
+          <div class="lbl"><span id="dValL">المبلغ <span class="req">*</span></span><small id="dValS"></small></div>
+          <div class="amount" id="dBox">
+            <div class="amt-row">
+              <input id="dVal" inputmode="decimal" autocomplete="off" placeholder="0" aria-label="قيمة الخصم">
+              <span class="unit" id="dUnit">₪</span>
+            </div>
+            <div class="amt-foot"><span id="dQuick" style="display:contents"></span><span class="calc" id="dCalc"></span></div>
+          </div>
+          <div class="err-msg" role="alert" id="dErrMsg"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg><span id="dErrT">اكتب قيمة أكبر من صفر.</span></div>
+          <div class="warn" id="dOver" hidden><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/></svg><span id="dOverT"></span></div>
+        </div>
+
+        <div style="margin-top:22px" id="segWrap" hidden>
+          <div class="lbl"><span>الفئة</span><small>لمين هالخصم؟ بيساعد بالتقارير</small></div>
+          <input class="inp" id="dSeg" placeholder="مثلاً: موظفو أبو زايد" autocomplete="off">
+          <div class="segs" id="segs"></div>
+        </div>
+
+        <div style="margin-top:22px">
+          <div class="lbl"><span>ملاحظات</span><small>اختياري</small></div>
+          <textarea class="inp" id="dNote" rows="2" placeholder="مثلاً: خصم بموافقة المدير"></textarea>
+        </div>
+      </section>
+    </div>
+
+    <div class="foot">
+      <span class="kb"><kbd>Ctrl</kbd>+<kbd>Enter</kbd> حفظ · <kbd>Esc</kbd> إغلاق</span>
+      <button type="button" class="btn" id="cancel">إلغاء</button>
+      <button type="submit" class="btn pr" id="save" disabled><span id="saveLbl">إضافة التحميل</span></button>
+    </div>
+  </div>
+
+  <aside class="side" aria-live="polite">
+    <h2 id="sTitle">ملخص التحميل <span class="tag" id="sTag">تسوية</span></h2>
+    <div class="big"><small id="sBigL">مبلغ التحميل</small><div class="v num" id="sBig">0.00<span>₪</span></div><div class="conv" id="sConv">&nbsp;</div></div>
+    <div class="ledger" id="sLedger"></div>
+    <div class="kpi2" id="sKpi" hidden></div>
+    <div class="meta">
+      <div><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>بيتسجل باسم <b>يوسف أبو زايد</b></div>
+      <div><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><b id="sDate"></b></div>
+      <div><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4M9 13h6M9 17h6"/></svg>بيطلع بكشف حساب المشترك</div>
+    </div>
+    <div class="after-save">
+      <span class="perm"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>صلاحية: إضافة تحميلات وخصومات</span>
+      <label><input type="checkbox" id="sms" checked> ابعت SMS للمشترك بالرصيد الجديد</label>
+    </div>
+  </aside>
+
+  <div class="done" id="done">
+    <div class="check" id="dnCk"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7"/></svg></div>
+    <h2 id="dnT">انضاف التحميل</h2>
+    <p id="dnP"></p>
+    <div class="receipt" id="dnR"></div>
+    <div class="acts">
+      <button type="button" class="btn" id="dnMore">إضافة كمان</button>
+      <button type="button" class="btn" id="dnStmt"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4M9 13h6M9 17h6"/></svg>كشف الحساب</button>
+      <button type="button" class="btn pr" id="dnOk" style="min-width:140px;margin:0">تم</button>
+    </div>
+  </div>
+</form>
+</div>
+<div class="toast" id="toast"><span id="tmsg"></span><button type="button" id="undo">تراجع</button></div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const BAL=-320;          // الرصيد الحالي: سالب = عليه
+const KILO=3;            // سعر الكيلو للمشترك
+const WEEK={kilos:40,min:30}; // قراءة الأسبوع الأخير والحد الأدنى
+const HAS_STD=false;
+const I={
+ plusc:'<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>',minusc:'<circle cx="12" cy="12" r="9"/><path d="M8 12h8"/>',
+ charge:'<path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/>',disc:'<path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/>'};
+const svg=(p,c='i')=>`<svg class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+const fmt=n=>Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const f0=n=>(+n).toLocaleString('en-US',{maximumFractionDigits:2});
+const sideW=n=>n<0?'عليه':n>0?'له':'صفر';
+const balTxt=n=>n?`${fmt(n)} ₪ ${sideW(n)}`:'0.00 ₪';
+const OWED=Math.max(-BAL,0);
+const S={k:'charge',cType:'settlement',dKind:'once',dMethod:'shekel',seg:''};
+const CT={settlement:{n:'تسوية',q:[20,50,100],ph:'مثلاً: تسوية فرق قراءة شهر 8'},penalty:{n:'غرامة مالية',q:[50,100,200],ph:'اكتب سبب الغرامة، مثلاً: توصيل خط بدون عداد',need:1},disconnection_fee:{n:'رسوم فصل خدمة',q:[25,50],def:50,ph:'مثلاً: فصل بسبب تراكم الدين'}};
+const SEGS=['موظفو أبو زايد','حالات إنسانية','مساجد ومؤسسات','أسر الشهداء'];
+$('#balNow').textContent=balTxt(BAL);
+$('#sDate').textContent=new Date().toLocaleDateString('ar-EG-u-nu-latn',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+/* ---------- tabs ---------- */
+function setTab(k){S.k=k;$$('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.k===k));
+  $('#pCharge').hidden=k!=='charge';$('#pDisc').hidden=k!=='discount';
+  $('#hIc').className='ic '+(k==='charge'?'ch':'dc');$('#hIc').innerHTML=svg(k==='charge'?I.charge:I.disc);
+  $('#t').textContent=k==='charge'?'إضافة تحميل':'إضافة خصم';
+  $('#tSub').textContent=k==='charge'?'مبلغ بيتضاف على حساب المشترك.':'بينزّل من اللي على المشترك، مرة وحدة أو كل أسبوع.';
+  $('#save').classList.toggle('green',k==='discount');render();
+  setTimeout(()=>(k==='charge'?$('#cAmt'):$('#dVal')).focus(),30)}
+$$('.tabs button').forEach(b=>b.onclick=()=>setTab(b.dataset.k));
+
+/* ---------- charge ---------- */
+const cAmt=$('#cAmt');
+function setCType(v){S.cType=v;$$('#cType .tile').forEach(t=>t.setAttribute('aria-checked',t.dataset.v===v));const c=CT[v];
+  $('#cQuick').innerHTML=c.q.map(q=>`<button type="button" class="q" data-q="${q}">${q} ₪</button>`).join('')+(c.def?`<span class="fx">المعتاد لهالنوع <b>${c.def} ₪</b></span>`:'');
+  $$('#cQuick .q').forEach(b=>b.onclick=()=>{cAmt.value=b.dataset.q;render();cAmt.focus()});
+  if(c.def&&!cAmt.value)cAmt.value=c.def;
+  $('#cNote').placeholder=c.ph;$('#cNoteL').innerHTML=c.need?'سبب الغرامة <span class="req">*</span>':'ملاحظات';$('#cNoteS').textContent=c.need?'لازم، عشان يبان بكشف الحساب':'اختياري';render()}
+$$('#cType .tile').forEach(t=>t.onclick=()=>setCType(t.dataset.v));
+const num=el=>{const v=parseFloat(el.value.replace(/,/g,''));return isFinite(v)&&v>0?v:0};
+
+/* ---------- discount ---------- */
+const dVal=$('#dVal');
+const HINT={once:{percentage:`من اللي عليه (${fmt(OWED)} ₪)`,kilowatt:`على سعر الكيلو (${KILO} ₪)`,shekel:'مبلغ ثابت من الرصيد'},
+            standing:{percentage:'من قيمة كل قراءة',kilowatt:'كيلوات ببلاش كل أسبوع',shekel:'بينزل من سعر الكيلو'}};
+const QK={once:{percentage:[5,10,25,50],kilowatt:[10,20,50],shekel:[10,20,50]},standing:{percentage:[5,10,20],kilowatt:[5,10,20],shekel:[.5,1]}};
+function setKind(v){S.dKind=v;$$('#dKind .tile').forEach(t=>t.setAttribute('aria-checked',t.dataset.v===v));$('#segWrap').hidden=v!=='standing';$('#curStd').hidden=!(v==='standing'&&HAS_STD);setMethod(S.dMethod)}
+function setMethod(v){S.dMethod=v;$$('#dMethod .tile').forEach(t=>t.setAttribute('aria-checked',t.dataset.v===v));
+  $$('#dMethod [data-h]').forEach(s=>s.textContent=HINT[S.dKind][s.dataset.h]);$('#dMethod [data-t=shekel]').textContent=S.dKind==='standing'?'شيكل من سعر الكيلو':'شيكل';
+  const st=S.dKind==='standing';
+  $('#dValL').innerHTML=({percentage:st?'النسبة من كل قراءة':'النسبة',kilowatt:st?'الكيلوات المجانية كل أسبوع':'عدد الكيلوات',shekel:st?'الخصم من سعر الكيلو':'المبلغ'})[v]+' <span class="req">*</span>';
+  $('#dValS').textContent=({percentage:'من 1 لـ 100',kilowatt:`الكيلو بـ ${KILO} ₪`,shekel:st?`سعر الكيلو ${KILO} ₪`:'بالشيكل'})[v];
+  $('#dUnit').innerHTML=({percentage:'%',kilowatt:'<span>kWh<small>كيلو</small></span>',shekel:'₪'})[v];
+  $('#dQuick').innerHTML=QK[S.dKind][v].map(q=>`<button type="button" class="q" data-q="${q}">${q}${v==='percentage'?'%':v==='kilowatt'?' كيلو':' ₪'}</button>`).join('')+(!st&&v==='shekel'&&OWED?`<button type="button" class="q full" data-q="${OWED}">كل اللي عليه</button>`:'');
+  $$('#dQuick .q').forEach(b=>b.onclick=()=>{dVal.value=b.dataset.q;render();dVal.focus()});render()}
+$$('#dKind .tile').forEach(t=>t.onclick=()=>setKind(t.dataset.v));
+$$('#dMethod .tile').forEach(t=>t.onclick=()=>setMethod(t.dataset.v));
+$('#segs').innerHTML=SEGS.map(s=>`<button type="button" class="q" data-s="${s}">${s}</button>`).join('');
+$$('#segs .q').forEach(b=>b.onclick=()=>{$('#dSeg').value=S.seg===b.dataset.s?'':b.dataset.s;S.seg=$('#dSeg').value;markSeg();render()});
+function markSeg(){$$('#segs .q').forEach(b=>b.classList.toggle('on',b.dataset.s===$('#dSeg').value))}
+$('#dSeg').oninput=()=>{S.seg=$('#dSeg').value;markSeg();render()};
+$('#stopStd').onclick=()=>toast('انوقف الخصم الدائم');
+
+/* what a once-discount takes off now */
+function onceOff(v){return S.dMethod==='percentage'?OWED*v/100:S.dMethod==='kilowatt'?v*KILO:v}
+/* a week's bill without / with the standing discount */
+function weekBill(v){const base=WEEK.kilos*KILO;let with_=base;
+  if(S.dMethod==='percentage')with_=base*(1-v/100);else if(S.dMethod==='kilowatt')with_=Math.max(0,WEEK.kilos-v)*KILO;else with_=WEEK.kilos*Math.max(0,KILO-v);
+  return{base:Math.max(base,WEEK.min),with_:Math.max(with_,WEEK.min),raw:with_}}
+
+/* ---------- render ---------- */
+function render(){const sv=$('#save');let ok=false,lbl='';
+  if(S.k==='charge'){const a=num(cAmt),c=CT[S.cType],after=BAL-a,needNote=c.need&&!$('#cNote').value.trim();
+    $('#cBox').classList.remove('err');$('#cBig').hidden=a<=500;$('#cNote').classList.toggle('need',!!(c.need&&a&&needNote));
+    $('#sTitle').firstChild.textContent='ملخص التحميل ';$('#sTag').textContent=c.n;$('#sBigL').textContent='مبلغ التحميل';
+    $('#sBig').className='v num r';$('#sBig').innerHTML=`+${fmt(a)}<span>₪</span>`;$('#sConv').textContent=' ';
+    $('#sLedger').innerHTML=`<div><span>الرصيد الحالي</span><b>${balTxt(BAL)}</b></div><div class="adj"><span>${c.n}</span><b class="r">+${fmt(a)} ₪</b></div><div class="sep"></div><div class="after"><span>الرصيد بعد التحميل</span><b class="${after<0?'db':'cr'}">${balTxt(after)}</b></div>`;
+    $('#sKpi').hidden=true;ok=a>0&&!needNote;lbl=a?`تحميل ${fmt(a)} ₪ على الحساب`:'إضافة التحميل'}
+  else{const v=num(dVal),st=S.dKind==='standing',m=S.dMethod;let bad='',over='';
+    if(m==='percentage'&&v>100)bad='النسبة ما بتزيد عن 100%.';
+    if(st&&m==='shekel'&&v>KILO)bad=`الخصم ما بيزيد عن سعر الكيلو (${KILO} ₪).`;
+    $('#dBox').classList.toggle('err',!!bad);$('#dErrT').textContent=bad||'اكتب قيمة أكبر من صفر.';$('#dErrMsg').style.display=bad?'flex':'';
+    $('#sTitle').firstChild.textContent=st?'ملخص الخصم الدائم ':'ملخص الخصم ';$('#sTag').textContent=st?'كل أسبوع':'مرة وحدة';
+    if(!st){const off=bad?0:onceOff(v),after=BAL+off;
+      $('#dCalc').innerHTML=v&&!bad&&m!=='shekel'?`= <b class="g">${fmt(off)} ₪</b>`:'';
+      if(off>OWED&&OWED>0)over=`الخصم أكبر من اللي عليه بـ ${fmt(off-OWED)} ₪، فالرصيد بيصير له.`;
+      $('#sBigL').textContent='قيمة الخصم';$('#sBig').className='v num g';$('#sBig').innerHTML=`−${fmt(off)}<span>₪</span>`;
+      $('#sConv').textContent=m==='percentage'&&v?`${f0(v)}% من ${fmt(OWED)} ₪`:m==='kilowatt'&&v?`${f0(v)} كيلو × ${KILO} ₪`:' ';
+      $('#sLedger').innerHTML=`<div><span>الرصيد الحالي</span><b>${balTxt(BAL)}</b></div><div class="adj"><span>خصم</span><b class="g">−${fmt(off)} ₪</b></div><div class="sep"></div><div class="after"><span>الرصيد بعد الخصم</span><b class="${after<0?'db':'cr'}">${balTxt(after)}</b></div>`;
+      $('#sKpi').hidden=true;lbl=off?`خصم ${fmt(off)} ₪`:'إضافة الخصم'}
+    else{const w=weekBill(bad?0:v),save=w.base-w.with_;
+      $('#dCalc').innerHTML=v&&!bad?`بيوفّر <b class="g">${fmt(save)} ₪</b> بالأسبوع`:'';
+      if(v&&!bad&&w.raw<WEEK.min)over=`الحد الأدنى للقراءة ${WEEK.min} ₪، فالمشترك بيدفع الحد الأدنى حتى لو الخصم أكبر.`;
+      $('#sBigL').textContent='بيدفع عن قراءة الأسبوع الأخير';$('#sBig').className='v num g';$('#sBig').innerHTML=`${fmt(w.with_)}<span>₪</span>`;
+      $('#sConv').textContent=`بدل ${fmt(w.base)} ₪ · ${WEEK.kilos} كيلو × ${KILO} ₪`;
+      const terms=v?(m==='percentage'?`${f0(v)}%`:m==='kilowatt'?`${f0(v)} كيلو`:`${f0(v)} شيكل من سعر الكيلو`):'—';
+      $('#sLedger').innerHTML=`<div><span>الخصم</span><b style="direction:rtl">${terms}</b></div><div><span>الفئة</span><b style="direction:rtl">${S.seg||'—'}</b></div><div class="sep"></div><div class="after"><span>بيبدأ من</span><b style="direction:rtl;font-size:15px">قراءة الأسبوع الأخير</b></div>`;
+      $('#sKpi').hidden=false;$('#sKpi').innerHTML=`<div><small>توفير بالأسبوع</small><b class="g">${fmt(save)} ₪</b></div><div><small>توفير بالشهر تقريباً</small><b class="g">${fmt(save*4.3)} ₪</b></div>`;
+      lbl=v&&!bad?'تفعيل الخصم الدائم':'إضافة الخصم الدائم'}
+    $('#dOver').hidden=!over;$('#dOverT').textContent=over;ok=v>0&&!bad}
+  sv.disabled=!ok;$('#saveLbl').textContent=lbl}
+cAmt.oninput=()=>{cAmt.value=cAmt.value.replace(/[^\d.,]/g,'');render()};
+dVal.oninput=()=>{dVal.value=dVal.value.replace(/[^\d.,]/g,'');render()};
+$('#cNote').oninput=render;
+
+/* ---------- save ---------- */
+$('#m').onsubmit=e=>{e.preventDefault();if($('#save').disabled){(S.k==='charge'?$('#cBox'):$('#dBox')).classList.add('err');return}
+  const md=$('#m');let rows=[],t,p;
+  if(S.k==='charge'){const a=num(cAmt),c=CT[S.cType];t='انضاف التحميل';p=`${fmt(a)} ₪ ${c.n} على حساب محمد أحمد الشاعر.`;$('#dnCk').className='check r';
+    rows=[['النوع',c.n],['المبلغ','+'+fmt(a)+' ₪'],['الرصيد بعد',balTxt(BAL-a)],['ملاحظات',$('#cNote').value||'—']]}
+  else{const v=num(dVal),st=S.dKind==='standing';$('#dnCk').className='check';
+    if(!st){const off=onceOff(v);t='انضاف الخصم';p=`نزل ${fmt(off)} ₪ من حساب محمد أحمد الشاعر.`;rows=[['الطريقة',{percentage:f0(v)+'% من الرصيد',kilowatt:f0(v)+' كيلو × '+KILO+' ₪',shekel:'مبلغ ثابت'}[S.dMethod]],['قيمة الخصم','−'+fmt(off)+' ₪'],['الرصيد بعد',balTxt(BAL+off)]]}
+    else{const w=weekBill(v);t='انفعّل الخصم الدائم';p='بينخصم تلقائياً من قراءة الأسبوع الأخير وكل قراءة بعدها.';rows=[['الخصم',S.dMethod==='percentage'?f0(v)+'%':S.dMethod==='kilowatt'?f0(v)+' كيلو':f0(v)+' شيكل من سعر الكيلو'],['الفئة',S.seg||'—'],['قراءة الأسبوع الأخير',fmt(w.with_)+' ₪ بدل '+fmt(w.base)+' ₪']]}}
+  $('#dnOk').classList.toggle('green',S.k==='discount');$('#dnT').textContent=t;$('#dnP').textContent=p;$('#dnR').innerHTML=rows.map(([a,b])=>`<div><span>${a}</span><b>${b}</b></div>`).join('')+($('#sms').checked?'<div><span>SMS</span><b>انبعتت للمشترك</b></div>':'');
+  md.classList.add('saved')};
+$('#dnMore').textContent='تحميل كمان';$('#dnMore').onclick=()=>{$('#m').classList.remove('saved');cAmt.value='';dVal.value='';setCType(S.cType);setMethod(S.dMethod)};
+$('#dnOk').onclick=$('#cancel').onclick=$('.x').onclick=()=>toast('بتسكّر النافذة وبترجع لملف المشترك');
+$('#dnStmt').onclick=()=>toast('بيفتح كشف حساب المشترك، والعملية أول سطر فيه');
+$('#undo').onclick=()=>$('#toast').classList.remove('on');
+function toast(m){const t=$('#toast');$('#tmsg').textContent=m;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),3000)}
+
+/* ---------- keyboard ---------- */
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();$('#m').requestSubmit();return}
+  if(e.key==='Escape'){toast('بتسكّر النافذة');return}
+  const typing=['INPUT','TEXTAREA'].includes(document.activeElement.tagName);if(typing&&document.activeElement.id!=='cAmt'&&document.activeElement.id!=='dVal')return;
+  if(typing&&/^\d$/.test(e.key))return;
+  if(['1','2','3'].includes(e.key)){const i=+e.key-1;if(S.k==='charge')setCType(['settlement','penalty','disconnection_fee'][i]);else setMethod(['percentage','kilowatt','shekel'][i])}});
+$$('.demo-bar .seg button').forEach(b=>b.onclick=()=>{$$('.demo-bar .seg button').forEach(x=>x.setAttribute('aria-pressed',x===b));document.documentElement.dataset.theme=b.dataset.theme});
+
+setCType('settlement');setKind('once');setTab('charge');
+</script>
+</body>
+</html>
