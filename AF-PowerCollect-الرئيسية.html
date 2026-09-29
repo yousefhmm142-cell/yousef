@@ -421,15 +421,25 @@ a{color:inherit;text-decoration:none}
 
 /* quick access */
 .qa{margin-top:16px}
-.qg{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
-.q{display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:18px;border:1px solid var(--line2);background:var(--raised);transition:.18s;min-width:0}
+.qg{display:grid;grid-template-columns:repeat(7,1fr);gap:10px}
+.q{position:relative;display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:18px;border:1px solid var(--line2);background:var(--raised);transition:.18s;min-width:0}
 .q:hover{background:var(--surface);border-color:color-mix(in srgb,var(--brand) 40%,var(--line));transform:translateY(-2px);box-shadow:var(--shadow)}
 .q:hover .qi{background:linear-gradient(180deg,var(--brand-hi),var(--brand-lo));color:#fff}
 .q .qi{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--surface);border:1px solid var(--line2);color:var(--ink2);transition:.18s}
 .q .qi svg{width:19px;height:19px}
 .q b{font-size:14.5px}
 .q small{display:block;font-size:12px;color:var(--faint);margin-top:-8px}
-.qh{margin:18px 0 8px;font-size:13px;font-weight:700;color:var(--faint)}
+.qh{margin:18px 0 8px;font-size:14px;font-weight:700;color:var(--ink2);display:flex;align-items:center;gap:8px}
+.qh span{font-size:12px;font-weight:500;color:var(--faint)}
+.q .tg{position:absolute;top:12px;inset-inline-end:12px;font-style:normal;font-size:11px;font-weight:700;border-radius:7px;padding:1px 7px;background:var(--sunken);color:var(--faint);display:inline-flex;align-items:center;gap:3px}
+.q .tg svg{width:11px;height:11px}
+.q .tg.here{background:var(--brand);color:#fff}
+.q.on{border-color:color-mix(in srgb,var(--brand) 45%,var(--line));background:color-mix(in srgb,var(--brand) 5%,var(--surface))}
+.q.on .qi{background:linear-gradient(180deg,var(--brand-hi),var(--brand-lo));color:#fff;border:0}
+.q.off{opacity:.6;border-style:dashed;cursor:default}
+.q.off:hover{transform:none;box-shadow:none;background:var(--raised);border-color:var(--line2)}
+.q.off:hover .qi{background:var(--surface);color:var(--ink2)}
+.q.lkd .tg.lk{color:var(--warn);background:var(--warn-t)}
 .qh:first-of-type{margin-top:4px}
 .notes{margin-top:18px;border:1px dashed var(--line);border-radius:18px;padding:4px 18px;background:var(--surface);font-size:14.5px;color:var(--ink2)}
 .notes summary{cursor:pointer;font-weight:700;padding:10px 0}
@@ -475,6 +485,7 @@ a{color:inherit;text-decoration:none}
   </div>
   <section class="hero rise" style="animation-delay:.05s" id="hero"></section>
   <div class="kg" id="kg"></div>
+  <section class="pn qa rise" style="animation-delay:.12s"><div class="ph2"><h2>الوصول السريع</h2><p>جميع صفحات القائمة الجانبية والعمليات</p></div><div id="qa"></div></section>
   <div class="g2">
     <section class="pn rise" style="animation-delay:.15s"><div class="ph2"><h2>بانتظار قرارك <span class="c" id="tc"></span></h2><p>مهامّ تحتاج إجراءً منك اليوم</p></div><div id="tasks"></div></section>
     <section class="pn rise" style="animation-delay:.2s"><div class="ph2"><h2 id="rgT"></h2><a class="more" href="AF-PowerCollect-مراجعة-القراءات.html">المراجعة<span id="mI1"></span></a></div><div class="prg" id="prg"></div><div class="lgd"><span><i style="background:var(--brand)"></i>نسبة القراءات المُدخلة هذا الأسبوع</span><span><i style="background:var(--warn)"></i>أقل من 60٪: متأخرة</span></div></section>
@@ -484,7 +495,6 @@ a{color:inherit;text-decoration:none}
     <section class="pn rise" style="animation-delay:.3s"><div class="ph2"><h2>آخر العمليات</h2><a class="more" href="AF-PowerCollect-السجل-المالي.html">السجل المالي<span id="mI3"></span></a></div><div class="fd" id="feed"></div></section>
     <section class="pn rise" style="animation-delay:.35s"><div class="ph2"><h2>أعلى الذمم المستحقة</h2><a class="more" href="AF-PowerCollect-جدول-المشتركين.html">كل المشتركين<span id="mI4"></span></a></div><div id="debt"></div></section>
   </div>
-  <section class="pn qa rise" style="animation-delay:.4s"><div class="ph2"><h2>الوصول السريع</h2><p>جميع صفحات النظام</p></div><div id="qa"></div></section>
   <details class="notes">
     <summary>ملاحظات للمبرمج</summary>
     <ul>
@@ -502,7 +512,7 @@ a{color:inherit;text-decoration:none}
 <div class="toast" id="toast"><span class="ok" id="tIc"></span><span id="tmsg"></span><button id="undo" hidden>تراجع</button></div>
 <script>
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
-const P={search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',go:'<path d="m15 18-6-6 6-6"/>',plus:'<path d="M12 5v14M5 12h14"/>',cash:'<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/>',users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.5-5.5 6.5-5.5s5.5 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.5c1.6.7 2.6 2.4 3 5.5"/>',debt:'<path d="M12 3v18M7 7.5c0-1.9 2.2-3 5-3s5 1.1 5 3-2.2 2.7-5 3.5-5 1.6-5 3.5 2.2 3 5 3 5-1.1 5-3"/>',read:'<circle cx="12" cy="13" r="8"/><path d="M12 13l4-4M8 5l-1-2M16 5l1-2"/>',box:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h4"/>',check:'<path d="m5 12.5 4.5 4.5L19 7"/>',alert:'<path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/>',hand:'<path d="M7 11V6a2 2 0 0 1 4 0v5M11 10V4a2 2 0 0 1 4 0v6M15 10V6a2 2 0 0 1 4 0v8a7 7 0 0 1-7 7h-1a6 6 0 0 1-5-3l-3-5a2 2 0 0 1 3-2l2 2"/>',cut:'<path d="M18.4 6.6a9 9 0 1 1-12.8 0M12 3v9"/>',file:'<path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4M9 12h6M9 16h6"/>',minus:'<path d="M5 12h14"/>',tag:'<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8" r="1.5"/>',map:'<path d="M9 4 3 6.5v13.5l6-2.5 6 2.5 6-2.5V4l-6 2.5z"/><path d="M9 4v13.5M15 6.5V20"/>',branch:'<path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',chart:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',lock:'<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',ledger:'<path d="M5 4h14v16H5z"/><path d="M9 4v16M12 8h4M12 12h4"/>',bolt:'<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',phone:'<rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/>',shield:'<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/>',breaker:'<rect x="6" y="3" width="12" height="18" rx="2"/><path d="M10 8h4v5h-4z"/>',pin:'<path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/>'};
+const P={search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',go:'<path d="m15 18-6-6 6-6"/>',plus:'<path d="M12 5v14M5 12h14"/>',cash:'<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/>',users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.5-5.5 6.5-5.5s5.5 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.5c1.6.7 2.6 2.4 3 5.5"/>',debt:'<path d="M12 3v18M7 7.5c0-1.9 2.2-3 5-3s5 1.1 5 3-2.2 2.7-5 3.5-5 1.6-5 3.5 2.2 3 5 3 5-1.1 5-3"/>',read:'<circle cx="12" cy="13" r="8"/><path d="M12 13l4-4M8 5l-1-2M16 5l1-2"/>',box:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h4"/>',check:'<path d="m5 12.5 4.5 4.5L19 7"/>',alert:'<path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/>',hand:'<path d="M7 11V6a2 2 0 0 1 4 0v5M11 10V4a2 2 0 0 1 4 0v6M15 10V6a2 2 0 0 1 4 0v8a7 7 0 0 1-7 7h-1a6 6 0 0 1-5-3l-3-5a2 2 0 0 1 3-2l2 2"/>',cut:'<path d="M18.4 6.6a9 9 0 1 1-12.8 0M12 3v9"/>',file:'<path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4M9 12h6M9 16h6"/>',minus:'<path d="M5 12h14"/>',tag:'<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8" r="1.5"/>',map:'<path d="M9 4 3 6.5v13.5l6-2.5 6 2.5 6-2.5V4l-6 2.5z"/><path d="M9 4v13.5M15 6.5V20"/>',branch:'<path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',chart:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',lock:'<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',ledger:'<path d="M5 4h14v16H5z"/><path d="M9 4v16M12 8h4M12 12h4"/>',bolt:'<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',phone:'<rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/>',shield:'<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/>',breaker:'<rect x="6" y="3" width="12" height="18" rx="2"/><path d="M10 8h4v5h-4z"/>',grid:'<rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/>',cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',pin:'<path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/>'};
 const ic=(k,s=18)=>`<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${P[k]}</svg>`;
 const n0=v=>Math.round(v).toLocaleString('en-US'),n2=v=>v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 const F='AF-PowerCollect-';
@@ -570,11 +580,13 @@ function feed(){const adm=ROLE==='admin';
 function debt(){const L=ROLE==='admin'?DEB:DEB.filter((_,i)=>i!==1);
   $('#debt').innerHTML=L.slice(0,5).map(([n,v,st,b])=>{const ini=n.split(' ').filter(w=>w!=='أبو'&&w!=='عبد').slice(0,2).map(w=>w.replace('ال','')[0]).join('');
    return`<a class="dr" href="${F}كشف-الحساب.html"><span class="av">${ini}</span><span><b>${n}</b><small>الطبلون ${b} · ${st==='مقطوع'?'<span class="cut" style="color:var(--danger);font-weight:700">مقطوع</span>':'فعّال'}</small></span><span class="am"><b>${n0(v)} ₪</b><small>عليه</small></span></a>`}).join('')}
-const Q=[['العمليات اليومية',[['تسجيل-دفعة','cash','تسجيل دفعة','مع قراءة الإشعار'],['مراجعة-القراءات','read','مراجعة القراءات','والدفعات الميدانية'],['جدول-المشتركين','users','المشتركون','البحث والتصفية'],['ملف-المشترك','user','ملف المشترك','البيانات والحركات'],['كشف-الحساب','ledger','كشف الحساب','الحركات والرصيد'],['تطبيق-الميدان','phone','تطبيق الميدان','القارئ والمحصّل']]],
- ['الحسابات',[['إضافة-خصم','minus','إضافة خصم','لمرة أو دائم'],['إضافة-تحميل','plus','إضافة تحميل','غرامة أو تسوية'],['السجل-المالي','file','السجل المالي','كل الحركات'],['أداء-الفروع','chart','أداء الفروع','التحصيل والمقارنة'],['التعرفات','tag','التعرفات','الأسعار والشرائح']]],
- ['الشبكة والإعدادات',[['الطبلونات','box','الطبلونات','الخريطة والمناطق'],['القواطع','breaker','القواطع','حسب الطبلون'],['الفروع','branch','الفروع','9 فروع'],['المحافظات','map','المحافظات والمناطق','التقسيم الجغرافي'],['المستخدمون','user','المستخدمون','الحسابات والأدوار'],['الصلاحيات','shield','الصلاحيات','حسب الدور']]]];
-function qa(){const adm=ROLE==='admin',hide=['الفروع','المحافظات','الصلاحيات','التعرفات','أداء-الفروع'];
-  $('#qa').innerHTML=Q.map(([h,l])=>{const v=l.filter(x=>adm||!hide.includes(x[0]));return v.length?`<div class="qh">${h}</div><div class="qg">${v.map(([f,i,t,s])=>`<a class="q" href="${F+f}.html"><span class="qi">${ic(i,19)}</span><b>${t}</b><small>${s}</small></a>`).join('')}</div>`:''}).join('')}
+const Q=[['الصفحات','كما في القائمة الجانبية',[['الرئيسية','grid','الرئيسية','أنت هنا',0,1],['السجل-المالي','ledger','السجل المالي','كل الحركات المالية'],['أداء-الفروع','chart','أداء الفروع','التحصيل والمقارنة',1],['جدول-المشتركين','users','المشتركون','البحث والتصفية'],['مراجعة-القراءات','read','القراءات','المراجعة والاعتماد'],['المستخدمون','user','المستخدمون','الحسابات والأدوار']]],
+ ['الإعدادات','كما في القائمة الجانبية',[['الفروع','branch','الفروع','9 فروع',1],['التعرفات','tag','التعرفات','الأسعار والشرائح',1],['القواطع','bolt','القواطع','حسب الطبلون'],['الطبلونات','box','الطبلونات','الخريطة والمناطق'],['المحافظات','map','المحافظات','والمناطق الفرعية',1],['الصلاحيات','shield','الصلاحيات','حسب الدور',1],['','cal','مواعيد القراءات','لم تُصمَّم بعد']]],
+ ['عمليات سريعة','من داخل الصفحات',[['تسجيل-دفعة','cash','تسجيل دفعة','مع قراءة الإشعار'],['إضافة-خصم','minus','إضافة خصم','لمرة أو دائم'],['إضافة-تحميل','plus','إضافة تحميل','غرامة أو تسوية'],['كشف-الحساب','file','كشف الحساب','الحركات والرصيد'],['ملف-المشترك','user','ملف المشترك','البيانات والحركات'],['تطبيق-الميدان','phone','تطبيق الميدان','القارئ والمحصّل'],['','lock','الملف الشخصي','لم يُصمَّم بعد']]]];
+function qa(){const adm=ROLE==='admin';
+  $('#qa').innerHTML=Q.map(([h,hs,l])=>`<div class="qh">${h}<span>${hs}</span></div><div class="qg">${l.map(([f,i,t,s,own,here])=>{const lk=!adm&&own,soon=!f;
+   const inner=`<span class="qi">${ic(i,19)}</span><b>${t}</b><small>${s}</small>${here?'<em class="tg here">الحالية</em>':soon?'<em class="tg">قريبًا</em>':lk?`<em class="tg lk">${ic('lock',12)}للمدير العام</em>`:''}`;
+   return soon||here?`<div class="q ${here?'on':'off'}">${inner}</div>`:`<a class="q ${lk?'lkd':''}" href="${F+f}.html">${inner}</a>`}).join('')}</div>`).join('')}
 function all(){const adm=ROLE==='admin';
   $('#hsub').textContent=`الثلاثاء 29 أيلول 2026 · أسبوع القراءات 26/09 – 02/10 · ${adm?'المدير العام':'مدير فرع النصيرات'}`;
   hero();kpis();tasks();prog();table();feed();debt();qa()}
