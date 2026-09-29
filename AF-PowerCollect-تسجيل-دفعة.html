@@ -190,6 +190,46 @@ svg.i{width:18px;height:18px;flex:none}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 .toast button{border:0;background:#ffffff1a;color:#fff;border-radius:10px;padding:5px 12px;font-weight:700;cursor:pointer}
 
+[hidden]{display:none!important}
+/* قراءة إشعار التحويل */
+.scan{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;border:1.5px dashed color-mix(in srgb,var(--brand) 45%,var(--line));background:color-mix(in srgb,var(--brand) 5%,var(--surface))}
+.scan .si{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(180deg,var(--brand-hi),var(--brand-lo));color:#fff;flex:none}
+.scan b{display:block;font-size:15px}
+.scan small{display:block;font-size:12.5px;color:var(--faint);line-height:1.5}
+.scan .sa{margin-inline-start:auto;display:flex;gap:6px;flex:none}
+.scan .sa button{height:38px;border-radius:11px;border:1px solid var(--line);background:var(--surface);padding:0 12px;font-weight:700;font-size:13.5px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;color:var(--ink2)}
+.scan .sa button.p{border:0;color:#fff;background:linear-gradient(180deg,var(--brand-hi),var(--brand-lo))}
+.scan .sa svg{width:16px;height:16px}
+.ocr{display:grid;grid-template-columns:96px minmax(0,1fr);gap:14px;padding:12px;border-radius:16px;border:1px solid var(--line2);background:var(--surface)}
+.ocr .th{position:relative;width:96px;height:128px;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#fff;cursor:zoom-in}
+.ocr .th img{width:100%;height:100%;object-fit:cover;object-position:top}
+.ocr .th .beam{position:absolute;inset-inline:0;height:34px;top:-34px;background:linear-gradient(180deg,transparent,#a51d2655,#a51d26);animation:beam 1.1s linear infinite}
+@keyframes beam{to{top:128px}}
+.ocr .st{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+.ocr .st.ok{color:var(--success)}
+.ocr .st .sp{width:16px;height:16px;border-radius:50%;border:2.5px solid var(--line);border-top-color:var(--brand);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ocr ul{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:4px;font-size:13px;color:var(--muted)}
+.ocr li{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dashed var(--line2);padding-bottom:4px}
+.ocr li b{color:var(--ink);font-family:Alexandria,'IBM Plex Sans Arabic';font-weight:700}
+.ocr .ck2{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:12.5px;color:var(--success);font-weight:600}
+.ocr .ra{display:flex;gap:6px;margin-top:8px}
+.ocr .ra button{height:32px;border-radius:10px;border:1px solid var(--line);background:var(--surface);padding:0 10px;font-size:12.5px;font-weight:700;cursor:pointer;color:var(--ink2)}
+.filled{box-shadow:0 0 0 3px color-mix(in srgb,var(--success) 25%,transparent)!important;border-color:var(--success)!important;transition:box-shadow .4s}
+.fromimg{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700;color:var(--success);background:var(--success-tint);padding:1px 7px;border-radius:99px}
+.cam{position:fixed;inset:0;z-index:40;background:#05070acc;backdrop-filter:blur(6px);display:grid;place-items:center;padding:20px}
+.cam .box{width:min(460px,100%);background:#0b0d10;border-radius:26px;overflow:hidden;box-shadow:0 30px 80px -20px #000;color:#fff}
+.cam .vf{position:relative;aspect-ratio:3/4;background:#000;display:grid;place-items:center;overflow:hidden}
+.cam video{width:100%;height:100%;object-fit:cover}.cam .vf img{width:84%;height:auto;object-fit:contain}
+.cam .frame{position:absolute;inset:6% 8%;border-radius:18px;box-shadow:0 0 0 9999px #0006;border:2px solid #ffffffcc}
+.cam .hint{z-index:1;text-shadow:0 1px 3px #000}
+.cam .hint{position:absolute;top:12px;inset-inline:0;text-align:center;font-size:13.5px;font-weight:600}
+.cam .nocam{position:absolute;bottom:12px;inset-inline:12px;text-align:center;font-size:12.5px;background:#000a;border-radius:10px;padding:6px 8px;color:#dfe3e8}
+.cam .bar2{display:flex;align-items:center;justify-content:space-between;padding:16px 20px}
+.cam .bar2 button{border:0;background:#ffffff14;color:#fff;height:42px;border-radius:12px;padding:0 14px;font-weight:700;cursor:pointer}
+.cam .bar2 .shot{width:68px;height:68px!important;border-radius:50%!important;border:4px solid #fff!important;background:var(--brand)!important;padding:0!important}
+.viewer{position:fixed;inset:0;z-index:41;background:#05070ae6;display:grid;place-items:center;padding:24px;cursor:zoom-out}
+.viewer img{max-width:min(420px,100%);max-height:90vh;border-radius:16px;box-shadow:0 30px 80px -20px #000}
 /* responsive */
 @media (max-width:900px){
   .modal{display:flex;flex-direction:column;border-radius:24px}
@@ -199,6 +239,7 @@ svg.i{width:18px;height:18px;flex:none}
   .side .big .v{font-size:32px}
 }
 @media (max-width:560px){
+  .scan{flex-wrap:wrap}.scan .sa{width:100%;margin:0}.scan .sa button{flex:1;justify-content:center}
   .stage{padding:64px 0 0;place-items:end center}
   .modal{border-radius:24px 24px 0 0}
   .body{padding:18px 16px 8px}.mh{padding:16px}.foot{padding:12px 16px;position:sticky;bottom:0}
@@ -224,19 +265,19 @@ svg.i{width:18px;height:18px;flex:none}
   <div class="main">
     <div class="mh">
       <span class="ic"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20M6 15h4"/></svg></span>
-      <div><h1 id="t">تسجيل دفعة</h1><p>سجّل المبلغ اللي استلمته، والرصيد بيتحدث لحاله.</p></div>
+      <div><h1 id="t">تسجيل دفعة</h1><p>أدخل المبلغ المستلم، ويُحدَّث رصيد المشترك تلقائيًا.</p></div>
       <button type="button" class="x" aria-label="إغلاق"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
 
     <div class="body">
       <div class="who">
-        <span class="av">AC<i></i></span>
-        <div><b>Alf Carroll</b><small>حساب <span class="num">202600041</span> · فرع المنصور</small></div>
+        <span class="av">مش<i></i></span>
+        <div><b>محمد أحمد الشاعر</b><small>حساب <span class="num">202600041</span> · فرع النصيرات</small></div>
         <div class="chip"><small>الرصيد الحالي</small><span class="bal num" id="balNow"></span></div>
       </div>
 
       <div>
-        <div class="lbl"><span>المبلغ المستلم <span class="req">*</span></span><small>اكتب المبلغ بالعملة اللي استلمتها</small></div>
+        <div class="lbl"><span>المبلغ المستلم <span class="req">*</span></span><small>بالعملة التي استُلم بها المبلغ</small></div>
         <div class="amount" id="amtBox">
           <div class="amt-row">
             <input id="amt" inputmode="decimal" autocomplete="off" placeholder="0.00" aria-label="المبلغ">
@@ -254,7 +295,7 @@ svg.i{width:18px;height:18px;flex:none}
             <span class="fx" id="fx"></span>
           </div>
         </div>
-        <div class="err-msg" role="alert"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>اكتب مبلغ أكبر من صفر.</div>
+        <div class="err-msg" role="alert"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>أدخل مبلغًا أكبر من صفر.</div>
       </div>
 
       <div>
@@ -266,12 +307,15 @@ svg.i{width:18px;height:18px;flex:none}
           </button>
           <button type="button" class="tile" role="radio" aria-checked="false" data-m="cash">
             <span class="ti"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg></span>
-            <span><b>نقد</b><small>استلمت المبلغ كاش</small></span><span class="dot"></span>
+            <span><b>نقدًا</b><small>استُلم المبلغ نقدًا في المكتب</small></span><span class="dot"></span>
           </button>
         </div>
 
         <div class="reveal on" id="bankReveal"><div>
           <div class="bank-card" style="margin-top:12px">
+            <div class="scan" id="scan"><span class="si"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span><div><b>قراءة إشعار التحويل تلقائيًا</b><small>صوّر الإشعار من جوال المشترك أو أرفق صورته، وتُعبّأ البيانات تلقائيًا.</small></div>
+              <div class="sa"><button type="button" class="p" id="camBtn"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>التقاط صورة</button><button type="button" id="upBtn"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></svg>إرفاق صورة</button><input type="file" id="file" accept="image/*" hidden></div></div>
+            <div class="ocr" id="ocr" hidden></div>
             <div>
               <div class="lbl"><span>البنك أو المحفظة <span class="req">*</span></span></div>
               <div class="banks" role="radiogroup" aria-label="البنك أو المحفظة">
@@ -284,11 +328,11 @@ svg.i{width:18px;height:18px;flex:none}
               <div>
                 <div class="lbl"><span>اسم المحوِّل</span>
                   <label class="toggle"><input type="checkbox" id="self" checked><span class="sw"></span>المشترك نفسه</label></div>
-                <input class="inp" id="payer" value="Alf Carroll" readonly>
+                <input class="inp" id="payer" value="محمد أحمد الشاعر" readonly>
               </div>
               <div>
-                <div class="lbl"><span>الرقم المرجعي</span><small>من إشعار الحوالة</small></div>
-                <input class="inp num" placeholder="مثال: TRX-48213" dir="ltr" style="text-align:right">
+                <div class="lbl"><span>الرقم المرجعي</span><small>من إشعار التحويل</small></div>
+                <input class="inp num" id="ref" placeholder="مثال: FT26272X8Q41" dir="ltr" style="text-align:right">
               </div>
             </div>
           </div>
@@ -298,14 +342,14 @@ svg.i{width:18px;height:18px;flex:none}
       <div>
         <button type="button" class="more-toggle" id="moreBtn" aria-expanded="false" aria-controls="more">
           <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
-          تفاصيل إضافية <span style="font-weight:500;color:var(--faint)">(اختياري: السند اليدوي، التاريخ، ملاحظة)</span>
+          تفاصيل إضافية <span style="font-weight:500;color:var(--faint)">(اختيارية: السند الورقي، التاريخ، ملاحظة)</span>
         </button>
         <div class="reveal" id="more"><div>
           <div class="two" style="margin-top:14px">
-            <div><div class="lbl"><span>رقم السند اليدوي</span><small>إذا في وصل ورقي</small></div><input class="inp num" placeholder="مثال: 00412" dir="ltr" style="text-align:right"></div>
+            <div><div class="lbl"><span>رقم السند الورقي</span><small>إن وُجد إيصال ورقي</small></div><input class="inp num" placeholder="مثال: 00412" dir="ltr" style="text-align:right"></div>
             <div><div class="lbl"><span>تاريخ الاستلام</span></div><input class="inp" type="date" id="date"></div>
           </div>
-          <div style="margin-top:14px"><div class="lbl"><span>ملاحظة</span></div><input class="inp" placeholder="أي تفصيل بدك يضل محفوظ مع الدفعة"></div>
+          <div style="margin-top:14px"><div class="lbl"><span>ملاحظة</span></div><input class="inp" placeholder="أي تفصيل يُحفظ مع الدفعة"></div>
         </div></div>
       </div>
     </div>
@@ -325,7 +369,7 @@ svg.i{width:18px;height:18px;flex:none}
     <div class="big"><small>المبلغ</small><div class="v" id="sAmt">0.00<span>₪</span></div><div class="conv" id="sConv">&nbsp;</div></div>
     <div class="ledger">
       <div><span>الرصيد الحالي</span><b id="sBefore"></b></div>
-      <div><span>هاي الدفعة</span><b id="sPay">+0.00</b></div>
+      <div><span>هذه الدفعة</span><b id="sPay">+0.00</b></div>
       <div class="sep"></div>
       <div class="after"><span>الرصيد بعد الدفعة</span><b id="sAfter"></b></div>
     </div>
@@ -335,19 +379,19 @@ svg.i{width:18px;height:18px;flex:none}
     </div>
     <div class="meta">
       <div><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>الطريقة: <b id="sMethod">تحويل · بنك فلسطين</b></div>
-      <div><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>المحصّل: <b>Christine King</b></div>
+      <div><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>المحصّل: <b>يوسف أبو زايد</b></div>
       <div><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="sTime"></span></div>
     </div>
     <div class="after-save">
       بعد الحفظ:
-      <label><input type="checkbox" checked>اطبع الإيصال</label>
-      <label><input type="checkbox" checked>ابعت SMS تأكيد للمشترك</label>
+      <label><input type="checkbox" checked>طباعة الإيصال</label>
+      <label><input type="checkbox" checked>إرسال رسالة تأكيد للمشترك</label>
     </div>
   </aside>
 
   <div class="done">
     <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></div>
-    <h2>انسجلت الدفعة</h2>
+    <h2>تم تسجيل الدفعة</h2>
     <p id="dMsg"></p>
     <div class="receipt" id="rcpt"></div>
     <div class="acts">
@@ -359,7 +403,10 @@ svg.i{width:18px;height:18px;flex:none}
 </form>
 </div>
 
-<div class="toast" id="toast"><span>انسجلت الدفعة وانبعت SMS للمشترك</span><button type="button" id="undo">تراجع</button></div>
+<div class="cam" id="cam" hidden><div class="box"><div class="vf"><video id="vid" autoplay playsinline muted></video><img id="camSample" alt="" hidden><div class="frame"></div><div class="hint">ضع إشعار التحويل داخل الإطار</div><div class="nocam" id="noCam" hidden>لا تتوفر كاميرا في هذا الجهاز. تُعرض صورة تجريبية لإشعار تحويل.</div></div>
+  <div class="bar2"><button type="button" id="camX">إلغاء</button><button type="button" class="shot" id="shot" aria-label="التقاط"></button><button type="button" id="camUp">من الاستوديو</button></div></div></div>
+<div class="viewer" id="viewer" hidden><img id="viewImg" alt="إشعار التحويل"></div>
+<div class="toast" id="toast"><span>تم تسجيل الدفعة وإرسال رسالة تأكيد للمشترك</span><button type="button" id="undo">تراجع</button></div>
 
 <script>
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
@@ -377,7 +424,7 @@ const amt=$('#amt');
 function val(){const v=parseFloat(amt.value.replace(/,/g,''));return isFinite(v)&&v>0?v:0}
 function render(){
   const a=val(),r=+($('#rate')?.value||RATES[cur]),ils=a*r,after=BAL+ils;
-  $('#fx').innerHTML=cur==='ILS'?'':`سعر الصرف <input id="rate" class="num" value="${r}" aria-label="سعر الصرف"> · بيتسجل <b>${fmt(ils)} ₪</b>`;
+  $('#fx').innerHTML=cur==='ILS'?'':`سعر الصرف <input id="rate" class="num" value="${r}" aria-label="سعر الصرف"> · يُسجَّل <b>${fmt(ils)} ₪</b>`;
   if(cur!=='ILS'){const ri=$('#rate');ri.oninput=()=>{renderNums()};}
   renderNums();
 }
@@ -400,7 +447,7 @@ $$('#cur button').forEach(b=>b.onclick=()=>{$$('#cur button').forEach(x=>x.setAt
 function setMethod(m){method=m;$$('.tile').forEach(t=>t.setAttribute('aria-checked',t.dataset.m===m));$('#bankReveal').classList.toggle('on',m==='bank');$('#sMethod').textContent=m==='bank'?'تحويل · '+$('.bank[aria-checked=true] span:last-child').firstChild.textContent:'نقد'}
 $$('.tile').forEach(t=>t.onclick=()=>setMethod(t.dataset.m));
 $$('.bank').forEach(b=>b.onclick=()=>{$$('.bank').forEach(x=>x.setAttribute('aria-checked',x===b));setMethod('bank')});
-$('#self').onchange=e=>{const p=$('#payer');p.readOnly=e.target.checked;if(e.target.checked)p.value='Alf Carroll';else{p.value='';p.focus()}};
+$('#self').onchange=e=>{const p=$('#payer');p.readOnly=e.target.checked;if(e.target.checked)p.value='محمد أحمد الشاعر';else{p.value='';p.focus()}};
 $('#moreBtn').onclick=e=>{const on=e.currentTarget.getAttribute('aria-expanded')!=='true';e.currentTarget.setAttribute('aria-expanded',on);$('#more').classList.toggle('on',on)};
 const now=new Date();$('#date').valueAsDate=now;
 $('#sTime').innerHTML='اليوم، <b class="num">'+now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+'</b>';
@@ -412,9 +459,50 @@ document.addEventListener('keydown',e=>{
 $('#m').onsubmit=e=>{e.preventDefault();
   if(!val()){$('#amtBox').classList.add('err');amt.focus();return}
   const a=val(),r=cur==='ILS'?1:(+$('#rate').value||RATES[cur]),ils=a*r,after=BAL+ils;
-  $('#dMsg').textContent=`${fmt(a)} ${NAME[cur]} من Alf Carroll · الرصيد الجديد ${balHTML(after)}`;
-  $('#rcpt').innerHTML=[['رقم الإيصال','<span class="num">R-2026-08814</span>'],['المبلغ',`<span class="num">${fmt(a)} ${SYM[cur]}</span>`],['بالشيكل',`<span class="num">${fmt(ils)} ₪</span>`],['الطريقة',$('#sMethod').textContent],['الرصيد بعد الدفعة',`<span class="num">${balHTML(after)}</span>`]].map(([k,v])=>`<div><span>${k}</span><b>${v}</b></div>`).join('');
+  $('#dMsg').textContent=`${fmt(a)} ${NAME[cur]} من محمد أحمد الشاعر · الرصيد الجديد ${balHTML(after)}`;
+  $('#rcpt').innerHTML=[['رقم الإيصال','<span class="num">R-2026-08814</span>'],['المبلغ',`<span class="num">${fmt(a)} ${SYM[cur]}</span>`],['بالشيكل',`<span class="num">${fmt(ils)} ₪</span>`],['الطريقة',$('#sMethod').textContent],['الرصيد بعد الدفعة',`<span class="num">${balHTML(after)}</span>`]].concat(attached&&method==='bank'?[['المرفق','صورة إشعار التحويل']]:[]).map(([k,v])=>`<div><span>${k}</span><b>${v}</b></div>`).join('');
   $('#m').classList.add('saved');const t=$('#toast');t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),5000)};
+
+/* ---------- قراءة إشعار التحويل (OCR) ---------- */
+// نموذج: صورة إشعار تجريبية، والقيم المستخرجة ثابتة. في النظام الحقيقي تُرسل الصورة لخدمة قراءة النصوص.
+const SAMPLE='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="360" height="640" viewBox="0 0 360 640" font-family="Tahoma,Arial">
+<rect width="360" height="640" fill="#f4f6f8"/><rect width="360" height="120" fill="#0b6b3a"/>
+<text x="180" y="58" fill="#fff" font-size="20" text-anchor="middle" font-weight="700">حوالة ناجحة</text><text x="180" y="88" fill="#d6f5e3" font-size="13" text-anchor="middle">تطبيق البنك · صورة تجريبية</text>
+<circle cx="180" cy="160" r="30" fill="#e3f6ec"/><path d="M166 160l10 10 20-22" stroke="#0b6b3a" stroke-width="6" fill="none" stroke-linecap="round"/>
+<text x="180" y="230" fill="#111" font-size="34" text-anchor="middle" font-weight="700">250.00 ILS</text>
+<g font-size="14" fill="#555"><text x="330" y="290" text-anchor="end">من</text><text x="330" y="340" text-anchor="end">إلى</text><text x="330" y="390" text-anchor="end">الرقم المرجعي</text><text x="330" y="440" text-anchor="end">التاريخ</text><text x="330" y="490" text-anchor="end">البيان</text></g>
+<g font-size="15" fill="#111" font-weight="700"><text x="30" y="290">أحمد محمد الشاعر</text><text x="30" y="340">شركة أبناء فارس أبو زايد</text><text x="30" y="390">FT26272X8Q41</text><text x="30" y="440">29/09/2026 10:42</text><text x="30" y="490">اشتراك 202600041</text></g>
+<g stroke="#e3e6ea"><line x1="24" y1="305" x2="336" y2="305"/><line x1="24" y1="355" x2="336" y2="355"/><line x1="24" y1="405" x2="336" y2="405"/><line x1="24" y1="455" x2="336" y2="455"/></g>
+<rect x="24" y="540" width="312" height="48" rx="12" fill="#0b6b3a"/><text x="180" y="570" fill="#fff" font-size="15" text-anchor="middle">مشاركة الإشعار</text></svg>`);
+const OCR={amount:'250.00',currency:'ILS',bank:0,payer:'أحمد محمد الشاعر',ref:'FT26272X8Q41',date:'2026-09-29',time:'10:42'};
+let stream=null,attached=null;
+function openCam(){$('#cam').hidden=false;$('#noCam').hidden=true;$('#camSample').hidden=true;$('#vid').hidden=false;
+  if(navigator.mediaDevices?.getUserMedia){navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}).then(s=>{stream=s;$('#vid').srcObject=s}).catch(noCam)}else noCam()}
+function noCam(){$('#vid').hidden=true;$('#camSample').src=SAMPLE;$('#camSample').hidden=false;$('#noCam').hidden=false}
+function closeCam(){$('#cam').hidden=true;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}}
+function capture(){let src=SAMPLE;const v=$('#vid');if(stream&&v.videoWidth){const c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0);src=c.toDataURL('image/jpeg',.85)}closeCam();readImage(src)}
+function readImage(src){attached=src;setMethod('bank');const o=$('#ocr');o.hidden=false;
+  o.innerHTML=`<div class="th" id="th"><img src="${src}" alt="إشعار التحويل"><span class="beam"></span></div><div><div class="st"><span class="sp"></span>جارٍ قراءة الإشعار…</div><ul><li><span>المبلغ</span><b>…</b></li><li><span>البنك</span><b>…</b></li><li><span>المحوِّل</span><b>…</b></li><li><span>الرقم المرجعي</span><b>…</b></li></ul></div>`;
+  setTimeout(fill,1700)}
+function mark(el){el.classList.remove('filled');void el.offsetWidth;el.classList.add('filled');setTimeout(()=>el.classList.remove('filled'),2600)}
+function fill(){
+  $$('#cur button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.c===OCR.currency));cur=OCR.currency;amt.value=OCR.amount;render();mark($('#amtBox'));
+  const b=$$('.bank')[OCR.bank];$$('.bank').forEach(x=>x.setAttribute('aria-checked',x===b));setMethod('bank');mark(b);
+  $('#self').checked=false;const p=$('#payer');p.readOnly=false;p.value=OCR.payer;mark(p);
+  const r=$('#ref');r.value=OCR.ref;mark(r);
+  $('#date').value=OCR.date;
+  $('#ocr').innerHTML=`<div class="th" id="th"><img src="${attached}" alt="إشعار التحويل"></div><div><div class="st ok"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px"><path d="M5 12l5 5 9-10"/></svg>تمت قراءة الإشعار، يُرجى مراجعة البيانات</div>
+   <ul><li><span>المبلغ</span><b>${OCR.amount} ₪</b></li><li><span>البنك</span><b>بنك فلسطين</b></li><li><span>المحوِّل</span><b>${OCR.payer}</b></li><li><span>الرقم المرجعي</span><b dir="ltr">${OCR.ref}</b></li><li><span>التاريخ</span><b dir="ltr">29/09/2026 ${OCR.time}</b></li></ul>
+   <div class="ck2"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:15px;height:15px"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg>الرقم المرجعي غير مسجّل في أي دفعة سابقة</div>
+   <div class="ra"><button type="button" id="reScan">صورة أخرى</button><button type="button" id="rmImg">إزالة المرفق</button></div></div>`;
+  $('#reScan').onclick=openCam;$('#rmImg').onclick=()=>{attached=null;$('#ocr').hidden=true;renderAttach()};
+  renderAttach();amt.focus()}
+function renderAttach(){$('#attLine')?.remove();if(attached)$('.meta').insertAdjacentHTML('beforeend','<div id="attLine"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 12.5 12.5 21a5 5 0 0 1-7-7L14 5.5a3.3 3.3 0 0 1 4.7 4.7L10.3 18.6a1.7 1.7 0 0 1-2.4-2.4L15.5 8.6"/></svg>مرفق: <b>صورة إشعار التحويل</b></div>')}
+$('#camBtn').onclick=openCam;$('#camX').onclick=closeCam;$('#shot').onclick=capture;
+$('#upBtn').onclick=()=>$('#file').click();$('#camUp').onclick=()=>{closeCam();$('#file').click()};
+$('#file').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>readImage(rd.result);rd.readAsDataURL(f);e.target.value=''};
+document.addEventListener('click',e=>{if(e.target.closest('#th')){$('#viewImg').src=attached;$('#viewer').hidden=false}});
+$('#viewer').onclick=()=>$('#viewer').hidden=true;
 $('#undo').onclick=()=>{$('#m').classList.remove('saved');$('#toast').classList.remove('on')};
 $('#again').onclick=()=>{$('#m').classList.remove('saved');amt.value='';renderNums();amt.focus()};
 $$('.seg button').forEach(b=>b.onclick=()=>{$$('.seg button').forEach(x=>x.setAttribute('aria-pressed',x===b));document.documentElement.dataset.theme=b.dataset.theme});
