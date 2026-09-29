@@ -577,6 +577,7 @@ $('#bOk').onclick=()=>approve([...S.sel]);$('#bNo').onclick=()=>reject([...S.sel
 const setW=w=>{S.w=w;S.data={r:genR(w),p:genP(w)};S.sel.clear();S.edit=null;S.f=w?'all':'pend';render()};
 $('#wPrev').onclick=()=>setW(S.w+1);$('#wNext').onclick=()=>setW(S.w-1);
 $$('.demo-bar .seg button').forEach(b=>b.onclick=()=>{$$('.demo-bar .seg button').forEach(x=>x.setAttribute('aria-pressed',x===b));document.documentElement.dataset.theme=b.dataset.theme});
+if(location.hash==='#p')S.tab='p';
 render();
 </script>
 </body>
