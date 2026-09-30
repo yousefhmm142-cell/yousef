@@ -778,6 +778,9 @@ h2.sec small{font-family:var(--f-body);font-weight:500;color:var(--muted);font-s
 .reg-row[data-depth="2"]::before{inset-inline-start:30px}
 .reg-row.is-off{display:grid!important;opacity:.4}
 
+.upd p{margin:0 0 10px;font-size:.84rem;color:var(--muted)}
+.upd .fine{margin:10px 0 0}
+.upd-acts{display:flex;flex-wrap:wrap;gap:8px}
 .aside-note{font-size:.8rem;color:var(--muted);background:var(--surface-2);border-radius:10px;padding:10px 12px;display:grid;gap:6px}
 .aside-note p{margin:0}
 .linkish{border:0;background:none;padding:0;color:var(--ink);font-weight:600;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
@@ -866,13 +869,13 @@ h2.sec small{font-family:var(--f-body);font-weight:500;color:var(--muted);font-s
   <header class="bar">
     <div class="emblem" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 2 4 13.6h6.3L9 22l10-12.4h-6.4z"/></svg></div>
     <div>
-      <h1>شبكة مخيم اجديد</h1>
-      <p>خريطة كوابل الكهرباء · نسخة العامل</p>
+      <h1 id="title">شبكة مخيم اجديد</h1>
+      <p id="subtitle">خريطة كوابل الكهرباء · نسخة العامل</p>
     </div>
     <div class="bar-meta" aria-label="ملخص الشبكة">
       <div><b id="m-len">—</b><span>طول الكوابل</span></div>
       <div><b id="m-cnt">—</b><span>كابل</span></div>
-      <div><b>2</b><span>مصدر تغذية</span></div>
+      <div><b id="m-src">—</b><span>مصدر تغذية</span></div>
     </div>
   </header>
 
@@ -887,12 +890,8 @@ h2.sec small{font-family:var(--f-body);font-weight:500;color:var(--muted);font-s
 
     <div class="mapwrap">
       <div id="map" role="application" aria-label="خريطة الكوابل"></div>
-      <div class="attrib">Imagery © Esri, Maxar, Earthstar Geographics</div>
-      <div class="map-tools">
-        <button class="chip-btn" type="button" data-jump="all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>كل الشبكة</button>
-        <button class="chip-btn" type="button" data-jump="abu">مولد أبو زايد</button>
-        <button class="chip-btn" type="button" data-jump="muf">المفتي</button>
-      </div>
+      <div class="attrib">© Esri, Maxar, Earthstar</div>
+      <div class="map-tools" id="mapTools"></div>
     </div>
   </div>
 </div>
@@ -901,7 +900,42 @@ h2.sec small{font-family:var(--f-body);font-weight:500;color:var(--muted);font-s
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script>
 (function(){
-const D = {"cables": [{"n": 1, "cls": "150", "spec": "4×150", "title": "كابل 4×150", "src": "abu", "parent": null, "how": "gen", "note": null, "orig": "كابل 4*150", "len": 233, "dir": "شمال شرق", "path": [[31.460345, 34.38834], [31.460675, 34.388603], [31.460929, 34.38898], [31.461113, 34.389245], [31.461273, 34.389426], [31.461476, 34.389713], [31.46147, 34.389811], [31.461389, 34.389901], [31.461273, 34.390005], [31.461187, 34.390095]], "kids": [2], "spots": [[31.46108, 34.389198], [31.460883, 34.388911], [31.461299, 34.389463], [31.460714, 34.38866], [31.461473, 34.389709], [31.460518, 34.388478], [31.461348, 34.389938]]}, {"n": 2, "cls": "50", "spec": "4×50", "title": "كابل 4×50", "src": "abu", "parent": 1, "how": "branch", "note": null, "orig": "كابل 4*50", "len": 60, "dir": "شمال شرق", "path": [[31.461471, 34.389802], [31.461582, 34.389965], [31.461823, 34.390275]], "kids": [], "spots": [[31.461643, 34.390043], [31.461588, 34.389973], [31.461697, 34.390113], [31.461545, 34.38991], [31.461744, 34.390173], [31.461504, 34.389851], [31.461787, 34.390229]]}, {"n": 3, "cls": "150", "spec": "4×150 + 1×25", "title": "كابل 4×150 + 1×25", "src": "abu", "parent": null, "how": "gen", "note": null, "orig": "كابل 4*150+25*1", "len": 323, "dir": "جنوب غرب", "path": [[31.460325, 34.388346], [31.460346, 34.388198], [31.460248, 34.388087], [31.460086, 34.387927], [31.459932, 34.387729], [31.459595, 34.387384], [31.459524, 34.387373], [31.459302, 34.38713], [31.459118, 34.386966], [31.459002, 34.386847], [31.458794, 34.386658], [31.458634, 34.3865], [31.458477, 34.386393], [31.458211, 34.386146]], "kids": [4, 5, 6, 9], "spots": [[31.459356, 34.38719], [31.459697, 34.387488], [31.45902, 34.386865], [31.459976, 34.387786], [31.458725, 34.386589], [31.460228, 34.388067], [31.458439, 34.386358]]}, {"n": 4, "cls": "50", "spec": "4×50", "title": "كابل 4×50", "src": "abu", "parent": 3, "how": "branch", "note": null, "orig": "كابل 4*50", "len": 109, "dir": "جنوب شرق", "path": [[31.459926, 34.387728], [31.459865, 34.387773], [31.459726, 34.387933], [31.459619, 34.388064], [31.459448, 34.388328], [31.459277, 34.388585]], "kids": [], "spots": [[31.459577, 34.388129], [31.459673, 34.387998], [31.459488, 34.388267], [31.459762, 34.387891], [31.45941, 34.388385], [31.459846, 34.387794], [31.459337, 34.388494]]}, {"n": 5, "cls": "95", "spec": "4×95", "title": "كابل 4×95", "src": "abu", "parent": 3, "how": "branch", "note": null, "orig": "4*95", "len": 197, "dir": "جنوب شرق", "path": [[31.45951, 34.387443], [31.4593, 34.387746], [31.459145, 34.387979], [31.459008, 34.388199], [31.458769, 34.388551], [31.45857, 34.388817], [31.458379, 34.389047]], "kids": [], "spots": [[31.458964, 34.388264], [31.459123, 34.388014], [31.458798, 34.388509], [31.459264, 34.3878], [31.458647, 34.388714], [31.459398, 34.387605], [31.458503, 34.388898]]}, {"n": 6, "cls": "95", "spec": "4×95", "title": "كابل 4×95", "src": "abu", "parent": 3, "how": "branch", "note": null, "orig": "4*95", "len": 198, "dir": "جنوب شرق", "path": [[31.458981, 34.386859], [31.458712, 34.387236], [31.458423, 34.38763], [31.458212, 34.387934], [31.458066, 34.388175], [31.457967, 34.388294], [31.457824, 34.388442]], "kids": [7, 8], "spots": [[31.458405, 34.387656], [31.458579, 34.387418], [31.458237, 34.387899], [31.45873, 34.387211], [31.4581, 34.388118], [31.458867, 34.387019], [31.457958, 34.388304]]}, {"n": 7, "cls": "50", "spec": "4×50", "title": "كابل 4×50", "src": "abu", "parent": 6, "how": "cont", "note": "مكتوب في الملف الأصلي «4*5»، ولونه لون كوابل 4×50، فاعتُبر 4×50.", "orig": "4*5", "len": 149, "dir": "جنوب شرق", "path": [[31.457823, 34.388439], [31.457665, 34.3887], [31.457498, 34.389024], [31.457202, 34.389455], [31.457007, 34.389678]], "kids": [], "spots": [[31.457451, 34.389092], [31.457564, 34.388897], [31.457325, 34.389275], [31.457654, 34.388722], [31.457216, 34.389434], [31.457745, 34.388567], [31.457103, 34.389568]]}, {"n": 8, "cls": "25", "spec": "4×25", "title": "كابل 4×25", "src": "abu", "parent": 6, "how": "branch", "note": null, "orig": "كابل 4*25", "len": 81, "dir": "غرب", "path": [[31.457945, 34.388315], [31.457864, 34.388216], [31.457779, 34.388042], [31.457845, 34.387786], [31.457954, 34.387576], [31.457952, 34.387583]], "kids": [], "spots": [[31.457802, 34.387954], [31.457795, 34.388074], [31.457833, 34.387831], [31.457842, 34.388171], [31.457874, 34.387731], [31.457894, 34.388253], [31.457919, 34.387643]]}, {"n": 9, "cls": "50", "spec": "4×50", "title": "كابل 4×50", "src": "abu", "parent": 3, "how": "cont", "note": "مكتوب في الملف الأصلي «مابل 4*50».", "orig": "مابل 4*50", "len": 218, "dir": "جنوب شرق", "path": [[31.458268, 34.386211], [31.458269, 34.38642], [31.457957, 34.386895], [31.457689, 34.387254], [31.457426, 34.387667], [31.457132, 34.388022]], "kids": [10], "spots": [[31.457766, 34.38715], [31.45796, 34.386891], [31.457584, 34.38742], [31.458115, 34.386655], [31.457431, 34.387659], [31.458258, 34.386436], [31.457268, 34.387857]]}, {"n": 10, "cls": "25", "spec": "4×25", "title": "كابل 4×25", "src": "abu", "parent": 9, "how": "cont", "note": "مكتوب في الملف الأصلي «كابلا 4*25».", "orig": "كابلا 4*25", "len": 170, "dir": "جنوب شرق", "path": [[31.457123, 34.388045], [31.456827, 34.388469], [31.456575, 34.388854], [31.456403, 34.389074], [31.456117, 34.389392]], "kids": [], "spots": [[31.456646, 34.388746], [31.456786, 34.388532], [31.456498, 34.388952], [31.45691, 34.38835], [31.456361, 34.38912], [31.457026, 34.388184], [31.456228, 34.389269]]}, {"n": 11, "cls": "150", "spec": "4×150", "title": "كابل 4×150", "src": "abu", "parent": null, "how": "gen", "note": null, "orig": "4*150", "len": 560, "dir": "جنوب شرق", "path": [[31.460347, 34.388363], [31.460681, 34.388451], [31.460203, 34.389078], [31.45988, 34.389443], [31.459908, 34.389709], [31.45971, 34.389946], [31.459551, 34.39011], [31.459405, 34.390304], [31.459245, 34.39049], [31.459086, 34.390724], [31.45883, 34.391118], [31.458634, 34.39123], [31.458412, 34.391558], [31.458159, 34.39186], [31.457963, 34.392091], [31.457776, 34.392313], [31.457687, 34.392523]], "kids": [12], "spots": [[31.459358, 34.390358], [31.45989, 34.38973], [31.45888, 34.391041], [31.460168, 34.389117], [31.458414, 34.391556], [31.460574, 34.388592], [31.457989, 34.39206]]}, {"n": 12, "cls": "95", "spec": "4×95", "title": "كابل 4×95", "src": "abu", "parent": 11, "how": "branch", "note": null, "orig": "كابل 4*95", "len": 219, "dir": "شمال", "path": [[31.458848, 34.391125], [31.459, 34.391287], [31.459168, 34.391442], [31.459319, 34.391597], [31.459542, 34.391828], [31.459837, 34.392079], [31.459846, 34.391963], [31.459992, 34.391776], [31.460114, 34.391584], [31.460228, 34.391447]], "kids": [], "spots": [[31.459595, 34.391873], [31.45937, 34.39165], [31.459833, 34.392076], [31.459178, 34.391452], [31.459948, 34.391832], [31.458993, 34.39128], [31.460094, 34.391615]]}, {"n": 13, "cls": "150", "spec": "4×150 + 95", "title": "كابل مخيم 5", "src": "muf", "parent": null, "how": "gen", "note": "مكتوب في الملف الأصلي «كابل مخيم 5 / 4*150 +95».", "orig": "كابل مخيم 5.      /4*150 +95", "len": 814, "dir": "غرب", "path": [[31.45001, 34.39835], [31.449968, 34.398302], [31.449999, 34.39822], [31.449787, 34.398125], [31.449413, 34.398018], [31.448707, 34.397653], [31.448428, 34.397673], [31.448221, 34.39746], [31.448523, 34.397044], [31.448726, 34.396705], [31.44909, 34.39623], [31.449465, 34.395718], [31.449576, 34.395573], [31.449829, 34.395241], [31.450146, 34.394847], [31.450531, 34.394362], [31.450958, 34.393873], [31.4514, 34.393485], [31.451491, 34.393325], [31.451655, 34.393055], [31.451777, 34.392986]], "kids": [], "spots": [[31.449234, 34.396033], [31.448535, 34.397023], [31.449964, 34.395073], [31.448616, 34.39766], [31.450618, 34.394263], [31.449428, 34.398022], [31.45128, 34.39359]]}, {"n": 14, "cls": "150", "spec": "4×150", "title": "كابل شارع جولي", "src": "muf", "parent": null, "how": "gen", "note": "مكتوب في الملف الأصلي «4*159»، والمقاس القياسي الأقرب 4×150.", "orig": "شارع جولي 4*159", "len": 995, "dir": "شمال غرب", "path": [[31.450025, 34.398314], [31.449998, 34.398285], [31.450021, 34.398232], [31.450311, 34.398215], [31.450589, 34.398231], [31.450812, 34.397953], [31.450941, 34.397702], [31.45106, 34.397477], [31.451293, 34.396984], [31.451479, 34.39664], [31.451663, 34.396325], [31.451812, 34.396079], [31.451944, 34.395832], [31.452086, 34.395593], [31.452227, 34.395336], [31.452377, 34.395053], [31.452462, 34.394791], [31.452654, 34.394405], [31.452822, 34.394207], [31.453072, 34.393587], [31.453312, 34.39299], [31.453507, 34.392512], [31.455156, 34.390186]], "kids": [], "spots": [[31.452626, 34.394462], [31.451953, 34.395818], [31.453269, 34.393096], [31.451309, 34.396954], [31.453898, 34.391961], [31.450753, 34.398027], [31.454584, 34.390993]]}, {"n": 15, "cls": "x", "spec": "غير مكتوب", "title": "كابل بك C", "src": "muf", "parent": null, "how": "gen", "note": "مقاس الكابل غير مكتوب في الملف الأصلي.", "orig": "كابل بكC", "len": 385, "dir": "جنوب غرب", "path": [[31.450021, 34.398343], [31.449976, 34.398298], [31.45001, 34.398213], [31.449795, 34.398112], [31.449415, 34.398008], [31.449268, 34.397916], [31.448705, 34.397643], [31.44843, 34.397662], [31.447227, 34.396344]], "kids": [], "spots": [[31.448513, 34.397656], [31.449007, 34.397789], [31.448111, 34.397313], [31.449415, 34.398008], [31.447783, 34.396953], [31.449818, 34.398123], [31.44748, 34.396621]]}], "measure": {"n": 0, "title": "خط قياس بدون اسم", "orig": "قياس بلا عنوان", "len": 276, "path": [[31.447243, 34.396432], [31.448795, 34.394197], [31.448784, 34.394168]]}, "points": {"abu": {"name": "مولد أبو زايد", "orig": "مولد ابو زايد", "ll": [31.460276, 34.388347]}, "muf": {"name": "المفتي", "orig": "المفتي", "ll": [31.450006, 34.398307]}, "mark": {"name": "مرق التولي السوق", "orig": "مرق التولي السوق", "ll": [31.448948, 34.389563]}}, "stray": {"name": "علامة موضعية بلا عنوان", "ll": [31.416541, 34.355158]}};
+/* ================= إعدادات سهلة التعديل =================
+   غيّر النصوص بين علامات '...' واحفظ الملف.
+   لتعديل الكوابل نفسها: عدّلها في Google Earth واحفظها KML أو KMZ،
+   وبعدين افتحها من زر «افتح ملف KML / KMZ» جوا الخريطة. */
+const SETTINGS = {
+  title:    'شبكة مخيم اجديد',                   // اسم الشبكة فوق
+  subtitle: 'خريطة كوابل الكهرباء · نسخة العامل', // السطر الصغير تحت الاسم
+  extraPct: '5–10%',                             // الزيادة على الطول للارتخاء والنزلات
+};
+/* ======================================================= */
+
+/* the network as drawn from the original file, with hand-checked names and notes */
+const BUILTIN = {
+  "name": "شبكة مخيم اجديد",
+  "sources": [{"id": "s0", "name": "مولد أبو زايد", "ll": [31.460276, 34.388347]}, {"id": "s1", "name": "المفتي", "ll": [31.450006, 34.398307]}],
+  "marks": [{"name": "مرق التولي السوق", "ll": [31.448948, 34.389563]}],
+  "ignored": 1,
+  "extras": [{"title": "خط قياس بدون اسم", "len": 276, "path": [[31.447243, 34.396432], [31.448795, 34.394197], [31.448784, 34.394168]]}],
+  "cables": [
+    {"n": 1, "cls": "150", "spec": "4×150", "title": "كابل 4×150", "src": "s0", "parent": null, "how": "gen", "note": null, "orig": "كابل 4*150", "len": 233, "dir": "شمال شرق", "path": [[31.460345, 34.38834], [31.460675, 34.388603], [31.460929, 34.38898], [31.461113, 34.389245], [31.461273, 34.389426], [31.461476, 34.389713], [31.46147, 34.389811], [31.461389, 34.389901], [31.461273, 34.390005], [31.461187, 34.390095]], "kids": [2], "spots": [[31.46108, 34.389198], [31.460883, 34.388911], [31.461299, 34.389463], [31.460714, 34.38866], [31.461473, 34.389709], [31.460518, 34.388478], [31.461348, 34.389938]]},
+    {"n": 2, "cls": "50", "spec": "4×50", "title": "كابل 4×50", "src": "s0", "parent": 1, "how": "branch", "note": null, "orig": "كابل 4*50", "len": 60, "dir": "شمال شرق", "path": [[31.461471, 34.389802], [31.461582, 34.389965], [31.461823, 34.390275]], "kids": [], "spots": [[31.461643, 34.390043], [31.461588, 34.389973], [31.461697, 34.390113], [31.461545, 34.38991], [31.461744, 34.390173], [31.461504, 34.389851], [31.461787, 34.390229]]},
+    {"n": 3, "cls": "150", "spec": "4×150 + 1×25", "title": "كابل 4×150 + 1×25", "src": "s0", "parent": null, "how": "gen", "note": null, "orig": "كابل 4*150+25*1", "len": 323, "dir": "جنوب غرب", "path": [[31.460325, 34.388346], [31.460346, 34.388198], [31.460248, 34.388087], [31.460086, 34.387927], [31.459932, 34.387729], [31.459595, 34.387384], [31.459524, 34.387373], [31.459302, 34.38713], [31.459118, 34.386966], [31.459002, 34.386847], [31.458794, 34.386658], [31.458634, 34.3865], [31.458477, 34.386393], [31.458211, 34.386146]], "kids": [4, 5, 6, 9], "spots": [[31.459356, 34.38719], [31.459697, 34.387488], [31.45902, 34.386865], [31.459976, 34.387786], [31.458725, 34.386589], [31.460228, 34.388067], [31.458439, 34.386358]]},
+    {"n": 4, "cls": "50", "spec": "4×50", "title": "كابل 4×50", "src": "s0", "parent": 3, "how": "branch", "note": null, "orig": "كابل 4*50", "len": 109, "dir": "جنوب شرق", "path": [[31.459926, 34.387728], [31.459865, 34.387773], [31.459726, 34.387933], [31.459619, 34.388064], [31.459448, 34.388328], [31.459277, 34.388585]], "kids": [], "spots": [[31.459577, 34.388129], [31.459673, 34.387998], [31.459488, 34.388267], [31.459762, 34.387891], [31.45941, 34.388385], [31.459846, 34.387794], [31.459337, 34.388494]]},
+    {"n": 5, "cls": "95", "spec": "4×95", "title": "كابل 4×95", "src": "s0", "parent": 3, "how": "branch", "note": null, "orig": "4*95", "len": 197, "dir": "جنوب شرق", "path": [[31.45951, 34.387443], [31.4593, 34.387746], [31.459145, 34.387979], [31.459008, 34.388199], [31.458769, 34.388551], [31.45857, 34.388817], [31.458379, 34.389047]], "kids": [], "spots": [[31.458964, 34.388264], [31.459123, 34.388014], [31.458798, 34.388509], [31.459264, 34.3878], [31.458647, 34.388714], [31.459398, 34.387605], [31.458503, 34.388898]]},
+    {"n": 6, "cls": "95", "spec": "4×95", "title": "كابل 4×95", "src": "s0", "parent": 3, "how": "branch", "note": null, "orig": "4*95", "len": 198, "dir": "جنوب شرق", "path": [[31.458981, 34.386859], [31.458712, 34.387236], [31.458423, 34.38763], [31.458212, 34.387934], [31.458066, 34.388175], [31.457967, 34.388294], [31.457824, 34.388442]], "kids": [7, 8], "spots": [[31.458405, 34.387656], [31.458579, 34.387418], [31.458237, 34.387899], [31.45873, 34.387211], [31.4581, 34.388118], [31.458867, 34.387019], [31.457958, 34.388304]]},
+    {"n": 7, "cls": "50", "spec": "4×50", "title": "كابل 4×50", "src": "s0", "parent": 6, "how": "cont", "note": "مكتوب في الملف الأصلي «4*5»، ولونه لون كوابل 4×50، فاعتُبر 4×50.", "orig": "4*5", "len": 149, "dir": "جنوب شرق", "path": [[31.457823, 34.388439], [31.457665, 34.3887], [31.457498, 34.389024], [31.457202, 34.389455], [31.457007, 34.389678]], "kids": [], "spots": [[31.457451, 34.389092], [31.457564, 34.388897], [31.457325, 34.389275], [31.457654, 34.388722], [31.457216, 34.389434], [31.457745, 34.388567], [31.457103, 34.389568]]},
+    {"n": 8, "cls": "25", "spec": "4×25", "title": "كابل 4×25", "src": "s0", "parent": 6, "how": "branch", "note": null, "orig": "كابل 4*25", "len": 81, "dir": "غرب", "path": [[31.457945, 34.388315], [31.457864, 34.388216], [31.457779, 34.388042], [31.457845, 34.387786], [31.457954, 34.387576], [31.457952, 34.387583]], "kids": [], "spots": [[31.457802, 34.387954], [31.457795, 34.388074], [31.457833, 34.387831], [31.457842, 34.388171], [31.457874, 34.387731], [31.457894, 34.388253], [31.457919, 34.387643]]},
+    {"n": 9, "cls": "50", "spec": "4×50", "title": "كابل 4×50", "src": "s0", "parent": 3, "how": "cont", "note": "مكتوب في الملف الأصلي «مابل 4*50».", "orig": "مابل 4*50", "len": 218, "dir": "جنوب شرق", "path": [[31.458268, 34.386211], [31.458269, 34.38642], [31.457957, 34.386895], [31.457689, 34.387254], [31.457426, 34.387667], [31.457132, 34.388022]], "kids": [10], "spots": [[31.457766, 34.38715], [31.45796, 34.386891], [31.457584, 34.38742], [31.458115, 34.386655], [31.457431, 34.387659], [31.458258, 34.386436], [31.457268, 34.387857]]},
+    {"n": 10, "cls": "25", "spec": "4×25", "title": "كابل 4×25", "src": "s0", "parent": 9, "how": "cont", "note": "مكتوب في الملف الأصلي «كابلا 4*25».", "orig": "كابلا 4*25", "len": 170, "dir": "جنوب شرق", "path": [[31.457123, 34.388045], [31.456827, 34.388469], [31.456575, 34.388854], [31.456403, 34.389074], [31.456117, 34.389392]], "kids": [], "spots": [[31.456646, 34.388746], [31.456786, 34.388532], [31.456498, 34.388952], [31.45691, 34.38835], [31.456361, 34.38912], [31.457026, 34.388184], [31.456228, 34.389269]]},
+    {"n": 11, "cls": "150", "spec": "4×150", "title": "كابل 4×150", "src": "s0", "parent": null, "how": "gen", "note": null, "orig": "4*150", "len": 560, "dir": "جنوب شرق", "path": [[31.460347, 34.388363], [31.460681, 34.388451], [31.460203, 34.389078], [31.45988, 34.389443], [31.459908, 34.389709], [31.45971, 34.389946], [31.459551, 34.39011], [31.459405, 34.390304], [31.459245, 34.39049], [31.459086, 34.390724], [31.45883, 34.391118], [31.458634, 34.39123], [31.458412, 34.391558], [31.458159, 34.39186], [31.457963, 34.392091], [31.457776, 34.392313], [31.457687, 34.392523]], "kids": [12], "spots": [[31.459358, 34.390358], [31.45989, 34.38973], [31.45888, 34.391041], [31.460168, 34.389117], [31.458414, 34.391556], [31.460574, 34.388592], [31.457989, 34.39206]]},
+    {"n": 12, "cls": "95", "spec": "4×95", "title": "كابل 4×95", "src": "s0", "parent": 11, "how": "branch", "note": null, "orig": "كابل 4*95", "len": 219, "dir": "شمال", "path": [[31.458848, 34.391125], [31.459, 34.391287], [31.459168, 34.391442], [31.459319, 34.391597], [31.459542, 34.391828], [31.459837, 34.392079], [31.459846, 34.391963], [31.459992, 34.391776], [31.460114, 34.391584], [31.460228, 34.391447]], "kids": [], "spots": [[31.459595, 34.391873], [31.45937, 34.39165], [31.459833, 34.392076], [31.459178, 34.391452], [31.459948, 34.391832], [31.458993, 34.39128], [31.460094, 34.391615]]},
+    {"n": 13, "cls": "150", "spec": "4×150 + 95", "title": "كابل مخيم 5", "src": "s1", "parent": null, "how": "gen", "note": "مكتوب في الملف الأصلي «كابل مخيم 5 / 4*150 +95».", "orig": "كابل مخيم 5.      /4*150 +95", "len": 814, "dir": "غرب", "path": [[31.45001, 34.39835], [31.449968, 34.398302], [31.449999, 34.39822], [31.449787, 34.398125], [31.449413, 34.398018], [31.448707, 34.397653], [31.448428, 34.397673], [31.448221, 34.39746], [31.448523, 34.397044], [31.448726, 34.396705], [31.44909, 34.39623], [31.449465, 34.395718], [31.449576, 34.395573], [31.449829, 34.395241], [31.450146, 34.394847], [31.450531, 34.394362], [31.450958, 34.393873], [31.4514, 34.393485], [31.451491, 34.393325], [31.451655, 34.393055], [31.451777, 34.392986]], "kids": [], "spots": [[31.449234, 34.396033], [31.448535, 34.397023], [31.449964, 34.395073], [31.448616, 34.39766], [31.450618, 34.394263], [31.449428, 34.398022], [31.45128, 34.39359]]},
+    {"n": 14, "cls": "150", "spec": "4×150", "title": "كابل شارع جولي", "src": "s1", "parent": null, "how": "gen", "note": "مكتوب في الملف الأصلي «4*159»، والمقاس القياسي الأقرب 4×150.", "orig": "شارع جولي 4*159", "len": 995, "dir": "شمال غرب", "path": [[31.450025, 34.398314], [31.449998, 34.398285], [31.450021, 34.398232], [31.450311, 34.398215], [31.450589, 34.398231], [31.450812, 34.397953], [31.450941, 34.397702], [31.45106, 34.397477], [31.451293, 34.396984], [31.451479, 34.39664], [31.451663, 34.396325], [31.451812, 34.396079], [31.451944, 34.395832], [31.452086, 34.395593], [31.452227, 34.395336], [31.452377, 34.395053], [31.452462, 34.394791], [31.452654, 34.394405], [31.452822, 34.394207], [31.453072, 34.393587], [31.453312, 34.39299], [31.453507, 34.392512], [31.455156, 34.390186]], "kids": [], "spots": [[31.452626, 34.394462], [31.451953, 34.395818], [31.453269, 34.393096], [31.451309, 34.396954], [31.453898, 34.391961], [31.450753, 34.398027], [31.454584, 34.390993]]},
+    {"n": 15, "cls": "x", "spec": "غير مكتوب", "title": "كابل بك C", "src": "s1", "parent": null, "how": "gen", "note": "مقاس الكابل غير مكتوب في الملف الأصلي.", "orig": "كابل بكC", "len": 385, "dir": "جنوب غرب", "path": [[31.450021, 34.398343], [31.449976, 34.398298], [31.45001, 34.398213], [31.449795, 34.398112], [31.449415, 34.398008], [31.449268, 34.397916], [31.448705, 34.397643], [31.44843, 34.397662], [31.447227, 34.396344]], "kids": [], "spots": [[31.448513, 34.397656], [31.449007, 34.397789], [31.448111, 34.397313], [31.449415, 34.398008], [31.447783, 34.396953], [31.449818, 34.398123], [31.44748, 34.396621]]}
+  ]
+};
 
 const CLS = {
   '150':{spec:'4×150', w:7,   rank:0},
@@ -911,19 +945,23 @@ const CLS = {
   'x':  {spec:'غير مكتوب', w:4.5, rank:4},
 };
 const SIZE_ORDER = ['150','95','50','25','x'];
-const SRC = {abu:D.points.abu.name, muf:D.points.muf.name};
-const byN = new Map(D.cables.map(c => [c.n, c]));
 const fmt = n => Math.round(n).toLocaleString('en-US');
 const gmaps = ll => 'https://www.google.com/maps/search/?api=1&query=' + ll[0] + ',' + ll[1];
 const plural = n => n === 1 ? 'كابل واحد' : n === 2 ? 'كابلين' : n <= 10 ? n + ' كوابل' : n + ' كابل';
 const ltr = s => String(s).replace(/(\d+[×*]\d+(?:\s*\+\s*(?:\d+[×*])?\d+)*)/g, '<bdi dir="ltr">$1</bdi>');
-const depth = c => c.parent ? 1 + depth(byN.get(c.parent)) : 0;
+const esc = s => String(s).replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const app = document.getElementById('app');
-const sheetMatch = /^#sheet-(all|abu|muf)$/.exec(location.hash);
+const sheetMatch = /^#sheet-(all|s\d+)$/.exec(location.hash);
 const sheet = sheetMatch ? sheetMatch[1] : null;   /* still 4K sheets rendered for printing and WhatsApp */
 const still = !!sheet;
 if (sheet) app.classList.add('sheet');
+const STORE = 'shabaka-network-kml';
+const store = {
+  get(){ try { return localStorage.getItem(STORE); } catch (e) { return null; } },
+  set(v){ try { localStorage.setItem(STORE, v); return true; } catch (e) { return false; } },
+  clear(){ try { localStorage.removeItem(STORE); } catch (e) {} },
+};
 
 const ICON = {
   bolt:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 2 4 13.6h6.3L9 22l10-12.4h-6.4z"/></svg>',
@@ -936,14 +974,128 @@ const ICON = {
   layers:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></svg>',
   back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>',
   fwd:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg>',
+  upload:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>',
+  fit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>',
 };
 
-/* ---------- totals ---------- */
-const totals = {};
-for (const c of D.cables) { const t = totals[c.cls] ||= {len:0, n:0}; t.len += c.len; t.n++; }
-const totalLen = D.cables.reduce((s,c) => s + c.len, 0);
-document.getElementById('m-len').textContent = (totalLen/1000).toFixed(1) + ' كم';
-document.getElementById('m-cnt').textContent = D.cables.length;
+/* ---------- geometry ---------- */
+const RAD = Math.PI / 180;
+const hav = (a, b) => { const h = Math.sin((b[0]-a[0])*RAD/2)**2 + Math.cos(a[0]*RAD)*Math.cos(b[0]*RAD)*Math.sin((b[1]-a[1])*RAD/2)**2; return 2*6371008.8*Math.asin(Math.sqrt(h)); };
+const lineLen = p => { let s = 0; for (let i = 1; i < p.length; i++) s += hav(p[i-1], p[i]); return s; };
+function along(p, f){
+  const t = lineLen(p) * f; let acc = 0;
+  for (let i = 1; i < p.length; i++) { const s = hav(p[i-1], p[i]); if (acc + s >= t && s > 0) { const u = (t-acc)/s; return [p[i-1][0] + u*(p[i][0]-p[i-1][0]), p[i-1][1] + u*(p[i][1]-p[i-1][1])]; } acc += s; }
+  return p[p.length-1];
+}
+function distToLine(q, p){
+  const kx = 111320*Math.cos(q[0]*RAD), ky = 110574; let m = Infinity;
+  for (let i = 1; i < p.length; i++) {
+    const a = p[i-1], b = p[i], px = (q[1]-a[1])*kx, py = (q[0]-a[0])*ky, bx = (b[1]-a[1])*kx, by = (b[0]-a[0])*ky, L2 = bx*bx + by*by;
+    const u = L2 ? Math.max(0, Math.min(1, (px*bx + py*by)/L2)) : 0; m = Math.min(m, Math.hypot(px-u*bx, py-u*by));
+  }
+  return m;
+}
+const DIRS = ['شمال','شمال شرق','شرق','جنوب شرق','جنوب','جنوب غرب','غرب','شمال غرب'];
+function dirOf(a, b){
+  const y = Math.sin((b[1]-a[1])*RAD)*Math.cos(b[0]*RAD), x = Math.cos(a[0]*RAD)*Math.sin(b[0]*RAD) - Math.sin(a[0]*RAD)*Math.cos(b[0]*RAD)*Math.cos((b[1]-a[1])*RAD);
+  return DIRS[Math.floor((((Math.atan2(y, x)/RAD + 360) % 360) + 22.5) % 360 / 45)];
+}
+
+/* ---------- reading a network from Google Earth (KML / KMZ) ---------- */
+const SPEC_RE = /\d+\s*[*×xX]\s*\d+(?:\s*\+\s*(?:\d+\s*[*×xX]\s*)?\d+)*/;
+function netFromKml(text){
+  const doc = new DOMParser().parseFromString(text, 'text/xml');
+  if (doc.getElementsByTagName('parsererror').length) throw new Error('الملف مش KML سليم.');
+  const tag = (e, t) => e.getElementsByTagNameNS('*', t);
+  const nameOf = e => { for (const ch of e.children) if (ch.localName === 'name') return ch.textContent.replace(/\s+/g, ' ').trim(); return ''; };
+  const coords = e => { const c = tag(e, 'coordinates')[0]; return c ? c.textContent.trim().split(/\s+/).map(s => s.split(',').map(Number)).filter(a => a.length >= 2 && isFinite(a[0]) && isFinite(a[1])).map(a => [a[1], a[0]]) : []; };
+  const lines = [], pts = [];
+  for (const pm of tag(doc, 'Placemark')) {
+    const nm = nameOf(pm), ls = tag(pm, 'LineString');
+    if (ls.length) { for (const l of ls) { const p = coords(l); if (p.length >= 2) lines.push({name:nm, path:p}); } continue; }
+    const pt = tag(pm, 'Point')[0];
+    if (pt) { const p = coords(pt); if (p.length) pts.push({name:nm, ll:p[0]}); }
+  }
+  const untitled = s => !s || /بلا عنوان|بدون عنوان|untitled/i.test(s);
+  const isExtra = s => untitled(s) || /قياس|measure/i.test(s);
+  const cabLines = lines.filter(l => !isExtra(l.name));
+  if (!cabLines.length) throw new Error('ما لقيت ولا كابل (خط) في الملف.');
+  const extras = lines.filter(l => isExtra(l.name)).map(l => ({title: untitled(l.name) ? 'خط بدون اسم' : l.name, len: Math.round(lineLen(l.path)), path: l.path}));
+
+  const ends = cabLines.flatMap(l => [l.path[0], l.path[l.path.length-1]]);
+  const nearNet = q => cabLines.some(l => l.path.some(v => hav(q, v) < 1500));
+  const sources = [], marks = []; let ignored = 0;
+  for (const p of pts) {
+    if (untitled(p.name) || !nearNet(p.ll)) { ignored++; continue; }
+    (ends.some(e => hav(e, p.ll) < 25) || /مولد|محطة|مصدر|generator/i.test(p.name) ? sources : marks).push(p);
+  }
+  sources.forEach((s, i) => s.id = 's' + i);
+
+  const cs = cabLines.map(l => {
+    const m = l.name.match(SPEC_RE);
+    const spec = m ? m[0].replace(/\s*[*xX×]\s*/g, '×').replace(/\s*\+\s*/g, ' + ') : 'غير مكتوب';
+    const size = m ? (m[0].match(/[*×xX]\s*(\d+)/) || [])[1] : null;
+    let title = l.name.replace(/\*/g, '×').trim();
+    if (!/[؀-ۿ]/.test(title)) title = 'كابل ' + title;
+    return {orig:l.name, title, spec, cls: ['150','95','50','25'].includes(size) ? size : 'x', path:l.path.slice(), src:null, parent:null, how:null};
+  });
+  const TOUCH = 20, CONT = 12;
+  const nearestSrc = q => { let best = null, d = Infinity; for (const s of sources) { const x = hav(q, s.ll); if (x < d) { d = x; best = s; } } return [best, d]; };
+  for (const c of cs) {                                   // cables that leave a source (drawn either way)
+    const [s, d] = nearestSrc(c.path[0]), [s2, d2] = nearestSrc(c.path[c.path.length-1]);
+    if (s && d < TOUCH) { c.how = 'gen'; c.src = s.id; }
+    else if (s2 && d2 < TOUCH) { c.path.reverse(); c.how = 'gen'; c.src = s2.id; }
+  }
+  for (let changed = true; changed;) {                    // then cables that leave a placed cable
+    changed = false;
+    for (const c of cs) {
+      if (c.how) continue;
+      for (const flip of [false, true]) {
+        const q = flip ? c.path[c.path.length-1] : c.path[0];
+        let best = null, bd = Infinity;
+        for (const o of cs) { if (o === c || !o.how) continue; const d = distToLine(q, o.path); if (d < bd) { bd = d; best = o; } }
+        if (best && bd < TOUCH) {
+          if (flip) c.path.reverse();
+          c.parent = best; c.src = best.src;
+          c.how = hav(c.path[0], best.path[best.path.length-1]) < CONT ? 'cont' : 'branch';
+          changed = true; break;
+        }
+      }
+    }
+  }
+  for (const c of cs) if (!c.how) { c.how = 'free'; const [s] = nearestSrc(c.path[0]); c.src = s ? s.id : 'none'; }
+  if (cs.some(c => c.src === 'none')) sources.push({id:'none', name:'بدون مصدر', ll:null});
+
+  const order = [];
+  const walk = c => { order.push(c); cs.filter(k => k.parent === c).forEach(walk); };
+  for (const s of sources) cs.filter(c => c.src === s.id && !c.parent).forEach(walk);
+  order.forEach((c, i) => c.n = i + 1);
+  const out = order.map(c => ({n:c.n, cls:c.cls, spec:c.spec, title:c.title, src:c.src, parent:c.parent ? c.parent.n : null, how:c.how,
+    note:null, orig:c.orig, len:Math.round(lineLen(c.path)), dir:dirOf(c.path[0], c.path[c.path.length-1]), path:c.path, kids:[],
+    spots:[.5,.35,.65,.22,.78,.1,.9].map(f => along(c.path, f))}));
+  for (const c of out) if (c.parent) out[c.parent-1].kids.push(c.n);
+  const docEl = tag(doc, 'Document')[0];
+  return {name: docEl ? nameOf(docEl) : '', sources, marks, cables: out, extras, ignored};
+}
+
+async function unzipKml(u8){
+  const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength), dec = new TextDecoder();
+  let e = u8.length - 22; while (e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--;
+  if (e < 0) throw new Error('ملف KMZ تالف.');
+  let p = dv.getUint32(e + 16, true);
+  for (let i = dv.getUint16(e + 10, true); i > 0; i--) {
+    if (dv.getUint32(p, true) !== 0x02014b50) break;
+    const method = dv.getUint16(p + 10, true), size = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true);
+    const off = dv.getUint32(p + 42, true), name = dec.decode(u8.subarray(p + 46, p + 46 + nl));
+    p += 46 + nl + dv.getUint16(p + 30, true) + dv.getUint16(p + 32, true);
+    if (!/\.kml$/i.test(name)) continue;
+    const start = off + 30 + dv.getUint16(off + 26, true) + dv.getUint16(off + 28, true), data = u8.subarray(start, start + size);
+    if (method === 0) return dec.decode(data);
+    if (method === 8 && 'DecompressionStream' in window) return dec.decode(await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer());
+    throw new Error('المتصفح ما بيقدر يفتح هاد الـ KMZ، احفظه KML وجرب.');
+  }
+  throw new Error('ما لقيت ملف KML جوا الـ KMZ.');
+}
 
 /* ---------- map ---------- */
 const map = L.map('map', {zoomControl:false, attributionControl:false, zoomSnap:.25, zoomDelta:.5, minZoom:13, maxZoom:20});
@@ -970,10 +1122,13 @@ const Grid = L.GridLayer.extend({
 });
 const grid = new Grid({pane:'tilePane'}).addTo(map);
 
-/* satellite imagery ships with the page as 1024px blocks: sat/{zoom}/{x}_{y}.jpg */
+/* satellite imagery ships with the page as 1024px blocks: sat/{zoom}/{x}_{y}.jpg (or embedded in window.SAT_DATA) */
 const SATBOX = [31.444227, 34.383145999999996, 31.464823, 34.40135];
 const OFF = still ? 2 : (L.Browser.retina ? 1 : 0);
-const Sat = L.TileLayer.extend({getTileUrl(c){ return 'sat/' + (c.z + OFF) + '/' + c.x + '_' + c.y + '.jpg'; }});
+const Sat = L.TileLayer.extend({getTileUrl(c){
+  const key = (c.z + OFF) + '/' + c.x + '_' + c.y;
+  return window.SAT_DATA ? (window.SAT_DATA[key] || '') : 'sat/' + key + '.jpg';
+}});
 const sat = new Sat('', {tileSize:1024 >> OFF, minNativeZoom:15 - OFF, maxNativeZoom:19 - OFF, maxZoom:20,
   bounds:[[SATBOX[0],SATBOX[1]],[SATBOX[2],SATBOX[3]]], className:'sat', keepBuffer:1});
 let satOn = false, satBtn = null;
@@ -992,59 +1147,83 @@ const SatCtl = L.Control.extend({onAdd(){
 }});
 if (!still) new SatCtl({position:'topleft'}).addTo(map);
 setSat(true);
-map.setMaxBounds(L.latLngBounds([[SATBOX[0],SATBOX[1]],[SATBOX[2],SATBOX[3]]]).pad(.35));
 
 for (const [name, z] of [['halo',395],['cas',400],['cab',410],['dots',420],['hit',430],['badges',640],['srcs',650]]) map.createPane(name).style.zIndex = z;
-
-const layers = {};
-const sorted = [...D.cables].sort((a,b) => CLS[a.cls].rank - CLS[b.cls].rank || a.n - b.n);
-const opt = (o) => Object.assign({lineCap:'round', lineJoin:'round', interactive:false, smoothFactor:.5}, o);
-for (const c of sorted) layers[c.n] = {
-  halo: L.polyline(c.path, opt({pane:'halo', className:'halo', weight:CLS[c.cls].w + 16, color:'#000'})).addTo(map),
-  cas:  L.polyline(c.path, opt({pane:'cas', className:'cas', weight:CLS[c.cls].w + 3.5, color:'#000'})).addTo(map),
-};
-for (const c of sorted) layers[c.n].cab = L.polyline(c.path, opt({pane:'cab', className:'cab cab-' + c.cls, weight:CLS[c.cls].w, color:'#000'})).addTo(map);
-
-const meas = L.polyline(D.measure.path, opt({pane:'cab', className:'meas is-off', weight:3, dashArray:'2 9', color:'#000'})).addTo(map);
-
-/* junctions (where a cable leaves another) and open ends */
-for (const c of D.cables) {
-  const o = layers[c.n];
-  if (c.parent) o.jn = L.circleMarker(c.path[0], {pane:'dots', radius:5, weight:2.5, className:'jn', interactive:false, color:'#000', fillColor:'#fff', fillOpacity:1}).addTo(map);
-  if (!c.kids.some(k => byN.get(k).how === 'cont')) o.end = L.circleMarker(c.path[c.path.length-1], {pane:'dots', radius:4.5, weight:2, className:'endcap s-' + c.cls, interactive:false, color:'#000', fillColor:'#000', fillOpacity:1}).addTo(map);
-}
-for (const c of sorted) {
-  const o = layers[c.n];
-  o.hit = L.polyline(c.path, {pane:'hit', weight:26, opacity:0, color:'#000', lineCap:'round', lineJoin:'round', smoothFactor:.5}).addTo(map);
-  o.hit.on('click', e => { L.DomEvent.stopPropagation(e); select(c.n); });
-  o.badge = L.marker(c.spots[0], {pane:'badges', keyboard:false, icon:L.divIcon({className:'badge-wrap', iconSize:[30,30], iconAnchor:[15,15],
-    html:'<div class="badge b-' + c.cls + '">' + c.n + '</div>'})}).addTo(map);
-  o.badge.on('click', e => { L.DomEvent.stopPropagation(e); select(c.n); });
-}
-
-function srcIcon(name){ return L.divIcon({className:'', iconSize:[40,40], iconAnchor:[20,20], html:'<div class="src"><div class="src-icon">' + ICON.bolt + '</div><div class="src-name">' + name + '</div></div>'}); }
-const srcMarkers = [
-  L.marker(D.points.abu.ll, {pane:'srcs', icon:srcIcon(D.points.abu.name), keyboard:false}).addTo(map),
-  L.marker(D.points.muf.ll, {pane:'srcs', icon:srcIcon(D.points.muf.name), keyboard:false}).addTo(map),
-];
-srcMarkers[0].on('click', () => jump('abu')); srcMarkers[1].on('click', () => jump('muf'));
-L.marker(D.points.mark.ll, {pane:'srcs', keyboard:false, icon:L.divIcon({className:'', iconSize:[26,26], iconAnchor:[13,13],
-  html:'<div class="mark"><div class="mark-dot">' + ICON.shop + '</div><div class="mark-name">' + D.points.mark.name + '</div></div>'})}).addTo(map);
-
+const drawn = L.layerGroup().addTo(map);
 map.on('click', () => { if (sel) select(null); });
 
 /* ---------- state ---------- */
-let sel = null;
+let D, byN, SRC, totals, layers, extraLines, srcMarkers, custom = false;
+let sel = null, showExtras = false;
 const hidden = new Set();
-let showMeas = false;
 const el = (layer) => layer && layer.getElement && layer.getElement();
+const depth = c => c.parent ? 1 + depth(byN.get(c.parent)) : 0;
+const opt = (o) => Object.assign({lineCap:'round', lineJoin:'round', interactive:false, smoothFactor:.5}, o);
+
+function build(net, isCustom){
+  drawn.clearLayers();
+  D = net; custom = !!isCustom; sel = null; hidden.clear(); showExtras = false;
+  app.classList.remove('has-sel');
+  byN = new Map(D.cables.map(c => [c.n, c]));
+  SRC = Object.fromEntries(D.sources.map(s => [s.id, s.name]));
+  totals = {};
+  for (const c of D.cables) { const t = totals[c.cls] ||= {len:0, n:0}; t.len += c.len; t.n++; }
+  const totalLen = D.cables.reduce((s,c) => s + c.len, 0);
+  const title = (custom && D.name) || SETTINGS.title;
+  document.getElementById('title').textContent = title;
+  document.title = title;
+  document.getElementById('subtitle').textContent = SETTINGS.subtitle;
+  document.getElementById('m-len').textContent = totalLen >= 1000 ? (totalLen/1000).toFixed(1) + ' كم' : fmt(totalLen) + ' م';
+  document.getElementById('m-cnt').textContent = D.cables.length;
+  document.getElementById('m-src').textContent = D.sources.filter(s => s.ll).length;
+
+  layers = {};
+  const sorted = [...D.cables].sort((a,b) => CLS[a.cls].rank - CLS[b.cls].rank || a.n - b.n);
+  const add = l => { drawn.addLayer(l); return l; };
+  for (const c of sorted) layers[c.n] = {
+    halo: add(L.polyline(c.path, opt({pane:'halo', className:'halo', weight:CLS[c.cls].w + 16, color:'#000'}))),
+    cas:  add(L.polyline(c.path, opt({pane:'cas', className:'cas', weight:CLS[c.cls].w + 3.5, color:'#000'}))),
+  };
+  for (const c of sorted) layers[c.n].cab = add(L.polyline(c.path, opt({pane:'cab', className:'cab cab-' + c.cls, weight:CLS[c.cls].w, color:'#000'})));
+  extraLines = D.extras.map(x => add(L.polyline(x.path, opt({pane:'cab', className:'meas is-off', weight:3, dashArray:'2 9', color:'#000'}))));
+  for (const c of D.cables) {       /* junctions (where a cable leaves another) and open ends */
+    const o = layers[c.n];
+    if (c.parent) o.jn = add(L.circleMarker(c.path[0], {pane:'dots', radius:5, weight:2.5, className:'jn', interactive:false, color:'#000', fillColor:'#fff', fillOpacity:1}));
+    if (!c.kids.some(k => byN.get(k).how === 'cont')) o.end = add(L.circleMarker(c.path[c.path.length-1], {pane:'dots', radius:4.5, weight:2, className:'endcap s-' + c.cls, interactive:false, color:'#000', fillColor:'#000', fillOpacity:1}));
+  }
+  for (const c of sorted) {
+    const o = layers[c.n];
+    o.hit = add(L.polyline(c.path, {pane:'hit', weight:26, opacity:0, color:'#000', lineCap:'round', lineJoin:'round', smoothFactor:.5}));
+    o.hit.on('click', e => { L.DomEvent.stopPropagation(e); select(c.n); });
+    o.badge = add(L.marker(c.spots[0], {pane:'badges', keyboard:false, icon:L.divIcon({className:'badge-wrap', iconSize:[30,30], iconAnchor:[15,15],
+      html:'<div class="badge b-' + c.cls + '">' + c.n + '</div>'})}));
+    o.badge.on('click', e => { L.DomEvent.stopPropagation(e); select(c.n); });
+  }
+  srcMarkers = D.sources.filter(s => s.ll).map(s => {
+    const m = add(L.marker(s.ll, {pane:'srcs', keyboard:false, icon:L.divIcon({className:'', iconSize:[40,40], iconAnchor:[20,20],
+      html:'<div class="src"><div class="src-icon">' + ICON.bolt + '</div><div class="src-name">' + esc(s.name) + '</div></div>'})}));
+    m.on('click', () => jump(s.id)); return m;
+  });
+  for (const k of D.marks) add(L.marker(k.ll, {pane:'srcs', keyboard:false, icon:L.divIcon({className:'', iconSize:[26,26], iconAnchor:[13,13],
+    html:'<div class="mark"><div class="mark-dot">' + ICON.shop + '</div><div class="mark-name">' + esc(k.name) + '</div></div>'})}));
+
+  document.getElementById('mapTools').innerHTML = '<button class="chip-btn" type="button" data-jump="all">' + ICON.fit + 'كل الشبكة</button>' +
+    D.sources.filter(s => s.ll).map(s => '<button class="chip-btn" type="button" data-jump="' + s.id + '">' + esc(s.name) + '</button>').join('');
+  document.querySelectorAll('[data-jump]').forEach(b => b.addEventListener('click', () => jump(b.dataset.jump)));
+
+  if (sheet) renderSheet(sheet); else renderOverview();
+  map.setMaxBounds(L.latLngBounds([[SATBOX[0],SATBOX[1]],[SATBOX[2],SATBOX[3]]]).extend(groupBounds('all')).pad(.35));
+  const b = groupBounds(sheet || 'all');
+  if (sheet) map.fitBounds(b, {padding:[34,34], animate:false});
+  else map.fitBounds(b, {paddingTopLeft:[20,64], paddingBottomRight:[20,20], animate:false});
+  applyFilters();
+}
 
 function groupBounds(g){
   const b = L.latLngBounds([]);
   for (const c of D.cables) if (g === 'all' || c.src === g) b.extend(layers[c.n].cab.getBounds());
-  if (g !== 'muf') b.extend(D.points.abu.ll);
-  if (g !== 'abu') b.extend(D.points.muf.ll);
-  if (g === 'all') b.extend(D.points.mark.ll);
+  for (const s of D.sources) if (s.ll && (g === 'all' || s.id === g)) b.extend(s.ll);
+  if (g === 'all') for (const k of D.marks) b.extend(k.ll);
   return b;
 }
 function fit(b, maxZoom){
@@ -1052,17 +1231,17 @@ function fit(b, maxZoom){
   if (reduce || still) map.fitBounds(b, Object.assign(o, {animate:false})); else map.flyToBounds(b, Object.assign(o, {duration:.6}));
 }
 function jump(g){ if (sel) select(null, {fit:false}); fit(groupBounds(g)); }
-document.querySelectorAll('[data-jump]').forEach(b => b.addEventListener('click', () => jump(b.dataset.jump)));
 
 /* keep number badges readable: try a few spots along each cable, skip ones that would overlap */
 function declutter(){
+  if (!D) return;
   const taken = [];
   for (const m of srcMarkers) { const p = map.latLngToContainerPoint(m.getLatLng());
     taken.push({p, r:36}, {p:p.add([0,36]), r:34}, {p:p.add([-38,36]), r:30}, {p:p.add([38,36]), r:30}); }
   const order = D.cables.filter(c => !hidden.has(c.cls))
     .sort((a,b) => (b.n === sel) - (a.n === sel) || CLS[a.cls].rank - CLS[b.cls].rank || a.n - b.n);
   const gap = 32;
-  for (const c of D.cables) if (hidden.has(c.cls)) el(layers[c.n].badge)?.classList.add('is-off'); else el(layers[c.n].badge)?.classList.remove('is-off');
+  for (const c of D.cables) el(layers[c.n].badge)?.classList.toggle('is-off', hidden.has(c.cls));
   for (const c of order) {
     const m = layers[c.n].badge; let placed = false;
     for (const s of c.spots) {
@@ -1081,7 +1260,7 @@ function applyFilters(){
     for (const k of ['halo','cas','cab','hit','jn','end']) el(o[k])?.classList.toggle('is-off', off);
     document.querySelector('.reg-row[data-n="' + c.n + '"]')?.classList.toggle('is-off', off);
   }
-  el(meas)?.classList.toggle('is-off', !showMeas);
+  for (const l of extraLines) el(l)?.classList.toggle('is-off', !showExtras);
   if (sel && hidden.has(byN.get(sel).cls)) select(null, {fit:false});
   declutter();
 }
@@ -1114,29 +1293,31 @@ function select(n, opts){
 /* ---------- panel ---------- */
 const body = document.getElementById('panelBody');
 const swatch = (cls) => { const w = CLS[cls].w; return '<svg class="sw" viewBox="0 0 62 16" aria-hidden="true"><line class="sw-cas" x1="6" y1="8" x2="56" y2="8" stroke-width="' + (w+3.5) + '"/><line class="sw-cab sw-' + cls + '" x1="6" y1="8" x2="56" y2="8" stroke-width="' + w + '"/></svg>'; };
-const fromText = (c) => c.how === 'gen' ? 'من ' + SRC[c.src] : c.how === 'cont' ? 'يكمل من نهاية كابل ' + c.parent : 'يتفرّع من كابل ' + c.parent;
-const specHtml = (c) => c.cls === 'x' ? 'غير مكتوب' : ltr(c.spec).replace(' + ', ' +\u00a0').replace(/(<bdi dir="ltr">[^<]*?) \+/, '$1<br>+');
+const fromText = (c) => c.how === 'gen' ? 'من ' + esc(SRC[c.src]) : c.how === 'cont' ? 'يكمل من نهاية كابل ' + c.parent : c.how === 'branch' ? 'يتفرّع من كابل ' + c.parent : 'بدايته مش موصولة';
+const specHtml = (c) => c.spec === 'غير مكتوب' ? 'غير مكتوب' : ltr(esc(c.spec)).replace(' + ', ' + ').replace(/(<bdi dir="ltr">[^<]*?) \+/, '$1<br>+');
+const xLabel = () => D.cables.filter(c => c.cls === 'x').every(c => c.spec === 'غير مكتوب') ? 'مقطع غير مكتوب' : 'مقاس آخر أو غير مكتوب';
+const treeOf = (src) => { const rows = []; const walk = (c) => { rows.push(c); c.kids.forEach(k => walk(byN.get(k))); }; D.cables.filter(c => c.src === src && !c.parent).forEach(walk); return rows; };
 
 function renderOverview(){
   const rows = SIZE_ORDER.filter(k => totals[k]).map(k => {
     const on = !hidden.has(k);
-    const label = k === 'x' ? 'مقطع غير مكتوب' : ltr(CLS[k].spec) + ' <small>مم²</small>';
+    const label = k === 'x' ? xLabel() : ltr(CLS[k].spec) + ' <small>مم²</small>';
     return '<button type="button" class="size-row" data-cls="' + k + '" aria-pressed="' + on + '">' + swatch(k) +
       '<span class="size-name"><span class="sz">' + label + '</span><span class="cnt">' + plural(totals[k].n) + '</span></span>' +
       '<span class="size-len">' + fmt(totals[k].len) + ' <small>م</small></span>' + (on ? ICON.eye : ICON.eyeOff) + '</button>';
   }).join('');
 
   const group = (src) => {
-    const list = [];
-    const walk = (c) => { list.push(c); for (const k of c.kids) walk(byN.get(k)); };
-    D.cables.filter(c => c.src === src && !c.parent).forEach(walk);
+    const list = treeOf(src);
+    if (!list.length) return '';
     const len = list.reduce((s,c) => s + c.len, 0);
-    return '<div class="reg-group"><div class="reg-head"><span class="src-mini">' + ICON.bolt + '</span><b>' + SRC[src] + '</b><span>' + plural(list.length) + ' · ' + fmt(len) + ' م</span></div><ul class="reg-list">' +
+    return '<div class="reg-group"><div class="reg-head"><span class="src-mini">' + ICON.bolt + '</span><b>' + esc(SRC[src]) + '</b><span>' + plural(list.length) + ' · ' + fmt(len) + ' م</span></div><ul class="reg-list">' +
       list.map(c => '<li><button type="button" class="reg-row' + (hidden.has(c.cls) ? ' is-off' : '') + '" data-n="' + c.n + '" data-depth="' + Math.min(depth(c),2) + '">' +
         '<span class="badge b-' + c.cls + '">' + c.n + '</span>' +
-        '<span class="reg-main"><b>' + ltr(c.title) + '</b><span>' + fromText(c) + ' · باتجاه ' + c.dir + '</span></span>' +
+        '<span class="reg-main"><b>' + ltr(esc(c.title)) + '</b><span>' + fromText(c) + ' · باتجاه ' + c.dir + '</span></span>' +
         '<span class="reg-len">' + fmt(c.len) + ' <small>م</small></span></button></li>').join('') + '</ul></div>';
   };
+  const exLen = D.extras.reduce((s,x) => s + x.len, 0);
 
   body.innerHTML =
     '<section><h2 class="sec">ألوان الكوابل حسب المقطع <small>اضغط لإخفاء أو إظهار</small></h2><div class="sizes">' + rows + '</div></section>' +
@@ -1148,21 +1329,42 @@ function renderOverview(){
       '<div><svg viewBox="0 0 26 26"><circle style="fill:var(--surface);stroke:var(--casing)" cx="13" cy="13" r="10" stroke-width="2"/><path d="M7.5 11h11l-1-3.5h-9zM8.3 11v7.5h9.4V11M11.5 18.5v-4h3v4" fill="none" style="stroke:var(--ink)" stroke-width="1.5" stroke-linejoin="round"/></svg><span>معلم (للاستدلال)</span></div>' +
       '<div><svg viewBox="0 0 26 26"><line x1="2" y1="13" x2="24" y2="13" style="stroke:var(--muted)" stroke-width="3" stroke-dasharray="2 5" stroke-linecap="round"/></svg><span>خط قياس (مش كابل)</span></div>' +
     '</div></section>' +
-    '<section><h2 class="sec">سجل الكوابل <small>اضغط على أي كابل لتفاصيله</small></h2>' + group('abu') + group('muf') + '</section>' +
+    '<section><h2 class="sec">سجل الكوابل <small>اضغط على أي كابل لتفاصيله</small></h2>' + D.sources.map(s => group(s.id)).join('') + '</section>' +
     '<div class="aside-note">' +
-      '<p>الأطوال مقاسة على الخريطة على مسار الكابل. عند التمديد زِد 5–10% للارتخاء والنزلات.</p>' +
-      '<p>في الملف الأصلي خط قياس بدون اسم طوله ' + fmt(D.measure.len) + ' م بعد نهاية كابل 15. <button type="button" class="linkish" id="measToggle">' + (showMeas ? 'إخفاء خط القياس' : 'إظهاره على الخريطة') + '</button></p>' +
-      '<p>وفيه كمان علامة بدون اسم على بعد حوالي 5.5 كم من المفتي، بعيدة عن الشبكة فلم تُعرض.</p>' +
-    '</div>';
+      '<p>الأطوال مقاسة على الخريطة على مسار الكابل. عند التمديد زِد ' + esc(SETTINGS.extraPct) + ' للارتخاء والنزلات.</p>' +
+      (D.extras.length ? '<p>في الملف ' + (D.extras.length === 1 ? 'خط قياس أو خط بدون اسم' : D.extras.length + ' خطوط قياس أو بدون اسم') + ' (' + fmt(exLen) + ' م)، مش محسوب ككابل. <button type="button" class="linkish" id="measToggle">' + (showExtras ? 'إخفاؤه' : 'إظهاره على الخريطة') + '</button></p>' : '') +
+      (D.ignored ? '<p>وفيه ' + (D.ignored === 1 ? 'علامة وحدة' : D.ignored + ' علامات') + ' بدون اسم أو بعيدة عن الشبكة، ما انعرضت.</p>' : '') +
+    '</div>' +
+    (still ? '' : '<section class="upd"><h2 class="sec">تحديث الشبكة</h2>' +
+      '<p>زِد أو احذف أو عدّل الكوابل في Google Earth، واحفظها ملف KML أو KMZ، وبعدين افتحه هون. اكتب المقطع باسم كل كابل، مثل «كابل 4*95»، عشان ياخد لونه.</p>' +
+      '<div class="upd-acts"><label class="act primary" for="kmlInput">' + ICON.upload + 'افتح ملف KML / KMZ</label><input type="file" id="kmlInput" hidden>' +
+      (custom ? '<button type="button" class="act" id="resetNet">رجوع للخريطة الأصلية</button>' : '') + '</div>' +
+      (custom ? '<p class="fine">معروض هلأ الملف اللي فتحته، ومحفوظ على هاد الجهاز لحد ما ترجع للأصلية.</p>' : '') +
+    '</section>');
 
   body.querySelectorAll('.size-row').forEach(b => b.addEventListener('click', () => {
     const k = b.dataset.cls; hidden.has(k) ? hidden.delete(k) : hidden.add(k); applyFilters(); renderOverview();
   }));
   body.querySelectorAll('.reg-row').forEach(b => b.addEventListener('click', () => select(+b.dataset.n)));
   document.getElementById('measToggle')?.addEventListener('click', () => {
-    showMeas = !showMeas; applyFilters(); renderOverview();
-    if (showMeas) fit(meas.getBounds().extend(layers[15].cab.getBounds()));
+    showExtras = !showExtras; applyFilters(); renderOverview();
+    if (showExtras && extraLines.length) { const b = L.latLngBounds([]); extraLines.forEach(l => b.extend(l.getBounds())); fit(b); }
   });
+  document.getElementById('kmlInput')?.addEventListener('change', e => { const f = e.target.files[0]; if (f) loadFile(f); e.target.value = ''; });
+  document.getElementById('resetNet')?.addEventListener('click', () => { store.clear(); build(BUILTIN, false); toast('رجعت الخريطة الأصلية'); });
+}
+
+async function loadFile(f){
+  try {
+    const u8 = new Uint8Array(await f.arrayBuffer());
+    const text = u8[0] === 0x50 && u8[1] === 0x4b ? await unzipKml(u8) : new TextDecoder().decode(u8);
+    const net = netFromKml(text);
+    build(net, true);
+    const kept = store.set(text);
+    toast('انفتحت الخريطة: ' + plural(net.cables.length) + (kept ? '' : ' (ما انحفظت على الجهاز)'));
+  } catch (err) {
+    toast(err && err.message ? err.message : 'ما قدرت أقرأ الملف.');
+  }
 }
 
 function endpointBlock(title, place, ll){
@@ -1174,17 +1376,16 @@ function endpointBlock(title, place, ll){
 }
 
 function renderDetail(c){
-  const start = c.how === 'gen' ? SRC[c.src] : c.how === 'cont' ? 'من نهاية كابل ' + c.parent : 'من منتصف كابل ' + c.parent + ' (نقطة تفرّع)';
+  const start = c.how === 'gen' ? esc(SRC[c.src]) : c.how === 'cont' ? 'من نهاية كابل ' + c.parent : c.how === 'branch' ? 'من منتصف كابل ' + c.parent + ' (نقطة تفرّع)' : 'مش موصولة بمصدر أو كابل';
   const cont = c.kids.map(k => byN.get(k)).find(k => k.how === 'cont');
   const end = cont ? 'يكمل بعدها كابل ' + cont.n : 'نهاية الكابل';
-  const branches = c.kids.map(k => byN.get(k)).filter(k => k.how !== 'cont');
   const idx = D.cables.findIndex(x => x.n === c.n);
   const prev = D.cables[idx-1], next = D.cables[idx+1];
-  const kidChip = (k) => '<button type="button" class="kid" data-n="' + k.n + '"><span class="badge b-' + k.cls + '">' + k.n + '</span>' + ltr(k.spec) + ' · ' + fmt(k.len) + ' م</button>';
+  const kidChip = (k) => '<button type="button" class="kid" data-n="' + k.n + '"><span class="badge b-' + k.cls + '">' + k.n + '</span>' + ltr(esc(k.spec)) + ' · ' + fmt(k.len) + ' م</button>';
 
   body.innerHTML = '<div class="det" style="--line-c:var(--c' + c.cls + ')">' +
     '<div class="det-head"><span class="badge b-' + c.cls + '">' + c.n + '</span>' +
-      '<div><div class="eyebrow">كابل رقم ' + c.n + ' · ' + SRC[c.src] + '</div><h2>' + ltr(c.title) + '</h2></div>' +
+      '<div><div class="eyebrow">كابل رقم ' + c.n + ' · ' + esc(SRC[c.src]) + '</div><h2>' + ltr(esc(c.title)) + '</h2></div>' +
       '<button type="button" class="icon-btn" id="detClose" aria-label="رجوع لكل الكوابل">' + ICON.close + '</button></div>' +
     '<div class="metrics">' +
       '<div><span class="k">الطول</span><span class="v big">' + fmt(c.len) + ' <small>م</small></span></div>' +
@@ -1194,8 +1395,8 @@ function renderDetail(c){
     '<ol class="route">' + endpointBlock('البداية', start, c.path[0]) + endpointBlock('النهاية', end, c.path[c.path.length-1]) + '</ol>' +
     (c.parent ? '<div><h2 class="sec">يتغذّى من</h2><div class="kids">' + kidChip(byN.get(c.parent)) + '</div></div>' : '') +
     (c.kids.length ? '<div><h2 class="sec">يطلع منه</h2><div class="kids">' + c.kids.map(k => kidChip(byN.get(k))).join('') + '</div></div>' : '') +
-    (c.note ? '<p class="note">' + ltr(c.note) + '</p>' : '') +
-    '<p class="fine">الطول مقاس على الخريطة على مسار الكابل. عند التمديد زِد 5–10% للارتخاء والنزلات. الاسم في الملف الأصلي: «' + ltr(c.orig.replace(/\s+/g,' ')) + '».</p>' +
+    (c.note ? '<p class="note">' + ltr(esc(c.note)) + '</p>' : '') +
+    '<p class="fine">الطول مقاس على الخريطة على مسار الكابل. عند التمديد زِد ' + esc(SETTINGS.extraPct) + ' للارتخاء والنزلات. الاسم في الملف: «' + ltr(esc(c.orig.replace(/\s+/g,' '))) + '».</p>' +
     '<div class="det-nav">' +
       (prev ? '<button type="button" class="act" data-n="' + prev.n + '">' + ICON.back + 'كابل ' + prev.n + '</button>' : '') +
       '<button type="button" class="act" id="detAll">كل الكوابل</button>' +
@@ -1209,7 +1410,7 @@ function renderDetail(c){
 }
 
 const toastEl = document.getElementById('toast'); let toastT;
-function toast(msg){ toastEl.textContent = msg; toastEl.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('show'), 1800); }
+function toast(msg){ toastEl.textContent = msg; toastEl.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('show'), 2400); }
 function copy(text, btn){
   const fallback = () => { const s = btn.parentElement.parentElement.querySelector('.coords'); const r = document.createRange(); r.selectNodeContents(s); const w = getSelection(); w.removeAllRanges(); w.addRange(r); toast('الإحداثيات محددة، انسخها يدويًا'); };
   try { navigator.clipboard.writeText(text).then(() => toast('تم نسخ الإحداثيات'), fallback); } catch (e) { fallback(); }
@@ -1228,24 +1429,22 @@ new MutationObserver(redraw).observe(document.documentElement, {attributes:true,
 
 /* still sheet: map + a band with the colours and the cables of this area */
 function renderSheet(g){
-  const srcs = g === 'all' ? ['abu','muf'] : [g];
+  const srcs = g === 'all' ? D.sources.map(s => s.id) : [g];
   const list = D.cables.filter(c => srcs.includes(c.src));
   const t = {}; for (const c of list) { const x = t[c.cls] ||= {len:0, n:0}; x.len += c.len; x.n++; }
   const len = list.reduce((s,c) => s + c.len, 0);
-  const label = {all:'كل الشبكة', abu:'منطقة مولد أبو زايد', muf:'منطقة المفتي'}[g];
-  document.querySelector('.bar p').textContent = 'خريطة كوابل الكهرباء على صورة القمر الصناعي · ' + label;
+  document.getElementById('subtitle').textContent = 'خريطة كوابل الكهرباء على صورة القمر الصناعي · ' + (g === 'all' ? 'كل الشبكة' : 'منطقة ' + SRC[g]);
   document.getElementById('m-len').textContent = len >= 1000 ? (len/1000).toFixed(1) + ' كم' : fmt(len) + ' م';
   document.getElementById('m-cnt').textContent = list.length;
-  document.querySelector('.bar-meta div:nth-child(3) b').textContent = srcs.length;
+  document.getElementById('m-src').textContent = srcs.length;
   const sizes = SIZE_ORDER.filter(k => t[k]).map(k => '<div class="sh-size">' + swatch(k) +
     '<b>' + (k === 'x' ? 'غير مكتوب' : ltr(CLS[k].spec) + ' <small>مم²</small>') + '</b>' +
     '<span>' + plural(t[k].n) + ' · ' + fmt(t[k].len) + ' م</span></div>').join('');
   const group = (src) => {
-    const rows = []; const walk = (c) => { rows.push(c); c.kids.forEach(k => walk(byN.get(k))); };
-    D.cables.filter(c => c.src === src && !c.parent).forEach(walk);
-    return '<div class="reg-group"><div class="reg-head"><span class="src-mini">' + ICON.bolt + '</span><b>' + SRC[src] + '</b><span>' + plural(rows.length) + ' · ' + fmt(rows.reduce((s,c) => s + c.len, 0)) + ' م</span></div>' +
+    const rows = treeOf(src);
+    return '<div class="reg-group"><div class="reg-head"><span class="src-mini">' + ICON.bolt + '</span><b>' + esc(SRC[src]) + '</b><span>' + plural(rows.length) + ' · ' + fmt(rows.reduce((s,c) => s + c.len, 0)) + ' م</span></div>' +
       rows.map(c => '<div class="reg-row" data-depth="' + Math.min(depth(c),2) + '"><span class="badge b-' + c.cls + '">' + c.n + '</span>' +
-        '<span class="reg-main"><b>' + ltr(c.title) + '</b><span>' + fromText(c) + ' · باتجاه ' + c.dir + '</span></span>' +
+        '<span class="reg-main"><b>' + ltr(esc(c.title)) + '</b><span>' + fromText(c) + ' · باتجاه ' + c.dir + '</span></span>' +
         '<span class="reg-len">' + fmt(c.len) + ' <small>م</small></span></div>').join('') + '</div>';
   };
   body.innerHTML = '<div class="sh-sizes">' + sizes + '</div><div class="sh-reg">' + srcs.map(group).join('') + '</div>' +
@@ -1253,15 +1452,15 @@ function renderSheet(g){
       '<span><svg viewBox="0 0 26 26"><rect x="2" y="2" width="22" height="22" rx="6" fill="#d7a64f" stroke="#132230" stroke-width="1.5"/><path d="M14.3 5 7.5 14h4.6l-1 7 7.4-9.4h-4.7z" fill="#1b1305"/></svg>مصدر تغذية</span>' +
       '<span><svg viewBox="0 0 26 26"><line x1="2" y1="13" x2="24" y2="13" stroke="#132230" stroke-width="6"/><line x1="2" y1="13" x2="24" y2="13" style="stroke:var(--c95)" stroke-width="3"/><circle cx="13" cy="13" r="5" fill="#fff" stroke="#132230" stroke-width="2.5"/></svg>نقطة تفرّع</span>' +
       '<span><svg viewBox="0 0 26 26"><line x1="2" y1="13" x2="18" y2="13" stroke="#132230" stroke-width="6" stroke-linecap="round"/><line x1="2" y1="13" x2="18" y2="13" style="stroke:var(--c50)" stroke-width="3" stroke-linecap="round"/><circle cx="18" cy="13" r="4.5" style="fill:var(--c50)" stroke="#132230" stroke-width="2"/></svg>نهاية الكابل</span>' +
-      '<span>الأطوال على الخريطة؛ زِد 5–10% للارتخاء والنزلات</span>' +
+      '<span>الأطوال على الخريطة؛ زِد ' + esc(SETTINGS.extraPct) + ' للارتخاء والنزلات</span>' +
       '<span style="direction:ltr">Imagery © Esri, Maxar, Earthstar Geographics</span>' +
     '</div>';
 }
 
-if (sheet) renderSheet(sheet); else renderOverview();
-if (sheet) map.fitBounds(groupBounds(sheet), {padding:[34,34], animate:false});
-else map.fitBounds(groupBounds('all'), {paddingTopLeft:[20,64], paddingBottomRight:[20,20], animate:false});
-
-applyFilters();
+/* start: the file opened last on this device, otherwise the original network */
+let start = BUILTIN, startCustom = false;
+const saved = !still && store.get();
+if (saved) { try { start = netFromKml(saved); startCustom = true; } catch (e) { store.clear(); } }
+build(start, startCustom);
 })();
 </script>
