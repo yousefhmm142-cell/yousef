@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تقرير المراجعة للمبرمج · AF PowerCollect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@500;600;700;800&family=El+Messiri:wght@600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#111820;--ink2:#353c46;--faint:#5e6773;--line:#e2e5e9;--line2:#eceef1;--page:#eff1f4;--brand:#a51d26;--red:#c81e1e;--red-t:#c81e1e12;--amb:#b45309;--amb-t:#b4530914;--grn:#047857;--grn-t:#0478571a;--blu:#1d5bcc;--blu-t:#1d5bcc12}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);color:var(--ink);font:15px/1.75 'IBM Plex Sans Arabic',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.doc{max-width:900px;margin:24px auto;background:#fff;border:1px solid var(--line2);border-radius:20px;padding:44px 52px}
+.cover{background:linear-gradient(135deg,#262c34,#1c2127 55%,#111418);color:#fff;border-radius:18px;padding:30px 32px;position:relative;overflow:hidden}
+.cover::before{content:"";position:absolute;inset-inline:0;top:0;height:3px;background:linear-gradient(90deg,#5c0d14,#a51d26 40%,#9aa3ae 75%,#dfe3e8)}
+.cover small{color:#aeb6c1;font-weight:600}
+.cover h1{margin:6px 0 4px;font:700 32px/1.3 'El Messiri',serif}
+.cover p{margin:0;color:#c9ced5;font-size:14px}
+.meta{display:flex;gap:22px;flex-wrap:wrap;margin-top:18px;font-size:13px;color:#aeb6c1}
+.meta b{color:#fff;font-family:Alexandria;font-weight:600}
+h2{font:700 23px/1.4 'El Messiri',serif;margin:38px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--line2);display:flex;align-items:center;gap:10px;break-after:avoid}
+h2 .n{font:800 14px Alexandria;background:var(--brand);color:#fff;border-radius:9px;width:30px;height:30px;display:inline-grid;place-items:center;flex:none}
+h3{font:700 17px/1.5 'IBM Plex Sans Arabic';margin:22px 0 6px;break-after:avoid}
+p{margin:6px 0}
+ul,ol{margin:6px 0;padding-inline-start:22px}
+li{margin:3px 0}
+code{font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace;background:#f2f3f5;border:1px solid var(--line2);border-radius:6px;padding:0 5px;direction:ltr;unicode-bidi:embed;white-space:nowrap}
+pre{direction:ltr;text-align:left;font:12.5px/1.6 ui-monospace,Menlo,monospace;background:#161a1f;color:#e0e3e7;border-radius:12px;padding:12px 14px;overflow-x:auto;margin:8px 0;white-space:pre-wrap;break-inside:avoid}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px;break-inside:auto}
+th{background:#f7f8fa;text-align:start;font-weight:700;color:var(--ink2);padding:8px 10px;border:1px solid var(--line)}
+td{padding:8px 10px;border:1px solid var(--line);vertical-align:top}
+tr{break-inside:avoid}
+.tag{display:inline-block;font-size:12px;font-weight:700;border-radius:7px;padding:0 8px;white-space:nowrap}
+.t-red{color:var(--red);background:var(--red-t)}.t-amb{color:var(--amb);background:var(--amb-t)}.t-grn{color:var(--grn);background:var(--grn-t)}.t-blu{color:var(--blu);background:var(--blu-t)}
+.item{border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin:10px 0;break-inside:avoid}
+.item h4{margin:0 0 4px;font-size:15.5px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.item .where{font-size:13px;color:var(--faint)}
+.item .fix{margin-top:4px}
+.item .fix b{color:var(--grn)}
+.box{border-radius:14px;padding:12px 16px;margin:12px 0;break-inside:avoid}
+.box.red{background:var(--red-t);border:1px solid #c81e1e33}
+.box.blu{background:var(--blu-t);border:1px solid #1d5bcc33}
+.box.grn{background:var(--grn-t);border:1px solid #04785733}
+.muted{color:var(--faint)}
+.phase{border-inline-start:4px solid var(--brand);padding:4px 14px;margin:12px 0;break-inside:avoid}
+.phase b.h{display:block;font-size:16px}
+.toc{columns:2;column-gap:28px;font-size:14.5px;margin:18px 0 0;padding-inline-start:20px}
+@media (max-width:760px){.doc{margin:0;border-radius:0;padding:22px 16px}.toc{columns:1}.cover h1{font-size:25px}table{display:block;overflow-x:auto}}
+@media print{body{background:#fff}.doc{margin:0;border:0;border-radius:0;padding:0;max-width:none}h2{break-before:auto}}
+@page{size:A4;margin:16mm 14mm}
+</style>
+</head>
+<body>
+<article class="doc">
+
+<header class="cover">
+  <small>AF PowerCollect · شركة أبو زايد</small>
+  <h1>تقرير مراجعة النظام للمبرمج</h1>
+  <p>مراجعة الكود الحالي، ومطابقته مع التصاميم، والأخطاء، والسرعة، وما يلزم قبل التشغيل الرسمي.</p>
+  <div class="meta"><span>التاريخ: <b>30/09/2026</b></span><span>النسخة المراجَعة: <b>62a7cdc</b> (دمج #71)</span><span>الفرع: <b>claude/confident-archimedes-9rwkuc</b></span></div>
+</header>
+
+<div class="box blu" style="margin-top:18px">
+  <b>كيف أُعدّ هذا التقرير:</b> بقراءة الكود فقط (Laravel وReact وتطبيق Flutter). لم يُشغَّل الموقع ولا التطبيق ولا الاختبارات، ولم تُقَس السرعة فعليًا؛ ملاحظات السرعة مبنية على شكل الاستعلامات وحجم البيانات المتوقع (أكثر من 20 ألف مشترك، وقراءة أسبوعية لكل مشترك). المراجع بصيغة <code>path:line</code> من النسخة المذكورة أعلاه.
+</div>
+
+<ol class="toc">
+  <li>الملخص: أهم 12 بندًا</li>
+  <li>ما تطبّق من التصاميم وما لم يتطبق</li>
+  <li>أخطاء في منطق العمل</li>
+  <li>الأمان</li>
+  <li>السرعة والأداء</li>
+  <li>ضروريات شركة رسمية</li>
+  <li>تطبيق الميدان</li>
+  <li>إضافات قوية تميّز النظام</li>
+  <li>خطة التنفيذ المقترحة</li>
+  <li>نقاط قوة يجب المحافظة عليها</li>
+</ol>
+
+<h2><span class="n">1</span>الملخص: أهم 12 بندًا</h2>
+<table>
+<tr><th>#</th><th>البند</th><th>النوع</th><th>الأولوية</th></tr>
+<tr><td>1</td><td>دفعات التطبيق تُسجَّل مباشرة في السجل المالي دون مراجعة</td><td>منطق عمل</td><td><span class="tag t-red">قرار من الإدارة</span></td></tr>
+<tr><td>2</td><td>الرقم المرجعي للحوالة غير فريد؛ الإشعار نفسه يمكن استخدامه مرتين</td><td>منطق عمل / مالي</td><td><span class="tag t-red">عاجل</span></td></tr>
+<tr><td>3</td><td>لا يوجد رفض للقراءة، ولا حالة "عداد مستبدل"</td><td>منطق عمل</td><td><span class="tag t-red">عاجل</span></td></tr>
+<tr><td>4</td><td>لا طباعة (سند قبض، كشف حساب PDF) ولا تصدير Excel</td><td>ميزة ضرورية</td><td><span class="tag t-red">قبل التشغيل</span></td></tr>
+<tr><td>5</td><td>لا تسليم نقدية ولا إقفال يومي للمحصّلين</td><td>ميزة ضرورية</td><td><span class="tag t-red">قبل التشغيل</span></td></tr>
+<tr><td>6</td><td>صفحة المشتركين تحمّل كل قراءات كل مشترك وقوائم كاملة في كل زيارة</td><td>سرعة</td><td><span class="tag t-red">عاجل</span></td></tr>
+<tr><td>7</td><td>جدول الحركات بلا <code>branch_id</code> وبلا فهارس على التاريخ والنوع</td><td>سرعة</td><td><span class="tag t-red">قبل تراكم البيانات</span></td></tr>
+<tr><td>8</td><td>لا سجل تدقيق عام (من عدّل ماذا، القيمة قبل وبعد)</td><td>أمان / رقابة</td><td><span class="tag t-amb">مهم</span></td></tr>
+<tr><td>9</td><td>لا نسخ احتياطي مجدول، والإعدادات الافتراضية للتطوير (debug، قاعدة البيانات للكاش)</td><td>تشغيل</td><td><span class="tag t-red">قبل التشغيل</span></td></tr>
+<tr><td>10</td><td>التطبيق: المفتاح في ملف عادي، <code>http</code>، واسم الحزمة <code>com.example</code></td><td>أمان التطبيق</td><td><span class="tag t-red">قبل النشر</span></td></tr>
+<tr><td>11</td><td>الدفعة في التطبيق تتطلب اتصالًا؛ لا حفظ على الجهاز</td><td>تطبيق</td><td><span class="tag t-amb">مهم</span></td></tr>
+<tr><td>12</td><td>تصاميم جاهزة لم تُطبق: الرئيسية، مراجعة القراءات، خريطة الطبلونات، قراءة الإشعار</td><td>واجهة</td><td><span class="tag t-blu">حسب الخطة</span></td></tr>
+</table>
+
+<h2><span class="n">2</span>ما تطبّق من التصاميم وما لم يتطبق</h2>
+<p>ملفات التصاميم كلها في مستودع <code>yousefhmm142-cell/yousef</code>، فرع <code>claude/optimistic-curie-w40uuk</code>، وكل ملف HTML نموذج تفاعلي يُفتح في المتصفح.</p>
+<table>
+<tr><th>التصميم</th><th>الحالة في الكود</th><th>ملاحظات</th></tr>
+<tr><td>التعرفات <code>AF-PowerCollect-التعرفات.html</code></td><td><span class="tag t-grn">مطبّق</span></td><td>البطاقات، تعديل السعر في مكانه، سجل الأسعار، الحاسبة، الشرائح.</td></tr>
+<tr><td>المحافظات <code>AF-PowerCollect-المحافظات.html</code></td><td><span class="tag t-grn">مطبّق</span></td><td>ثلاثة أعمدة (دمج #68).</td></tr>
+<tr><td>تسجيل دفعة <code>AF-PowerCollect-تسجيل-دفعة.html</code></td><td><span class="tag t-amb">جزئي</span></td><td>شعارات البنوك موجودة. ناقص: تصوير/إرفاق إشعار التحويل وقراءته، وفحص تكرار الرقم المرجعي.</td></tr>
+<tr><td>مراجعة القراءات <code>AF-PowerCollect-مراجعة-القراءات.html</code></td><td><span class="tag t-amb">جزئي</span></td><td>الاعتماد الجماعي موجود. ناقص: الرفض مع السبب، التنبيهات (استهلاك مرتفع، صفر، مقطوع وعليه استهلاك)، تبويب الدفعات الميدانية، زر "اعتماد السليمة فقط".</td></tr>
+<tr><td>الرئيسية <code>AF-PowerCollect-الرئيسية.html</code></td><td><span class="tag t-red">غير مطبّق</span></td><td>لوحة التحكم الحالية قديمة. التصميم الجديد: التحصيل الأسبوعي، المهام المعلّقة، تقدم القراءات، أداء الفروع، والوصول السريع لكل صفحات القائمة الجانبية.</td></tr>
+<tr><td>الطبلونات (خريطة) <code>AF-PowerCollect-الطبلونات.html</code></td><td><span class="tag t-red">غير مطبّق</span></td><td>الصفحة الحالية جدول فقط. يحتاج إحداثيات للطبلونات.</td></tr>
+<tr><td>جدول المشتركين <code>AF-PowerCollect-جدول-المشتركين.html</code></td><td><span class="tag t-amb">جزئي</span></td><td>ناقص: بطاقات التصفية العلوية (الأعداد حسب الحالة) وشريط الإجراءات الجماعية.</td></tr>
+<tr><td>كشف الحساب، الخصم، التحميل</td><td><span class="tag t-grn">مطبّق بشكل عام</span></td><td>العمل عليها مستمر (القيود العكسية والتسويات).</td></tr>
+<tr><td>تطبيق الميدان <code>AF-PowerCollect-تطبيق-الميدان.html</code></td><td><span class="tag t-amb">جزئي</span></td><td>التطبيق بُني بـ Flutter بهوية الشركة. ناقص من التصميم: الشاشة الرئيسية لاختيار الخدمة، لوحة الأرقام الخاصة، مسار الدفعة (المبلغ ← الطريقة ← الإيصال)، "قيد المراجعة"، قراءة الإشعار.</td></tr>
+<tr><td>مواعيد القراءات، الملف الشخصي، تسجيل الدخول</td><td><span class="tag t-blu">لم تُصمَّم بعد</span></td><td>الصفحات موجودة في الكود بالشكل الحالي.</td></tr>
+</table>
+
+<h2><span class="n">3</span>أخطاء في منطق العمل</h2>
+
+<div class="item"><h4><span class="tag t-red">عاجل</span>دفعات التطبيق تدخل السجل المالي فورًا</h4>
+<div class="where"><code>app/Http/Controllers/Mobile/MobileCollectionController.php:69</code> · <code>mobile/lib/main.dart:442</code> · جدول <code>pending_collections</code> أُنشئ ثم حُذف (<code>2026_09_29_132314_drop_pending_collections_table.php</code>)</div>
+<p>الاتفاق في التصميم أن الدفعة الميدانية تكون "قيد المراجعة" حتى يؤكدها المحاسب. الآن تُسجَّل مباشرة وتؤثر على رصيد المشترك. أي خطأ أو تلاعب من المحصّل يدخل الرصيد دون رقابة.</p>
+<div class="fix"><b>المطلوب:</b> قرار من الإدارة. إن كانت المراجعة مطلوبة: حالة للدفعة (<code>pending / confirmed / rejected</code>) مع <code>confirmed_by</code> و<code>confirmed_at</code>، ولا تُحتسب في الرصيد قبل التأكيد، وصفحة مراجعة (تبويب "الدفعات الميدانية" في تصميم مراجعة القراءات). إن كانت مباشرة: على الأقل تقرير يومي بدفعات كل محصّل وتسليم النقدية (البند 6.3).</div></div>
+
+<div class="item"><h4><span class="tag t-red">عاجل</span>الرقم المرجعي للحوالة غير فريد</h4>
+<div class="where"><code>app/Http/Requests/StoreSubscriberPaymentRequest.php:50</code></div>
+<p>لا يوجد فحص يمنع تسجيل الإشعار نفسه لدفعتين (لنفس المشترك أو لمشتركَين). هذا باب واضح للخطأ والاحتيال.</p>
+<div class="fix"><b>المطلوب:</b> قاعدة <code>unique</code> على (<code>bank_name</code>, <code>reference_number</code>) للحركات غير الملغاة، مع رسالة واضحة: "هذا الرقم المرجعي مسجّل في دفعة بتاريخ …". ويُطبَّق في الموقع والتطبيق.</div></div>
+
+<div class="item"><h4><span class="tag t-red">عاجل</span>لا يمكن إدخال قراءة أقل من السابقة، ولا يوجد رفض للقراءة</h4>
+<div class="where"><code>app/Http/Requests/StoreMeterReadingRequest.php:92</code> · <code>routes/web.php:62</code> (اعتماد فقط)</div>
+<p>عند استبدال العداد أو تصفيره لا توجد طريقة لإدخال القراءة الجديدة. والمدقق يستطيع الاعتماد أو التعديل فقط، ولا يستطيع إرجاع القراءة للقارئ مع سبب.</p>
+<div class="fix"><b>المطلوب:</b> (1) حالة <code>rejected</code> مع <code>rejection_reason</code> تعود للقارئ في التطبيق. (2) خيار "عداد مستبدل" بصلاحية خاصة: يسجّل قراءة بداية جديدة وقراءة نهاية القديم، ويُحسب الاستهلاك من الاثنين. (3) تنبيهات عند المراجعة: الاستهلاك ≥ 3 أضعاف متوسط آخر 8 أسابيع، استهلاك صفر، مشترك مقطوع وعليه استهلاك.</div></div>
+
+<div class="item"><h4><span class="tag t-amb">مهم</span>أسماء المناطق فريدة على مستوى النظام كله</h4>
+<div class="where"><code>database/migrations/2026_09_17_000002_create_areas_table.php:16</code> · <code>..._000003_create_sub_areas_table.php:16</code> · <code>..._000001_create_governorates_table.php:16</code></div>
+<p>لا يمكن وجود منطقتين فرعيتين بالاسم نفسه ("وسط المخيم") تحت منطقتين مختلفتين، وهذا واقع في غزة.</p>
+<div class="fix"><b>المطلوب:</b> التفرّد داخل الأب فقط: <code>unique(['area_id','name'])</code> للمناطق الفرعية و<code>unique(['governorate_id','name'])</code> للمناطق.</div></div>
+
+<div class="item"><h4><span class="tag t-amb">مهم</span>حدّ المبلغ في الدفعة مرتفع جدًا</h4>
+<div class="where"><code>app/Http/Requests/StoreSubscriberPaymentRequest.php:44</code> (<code>max:1000000</code>)</div>
+<div class="fix"><b>المطلوب:</b> تنبيه تأكيد عند مبلغ أكبر من رصيد المشترك بكثير أو أكبر من حد يُضبط من الإعدادات (مثلًا 2,000 ₪)، لتجنّب خطأ خانة إضافية.</div></div>
+
+<h2><span class="n">4</span>الأمان</h2>
+<table>
+<tr><th>البند</th><th>الوضع الحالي</th><th>المطلوب</th></tr>
+<tr><td>سجل تدقيق</td><td>إشعارات للمستخدم نفسه فقط (<code>ActionCompleted</code>)، والقيود المالية عكسية (جيد).</td><td>جدول <code>audit_logs</code>: المستخدم، العملية، السجل، القيم قبل/بعد، IP، الوقت. يشمل الأسعار والخصومات والصلاحيات وبيانات المشترك. وصفحة للمدير العام للبحث فيه.</td></tr>
+<tr><td>حماية حسابات المدراء</td><td>كلمة مرور فقط، ولا استعادة كلمة مرور.</td><td>تحقق بخطوتين للمدير العام ومدراء الفروع والمحاسبين، وإعادة تعيين كلمة المرور من المدير مع إجبار التغيير عند أول دخول.</td></tr>
+<tr><td>إعدادات الإنتاج</td><td><code>.env.example</code>: <code>APP_DEBUG=true</code>، <code>LOG_LEVEL=debug</code>.</td><td>في الإنتاج: <code>APP_DEBUG=false</code>، <code>SESSION_SECURE_COOKIE=true</code>، HTTPS إجباري، <code>LOG_LEVEL=warning</code>.</td></tr>
+<tr><td>مفاتيح التطبيق</td><td>صالحة 30 يومًا ولا تُحذف المنتهية (<code>app/Models/MobileAccessToken.php:33</code>).</td><td>مهمة مجدولة لحذف المنتهي، وزر "تسجيل خروج من كل الأجهزة" للمستخدم عند المدير.</td></tr>
+<tr><td>حدود الطلبات للـ API</td><td>على تسجيل الدخول فقط.</td><td><code>throttle</code> معقول على باقي مسارات <code>/api/mobile</code>.</td></tr>
+<tr><td>كلمات مرور تجريبية</td><td>محمية من الإنتاج في <code>DatabaseSeeder</code> (جيد).</td><td>التأكد أن <code>DemoUsersSeeder</code> و<code>DemoActivitySeeder</code> لا تعمل على الإنتاج أبدًا.</td></tr>
+</table>
+
+<h2><span class="n">5</span>السرعة والأداء</h2>
+<p>التقدير: 20 ألف مشترك × قراءة أسبوعية = حوالي مليون حركة في السنة للقراءات، إضافة للدفعات. أي استعلام يمرّ على كل الحركات سيبطؤ مع الوقت، لذلك الأفضل إصلاح هذه البنود الآن قبل تراكم البيانات.</p>
+
+<div class="item"><h4><span class="tag t-red">1</span>صفحة المشتركين تحمّل كل قراءات كل مشترك</h4>
+<div class="where"><code>app/Http/Controllers/SubscriberController.php:47</code> (<code>'meterReadings.recordedBy'</code>) و<code>:176</code></div>
+<p>كل صف في الجدول يحمل كل قراءاته منذ التسجيل ومن سجّلها، وتُرسل كلها للمتصفح. بعد سنة: 52 قراءة × عدد الصفوف في كل فتح للصفحة.</p>
+<div class="fix"><b>الحل:</b> تحميل آخر قراءة فقط (<code>latestMeterReading</code>)، وجلب السجل الكامل عند فتح نافذة المشترك أو كشف الحساب (prop اختياري في Inertia أو طلب منفصل).</div></div>
+
+<div class="item"><h4><span class="tag t-red">2</span>قوائم النماذج والتصفية تُحمَّل كاملة في كل زيارة</h4>
+<div class="where"><code>SubscriberController.php:67</code> و<code>:288–338</code> (كل الطبلونات مرتين، كل المناطق الفرعية) · نفس النمط في <code>MeterBoxController.php:158</code> و<code>MeterReadingController.php:421–432</code></div>
+<div class="fix"><b>الحل:</b> خيارات النماذج تُجلب عند فتح النافذة فقط (<code>Inertia::optional</code> أو <code>only</code>)، وقوائم التصفية تُخزّن في الكاش (<code>Cache::remember</code>) وتُمسح عند إضافة أو تعديل طبلون.</div></div>
+
+<div class="item"><h4><span class="tag t-red">3</span>جدول الحركات بلا فرع وبلا فهارس مناسبة</h4>
+<div class="where"><code>database/migrations/2026_09_17_000012_create_subscriber_transactions_table.php</code> · الاستعلامات عبر <code>whereHas('subscriber')</code> في <code>LedgerController.php:115</code> و<code>BranchPerformanceController.php:92,219</code></div>
+<p>كل تقارير السجل المالي وأداء الفروع تربط كل حركة بالمشترك لمعرفة الفرع، وتبحث بالتاريخ دون فهرس.</p>
+<div class="fix"><b>الحل:</b> إضافة <code>branch_id</code> للحركات (يُملأ عند الإنشاء ومن migration للقديم) وفهارس مركّبة:</div>
+<pre>$table->index(['branch_id', 'created_at']);
+$table->index(['type', 'created_at']);
+$table->index(['recorded_by', 'created_at']);
+$table->index(['subscriber_id', 'created_at']);
+// meter_readings
+$table->index(['status', 'week_start']);</pre></div>
+
+<div class="item"><h4><span class="tag t-amb">4</span><code>whereDate</code> يعطّل الفهرس</h4>
+<div class="where"><code>MeterReadingController.php:349,357</code> · <code>Mobile/MobileSubscriberController.php:26</code></div>
+<div class="fix"><b>الحل:</b> <code>week_start</code> عمود تاريخ، فيكفي <code>where('week_start', $week)</code> بدل <code>whereDate(...)</code> ليستخدم الفهرس.</div></div>
+
+<div class="item"><h4><span class="tag t-amb">5</span>تجميعات تُحسب داخل PHP بدل قاعدة البيانات</h4>
+<div class="where"><code>LedgerController.php:195–218</code> (<code>dayTotals</code>) · <code>BranchPerformanceController.php:188,267,302–310</code></div>
+<p>تُجلب صفوف خام ثم تُجمّع يوميًا في PHP. يوم اعتماد القراءات الأسبوعية وحده قد يكون 20 ألف صف.</p>
+<div class="fix"><b>الحل:</b> <code>GROUP BY</code> في SQL (مع تحويل المنطقة الزمنية أو عمود تاريخ محلي مخزّن)، وتخزين نتائج لوحة الرئيسية وأداء الفروع في الكاش لبضع دقائق.</div></div>
+
+<div class="item"><h4><span class="tag t-amb">6</span>البحث بـ <code>LIKE '%…%'</code></h4>
+<div class="where"><code>LedgerController.php:119–121</code> · <code>FiltersDataTable</code> · <code>MobileCollectionController.php:30–32</code></div>
+<div class="fix"><b>الحل:</b> رقم الحساب والهاتف ورقم الطبلون بحث من البداية (<code>'term%'</code>) فيستخدم الفهرس. الأسماء: فهرس <code>FULLTEXT</code> بمحلل <code>ngram</code> في MySQL (يدعم العربية)، أو Laravel Scout مع Meilisearch لاحقًا.</div></div>
+
+<div class="item"><h4><span class="tag t-amb">7</span>رقم السند يقفل كل الدفعات في النظام</h4>
+<div class="where"><code>app/Models/SubscriberTransaction.php:137</code> (<code>lockForUpdate()->max('voucher_number')</code>)</div>
+<p>كل دفعة، في أي فرع، تنتظر القفل نفسه. مع عشرات المحصّلين في الوقت نفسه يحدث انتظار وقد يحدث deadlock.</p>
+<div class="fix"><b>الحل:</b> جدول عدّاد (<code>voucher_counters</code>) بصف لكل سنة أو فرع، ويُقفل ذلك الصف فقط.</div></div>
+
+<div class="item"><h4><span class="tag t-amb">8</span>الرصيد يُحسب بجمع كل الحركات في كل مرة</h4>
+<div class="where"><code>SubscriberController.php:48</code> · <code>MobileCollectionController.php:28</code></div>
+<div class="fix"><b>الحل:</b> مقبول الآن مع الفهرس (البند 3). لاحقًا: عمود <code>balance</code> على المشترك يُحدَّث داخل نفس الـ transaction مع كل حركة، مع أمر للتحقق الدوري من تطابقه.</div></div>
+
+<div class="item"><h4><span class="tag t-amb">9</span>الخادم والبنية</h4>
+<div class="where"><code>.env.example</code>: <code>CACHE_STORE=database</code>, <code>SESSION_DRIVER=database</code>, <code>QUEUE_CONNECTION=database</code></div>
+<ul>
+<li>Redis للكاش والجلسات والطوابير.</li>
+<li><code>php artisan optimize</code> عند كل نشر (config/route/view/event cache)، وتفعيل OPcache.</li>
+<li>تشغيل queue worker، وجعل الإشعار <code>ActionCompleted</code> ينفّذ في الطابور (<code>ShouldQueue</code>) بدل أن يؤخر الطلب.</li>
+<li>ضغط gzip/brotli وHTTP/2، وملفات <code>build</code> بكاش طويل.</li>
+<li>تحميل الخطوط من الموقع نفسه بدل Google Fonts (<code>resources/views/app.blade.php:13</code>)، لأن الإنترنت في غزة غير مستقر، وحذف <code>welcome.blade.php</code> إن لم يُستخدم.</li>
+<li>حذف بقايا غير مستخدمة: <code>resources/js/app.js</code> وAlpine، وإدخاله في <code>vite.config.js</code>، وتعارض <code>@tailwindcss/vite</code> v4 مع Tailwind v3.</li>
+</ul></div>
+
+<div class="item"><h4><span class="tag t-amb">10</span>التطبيق: المزامنة والتخزين</h4>
+<div class="where"><code>mobile/lib/field_store.dart:38–43</code> · <code>mobile/lib/main.dart:283,332–338</code> · <code>MobileSubscriberController.php:28</code> (<code>paginate(500)</code>)</div>
+<p>كل بيانات المشتركين تُكتب في ملف JSON واحد يُعاد كتابته بالكامل عند كل حفظ، وتُنزّل القائمة كاملة في كل مزامنة.</p>
+<div class="fix"><b>الحل:</b> SQLite على الجهاز (<code>sqflite</code> أو <code>drift</code>)، ومزامنة بالتغييرات فقط (<code>?updated_since=</code>)، وتنزيل حسب المنطقة أو الطبلون، وضغط gzip للاستجابات.</div></div>
+
+<div class="box grn"><b>قياس قبل وبعد:</b> توليد بيانات بحجم حقيقي (20 ألف مشترك + سنة قراءات ودفعات) على نسخة اختبار، وتفعيل slow query log وLaravel Pulse أو Telescope، وقياس زمن الصفحات الأساسية. الهدف: أقل من 300 ms للخادم في الجداول الرئيسية.</div>
+
+<h2><span class="n">6</span>ضروريات شركة رسمية</h2>
+<h3>6.1 الطباعة والمستندات</h3>
+<ul>
+<li>سند قبض مطبوع لكل دفعة (A5 أو طابعة حرارية 80mm): الشعار، رقم السند، المشترك، المبلغ رقمًا وكتابة، الطريقة، المحصّل، التاريخ، الرصيد بعد الدفعة. وQR للتحقق.</li>
+<li>كشف حساب PDF بشعار الشركة لفترة محددة.</li>
+<li>فاتورة أسبوعية أو شهرية للمشترك.</li>
+</ul>
+<h3>6.2 التصدير والتقارير</h3>
+<ul>
+<li>تصدير Excel لكل الجداول (بنفس التصفية الظاهرة)، ويُنفّذ في الطابور للملفات الكبيرة.</li>
+<li>تقارير: التحصيل اليومي والشهري لكل فرع ومحصّل، أعمار الديون (30/60/90 يومًا)، المقطوعون، الاستهلاك لكل طبلون، الخصومات الممنوحة ومن منحها.</li>
+</ul>
+<h3>6.3 تسليم النقدية والإقفال اليومي</h3>
+<ul>
+<li>لكل محصّل: مجموع النقد المستلم اليوم، تسليمه لأمين الصندوق، من استلم، والفرق إن وجد.</li>
+<li>إقفال يومي للفرع يمنع تعديل حركات يوم مُقفل إلا بصلاحية خاصة وقيد عكسي.</li>
+</ul>
+<h3>6.4 التشغيل</h3>
+<ul>
+<li>نسخ احتياطي يومي تلقائي لقاعدة البيانات خارج الخادم (مثل <code>spatie/laravel-backup</code>)، مع تجربة استرجاع دورية. حاليًا لا توجد مهام مجدولة في <code>routes/console.php</code>.</li>
+<li>بيئة اختبار (staging) منفصلة عن الإنتاج.</li>
+<li>مراقبة الأعطال (Sentry أو ما يشابهه) وتنبيه عند توقف الطابور.</li>
+</ul>
+
+<h2><span class="n">7</span>تطبيق الميدان</h2>
+<table>
+<tr><th>البند</th><th>المرجع</th><th>المطلوب</th></tr>
+<tr><td>تخزين المفتاح</td><td><code>mobile/lib/field_store.dart:59</code></td><td><code>flutter_secure_storage</code> بدل ملف JSON عادي.</td></tr>
+<tr><td>عنوان الخادم</td><td><code>mobile/lib/api_client.dart:5–6</code></td><td>HTTPS فقط في نسخة الإنتاج.</td></tr>
+<tr><td>اسم الحزمة</td><td><code>mobile/android/app/build.gradle.kts:8,19</code></td><td>تغيير <code>com.example.power_collect</code> إلى معرّف الشركة قبل أول نشر (لا يمكن تغييره بعد النشر على Google Play)، وتوقيع release.</td></tr>
+<tr><td>الدفعات دون اتصال</td><td><code>main.dart:673</code></td><td>طابور محلي للدفعات مثل القراءات، مع <code>mobile_operation_id</code> (موجود ويمنع التكرار).</td></tr>
+<tr><td>تصميم الشاشات</td><td><code>AF-PowerCollect-تطبيق-الميدان.html</code></td><td>الشاشة الرئيسية لاختيار الخدمة، لوحة أرقام كبيرة، القراءة السابقة بجانب الحقل، مسار الدفعة بخطوات واضحة، إيصال بعد الدفعة.</td></tr>
+<tr><td>صورة الإشعار</td><td>—</td><td>تصوير الإشعار أو اختياره من الاستوديو ورفعه مع الدفعة، ثم قراءته (OCR يدعم العربية) كمرحلة ثانية.</td></tr>
+<tr><td>تحديث التطبيق</td><td>—</td><td>فحص رقم نسخة من الخادم وإجبار التحديث عند تغيير الـ API.</td></tr>
+</table>
+
+<h2><span class="n">8</span>إضافات قوية تميّز النظام</h2>
+<ul>
+<li><b>الرئيسية الجديدة</b> بكل المهام والاختصارات (التصميم جاهز).</li>
+<li><b>خريطة الطبلونات</b> لكل فرع (التصميم جاهز، يحتاج إحداثيات).</li>
+<li><b>قراءة إشعار التحويل من الصورة</b> وتعبئة البيانات تلقائيًا (التصميم جاهز للموقع والتطبيق).</li>
+<li><b>رسائل SMS أو واتساب</b>: الرصيد الأسبوعي، تأكيد كل دفعة، تنبيه قبل القطع.</li>
+<li><b>سعة الطبلون وأسماء الشوارع</b> لتوزيع المشتركين والقرّاء.</li>
+<li><b>بوابة للمشترك</b> لاحقًا: رصيده وكشف حسابه برقم الحساب ورمز يصله برسالة.</li>
+</ul>
+
+<h2><span class="n">9</span>خطة التنفيذ المقترحة</h2>
+<div class="phase"><b class="h">المرحلة 1: قبل التشغيل الرسمي</b>
+<ol>
+<li>قرار دفعات الميدان (مراجعة أو مباشرة) وتنفيذه.</li>
+<li>فرادة الرقم المرجعي للحوالة.</li>
+<li>رفض القراءة، وحالة العداد المستبدل، والتنبيهات.</li>
+<li>إصلاحات السرعة 1 و2 و3 و4 (صفحة المشتركين، القوائم، الفهارس و<code>branch_id</code>، <code>whereDate</code>).</li>
+<li>سند القبض المطبوع وكشف الحساب PDF وتصدير Excel.</li>
+<li>تسليم النقدية والإقفال اليومي.</li>
+<li>سجل التدقيق.</li>
+<li>إعدادات الإنتاج، Redis، النسخ الاحتياطي، HTTPS.</li>
+<li>أمان التطبيق واسم الحزمة.</li>
+</ol></div>
+<div class="phase"><b class="h">المرحلة 2: بعد التشغيل مباشرة</b>
+<ol>
+<li>الرئيسية الجديدة وصفحة مراجعة القراءات بالتصميم الكامل.</li>
+<li>الدفعات دون اتصال في التطبيق، وSQLite والمزامنة بالتغييرات.</li>
+<li>إصلاحات السرعة 5 إلى 8.</li>
+<li>التقارير الشهرية، وتفرّد أسماء المناطق داخل الأب.</li>
+</ol></div>
+<div class="phase"><b class="h">المرحلة 3: تطوير</b>
+<ol>
+<li>خريطة الطبلونات، قراءة الإشعار (OCR)، الرسائل، التحقق بخطوتين، بوابة المشترك.</li>
+</ol></div>
+
+<h2><span class="n">10</span>نقاط قوة يجب المحافظة عليها</h2>
+<ul>
+<li>صلاحيات دقيقة لكل عملية، وكل فرع يرى بياناته فقط (<code>visibleTo</code>)، ومفروضة في الخادم وليس في الواجهة فقط.</li>
+<li>التصحيح المالي بقيد عكسي بدل الحذف، مع تتبع من ألغى ومتى.</li>
+<li>منع تكرار القراءة والدفعة من التطبيق عبر <code>mobile_operation_id</code> الفريد.</li>
+<li>القراءات في التطبيق تُحفظ على الجهاز وتُزامن لاحقًا.</li>
+<li>حد لمحاولات الدخول في الموقع والتطبيق، وكلمات المرور التجريبية ممنوعة في الإنتاج.</li>
+<li>اختبارات آلية تغطي الصلاحيات والحركات والقراءات والـ API، وتعمل في GitHub Actions.</li>
+<li>الواجهة خفيفة (React + Inertia دون مكتبات ثقيلة) والصفحات تُحمّل عند الحاجة فقط.</li>
+</ul>
+
+<p class="muted" style="margin-top:30px;font-size:13px">أُعدّ هذا التقرير بمساعدة Claude بطلب من قسم التصميم. التصاميم المشار إليها في مستودع <code>yousefhmm142-cell/yousef</code>.</p>
+</article>
+</body>
+</html>
