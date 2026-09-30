@@ -1,0 +1,737 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document id="document">
+	<name>شبكة مخيم اجديد</name>
+	<visibility>0</visibility>
+	<Schema name="__managed_schema" id="__managed_schema">
+		<SimpleField type="int" name="121CA3F6BE4218911E37">
+			<displayName>الدقة (م)</displayName>
+		</SimpleField>
+		<SimpleField type="int" name="1E117FAD8342187D9606">
+			<displayName>الدقة (م)</displayName>
+		</SimpleField>
+		<SimpleField type="int" name="1B0C5D49C941DFA2D50C">
+			<displayName>الدقة (م)</displayName>
+		</SimpleField>
+	</Schema>
+	<gx:CascadingStyle kml:id="__managed_style_0EB052586F421891B6A5_highlight">
+		<styleUrl>https://earth.google.com/balloon_components/base/1.1.0.0/card_template.kml#main</styleUrl>
+		<Style>
+			<IconStyle>
+				<scale>1.2</scale>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LineStyle>
+				<color>ff2f2fd3</color>
+				<width>8.15217</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<gx:CascadingStyle kml:id="__managed_style_0EB052586F421891B6A5_normal">
+		<styleUrl>https://earth.google.com/balloon_components/base/1.1.0.0/card_template.kml#main</styleUrl>
+		<Style>
+			<IconStyle>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LineStyle>
+				<color>ff2f2fd3</color>
+				<width>5.43478</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<gx:CascadingStyle kml:id="__managed_style_007B07634642188932B7_normal">
+		<styleUrl>https://earth.google.com/balloon_components/base/1.1.0.0/card_template.kml#main</styleUrl>
+		<Style>
+			<IconStyle>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LineStyle>
+				<color>ff9f3f30</color>
+				<width>5.43478</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<StyleMap id="__managed_style_007B07634642188932B7">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#__managed_style_007B07634642188932B7_normal</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#__managed_style_007B07634642188932B7_highlight</styleUrl>
+		</Pair>
+	</StyleMap>
+	<gx:CascadingStyle kml:id="__managed_style_0FCC733CDA41DF73DD54_highlight">
+		<styleUrl>https://earth.google.com/balloon_components/base/1.1.0.0/card_template.kml#main</styleUrl>
+		<Style>
+			<IconStyle>
+				<scale>1.2</scale>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LineStyle>
+				<color>fff5a542</color>
+				<width>2.71739</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<gx:CascadingStyle kml:id="__managed_style_007B07634642188932B7_highlight">
+		<styleUrl>https://earth.google.com/balloon_components/base/1.1.0.0/card_template.kml#main</styleUrl>
+		<Style>
+			<IconStyle>
+				<scale>1.2</scale>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LineStyle>
+				<color>ff9f3f30</color>
+				<width>8.15217</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<gx:CascadingStyle kml:id="__managed_style_0FCC733CDA41DF73DD54_normal">
+		<styleUrl>https://earth.google.com/balloon_components/base/1.1.0.0/card_template.kml#main</styleUrl>
+		<Style>
+			<IconStyle>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LineStyle>
+				<color>fff5a542</color>
+				<width>1.81159</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<StyleMap id="__managed_style_0FCC733CDA41DF73DD54">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#__managed_style_0FCC733CDA41DF73DD54_normal</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#__managed_style_0FCC733CDA41DF73DD54_highlight</styleUrl>
+		</Pair>
+	</StyleMap>
+	<gx:CascadingStyle kml:id="__managed_style_0BBEA9556241DF6D7235_highlight">
+		<styleUrl>https://earth.google.com/balloon_components/base/1.1.0.0/card_template.kml#main</styleUrl>
+		<Style>
+			<IconStyle>
+				<scale>1.2</scale>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LineStyle>
+				<color>ff2dc0fb</color>
+				<width>2.71739</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<StyleMap id="__managed_style_0BBEA9556241DF6D7235">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#__managed_style_0BBEA9556241DF6D7235_normal</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#__managed_style_0BBEA9556241DF6D7235_highlight</styleUrl>
+		</Pair>
+	</StyleMap>
+	<StyleMap id="__managed_style_0EB052586F421891B6A5">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#__managed_style_0EB052586F421891B6A5_normal</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#__managed_style_0EB052586F421891B6A5_highlight</styleUrl>
+		</Pair>
+	</StyleMap>
+	<gx:CascadingStyle kml:id="__managed_style_0C51D8FAD941DF622FAD_highlight">
+		<styleUrl>https://earth.google.com/balloon_components/base/1.1.0.0/card_template.kml#main</styleUrl>
+		<Style>
+			<IconStyle>
+				<scale>1.2</scale>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LineStyle>
+				<color>ff2f2fd3</color>
+				<width>0.679348</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<gx:CascadingStyle kml:id="__managed_style_0A173B3AF741DF6B70FF_highlight">
+		<styleUrl>https://earth.google.com/balloon_components/base/1.1.0.0/card_template.kml#main</styleUrl>
+		<Style>
+			<IconStyle>
+				<scale>1.2</scale>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LineStyle>
+				<color>ffa21f7b</color>
+				<width>2.71739</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<StyleMap id="__managed_style_0C51D8FAD941DF622FAD">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#__managed_style_0C51D8FAD941DF622FAD_normal</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#__managed_style_0C51D8FAD941DF622FAD_highlight</styleUrl>
+		</Pair>
+	</StyleMap>
+	<gx:CascadingStyle kml:id="__managed_style_0B1EBA916A41DF66A98B_normal">
+		<styleUrl>https://earth.google.com/balloon_components/base/1.1.0.0/card_template.kml#main</styleUrl>
+		<Style>
+			<IconStyle>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LineStyle>
+				<color>ff2f2fd3</color>
+				<width>1.81159</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<StyleMap id="__managed_style_0A173B3AF741DF6B70FF">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#__managed_style_0A173B3AF741DF6B70FF_normal</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#__managed_style_0A173B3AF741DF6B70FF_highlight</styleUrl>
+		</Pair>
+	</StyleMap>
+	<gx:CascadingStyle kml:id="__managed_style_0B1EBA916A41DF66A98B_highlight">
+		<styleUrl>https://earth.google.com/balloon_components/base/1.1.0.0/card_template.kml#main</styleUrl>
+		<Style>
+			<IconStyle>
+				<scale>1.2</scale>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LineStyle>
+				<color>ff2f2fd3</color>
+				<width>2.71739</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<gx:CascadingStyle kml:id="__managed_style_0BBEA9556241DF6D7235_normal">
+		<styleUrl>https://earth.google.com/balloon_components/base/1.1.0.0/card_template.kml#main</styleUrl>
+		<Style>
+			<IconStyle>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LineStyle>
+				<color>ff2dc0fb</color>
+				<width>1.81159</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<gx:CascadingStyle kml:id="__managed_style_0A173B3AF741DF6B70FF_normal">
+		<styleUrl>https://earth.google.com/balloon_components/base/1.1.0.0/card_template.kml#main</styleUrl>
+		<Style>
+			<IconStyle>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LineStyle>
+				<color>ffa21f7b</color>
+				<width>1.81159</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<gx:CascadingStyle kml:id="__managed_style_0C51D8FAD941DF622FAD_normal">
+		<styleUrl>https://earth.google.com/balloon_components/base/1.1.0.0/card_template.kml#main</styleUrl>
+		<Style>
+			<IconStyle>
+				<Icon>
+					<href>https://earth.google.com/earth/document/icon?color=1976d2&amp;id=2000&amp;scale=4</href>
+				</Icon>
+				<hotSpot x="64" y="128" xunits="pixels" yunits="insetPixels"/>
+			</IconStyle>
+			<LineStyle>
+				<color>ff2f2fd3</color>
+				<width>0.452899</width>
+			</LineStyle>
+			<PolyStyle>
+				<color>40ffffff</color>
+			</PolyStyle>
+		</Style>
+	</gx:CascadingStyle>
+	<StyleMap id="__managed_style_0B1EBA916A41DF66A98B">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#__managed_style_0B1EBA916A41DF66A98B_normal</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#__managed_style_0B1EBA916A41DF66A98B_highlight</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Placemark id="05D9CFBAE541DF6218DD">
+		<name>كابل 4*150</name>
+		<LookAt>
+			<longitude>34.39004194360466</longitude>
+			<latitude>31.461236749955</latitude>
+			<altitude>14.89882743490141</altitude>
+			<heading>115.3580366818114</heading>
+			<tilt>7.872592498970315</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>666.4943518615473</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_0C51D8FAD941DF622FAD</styleUrl>
+		<LineString>
+			<coordinates>
+				34.38833987876707,31.46034554323224,0 34.38860264064915,31.46067463829393,0 34.38898023896926,31.46092919642362,0 34.38924491772283,31.4611128922119,0 34.38942555675091,31.46127340666382,0 34.38971285378475,31.46147651115876,0 34.38981057873458,31.46147010570963,0 34.38990117025751,31.46138915209414,0 34.39000537630704,31.46127272171418,0 34.39009543655848,31.46118738382873,0 
+			</coordinates>
+		</LineString>
+	</Placemark>
+	<Placemark id="0A63EE6EC041DF6633FD">
+		<name>كابل 4*150+25*1</name>
+		<LookAt>
+			<longitude>34.38614259785383</longitude>
+			<latitude>31.45820709899353</latitude>
+			<altitude>10.38344034524281</altitude>
+			<heading>115.3558853260411</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>428.364358464969</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_0B1EBA916A41DF66A98B</styleUrl>
+		<LineString>
+			<coordinates>
+				34.38834636899633,31.46032466018558,0 34.38819816929134,31.46034608267424,0 34.38808734696192,31.46024755391707,0 34.38792689670822,31.46008558030013,0 34.38772912564913,31.45993169184222,0 34.38738377702911,31.45959451971031,0 34.38737288610667,31.45952366688543,0 34.38713027152318,31.45930168226409,0 34.38696584762587,31.45911844189891,0 34.38684657131642,31.45900161304271,0 34.3866579121155,31.45879417194458,0 34.3864999329322,31.45863384423403,0 34.38639257262812,31.45847714217642,0 34.38614583017111,31.45821096565378,0 
+			</coordinates>
+		</LineString>
+	</Placemark>
+	<Placemark id="0D5672A1F241DF693258">
+		<name>4*150</name>
+		<LookAt>
+			<longitude>34.39252791413674</longitude>
+			<latitude>31.45768453088812</latitude>
+			<altitude>20.2375549145938</altitude>
+			<heading>115.3591452400936</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>457.2794798358519</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_0B1EBA916A41DF66A98B</styleUrl>
+		<LineString>
+			<coordinates>
+				34.38836269189604,31.46034725694408,0 34.38845121709907,31.46068074996905,0 34.38907831363435,31.46020271011525,0 34.3894435465472,31.45987991298335,0 34.38970943735601,31.4599082268229,0 34.38994549305927,31.45970964607741,0 34.39010964119422,31.45955091563343,0 34.39030367430712,31.45940528854863,0 34.39048956936598,31.45924534013873,0 34.39072408168612,31.4590864498448,0 34.39111776264676,31.45882993923296,0 34.3912301795079,31.4586336694847,0 34.39155778173505,31.45841202974346,0 34.39185997670433,31.45815927772889,0 34.39209154416568,31.45796301491704,0 34.39231250595552,31.45777563774756,0 34.39252290072359,31.45768655774276,0 
+			</coordinates>
+		</LineString>
+	</Placemark>
+	<Placemark id="018E6CEA1B41DF6B5DE2">
+		<name>كابل 4*95</name>
+		<LookAt>
+			<longitude>34.39145422299428</longitude>
+			<latitude>31.4602260322581</latitude>
+			<altitude>19.23177634324284</altitude>
+			<heading>136.6864644229449</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>430.1378620127798</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_0A173B3AF741DF6B70FF</styleUrl>
+		<LineString>
+			<coordinates>
+				34.3911245681198,31.45884759198574,0 34.39128754003158,31.45899970689083,0 34.39144197488108,31.45916760159114,0 34.39159688326676,31.45931934984473,0 34.39182781757147,31.45954218165028,0 34.39207939968698,31.45983653772908,0 34.39196264012614,31.45984591324549,0 34.39177554791723,31.45999154985547,0 34.39158364662362,31.46011419434529,0 34.39144663110944,31.46022814091768,0 
+			</coordinates>
+		</LineString>
+	</Placemark>
+	<Placemark id="074EA9390F41DF6D7224">
+		<name>كابل 4*50</name>
+		<LookAt>
+			<longitude>34.38859047418743</longitude>
+			<latitude>31.45927533680702</latitude>
+			<altitude>13.51788896902046</altitude>
+			<heading>136.6847159986654</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>423.1982569884713</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_0BBEA9556241DF6D7235</styleUrl>
+		<LineString>
+			<coordinates>
+				34.38772836823154,31.45992583761858,0 34.38777327824945,31.45986525529634,0 34.38793265005414,31.45972585167026,0 34.38806351628527,31.45961883660146,0 34.38832770209407,31.45944787503353,0 34.38858554416731,31.45927753883178,0 
+			</coordinates>
+		</LineString>
+	</Placemark>
+	<Placemark id="08D35041AD41DF6EEE74">
+		<name>4*95</name>
+		<LookAt>
+			<longitude>34.38904803341987</longitude>
+			<latitude>31.45837165573695</latitude>
+			<altitude>17.11757262821791</altitude>
+			<heading>136.6849601615223</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>668.8958756416105</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_0A173B3AF741DF6B70FF</styleUrl>
+		<LineString>
+			<coordinates>
+				34.38744344215893,31.45950990071502,0 34.38774604937394,31.45929973177207,0 34.38797929028939,31.45914520420262,0 34.38819891266344,31.45900834669954,0 34.38855083982474,31.45876882125675,0 34.38881657030288,31.45856955111319,0 34.3890465507801,31.45837917079392,0 
+			</coordinates>
+		</LineString>
+	</Placemark>
+	<Placemark id="0856366C5A41DF703B70">
+		<name>4*95</name>
+		<LookAt>
+			<longitude>34.38846582480443</longitude>
+			<latitude>31.45788666479952</latitude>
+			<altitude>15.74372119432166</altitude>
+			<heading>136.6848013619177</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>437.3788221839641</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_0A173B3AF741DF6B70FF</styleUrl>
+		<LineString>
+			<coordinates>
+				34.38685871007308,31.45898069202599,0 34.38723550197864,31.45871171692137,0 34.38762952295228,31.45842307310924,0 34.38793348344784,31.45821230569478,0 34.38817469036468,31.45806622766368,0 34.38829412688263,31.45796724299069,0 34.38844156367615,31.45782405967691,0 
+			</coordinates>
+		</LineString>
+	</Placemark>
+	<Placemark id="0D04BE722B41DF71BCB3">
+		<name>4*5</name>
+		<LookAt>
+			<longitude>34.3878121741343</longitude>
+			<latitude>31.45781651573678</latitude>
+			<altitude>13.92073715562215</altitude>
+			<heading>136.6845188169708</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>778.7955224490727</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_0BBEA9556241DF6D7235</styleUrl>
+		<LineString>
+			<coordinates>
+				34.38843954882042,31.45782353804818,0 34.38869946862107,31.45766508123342,0 34.3890243741569,31.45749791382888,0 34.38945475045922,31.45720168451206,0 34.3896783290196,31.45700744169809,0 
+			</coordinates>
+		</LineString>
+	</Placemark>
+	<Placemark id="02BBF2F67D41DF739E3E">
+		<name>كابل 4*25</name>
+		<LookAt>
+			<longitude>34.38758263918537</longitude>
+			<latitude>31.4579522770726</latitude>
+			<altitude>13.37341536725615</altitude>
+			<heading>114.2788068287676</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>510.8386472779966</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_0FCC733CDA41DF73DD54</styleUrl>
+		<LineString>
+			<coordinates>
+				34.38831467446639,31.45794476940697,0 34.38821623346757,31.45786434416939,0 34.38804232775061,31.4577793068463,0 34.38778649132358,31.45784472690474,0 34.38757642120608,31.45795381796441,0 34.3875826390865,31.45795227698807,0 
+			</coordinates>
+		</LineString>
+	</Placemark>
+	<Placemark id="0C37087E6141DF9ED69C">
+		<name>مابل 4*50</name>
+		<LookAt>
+			<longitude>34.38817132110223</longitude>
+			<latitude>31.45713035805874</latitude>
+			<altitude>17.67124501373466</altitude>
+			<heading>125.4712509945685</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>539.7321207710775</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_0BBEA9556241DF6D7235</styleUrl>
+		<LineString>
+			<coordinates>
+				34.38621056938554,31.45826758020715,0 34.38642038402492,31.4582691103383,0 34.38689491197449,31.45795707752583,0 34.3872542517808,31.45768912633604,0 34.38766700228926,31.45742581184121,0 34.3880217130503,31.45713236441351,0 
+			</coordinates>
+		</LineString>
+	</Placemark>
+	<Placemark id="092A2B0B0D41DF9FB402">
+		<name>كابلا 4*25</name>
+		<LookAt>
+			<longitude>34.38939224466851</longitude>
+			<latitude>31.45611115446959</latitude>
+			<altitude>23.4595291206973</altitude>
+			<heading>125.4718881305972</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>533.9438398173661</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_0FCC733CDA41DF73DD54</styleUrl>
+		<LineString>
+			<coordinates>
+				34.38804471216547,31.4571225495857,0 34.38846858843,31.45682715141368,0 34.38885417273127,31.45657501221626,0 34.38907429944381,31.45640327019443,0 34.38939186863407,31.45611702317092,0 
+			</coordinates>
+		</LineString>
+	</Placemark>
+	<Placemark id="0AC8880E0741DFA081E9">
+		<name>كابل 4*50</name>
+		<LookAt>
+			<longitude>34.39027933948066</longitude>
+			<latitude>31.4618234263934</latitude>
+			<altitude>14.00516939844224</altitude>
+			<heading>125.472239406967</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>328.2109153658894</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_0BBEA9556241DF6D7235</styleUrl>
+		<LineString>
+			<coordinates>
+				34.38980191342893,31.46147151128589,0 34.38996532128657,31.46158196243192,0 34.39027536068341,31.46182259896491,0 
+			</coordinates>
+		</LineString>
+	</Placemark>
+	<Placemark id="07B32F18B941DFA2D50C">
+		<name>مولد ابو زايد</name>
+		<LookAt>
+			<longitude>34.38800085922897</longitude>
+			<latitude>31.46038201605314</latitude>
+			<altitude>11.4964517012188</altitude>
+			<heading>125.4707426079322</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>1279.072786671604</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_0BBEA9556241DF6D7235</styleUrl>
+		<ExtendedData>
+			<SchemaData schemaUrl="#__managed_schema">
+				<SimpleData name="1B0C5D49C941DFA2D50C">0</SimpleData>
+			</SchemaData>
+		</ExtendedData>
+		<Point>
+			<extrude>1</extrude>
+			<coordinates>34.38834699563577,31.46027588774263,11.40544539206976</coordinates>
+		</Point>
+	</Placemark>
+	<Placemark id="0F874F3EA342187D9606">
+		<name>المفتي</name>
+		<LookAt>
+			<longitude>34.39828691802433</longitude>
+			<latitude>31.44992678913017</latitude>
+			<altitude>13.39160565198025</altitude>
+			<heading>339.1176349212135</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>199.08069848163</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_0BBEA9556241DF6D7235</styleUrl>
+		<ExtendedData>
+			<SchemaData schemaUrl="file://earth/11476433184174660106#__managed_schema">
+				<SimpleData name="1E117FAD8342187D9606">0</SimpleData>
+			</SchemaData>
+		</ExtendedData>
+		<Point>
+			<extrude>1</extrude>
+			<coordinates>34.39830730805955,31.45000607893668,13.39158123231959</coordinates>
+		</Point>
+	</Placemark>
+	<Placemark id="0848938F70421888DABE">
+		<name>كابل بكC</name>
+		<LookAt>
+			<longitude>34.39698511174443</longitude>
+			<latitude>31.44755845371067</latitude>
+			<altitude>0</altitude>
+			<heading>288.7996449951196</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>610.0158262657112</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_007B07634642188932B7</styleUrl>
+		<LineString>
+			<coordinates>
+				34.39834270563638,31.45002123815112,0 34.39829833544444,31.4499760854766,0 34.39821326556385,31.45000978258835,0 34.398112395641,31.44979530203121,0 34.39800778032793,31.44941520764283,0 34.39791573146893,31.4492677687093,0 34.39764293437512,31.44870554988223,0 34.39766188324575,31.44843036171404,0 34.39634447321917,31.44722668878928,0 
+			</coordinates>
+		</LineString>
+	</Placemark>
+	<Placemark id="021CD8572042188BAE54">
+		<name>شارع جولي 4*159</name>
+		<LookAt>
+			<longitude>34.39022802147634</longitude>
+			<latitude>31.45518039768517</latitude>
+			<altitude>23.28255820177793</altitude>
+			<heading>307.6520110648418</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>690.7803503778996</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_007B07634642188932B7</styleUrl>
+		<LineString>
+			<coordinates>
+				34.39831449994281,31.45002514772564,0 34.39828456859991,31.44999788858973,0 34.39823229116217,31.45002088504687,0 34.3982150382767,31.45031073489315,0 34.39823104580665,31.45058856635509,0 34.39795253192918,31.45081219180772,0 34.39770184409656,31.45094108856567,0 34.39747670381001,31.45106004543509,0 34.39698420847915,31.45129303471773,0 34.3966400511876,31.45147925364487,0 34.39632496456855,31.45166252382419,0 34.39607889837621,31.45181145367579,0 34.39583204565412,31.45194439896089,0 34.39559266333391,31.45208581509726,0 34.39533583899257,31.45222667337469,0 34.39505270164562,31.45237702111709,0 34.39479106257966,31.45246227175567,0 34.39440542065071,31.45265404975332,0 34.39420695341757,31.4528221268028,0 34.39358727125394,31.45307149279056,0 34.39298961097152,31.45331185362054,0 34.39251204425693,31.4535072157739,0 34.39018613868267,31.45515615505778,0 
+			</coordinates>
+		</LineString>
+	</Placemark>
+	<Placemark id="09B2FEAB3342188E7335">
+		<name>كابل مخيم 5.      /4*150 +95</name>
+		<LookAt>
+			<longitude>34.39296445223039</longitude>
+			<latitude>31.45174955237678</latitude>
+			<altitude>0</altitude>
+			<heading>-72.67557664237206</heading>
+			<tilt>11.22937431459344</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>239.8559731739247</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_0EB052586F421891B6A5</styleUrl>
+		<LineString>
+			<coordinates>
+				34.39835021243214,31.45000963842041,0 34.3983020652519,31.44996779765317,0 34.3982200698953,31.44999905470162,0 34.39812487916266,31.44978718951963,0 34.398018306954,31.44941300449278,0 34.39765308251797,31.44870672703555,0 34.39767329019258,31.44842788361715,0 34.39745983996873,31.44822134018516,0 34.39704349772447,31.44852335573877,0 34.39670487028018,31.44872597481426,0 34.39623038643155,31.44909007188987,0 34.39571761321422,31.44946483803645,0 34.39557312882614,31.44957595535793,0 34.39524063733653,31.44982855509815,0 34.39484655349904,31.45014584821869,0 34.39436220223007,31.45053066911923,0 34.3938731914541,31.45095824357838,0 34.39348536495742,31.45140003379058,0 34.39332465257534,31.45149097505296,0 34.39305456283011,31.45165511402095,0 34.39298627310649,31.45177693595368,0 
+			</coordinates>
+		</LineString>
+	</Placemark>
+	<Placemark id="0666EAE4DC4218911E37">
+		<name>مرق التولي السوق</name>
+		<LookAt>
+			<longitude>34.38997828081607</longitude>
+			<latitude>31.44905900985182</latitude>
+			<altitude>31.7492568848683</altitude>
+			<heading>-91.68376934961123</heading>
+			<tilt>11.22950724763519</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>315.7567568363083</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_0BBEA9556241DF6D7235</styleUrl>
+		<ExtendedData>
+			<SchemaData schemaUrl="file://earth/11476433184174660106#__managed_schema">
+				<SimpleData name="121CA3F6BE4218911E37">0</SimpleData>
+			</SchemaData>
+		</ExtendedData>
+		<Point>
+			<extrude>1</extrude>
+			<coordinates>34.38956336084882,31.448947688848,30.81940838931525</coordinates>
+		</Point>
+	</Placemark>
+	<Placemark id="02B0493E5042228D4624">
+		<name>قياس بلا عنوان</name>
+		<LookAt>
+			<longitude>34.39416793680944</longitude>
+			<latitude>31.44878371932919</latitude>
+			<altitude>26.21139604141677</altitude>
+			<heading>119.4813435318274</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>2583.908494845964</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_0BBEA9556241DF6D7235</styleUrl>
+		<LineString>
+			<coordinates>
+				34.39643222709223,31.44724292288904,0 34.39419699692845,31.44879468781064,0 34.39416793661172,31.4487837188221,0 
+			</coordinates>
+		</LineString>
+	</Placemark>
+	<Placemark id="0A1C9B838C4222C676AF">
+		<name>علامة موضعية بلا عنوان</name>
+		<LookAt>
+			<longitude>34.35515819253062</longitude>
+			<latitude>31.41654056921196</latitude>
+			<altitude>24.88633405964235</altitude>
+			<heading>358.9999999885412</heading>
+			<tilt>0</tilt>
+			<gx:fovy>35</gx:fovy>
+			<range>499.9999674237915</range>
+			<altitudeMode>absolute</altitudeMode>
+		</LookAt>
+		<styleUrl>#__managed_style_0BBEA9556241DF6D7235</styleUrl>
+		<Point>
+			<coordinates>34.35515819253062,31.41654056921196,24.88633405964235</coordinates>
+		</Point>
+	</Placemark>
+</Document>
+</kml>

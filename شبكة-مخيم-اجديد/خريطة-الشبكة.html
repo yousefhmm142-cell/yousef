@@ -1,0 +1,1182 @@
+<title>شبكة مخيم اجديد</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alexandria:wght@500;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
+<style>
+
+.leaflet-pane,
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-tile-container,
+.leaflet-pane > svg,
+.leaflet-pane > canvas,
+.leaflet-zoom-box,
+.leaflet-image-layer,
+.leaflet-layer {
+	position: absolute;
+	left: 0;
+	top: 0;
+	}
+.leaflet-container {
+	overflow: hidden;
+	}
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+	-webkit-user-select: none;
+	   -moz-user-select: none;
+	        user-select: none;
+	  -webkit-user-drag: none;
+	}
+.leaflet-tile::selection {
+	background: transparent;
+}
+.leaflet-safari .leaflet-tile {
+	image-rendering: -webkit-optimize-contrast;
+	}
+.leaflet-safari .leaflet-tile-container {
+	width: 1600px;
+	height: 1600px;
+	-webkit-transform-origin: 0 0;
+	}
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+	display: block;
+	}
+.leaflet-container .leaflet-overlay-pane svg {
+	max-width: none !important;
+	max-height: none !important;
+	}
+.leaflet-container .leaflet-marker-pane img,
+.leaflet-container .leaflet-shadow-pane img,
+.leaflet-container .leaflet-tile-pane img,
+.leaflet-container img.leaflet-image-layer,
+.leaflet-container .leaflet-tile {
+	max-width: none !important;
+	max-height: none !important;
+	width: auto;
+	padding: 0;
+	}
+.leaflet-container img.leaflet-tile {
+	mix-blend-mode: plus-lighter;
+}
+.leaflet-container.leaflet-touch-zoom {
+	-ms-touch-action: pan-x pan-y;
+	touch-action: pan-x pan-y;
+	}
+.leaflet-container.leaflet-touch-drag {
+	-ms-touch-action: pinch-zoom;
+	touch-action: none;
+	touch-action: pinch-zoom;
+}
+.leaflet-container.leaflet-touch-drag.leaflet-touch-zoom {
+	-ms-touch-action: none;
+	touch-action: none;
+}
+.leaflet-container {
+	-webkit-tap-highlight-color: transparent;
+}
+.leaflet-container a {
+	-webkit-tap-highlight-color: rgba(51, 181, 229, 0.4);
+}
+.leaflet-tile {
+	filter: inherit;
+	visibility: hidden;
+	}
+.leaflet-tile-loaded {
+	visibility: inherit;
+	}
+.leaflet-zoom-box {
+	width: 0;
+	height: 0;
+	-moz-box-sizing: border-box;
+	     box-sizing: border-box;
+	z-index: 800;
+	}
+.leaflet-overlay-pane svg {
+	-moz-user-select: none;
+	}
+.leaflet-pane         { z-index: 400; }
+.leaflet-tile-pane    { z-index: 200; }
+.leaflet-overlay-pane { z-index: 400; }
+.leaflet-shadow-pane  { z-index: 500; }
+.leaflet-marker-pane  { z-index: 600; }
+.leaflet-tooltip-pane   { z-index: 650; }
+.leaflet-popup-pane   { z-index: 700; }
+.leaflet-map-pane canvas { z-index: 100; }
+.leaflet-map-pane svg    { z-index: 200; }
+.leaflet-vml-shape {
+	width: 1px;
+	height: 1px;
+	}
+.leaflet-control {
+	position: relative;
+	z-index: 800;
+	pointer-events: visiblePainted; 
+	pointer-events: auto;
+	}
+.leaflet-top,
+.leaflet-bottom {
+	position: absolute;
+	z-index: 1000;
+	pointer-events: none;
+	}
+.leaflet-top {
+	top: 0;
+	}
+.leaflet-right {
+	right: 0;
+	}
+.leaflet-bottom {
+	bottom: 0;
+	}
+.leaflet-left {
+	left: 0;
+	}
+.leaflet-control {
+	float: left;
+	clear: both;
+	}
+.leaflet-right .leaflet-control {
+	float: right;
+	}
+.leaflet-top .leaflet-control {
+	margin-top: 10px;
+	}
+.leaflet-bottom .leaflet-control {
+	margin-bottom: 10px;
+	}
+.leaflet-left .leaflet-control {
+	margin-left: 10px;
+	}
+.leaflet-right .leaflet-control {
+	margin-right: 10px;
+	}
+.leaflet-fade-anim .leaflet-popup {
+	opacity: 0;
+	-webkit-transition: opacity 0.2s linear;
+	   -moz-transition: opacity 0.2s linear;
+	        transition: opacity 0.2s linear;
+	}
+.leaflet-fade-anim .leaflet-map-pane .leaflet-popup {
+	opacity: 1;
+	}
+.leaflet-zoom-animated {
+	-webkit-transform-origin: 0 0;
+	    -ms-transform-origin: 0 0;
+	        transform-origin: 0 0;
+	}
+svg.leaflet-zoom-animated {
+	will-change: transform;
+}
+.leaflet-zoom-anim .leaflet-zoom-animated {
+	-webkit-transition: -webkit-transform 0.25s cubic-bezier(0,0,0.25,1);
+	   -moz-transition:    -moz-transform 0.25s cubic-bezier(0,0,0.25,1);
+	        transition:         transform 0.25s cubic-bezier(0,0,0.25,1);
+	}
+.leaflet-zoom-anim .leaflet-tile,
+.leaflet-pan-anim .leaflet-tile {
+	-webkit-transition: none;
+	   -moz-transition: none;
+	        transition: none;
+	}
+.leaflet-zoom-anim .leaflet-zoom-hide {
+	visibility: hidden;
+	}
+.leaflet-interactive {
+	cursor: pointer;
+	}
+.leaflet-grab {
+	cursor: -webkit-grab;
+	cursor:    -moz-grab;
+	cursor:         grab;
+	}
+.leaflet-crosshair,
+.leaflet-crosshair .leaflet-interactive {
+	cursor: crosshair;
+	}
+.leaflet-popup-pane,
+.leaflet-control {
+	cursor: auto;
+	}
+.leaflet-dragging .leaflet-grab,
+.leaflet-dragging .leaflet-grab .leaflet-interactive,
+.leaflet-dragging .leaflet-marker-draggable {
+	cursor: move;
+	cursor: -webkit-grabbing;
+	cursor:    -moz-grabbing;
+	cursor:         grabbing;
+	}
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-image-layer,
+.leaflet-pane > svg path,
+.leaflet-tile-container {
+	pointer-events: none;
+	}
+.leaflet-marker-icon.leaflet-interactive,
+.leaflet-image-layer.leaflet-interactive,
+.leaflet-pane > svg path.leaflet-interactive,
+svg.leaflet-image-layer.leaflet-interactive path {
+	pointer-events: visiblePainted; 
+	pointer-events: auto;
+	}
+.leaflet-container {
+	background: #ddd;
+	outline-offset: 1px;
+	}
+.leaflet-container a {
+	color: #0078A8;
+	}
+.leaflet-zoom-box {
+	border: 2px dotted #38f;
+	background: rgba(255,255,255,0.5);
+	}
+.leaflet-container {
+	font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	font-size: 0.75rem;
+	line-height: 1.5;
+	}
+.leaflet-bar {
+	box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+	border-radius: 4px;
+	}
+.leaflet-bar a {
+	background-color: #fff;
+	border-bottom: 1px solid #ccc;
+	width: 26px;
+	height: 26px;
+	line-height: 26px;
+	display: block;
+	text-align: center;
+	text-decoration: none;
+	color: black;
+	}
+.leaflet-bar a,
+.leaflet-control-layers-toggle {
+	background-position: 50% 50%;
+	background-repeat: no-repeat;
+	display: block;
+	}
+.leaflet-bar a:hover,
+.leaflet-bar a:focus {
+	background-color: #f4f4f4;
+	}
+.leaflet-bar a:first-child {
+	border-top-left-radius: 4px;
+	border-top-right-radius: 4px;
+	}
+.leaflet-bar a:last-child {
+	border-bottom-left-radius: 4px;
+	border-bottom-right-radius: 4px;
+	border-bottom: none;
+	}
+.leaflet-bar a.leaflet-disabled {
+	cursor: default;
+	background-color: #f4f4f4;
+	color: #bbb;
+	}
+.leaflet-touch .leaflet-bar a {
+	width: 30px;
+	height: 30px;
+	line-height: 30px;
+	}
+.leaflet-touch .leaflet-bar a:first-child {
+	border-top-left-radius: 2px;
+	border-top-right-radius: 2px;
+	}
+.leaflet-touch .leaflet-bar a:last-child {
+	border-bottom-left-radius: 2px;
+	border-bottom-right-radius: 2px;
+	}
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out {
+	font: bold 18px 'Lucida Console', Monaco, monospace;
+	text-indent: 1px;
+	}
+.leaflet-touch .leaflet-control-zoom-in, .leaflet-touch .leaflet-control-zoom-out  {
+	font-size: 22px;
+	}
+.leaflet-control-layers {
+	box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+	background: #fff;
+	border-radius: 5px;
+	}
+.leaflet-touch .leaflet-control-layers-toggle {
+	width: 44px;
+	height: 44px;
+	}
+.leaflet-control-layers .leaflet-control-layers-list,
+.leaflet-control-layers-expanded .leaflet-control-layers-toggle {
+	display: none;
+	}
+.leaflet-control-layers-expanded .leaflet-control-layers-list {
+	display: block;
+	position: relative;
+	}
+.leaflet-control-layers-expanded {
+	padding: 6px 10px 6px 6px;
+	color: #333;
+	background: #fff;
+	}
+.leaflet-control-layers-scrollbar {
+	overflow-y: scroll;
+	overflow-x: hidden;
+	padding-right: 5px;
+	}
+.leaflet-control-layers-selector {
+	margin-top: 2px;
+	position: relative;
+	top: 1px;
+	}
+.leaflet-control-layers label {
+	display: block;
+	font-size: 13px;
+	font-size: 1.08333em;
+	}
+.leaflet-control-layers-separator {
+	height: 0;
+	border-top: 1px solid #ddd;
+	margin: 5px -10px 5px -6px;
+	}
+.leaflet-container .leaflet-control-attribution {
+	background: #fff;
+	background: rgba(255, 255, 255, 0.8);
+	margin: 0;
+	}
+.leaflet-control-attribution,
+.leaflet-control-scale-line {
+	padding: 0 5px;
+	color: #333;
+	line-height: 1.4;
+	}
+.leaflet-control-attribution a {
+	text-decoration: none;
+	}
+.leaflet-control-attribution a:hover,
+.leaflet-control-attribution a:focus {
+	text-decoration: underline;
+	}
+.leaflet-attribution-flag {
+	display: inline !important;
+	vertical-align: baseline !important;
+	width: 1em;
+	height: 0.6669em;
+	}
+.leaflet-left .leaflet-control-scale {
+	margin-left: 5px;
+	}
+.leaflet-bottom .leaflet-control-scale {
+	margin-bottom: 5px;
+	}
+.leaflet-control-scale-line {
+	border: 2px solid #777;
+	border-top: none;
+	line-height: 1.1;
+	padding: 2px 5px 1px;
+	white-space: nowrap;
+	-moz-box-sizing: border-box;
+	     box-sizing: border-box;
+	background: rgba(255, 255, 255, 0.8);
+	text-shadow: 1px 1px #fff;
+	}
+.leaflet-control-scale-line:not(:first-child) {
+	border-top: 2px solid #777;
+	border-bottom: none;
+	margin-top: -2px;
+	}
+.leaflet-control-scale-line:not(:first-child):not(:last-child) {
+	border-bottom: 2px solid #777;
+	}
+.leaflet-touch .leaflet-control-attribution,
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+	box-shadow: none;
+	}
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+	border: 2px solid rgba(0,0,0,0.2);
+	background-clip: padding-box;
+	}
+.leaflet-popup {
+	position: absolute;
+	text-align: center;
+	margin-bottom: 20px;
+	}
+.leaflet-popup-content-wrapper {
+	padding: 1px;
+	text-align: left;
+	border-radius: 12px;
+	}
+.leaflet-popup-content {
+	margin: 13px 24px 13px 20px;
+	line-height: 1.3;
+	font-size: 13px;
+	font-size: 1.08333em;
+	min-height: 1px;
+	}
+.leaflet-popup-content p {
+	margin: 17px 0;
+	margin: 1.3em 0;
+	}
+.leaflet-popup-tip-container {
+	width: 40px;
+	height: 20px;
+	position: absolute;
+	left: 50%;
+	margin-top: -1px;
+	margin-left: -20px;
+	overflow: hidden;
+	pointer-events: none;
+	}
+.leaflet-popup-tip {
+	width: 17px;
+	height: 17px;
+	padding: 1px;
+	margin: -10px auto 0;
+	pointer-events: auto;
+	-webkit-transform: rotate(45deg);
+	   -moz-transform: rotate(45deg);
+	    -ms-transform: rotate(45deg);
+	        transform: rotate(45deg);
+	}
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+	background: white;
+	color: #333;
+	box-shadow: 0 3px 14px rgba(0,0,0,0.4);
+	}
+.leaflet-container a.leaflet-popup-close-button {
+	position: absolute;
+	top: 0;
+	right: 0;
+	border: none;
+	text-align: center;
+	width: 24px;
+	height: 24px;
+	font: 16px/24px Tahoma, Verdana, sans-serif;
+	color: #757575;
+	text-decoration: none;
+	background: transparent;
+	}
+.leaflet-container a.leaflet-popup-close-button:hover,
+.leaflet-container a.leaflet-popup-close-button:focus {
+	color: #585858;
+	}
+.leaflet-popup-scrolled {
+	overflow: auto;
+	}
+.leaflet-oldie .leaflet-popup-content-wrapper {
+	-ms-zoom: 1;
+	}
+.leaflet-oldie .leaflet-popup-tip {
+	width: 24px;
+	margin: 0 auto;
+	-ms-filter: "progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678)";
+	filter: progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678);
+	}
+.leaflet-oldie .leaflet-control-zoom,
+.leaflet-oldie .leaflet-control-layers,
+.leaflet-oldie .leaflet-popup-content-wrapper,
+.leaflet-oldie .leaflet-popup-tip {
+	border: 1px solid #999;
+	}
+.leaflet-div-icon {
+	background: #fff;
+	border: 1px solid #666;
+	}
+.leaflet-tooltip {
+	position: absolute;
+	padding: 6px;
+	background-color: #fff;
+	border: 1px solid #fff;
+	border-radius: 3px;
+	color: #222;
+	white-space: nowrap;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	pointer-events: none;
+	box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+	}
+.leaflet-tooltip.leaflet-interactive {
+	cursor: pointer;
+	pointer-events: auto;
+	}
+.leaflet-tooltip-top:before,
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+	position: absolute;
+	pointer-events: none;
+	border: 6px solid transparent;
+	background: transparent;
+	content: "";
+	}
+.leaflet-tooltip-bottom {
+	margin-top: 6px;
+}
+.leaflet-tooltip-top {
+	margin-top: -6px;
+}
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-top:before {
+	left: 50%;
+	margin-left: -6px;
+	}
+.leaflet-tooltip-top:before {
+	bottom: 0;
+	margin-bottom: -12px;
+	border-top-color: #fff;
+	}
+.leaflet-tooltip-bottom:before {
+	top: 0;
+	margin-top: -12px;
+	margin-left: -6px;
+	border-bottom-color: #fff;
+	}
+.leaflet-tooltip-left {
+	margin-left: -6px;
+}
+.leaflet-tooltip-right {
+	margin-left: 6px;
+}
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+	top: 50%;
+	margin-top: -6px;
+	}
+.leaflet-tooltip-left:before {
+	right: 0;
+	margin-right: -12px;
+	border-left-color: #fff;
+	}
+.leaflet-tooltip-right:before {
+	left: 0;
+	margin-left: -12px;
+	border-right-color: #fff;
+	}
+@media print {
+	.leaflet-control {
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+		}
+	}
+
+</style>
+<style>
+/* Layout: a field sheet. The map fills the screen; the numbered cable register sits beside it
+   (on the right on wide screens, under it on phones). Every cable has one number, one colour per size. */
+:root{
+  --paper:#e8edf1;      /* map ground: cool survey paper */
+  --grid:rgba(16,33,47,.07);
+  --grid-strong:rgba(16,33,47,.13);
+  --surface:#ffffff;
+  --surface-2:#f3f6f8;
+  --ink:#10212f;
+  --muted:#586a79;
+  --rule:#d6dee4;
+  --navy:#0f2a3f;       /* header + primary buttons */
+  --on-navy:#f4f7fa;
+  --brass:#b98a3c;      /* selection ring, header hairline */
+  --casing:#132230;
+  --c150:#d62828; --c95:#7b2cbf; --c50:#f0a500; --c25:#1769d1; --cx:#4d5d6b;
+  --o150:#ffffff; --o95:#ffffff; --o50:#1f1600; --o25:#ffffff; --ox:#ffffff;
+  --shadow:0 1px 2px rgba(16,33,47,.08),0 6px 20px rgba(16,33,47,.10);
+  --f-display:"Alexandria","IBM Plex Sans Arabic",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans Arabic","Segoe UI",Tahoma,system-ui,sans-serif;
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0b141c; --grid:rgba(160,196,224,.06); --grid-strong:rgba(160,196,224,.12);
+    --surface:#111c26; --surface-2:#172532; --ink:#e7eef3; --muted:#91a4b4; --rule:#223342;
+    --navy:#07131d; --on-navy:#eef3f7; --brass:#d8ab5c; --casing:#03080c;
+    --c150:#ff5b5b; --c95:#c681ff; --c50:#ffc83d; --c25:#4cc3f5; --cx:#b6c3ce;
+    --o150:#1a0404; --o95:#16052a; --o50:#1f1600; --o25:#03182a; --ox:#0b141c;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0b141c; --grid:rgba(160,196,224,.06); --grid-strong:rgba(160,196,224,.12);
+  --surface:#111c26; --surface-2:#172532; --ink:#e7eef3; --muted:#91a4b4; --rule:#223342;
+  --navy:#07131d; --on-navy:#eef3f7; --brass:#d8ab5c; --casing:#03080c;
+  --c150:#ff5b5b; --c95:#c681ff; --c50:#ffc83d; --c25:#4cc3f5; --cx:#b6c3ce;
+  --o150:#1a0404; --o95:#16052a; --o50:#1f1600; --o25:#03182a; --ox:#0b141c;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+  color-scheme:dark;
+}
+
+html,body{height:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;overflow:hidden}
+*{box-sizing:border-box}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--brass);outline-offset:2px}
+
+.app{height:100%;display:grid;grid-template-rows:auto minmax(0,1fr)}
+/* ---------- header ---------- */
+.bar{background:var(--navy);color:var(--on-navy);padding:10px 16px;display:flex;align-items:center;gap:12px;
+  border-bottom:2px solid var(--brass)}
+.emblem{width:38px;height:38px;flex:none;border-radius:10px;display:grid;place-items:center;
+  background:linear-gradient(160deg,#f3c66a,#b98a3c);color:#1b1305}
+.emblem svg{width:20px;height:20px}
+.bar h1{margin:0;font-family:var(--f-display);font-weight:800;font-size:1.2rem;line-height:1.2;letter-spacing:0}
+.bar p{margin:0;font-size:.8rem;opacity:.78}
+.bar-meta{margin-inline-start:auto;display:flex;gap:18px;font-variant-numeric:tabular-nums}
+.bar-meta div{display:grid;text-align:center;line-height:1.15}
+.bar-meta b{font-family:var(--f-display);font-size:1.15rem;font-weight:700}
+.bar-meta span{font-size:.72rem;opacity:.75}
+
+/* ---------- stage ---------- */
+.stage{display:grid;grid-template-columns:1fr;grid-template-rows:minmax(0,1.2fr) minmax(0,1fr);grid-template-areas:"map" "panel";min-height:0}
+.panel{grid-area:panel}
+.mapwrap{grid-area:map}
+.app.panel-min .stage{grid-template-rows:minmax(0,1fr) auto}
+.mapwrap{position:relative;min-height:0}
+#map{position:absolute;inset:0;background:var(--paper);direction:ltr}
+@media (min-width:880px){
+  .stage{grid-template-columns:400px minmax(0,1fr);grid-template-rows:minmax(0,1fr);grid-template-areas:"panel map"}
+  .app.panel-min .stage{grid-template-rows:minmax(0,1fr)}
+  .panel{border-inline-end:1px solid var(--rule)}
+  .panel-toggle{display:none!important}
+}
+
+/* map overlay tools */
+.map-tools{position:absolute;top:12px;right:12px;z-index:800;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:calc(100% - 70px)}
+.chip-btn{border:1px solid var(--rule);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 13px;
+  font-weight:600;font-size:.84rem;box-shadow:var(--shadow);cursor:pointer;min-height:38px;display:inline-flex;align-items:center;gap:6px}
+.chip-btn:hover{border-color:var(--muted)}
+.chip-btn svg{width:15px;height:15px}
+
+/* Leaflet chrome in page tokens */
+.leaflet-container{font-family:var(--f-body);background:var(--paper)}
+.leaflet-bar{border:1px solid var(--rule)!important;box-shadow:var(--shadow)!important;border-radius:10px!important;overflow:hidden}
+.leaflet-bar a{background:var(--surface)!important;color:var(--ink)!important;width:40px!important;height:40px!important;line-height:38px!important;font-size:20px!important;border-bottom-color:var(--rule)!important}
+.leaflet-control-scale-line{background:var(--surface);color:var(--ink);border-color:var(--ink);font-weight:600;font-size:12px;direction:rtl;text-align:center}
+.north{background:var(--surface);border:1px solid var(--rule);border-radius:10px;box-shadow:var(--shadow);width:44px;padding:4px 0 3px;
+  display:grid;justify-items:center;color:var(--ink);font-size:11px;font-weight:700;line-height:1}
+.north svg{width:18px;height:22px}
+
+/* cable paths: colour comes from the size tokens so both themes stay legible */
+.cas{stroke:var(--casing)}
+.cab-150{stroke:var(--c150)} .cab-95{stroke:var(--c95)} .cab-50{stroke:var(--c50)} .cab-25{stroke:var(--c25)} .cab-x{stroke:var(--cx)}
+.halo{stroke:var(--brass);opacity:0;transition:opacity .2s}
+.halo.is-sel{opacity:.45}
+.meas{stroke:var(--muted)}
+.cas,.cab,.halo,.badge-wrap{transition:opacity .2s}
+.has-sel .cas:not(.is-sel):not(.is-kin),.has-sel .cab:not(.is-sel):not(.is-kin){opacity:.18}
+.has-sel .cas.is-kin,.has-sel .cab.is-kin{opacity:.55}
+.has-sel .badge-wrap:not(.is-sel):not(.is-kin){opacity:.25}
+.is-off{display:none!important}
+.jn{fill:var(--surface);stroke:var(--casing)}
+.endcap{stroke:var(--casing)}
+.endcap.s-150{fill:var(--c150)} .endcap.s-95{fill:var(--c95)} .endcap.s-50{fill:var(--c50)} .endcap.s-25{fill:var(--c25)} .endcap.s-x{fill:var(--cx)}
+.has-sel .jn,.has-sel .endcap{opacity:.35}
+
+/* number badges */
+.badge-wrap{background:none;border:0}
+.badge-wrap.is-crowd{visibility:hidden}
+.badge{--bg:var(--c150);--fg:var(--o150);width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
+  background:var(--bg);color:var(--fg);font-family:var(--f-display);font-weight:800;font-size:14px;line-height:1;
+  border:2.5px solid var(--surface);box-shadow:0 0 0 1.5px var(--casing),0 3px 8px rgba(0,0,0,.28);cursor:pointer;
+  font-variant-numeric:tabular-nums;padding:0}
+.b-150{--bg:var(--c150);--fg:var(--o150)} .b-95{--bg:var(--c95);--fg:var(--o95)} .b-50{--bg:var(--c50);--fg:var(--o50)}
+.b-25{--bg:var(--c25);--fg:var(--o25)} .b-x{--bg:var(--cx);--fg:var(--ox)}
+.badge-wrap.is-sel .badge{transform:scale(1.25);box-shadow:0 0 0 3px var(--brass),0 4px 12px rgba(0,0,0,.35)}
+
+/* sources + landmarks */
+.src{position:relative;width:40px;height:40px}
+.src-icon{position:absolute;inset:0;border-radius:11px;display:grid;place-items:center;
+  background:linear-gradient(160deg,#f3c66a,#b98a3c);color:#1b1305;border:2.5px solid var(--surface);
+  box-shadow:0 0 0 1.5px var(--casing),0 4px 12px rgba(0,0,0,.3)}
+.src-icon svg{width:21px;height:21px}
+.src-name,.mark-name{position:absolute;top:calc(100% + 5px);left:50%;transform:translateX(-50%);white-space:nowrap;direction:rtl;
+  background:var(--navy);color:var(--on-navy);font-family:var(--f-display);font-weight:700;font-size:13px;padding:3px 10px;border-radius:7px;
+  box-shadow:0 2px 6px rgba(0,0,0,.25);border:1px solid color-mix(in srgb,var(--brass) 70%,transparent)}
+.mark{position:relative;width:26px;height:26px}
+.mark-dot{position:absolute;inset:0;border-radius:50%;background:var(--surface);border:2px solid var(--casing);display:grid;place-items:center;color:var(--ink)}
+.mark-dot svg{width:14px;height:14px}
+.mark-name{background:var(--surface);color:var(--ink);border:1px solid var(--rule);font-weight:600;font-size:12px}
+
+/* ---------- panel ---------- */
+.panel{background:var(--surface);min-height:0;display:flex;flex-direction:column;border-top:1px solid var(--rule)}
+@media (min-width:880px){.panel{border-top:0}}
+.panel-toggle{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-bottom:1px solid var(--rule);
+  background:var(--surface-2);padding:8px 16px;min-height:40px;font-weight:600;font-size:.85rem;color:var(--muted);cursor:pointer}
+.panel-toggle svg{width:16px;height:16px;transition:transform .2s}
+.app.panel-min .panel-toggle svg{transform:rotate(180deg)}
+.app.panel-min .panel-body{display:none}
+.panel-body{overflow-y:auto;min-height:0;padding:16px;display:grid;gap:22px;align-content:start;overscroll-behavior:contain}
+
+.eyebrow{font-size:.74rem;font-weight:600;color:var(--muted);letter-spacing:.02em}
+h2.sec{margin:0 0 8px;font-family:var(--f-display);font-size:.95rem;font-weight:700;display:flex;align-items:baseline;gap:8px}
+h2.sec small{font-family:var(--f-body);font-weight:500;color:var(--muted);font-size:.78rem}
+
+/* sizes legend = filters */
+.sizes{display:grid;gap:6px}
+.size-row{display:grid;grid-template-columns:62px minmax(0,1fr) auto 26px;align-items:center;gap:10px;width:100%;text-align:start;
+  border:1px solid var(--rule);background:var(--surface);border-radius:10px;padding:8px 10px;cursor:pointer;min-height:48px}
+.size-row:hover{border-color:var(--muted)}
+.size-row svg.sw{width:62px;height:16px;overflow:visible}
+.sw-cas{stroke:var(--casing);stroke-linecap:round}
+.sw-150{stroke:var(--c150)} .sw-95{stroke:var(--c95)} .sw-50{stroke:var(--c50)} .sw-25{stroke:var(--c25)} .sw-x{stroke:var(--cx)}
+.sw-cab{stroke-linecap:round}
+.size-name{display:grid;gap:1px;min-width:0;line-height:1.2}
+.size-name .sz{font-family:var(--f-display);font-weight:700;font-size:1.02rem}
+.size-name .sz small{font-family:var(--f-body);font-weight:500;font-size:.78rem;color:var(--muted)}
+.size-name .cnt{font-size:.76rem;color:var(--muted)}
+.size-len{font-family:var(--f-display);font-weight:700;font-variant-numeric:tabular-nums;font-size:.98rem}
+.size-len small{font-family:var(--f-body);font-weight:500;color:var(--muted);font-size:.75rem}
+.eye{width:22px;height:22px;color:var(--muted)}
+.size-row[aria-pressed="false"]{background:var(--surface-2)}
+.size-row[aria-pressed="false"] .sw,.size-row[aria-pressed="false"] .size-name,.size-row[aria-pressed="false"] .size-len{opacity:.35}
+
+.symbols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 14px;font-size:.84rem}
+.symbols div{display:flex;align-items:center;gap:8px;min-width:0}
+.symbols svg{width:26px;height:26px;flex:none}
+
+/* register */
+.reg-group + .reg-group{margin-top:14px}
+.reg-head{display:flex;align-items:center;gap:8px;padding:6px 0 8px;border-bottom:1px solid var(--rule);margin-bottom:4px}
+.reg-head .src-mini{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;background:linear-gradient(160deg,#f3c66a,#b98a3c);color:#1b1305}
+.reg-head .src-mini svg{width:14px;height:14px}
+.reg-head b{font-family:var(--f-display);font-size:.95rem}
+.reg-head span{margin-inline-start:auto;color:var(--muted);font-size:.8rem;font-variant-numeric:tabular-nums}
+.reg-list{list-style:none;margin:0;padding:0}
+.reg-row{display:grid;grid-template-columns:30px minmax(0,1fr) auto;align-items:center;gap:10px;width:100%;text-align:start;border:0;background:none;
+  padding:7px 6px;border-radius:9px;cursor:pointer;min-height:48px;position:relative}
+.reg-row:hover{background:var(--surface-2)}
+.reg-row.is-sel{background:var(--surface-2);box-shadow:inset 0 0 0 2px var(--brass)}
+.reg-row .badge{width:28px;height:28px;font-size:13px;box-shadow:0 0 0 1.5px var(--casing)}
+.reg-main{min-width:0;line-height:1.3}
+.reg-main b{display:block;font-weight:600;font-size:.92rem}
+.reg-main span{display:block;font-size:.76rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reg-len{font-family:var(--f-display);font-weight:700;font-variant-numeric:tabular-nums;font-size:.95rem}
+.reg-len small{font-family:var(--f-body);font-weight:500;color:var(--muted);font-size:.74rem}
+.reg-row[data-depth="1"]{padding-inline-start:24px}
+.reg-row[data-depth="2"]{padding-inline-start:42px}
+.reg-row[data-depth]:not([data-depth="0"])::before{content:"";position:absolute;inset-inline-start:12px;top:0;bottom:50%;width:9px;
+  border-inline-start:1.5px solid var(--rule);border-bottom:1.5px solid var(--rule);border-end-start-radius:6px}
+.reg-row[data-depth="2"]::before{inset-inline-start:30px}
+.reg-row.is-off{display:grid!important;opacity:.4}
+
+.aside-note{font-size:.8rem;color:var(--muted);background:var(--surface-2);border-radius:10px;padding:10px 12px;display:grid;gap:6px}
+.aside-note p{margin:0}
+.linkish{border:0;background:none;padding:0;color:var(--ink);font-weight:600;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+
+/* ---------- detail card ---------- */
+.det{display:grid;gap:16px}
+.det-head{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center}
+.det-head .badge{width:52px;height:52px;font-size:22px;border-width:3px;cursor:default}
+.det-head h2{margin:2px 0 0;font-family:var(--f-display);font-size:1.3rem;font-weight:800;line-height:1.25;text-wrap:balance}
+.icon-btn{width:40px;height:40px;border-radius:10px;border:1px solid var(--rule);background:var(--surface);display:grid;place-items:center;cursor:pointer;color:var(--ink)}
+.icon-btn svg{width:18px;height:18px}
+.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--rule);border-radius:var(--r);overflow:hidden}
+.metrics div{padding:10px 12px;display:grid;gap:2px;min-width:0}
+.metrics div + div{border-inline-start:1px solid var(--rule)}
+.metrics .k{font-size:.74rem;color:var(--muted);font-weight:500}
+.metrics .v{font-family:var(--f-display);font-weight:700;font-size:1.05rem;line-height:1.25;font-variant-numeric:tabular-nums}
+.metrics .v.big{font-size:1.55rem}
+.metrics .v small{font-family:var(--f-body);font-size:.78rem;font-weight:500;color:var(--muted)}
+.metrics .v bdi{white-space:normal}
+.route{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.route li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px;align-items:start;position:relative;padding-bottom:14px}
+.route li:last-child{padding-bottom:0}
+.route li:first-child::after{content:"";position:absolute;inset-inline-start:10px;top:20px;bottom:0;width:3px;border-radius:2px;background:var(--line-c,var(--c150))}
+.route .pin{width:22px;height:22px;border-radius:50%;border:3px solid var(--line-c,var(--c150));background:var(--surface);margin-top:2px}
+.route li:last-child .pin{background:var(--line-c,var(--c150))}
+.route .where{display:grid;gap:6px;min-width:0}
+.route .where b{font-size:.76rem;color:var(--muted);font-weight:600}
+.route .where span{font-weight:600;font-size:.98rem}
+.route .acts{display:flex;flex-wrap:wrap;gap:6px}
+.act{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rule);background:var(--surface);border-radius:9px;padding:6px 10px;
+  font-size:.8rem;font-weight:600;color:var(--ink);text-decoration:none;cursor:pointer;min-height:36px}
+.act:hover{border-color:var(--muted)}
+.act.primary{background:var(--navy);color:var(--on-navy);border-color:var(--navy)}
+.act svg{width:15px;height:15px}
+.coords{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.76rem;color:var(--muted);direction:ltr;unicode-bidi:isolate;user-select:all}
+.kids{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.kid{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rule);background:var(--surface);border-radius:999px;padding:3px 10px 3px 4px;
+  cursor:pointer;font-size:.82rem;font-weight:600;min-height:36px}
+.kid .badge{width:26px;height:26px;font-size:12px;border-width:2px;box-shadow:none}
+.note{margin:0;font-size:.84rem;background:color-mix(in srgb,var(--brass) 14%,var(--surface));border:1px solid color-mix(in srgb,var(--brass) 40%,var(--surface));
+  border-radius:10px;padding:9px 12px}
+.fine{margin:0;font-size:.78rem;color:var(--muted)}
+.det-nav{display:flex;gap:8px}
+.det-nav .act{flex:1;justify-content:center}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--navy);color:var(--on-navy);
+  padding:9px 16px;border-radius:10px;font-weight:600;font-size:.85rem;opacity:0;pointer-events:none;transition:.2s;z-index:2000}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media (max-width:520px){
+  .bar{padding:8px 16px;gap:10px}
+  .bar h1{font-size:1.05rem}
+  .bar p{font-size:.72rem}
+  .emblem{width:34px;height:34px}
+  .bar-meta{gap:12px}
+  .bar-meta div:nth-child(3){display:none}
+  .map-tools{top:10px;right:10px}
+  .chip-btn{padding:6px 11px;font-size:.8rem;min-height:36px}
+}
+@media (max-width:360px){.bar-meta{display:none}}
+
+/* poster: one still sheet for WhatsApp / printing (opened with #poster) */
+.poster body{overflow:visible}
+.app.poster .stage{grid-template-columns:560px minmax(0,1fr);grid-template-rows:minmax(0,1fr);grid-template-areas:"panel map"}
+.app.poster .panel{border-inline-end:1px solid var(--rule);border-top:0}
+.app.poster .panel-toggle,.app.poster .map-tools,.app.poster .leaflet-control-zoom,.app.poster .aside-note{display:none!important}
+.app.poster .panel-body{overflow:visible;padding:18px 20px;gap:18px}
+.app.poster .reg-row{min-height:40px;padding-block:4px}
+.app.poster .size-row{min-height:42px;padding-block:5px}
+.app.poster .eye,.app.poster h2.sec small{display:none}
+.app.poster .size-row{grid-template-columns:62px minmax(0,1fr) auto}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="app" id="app">
+  <header class="bar">
+    <div class="emblem" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 2 4 13.6h6.3L9 22l10-12.4h-6.4z"/></svg></div>
+    <div>
+      <h1>شبكة مخيم اجديد</h1>
+      <p>خريطة كوابل الكهرباء · نسخة العامل</p>
+    </div>
+    <div class="bar-meta" aria-label="ملخص الشبكة">
+      <div><b id="m-len">—</b><span>طول الكوابل</span></div>
+      <div><b id="m-cnt">—</b><span>كابل</span></div>
+      <div><b>2</b><span>مصدر تغذية</span></div>
+    </div>
+  </header>
+
+  <div class="stage">
+    <aside class="panel" aria-label="دليل الشبكة">
+      <button class="panel-toggle" id="panelToggle" type="button" aria-expanded="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
+        <span id="panelToggleText">إخفاء القائمة وتكبير الخريطة</span>
+      </button>
+      <div class="panel-body" id="panelBody"></div>
+    </aside>
+
+    <div class="mapwrap">
+      <div id="map" role="application" aria-label="خريطة الكوابل"></div>
+      <div class="map-tools">
+        <button class="chip-btn" type="button" data-jump="all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>كل الشبكة</button>
+        <button class="chip-btn" type="button" data-jump="abu">مولد أبو زايد</button>
+        <button class="chip-btn" type="button" data-jump="muf">المفتي</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+(function(){
+const D = {"cables": [{"n": 1, "cls": "150", "spec": "4×150", "title": "كابل 4×150", "src": "abu", "parent": null, "how": "gen", "note": null, "orig": "كابل 4*150", "len": 233, "dir": "شمال شرق", "path": [[31.460345, 34.38834], [31.460675, 34.388603], [31.460929, 34.38898], [31.461113, 34.389245], [31.461273, 34.389426], [31.461476, 34.389713], [31.46147, 34.389811], [31.461389, 34.389901], [31.461273, 34.390005], [31.461187, 34.390095]], "kids": [2], "spots": [[31.46108, 34.389198], [31.460883, 34.388911], [31.461299, 34.389463], [31.460714, 34.38866], [31.461473, 34.389709], [31.460518, 34.388478], [31.461348, 34.389938]]}, {"n": 2, "cls": "50", "spec": "4×50", "title": "كابل 4×50", "src": "abu", "parent": 1, "how": "branch", "note": null, "orig": "كابل 4*50", "len": 60, "dir": "شمال شرق", "path": [[31.461471, 34.389802], [31.461582, 34.389965], [31.461823, 34.390275]], "kids": [], "spots": [[31.461643, 34.390043], [31.461588, 34.389973], [31.461697, 34.390113], [31.461545, 34.38991], [31.461744, 34.390173], [31.461504, 34.389851], [31.461787, 34.390229]]}, {"n": 3, "cls": "150", "spec": "4×150 + 1×25", "title": "كابل 4×150 + 1×25", "src": "abu", "parent": null, "how": "gen", "note": null, "orig": "كابل 4*150+25*1", "len": 323, "dir": "جنوب غرب", "path": [[31.460325, 34.388346], [31.460346, 34.388198], [31.460248, 34.388087], [31.460086, 34.387927], [31.459932, 34.387729], [31.459595, 34.387384], [31.459524, 34.387373], [31.459302, 34.38713], [31.459118, 34.386966], [31.459002, 34.386847], [31.458794, 34.386658], [31.458634, 34.3865], [31.458477, 34.386393], [31.458211, 34.386146]], "kids": [4, 5, 6, 9], "spots": [[31.459356, 34.38719], [31.459697, 34.387488], [31.45902, 34.386865], [31.459976, 34.387786], [31.458725, 34.386589], [31.460228, 34.388067], [31.458439, 34.386358]]}, {"n": 4, "cls": "50", "spec": "4×50", "title": "كابل 4×50", "src": "abu", "parent": 3, "how": "branch", "note": null, "orig": "كابل 4*50", "len": 109, "dir": "جنوب شرق", "path": [[31.459926, 34.387728], [31.459865, 34.387773], [31.459726, 34.387933], [31.459619, 34.388064], [31.459448, 34.388328], [31.459277, 34.388585]], "kids": [], "spots": [[31.459577, 34.388129], [31.459673, 34.387998], [31.459488, 34.388267], [31.459762, 34.387891], [31.45941, 34.388385], [31.459846, 34.387794], [31.459337, 34.388494]]}, {"n": 5, "cls": "95", "spec": "4×95", "title": "كابل 4×95", "src": "abu", "parent": 3, "how": "branch", "note": null, "orig": "4*95", "len": 197, "dir": "جنوب شرق", "path": [[31.45951, 34.387443], [31.4593, 34.387746], [31.459145, 34.387979], [31.459008, 34.388199], [31.458769, 34.388551], [31.45857, 34.388817], [31.458379, 34.389047]], "kids": [], "spots": [[31.458964, 34.388264], [31.459123, 34.388014], [31.458798, 34.388509], [31.459264, 34.3878], [31.458647, 34.388714], [31.459398, 34.387605], [31.458503, 34.388898]]}, {"n": 6, "cls": "95", "spec": "4×95", "title": "كابل 4×95", "src": "abu", "parent": 3, "how": "branch", "note": null, "orig": "4*95", "len": 198, "dir": "جنوب شرق", "path": [[31.458981, 34.386859], [31.458712, 34.387236], [31.458423, 34.38763], [31.458212, 34.387934], [31.458066, 34.388175], [31.457967, 34.388294], [31.457824, 34.388442]], "kids": [7, 8], "spots": [[31.458405, 34.387656], [31.458579, 34.387418], [31.458237, 34.387899], [31.45873, 34.387211], [31.4581, 34.388118], [31.458867, 34.387019], [31.457958, 34.388304]]}, {"n": 7, "cls": "50", "spec": "4×50", "title": "كابل 4×50", "src": "abu", "parent": 6, "how": "cont", "note": "مكتوب في الملف الأصلي «4*5»، ولونه لون كوابل 4×50، فاعتُبر 4×50.", "orig": "4*5", "len": 149, "dir": "جنوب شرق", "path": [[31.457823, 34.388439], [31.457665, 34.3887], [31.457498, 34.389024], [31.457202, 34.389455], [31.457007, 34.389678]], "kids": [], "spots": [[31.457451, 34.389092], [31.457564, 34.388897], [31.457325, 34.389275], [31.457654, 34.388722], [31.457216, 34.389434], [31.457745, 34.388567], [31.457103, 34.389568]]}, {"n": 8, "cls": "25", "spec": "4×25", "title": "كابل 4×25", "src": "abu", "parent": 6, "how": "branch", "note": null, "orig": "كابل 4*25", "len": 81, "dir": "غرب", "path": [[31.457945, 34.388315], [31.457864, 34.388216], [31.457779, 34.388042], [31.457845, 34.387786], [31.457954, 34.387576], [31.457952, 34.387583]], "kids": [], "spots": [[31.457802, 34.387954], [31.457795, 34.388074], [31.457833, 34.387831], [31.457842, 34.388171], [31.457874, 34.387731], [31.457894, 34.388253], [31.457919, 34.387643]]}, {"n": 9, "cls": "50", "spec": "4×50", "title": "كابل 4×50", "src": "abu", "parent": 3, "how": "cont", "note": "مكتوب في الملف الأصلي «مابل 4*50».", "orig": "مابل 4*50", "len": 218, "dir": "جنوب شرق", "path": [[31.458268, 34.386211], [31.458269, 34.38642], [31.457957, 34.386895], [31.457689, 34.387254], [31.457426, 34.387667], [31.457132, 34.388022]], "kids": [10], "spots": [[31.457766, 34.38715], [31.45796, 34.386891], [31.457584, 34.38742], [31.458115, 34.386655], [31.457431, 34.387659], [31.458258, 34.386436], [31.457268, 34.387857]]}, {"n": 10, "cls": "25", "spec": "4×25", "title": "كابل 4×25", "src": "abu", "parent": 9, "how": "cont", "note": "مكتوب في الملف الأصلي «كابلا 4*25».", "orig": "كابلا 4*25", "len": 170, "dir": "جنوب شرق", "path": [[31.457123, 34.388045], [31.456827, 34.388469], [31.456575, 34.388854], [31.456403, 34.389074], [31.456117, 34.389392]], "kids": [], "spots": [[31.456646, 34.388746], [31.456786, 34.388532], [31.456498, 34.388952], [31.45691, 34.38835], [31.456361, 34.38912], [31.457026, 34.388184], [31.456228, 34.389269]]}, {"n": 11, "cls": "150", "spec": "4×150", "title": "كابل 4×150", "src": "abu", "parent": null, "how": "gen", "note": null, "orig": "4*150", "len": 560, "dir": "جنوب شرق", "path": [[31.460347, 34.388363], [31.460681, 34.388451], [31.460203, 34.389078], [31.45988, 34.389443], [31.459908, 34.389709], [31.45971, 34.389946], [31.459551, 34.39011], [31.459405, 34.390304], [31.459245, 34.39049], [31.459086, 34.390724], [31.45883, 34.391118], [31.458634, 34.39123], [31.458412, 34.391558], [31.458159, 34.39186], [31.457963, 34.392091], [31.457776, 34.392313], [31.457687, 34.392523]], "kids": [12], "spots": [[31.459358, 34.390358], [31.45989, 34.38973], [31.45888, 34.391041], [31.460168, 34.389117], [31.458414, 34.391556], [31.460574, 34.388592], [31.457989, 34.39206]]}, {"n": 12, "cls": "95", "spec": "4×95", "title": "كابل 4×95", "src": "abu", "parent": 11, "how": "branch", "note": null, "orig": "كابل 4*95", "len": 219, "dir": "شمال", "path": [[31.458848, 34.391125], [31.459, 34.391287], [31.459168, 34.391442], [31.459319, 34.391597], [31.459542, 34.391828], [31.459837, 34.392079], [31.459846, 34.391963], [31.459992, 34.391776], [31.460114, 34.391584], [31.460228, 34.391447]], "kids": [], "spots": [[31.459595, 34.391873], [31.45937, 34.39165], [31.459833, 34.392076], [31.459178, 34.391452], [31.459948, 34.391832], [31.458993, 34.39128], [31.460094, 34.391615]]}, {"n": 13, "cls": "150", "spec": "4×150 + 95", "title": "كابل مخيم 5", "src": "muf", "parent": null, "how": "gen", "note": "مكتوب في الملف الأصلي «كابل مخيم 5 / 4*150 +95».", "orig": "كابل مخيم 5.      /4*150 +95", "len": 814, "dir": "غرب", "path": [[31.45001, 34.39835], [31.449968, 34.398302], [31.449999, 34.39822], [31.449787, 34.398125], [31.449413, 34.398018], [31.448707, 34.397653], [31.448428, 34.397673], [31.448221, 34.39746], [31.448523, 34.397044], [31.448726, 34.396705], [31.44909, 34.39623], [31.449465, 34.395718], [31.449576, 34.395573], [31.449829, 34.395241], [31.450146, 34.394847], [31.450531, 34.394362], [31.450958, 34.393873], [31.4514, 34.393485], [31.451491, 34.393325], [31.451655, 34.393055], [31.451777, 34.392986]], "kids": [], "spots": [[31.449234, 34.396033], [31.448535, 34.397023], [31.449964, 34.395073], [31.448616, 34.39766], [31.450618, 34.394263], [31.449428, 34.398022], [31.45128, 34.39359]]}, {"n": 14, "cls": "150", "spec": "4×150", "title": "كابل شارع جولي", "src": "muf", "parent": null, "how": "gen", "note": "مكتوب في الملف الأصلي «4*159»، والمقاس القياسي الأقرب 4×150.", "orig": "شارع جولي 4*159", "len": 995, "dir": "شمال غرب", "path": [[31.450025, 34.398314], [31.449998, 34.398285], [31.450021, 34.398232], [31.450311, 34.398215], [31.450589, 34.398231], [31.450812, 34.397953], [31.450941, 34.397702], [31.45106, 34.397477], [31.451293, 34.396984], [31.451479, 34.39664], [31.451663, 34.396325], [31.451812, 34.396079], [31.451944, 34.395832], [31.452086, 34.395593], [31.452227, 34.395336], [31.452377, 34.395053], [31.452462, 34.394791], [31.452654, 34.394405], [31.452822, 34.394207], [31.453072, 34.393587], [31.453312, 34.39299], [31.453507, 34.392512], [31.455156, 34.390186]], "kids": [], "spots": [[31.452626, 34.394462], [31.451953, 34.395818], [31.453269, 34.393096], [31.451309, 34.396954], [31.453898, 34.391961], [31.450753, 34.398027], [31.454584, 34.390993]]}, {"n": 15, "cls": "x", "spec": "غير مكتوب", "title": "كابل بك C", "src": "muf", "parent": null, "how": "gen", "note": "مقاس الكابل غير مكتوب في الملف الأصلي.", "orig": "كابل بكC", "len": 385, "dir": "جنوب غرب", "path": [[31.450021, 34.398343], [31.449976, 34.398298], [31.45001, 34.398213], [31.449795, 34.398112], [31.449415, 34.398008], [31.449268, 34.397916], [31.448705, 34.397643], [31.44843, 34.397662], [31.447227, 34.396344]], "kids": [], "spots": [[31.448513, 34.397656], [31.449007, 34.397789], [31.448111, 34.397313], [31.449415, 34.398008], [31.447783, 34.396953], [31.449818, 34.398123], [31.44748, 34.396621]]}], "measure": {"n": 0, "title": "خط قياس بدون اسم", "orig": "قياس بلا عنوان", "len": 276, "path": [[31.447243, 34.396432], [31.448795, 34.394197], [31.448784, 34.394168]]}, "points": {"abu": {"name": "مولد أبو زايد", "orig": "مولد ابو زايد", "ll": [31.460276, 34.388347]}, "muf": {"name": "المفتي", "orig": "المفتي", "ll": [31.450006, 34.398307]}, "mark": {"name": "مرق التولي السوق", "orig": "مرق التولي السوق", "ll": [31.448948, 34.389563]}}, "stray": {"name": "علامة موضعية بلا عنوان", "ll": [31.416541, 34.355158]}};
+
+const CLS = {
+  '150':{spec:'4×150', w:7,   rank:0},
+  '95': {spec:'4×95',  w:5.5, rank:1},
+  '50': {spec:'4×50',  w:4.5, rank:2},
+  '25': {spec:'4×25',  w:3.5, rank:3},
+  'x':  {spec:'غير مكتوب', w:4.5, rank:4},
+};
+const SIZE_ORDER = ['150','95','50','25','x'];
+const SRC = {abu:D.points.abu.name, muf:D.points.muf.name};
+const byN = new Map(D.cables.map(c => [c.n, c]));
+const fmt = n => Math.round(n).toLocaleString('en-US');
+const gmaps = ll => 'https://www.google.com/maps/search/?api=1&query=' + ll[0] + ',' + ll[1];
+const plural = n => n === 1 ? 'كابل واحد' : n === 2 ? 'كابلين' : n <= 10 ? n + ' كوابل' : n + ' كابل';
+const ltr = s => String(s).replace(/(\d+[×*]\d+(?:\s*\+\s*(?:\d+[×*])?\d+)*)/g, '<bdi dir="ltr">$1</bdi>');
+const depth = c => c.parent ? 1 + depth(byN.get(c.parent)) : 0;
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const app = document.getElementById('app');
+const poster = location.hash === '#poster';
+if (poster) { app.classList.add('poster'); document.documentElement.classList.add('poster'); }
+
+const ICON = {
+  bolt:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 2 4 13.6h6.3L9 22l10-12.4h-6.4z"/></svg>',
+  shop:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M4 9h16l-1.5-5h-13zM5 9v11h14V9M10 20v-6h4v6"/></svg>',
+  pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.1 7-11.5A7 7 0 0 0 5 9.5C5 14.9 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
+  copy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>',
+  close:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  eye:'<svg class="eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+  eyeOff:'<svg class="eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a9.6 9.6 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>',
+  back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>',
+  fwd:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg>',
+};
+
+/* ---------- totals ---------- */
+const totals = {};
+for (const c of D.cables) { const t = totals[c.cls] ||= {len:0, n:0}; t.len += c.len; t.n++; }
+const totalLen = D.cables.reduce((s,c) => s + c.len, 0);
+document.getElementById('m-len').textContent = (totalLen/1000).toFixed(1) + ' كم';
+document.getElementById('m-cnt').textContent = D.cables.length;
+
+/* ---------- map ---------- */
+const map = L.map('map', {zoomControl:false, attributionControl:false, zoomSnap:.25, zoomDelta:.5, minZoom:13, maxZoom:20});
+if (!poster) L.control.zoom({position:'topleft', zoomInTitle:'تكبير', zoomOutTitle:'تصغير'}).addTo(map);
+const scale = L.control.scale({position:'bottomleft', imperial:false, maxWidth:150});
+scale._updateScale = function(el, text, ratio){ el.style.width = Math.round(this.options.maxWidth * ratio) + 'px'; el.textContent = text.replace(' km',' كم').replace(' m',' متر'); };
+scale.addTo(map);
+const North = L.Control.extend({onAdd(){ const d = L.DomUtil.create('div','north'); d.innerHTML = '<svg viewBox="0 0 18 22"><path d="M9 1 16 20 9 15 2 20z" fill="currentColor"/><path d="M9 1v14l-7 5z" style="fill:var(--surface)" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>شمال'; return d; }});
+new North({position:'bottomright'}).addTo(map);
+
+const Grid = L.GridLayer.extend({
+  createTile(){
+    const r = 2, t = document.createElement('canvas'); t.width = t.height = 256*r;
+    const g = t.getContext('2d'), cs = getComputedStyle(document.documentElement);
+    g.lineWidth = r;
+    g.strokeStyle = cs.getPropertyValue('--grid').trim();
+    g.beginPath();
+    for (let i = 64; i < 256; i += 64) { g.moveTo(i*r, 0); g.lineTo(i*r, 256*r); g.moveTo(0, i*r); g.lineTo(256*r, i*r); }
+    g.stroke();
+    g.strokeStyle = cs.getPropertyValue('--grid-strong').trim();
+    g.beginPath(); g.moveTo(0,0); g.lineTo(256*r,0); g.moveTo(0,0); g.lineTo(0,256*r); g.stroke();
+    return t;
+  }
+});
+const grid = new Grid({pane:'tilePane'}).addTo(map);
+
+for (const [name, z] of [['halo',395],['cas',400],['cab',410],['dots',420],['hit',430],['badges',640],['srcs',650]]) map.createPane(name).style.zIndex = z;
+
+const layers = {};
+const sorted = [...D.cables].sort((a,b) => CLS[a.cls].rank - CLS[b.cls].rank || a.n - b.n);
+const opt = (o) => Object.assign({lineCap:'round', lineJoin:'round', interactive:false, smoothFactor:.5}, o);
+for (const c of sorted) layers[c.n] = {
+  halo: L.polyline(c.path, opt({pane:'halo', className:'halo', weight:CLS[c.cls].w + 16, color:'#000'})).addTo(map),
+  cas:  L.polyline(c.path, opt({pane:'cas', className:'cas', weight:CLS[c.cls].w + 3.5, color:'#000'})).addTo(map),
+};
+for (const c of sorted) layers[c.n].cab = L.polyline(c.path, opt({pane:'cab', className:'cab cab-' + c.cls, weight:CLS[c.cls].w, color:'#000'})).addTo(map);
+
+const meas = L.polyline(D.measure.path, opt({pane:'cab', className:'meas is-off', weight:3, dashArray:'2 9', color:'#000'})).addTo(map);
+
+/* junctions (where a cable leaves another) and open ends */
+for (const c of D.cables) {
+  const o = layers[c.n];
+  if (c.parent) o.jn = L.circleMarker(c.path[0], {pane:'dots', radius:5, weight:2.5, className:'jn', interactive:false, color:'#000', fillColor:'#fff', fillOpacity:1}).addTo(map);
+  if (!c.kids.some(k => byN.get(k).how === 'cont')) o.end = L.circleMarker(c.path[c.path.length-1], {pane:'dots', radius:4.5, weight:2, className:'endcap s-' + c.cls, interactive:false, color:'#000', fillColor:'#000', fillOpacity:1}).addTo(map);
+}
+for (const c of sorted) {
+  const o = layers[c.n];
+  o.hit = L.polyline(c.path, {pane:'hit', weight:26, opacity:0, color:'#000', lineCap:'round', lineJoin:'round', smoothFactor:.5}).addTo(map);
+  o.hit.on('click', e => { L.DomEvent.stopPropagation(e); select(c.n); });
+  o.badge = L.marker(c.spots[0], {pane:'badges', keyboard:false, icon:L.divIcon({className:'badge-wrap', iconSize:[30,30], iconAnchor:[15,15],
+    html:'<div class="badge b-' + c.cls + '">' + c.n + '</div>'})}).addTo(map);
+  o.badge.on('click', e => { L.DomEvent.stopPropagation(e); select(c.n); });
+}
+
+function srcIcon(name){ return L.divIcon({className:'', iconSize:[40,40], iconAnchor:[20,20], html:'<div class="src"><div class="src-icon">' + ICON.bolt + '</div><div class="src-name">' + name + '</div></div>'}); }
+const srcMarkers = [
+  L.marker(D.points.abu.ll, {pane:'srcs', icon:srcIcon(D.points.abu.name), keyboard:false}).addTo(map),
+  L.marker(D.points.muf.ll, {pane:'srcs', icon:srcIcon(D.points.muf.name), keyboard:false}).addTo(map),
+];
+srcMarkers[0].on('click', () => jump('abu')); srcMarkers[1].on('click', () => jump('muf'));
+L.marker(D.points.mark.ll, {pane:'srcs', keyboard:false, icon:L.divIcon({className:'', iconSize:[26,26], iconAnchor:[13,13],
+  html:'<div class="mark"><div class="mark-dot">' + ICON.shop + '</div><div class="mark-name">' + D.points.mark.name + '</div></div>'})}).addTo(map);
+
+map.on('click', () => { if (sel) select(null); });
+
+/* ---------- state ---------- */
+let sel = null;
+const hidden = new Set();
+let showMeas = false;
+const el = (layer) => layer && layer.getElement && layer.getElement();
+
+function groupBounds(g){
+  const b = L.latLngBounds([]);
+  for (const c of D.cables) if (g === 'all' || c.src === g) b.extend(layers[c.n].cab.getBounds());
+  if (g !== 'muf') b.extend(D.points.abu.ll);
+  if (g !== 'abu') b.extend(D.points.muf.ll);
+  if (g === 'all') b.extend(D.points.mark.ll);
+  return b;
+}
+function fit(b, maxZoom){
+  const o = {paddingTopLeft:[40,70], paddingBottomRight:[40,40], maxZoom: maxZoom || 18};
+  if (reduce || poster) map.fitBounds(b, Object.assign(o, {animate:false})); else map.flyToBounds(b, Object.assign(o, {duration:.6}));
+}
+function jump(g){ if (sel) select(null, {fit:false}); fit(groupBounds(g)); }
+document.querySelectorAll('[data-jump]').forEach(b => b.addEventListener('click', () => jump(b.dataset.jump)));
+
+/* keep number badges readable: try a few spots along each cable, skip ones that would overlap */
+function declutter(){
+  const taken = [];
+  for (const m of srcMarkers) { const p = map.latLngToContainerPoint(m.getLatLng());
+    taken.push({p, r:36}, {p:p.add([0,36]), r:34}, {p:p.add([-38,36]), r:30}, {p:p.add([38,36]), r:30}); }
+  const order = D.cables.filter(c => !hidden.has(c.cls))
+    .sort((a,b) => (b.n === sel) - (a.n === sel) || CLS[a.cls].rank - CLS[b.cls].rank || a.n - b.n);
+  const gap = poster ? 30 : 32;
+  for (const c of D.cables) if (hidden.has(c.cls)) el(layers[c.n].badge)?.classList.add('is-off'); else el(layers[c.n].badge)?.classList.remove('is-off');
+  for (const c of order) {
+    const m = layers[c.n].badge; let placed = false;
+    for (const s of c.spots) {
+      const p = map.latLngToContainerPoint(s);
+      if (taken.every(t => t.p.distanceTo(p) > Math.max(gap, t.r))) { m.setLatLng(s); taken.push({p, r:gap}); placed = true; break; }
+    }
+    el(m)?.classList.toggle('is-crowd', !placed && c.n !== sel);
+    if (!placed && c.n === sel) m.setLatLng(c.spots[0]);
+  }
+}
+map.on('zoomend moveend', declutter);
+
+function applyFilters(){
+  for (const c of D.cables) {
+    const off = hidden.has(c.cls), o = layers[c.n];
+    for (const k of ['halo','cas','cab','hit','jn','end']) el(o[k])?.classList.toggle('is-off', off);
+    document.querySelector('.reg-row[data-n="' + c.n + '"]')?.classList.toggle('is-off', off);
+  }
+  el(meas)?.classList.toggle('is-off', !showMeas);
+  if (sel && hidden.has(byN.get(sel).cls)) select(null, {fit:false});
+  declutter();
+}
+
+function select(n, opts){
+  opts = opts || {};
+  sel = n || null;
+  const c = sel && byN.get(sel);
+  if (c && hidden.has(c.cls)) { hidden.delete(c.cls); applyFilters(); }
+  const kin = new Set(c ? [c.parent, ...c.kids].filter(Boolean) : []);
+  app.classList.toggle('has-sel', !!sel);
+  for (const x of D.cables) {
+    const o = layers[x.n], on = x.n === sel, k = kin.has(x.n);
+    for (const key of ['halo','cas','cab']) { el(o[key])?.classList.toggle('is-sel', on); el(o[key])?.classList.toggle('is-kin', k); }
+    el(o.badge)?.classList.toggle('is-sel', on); el(o.badge)?.classList.toggle('is-kin', k);
+    o.cab.setStyle({weight: CLS[x.cls].w + (on ? 3 : 0)});
+    o.cas.setStyle({weight: CLS[x.cls].w + 3.5 + (on ? 3 : 0)});
+  }
+  if (c) {
+    layers[sel].cas.bringToFront(); layers[sel].cab.bringToFront();
+    renderDetail(c);
+    app.classList.remove('panel-min'); syncToggle();
+    if (opts.fit !== false) fit(layers[sel].cab.getBounds(), 18.5);
+  } else {
+    renderOverview();
+  }
+  declutter();
+}
+
+/* ---------- panel ---------- */
+const body = document.getElementById('panelBody');
+const swatch = (cls) => { const w = CLS[cls].w; return '<svg class="sw" viewBox="0 0 62 16" aria-hidden="true"><line class="sw-cas" x1="6" y1="8" x2="56" y2="8" stroke-width="' + (w+3.5) + '"/><line class="sw-cab sw-' + cls + '" x1="6" y1="8" x2="56" y2="8" stroke-width="' + w + '"/></svg>'; };
+const fromText = (c) => c.how === 'gen' ? 'من ' + SRC[c.src] : c.how === 'cont' ? 'يكمل من نهاية كابل ' + c.parent : 'يتفرّع من كابل ' + c.parent;
+const specHtml = (c) => c.cls === 'x' ? 'غير مكتوب' : ltr(c.spec).replace(' + ', ' +\u00a0').replace(/(<bdi dir="ltr">[^<]*?) \+/, '$1<br>+');
+
+function renderOverview(){
+  const rows = SIZE_ORDER.filter(k => totals[k]).map(k => {
+    const on = !hidden.has(k);
+    const label = k === 'x' ? 'مقطع غير مكتوب' : ltr(CLS[k].spec) + ' <small>مم²</small>';
+    return '<button type="button" class="size-row" data-cls="' + k + '" aria-pressed="' + on + '">' + swatch(k) +
+      '<span class="size-name"><span class="sz">' + label + '</span><span class="cnt">' + plural(totals[k].n) + '</span></span>' +
+      '<span class="size-len">' + fmt(totals[k].len) + ' <small>م</small></span>' + (on ? ICON.eye : ICON.eyeOff) + '</button>';
+  }).join('');
+
+  const group = (src) => {
+    const list = [];
+    const walk = (c) => { list.push(c); for (const k of c.kids) walk(byN.get(k)); };
+    D.cables.filter(c => c.src === src && !c.parent).forEach(walk);
+    const len = list.reduce((s,c) => s + c.len, 0);
+    return '<div class="reg-group"><div class="reg-head"><span class="src-mini">' + ICON.bolt + '</span><b>' + SRC[src] + '</b><span>' + plural(list.length) + ' · ' + fmt(len) + ' م</span></div><ul class="reg-list">' +
+      list.map(c => '<li><button type="button" class="reg-row' + (hidden.has(c.cls) ? ' is-off' : '') + '" data-n="' + c.n + '" data-depth="' + Math.min(depth(c),2) + '">' +
+        '<span class="badge b-' + c.cls + '">' + c.n + '</span>' +
+        '<span class="reg-main"><b>' + ltr(c.title) + '</b><span>' + fromText(c) + ' · باتجاه ' + c.dir + '</span></span>' +
+        '<span class="reg-len">' + fmt(c.len) + ' <small>م</small></span></button></li>').join('') + '</ul></div>';
+  };
+
+  body.innerHTML =
+    '<section><h2 class="sec">ألوان الكوابل حسب المقطع <small>اضغط لإخفاء أو إظهار</small></h2><div class="sizes">' + rows + '</div></section>' +
+    '<section><h2 class="sec">رموز الخريطة</h2><div class="symbols">' +
+      '<div><svg viewBox="0 0 26 26"><rect x="2" y="2" width="22" height="22" rx="6" fill="#d7a64f" style="stroke:var(--casing)" stroke-width="1.5"/><path d="M14.3 5 7.5 14h4.6l-1 7 7.4-9.4h-4.7z" fill="#1b1305"/></svg><span>مصدر تغذية (مولد)</span></div>' +
+      '<div><svg viewBox="0 0 26 26"><circle style="fill:var(--c150);stroke:var(--surface)" cx="13" cy="13" r="10" stroke-width="2.5"/><text x="13" y="17.5" text-anchor="middle" font-size="12" font-weight="800" style="fill:var(--o150)" font-family="Alexandria, sans-serif">3</text></svg><span>رقم الكابل</span></div>' +
+      '<div><svg viewBox="0 0 26 26"><line x1="2" y1="13" x2="24" y2="13" style="stroke:var(--casing)" stroke-width="6"/><line x1="2" y1="13" x2="24" y2="13" style="stroke:var(--c95)" stroke-width="3"/><circle style="fill:var(--surface);stroke:var(--casing)" cx="13" cy="13" r="5" stroke-width="2.5"/></svg><span>نقطة تفرّع</span></div>' +
+      '<div><svg viewBox="0 0 26 26"><line x1="2" y1="13" x2="18" y2="13" style="stroke:var(--casing)" stroke-width="6" stroke-linecap="round"/><line x1="2" y1="13" x2="18" y2="13" style="stroke:var(--c50)" stroke-width="3" stroke-linecap="round"/><circle style="fill:var(--c50);stroke:var(--casing)" cx="18" cy="13" r="4.5" stroke-width="2"/></svg><span>نهاية الكابل</span></div>' +
+      '<div><svg viewBox="0 0 26 26"><circle style="fill:var(--surface);stroke:var(--casing)" cx="13" cy="13" r="10" stroke-width="2"/><path d="M7.5 11h11l-1-3.5h-9zM8.3 11v7.5h9.4V11M11.5 18.5v-4h3v4" fill="none" style="stroke:var(--ink)" stroke-width="1.5" stroke-linejoin="round"/></svg><span>معلم (للاستدلال)</span></div>' +
+      '<div><svg viewBox="0 0 26 26"><line x1="2" y1="13" x2="24" y2="13" style="stroke:var(--muted)" stroke-width="3" stroke-dasharray="2 5" stroke-linecap="round"/></svg><span>خط قياس (مش كابل)</span></div>' +
+    '</div></section>' +
+    '<section><h2 class="sec">سجل الكوابل <small>اضغط على أي كابل لتفاصيله</small></h2>' + group('abu') + group('muf') + '</section>' +
+    '<div class="aside-note">' +
+      '<p>الأطوال مقاسة على الخريطة على مسار الكابل. عند التمديد زِد 5–10% للارتخاء والنزلات.</p>' +
+      '<p>في الملف الأصلي خط قياس بدون اسم طوله ' + fmt(D.measure.len) + ' م بعد نهاية كابل 15. <button type="button" class="linkish" id="measToggle">' + (showMeas ? 'إخفاء خط القياس' : 'إظهاره على الخريطة') + '</button></p>' +
+      '<p>وفيه كمان علامة بدون اسم على بعد حوالي 5.5 كم من المفتي، بعيدة عن الشبكة فلم تُعرض.</p>' +
+    '</div>';
+
+  body.querySelectorAll('.size-row').forEach(b => b.addEventListener('click', () => {
+    const k = b.dataset.cls; hidden.has(k) ? hidden.delete(k) : hidden.add(k); applyFilters(); renderOverview();
+  }));
+  body.querySelectorAll('.reg-row').forEach(b => b.addEventListener('click', () => select(+b.dataset.n)));
+  document.getElementById('measToggle')?.addEventListener('click', () => {
+    showMeas = !showMeas; applyFilters(); renderOverview();
+    if (showMeas) fit(meas.getBounds().extend(layers[15].cab.getBounds()));
+  });
+}
+
+function endpointBlock(title, place, ll){
+  const txt = ll[0].toFixed(6) + ', ' + ll[1].toFixed(6);
+  return '<li><span class="pin"></span><div class="where"><b>' + title + '</b><span>' + place + '</span>' +
+    '<div class="acts"><a class="act primary" href="' + gmaps(ll) + '" target="_blank" rel="noopener">' + ICON.pin + 'افتح في خرائط جوجل</a>' +
+    '<button type="button" class="act" data-copy="' + txt + '">' + ICON.copy + 'نسخ الإحداثيات</button></div>' +
+    '<span class="coords">' + txt + '</span></div></li>';
+}
+
+function renderDetail(c){
+  const start = c.how === 'gen' ? SRC[c.src] : c.how === 'cont' ? 'من نهاية كابل ' + c.parent : 'من منتصف كابل ' + c.parent + ' (نقطة تفرّع)';
+  const cont = c.kids.map(k => byN.get(k)).find(k => k.how === 'cont');
+  const end = cont ? 'يكمل بعدها كابل ' + cont.n : 'نهاية الكابل';
+  const branches = c.kids.map(k => byN.get(k)).filter(k => k.how !== 'cont');
+  const idx = D.cables.findIndex(x => x.n === c.n);
+  const prev = D.cables[idx-1], next = D.cables[idx+1];
+  const kidChip = (k) => '<button type="button" class="kid" data-n="' + k.n + '"><span class="badge b-' + k.cls + '">' + k.n + '</span>' + ltr(k.spec) + ' · ' + fmt(k.len) + ' م</button>';
+
+  body.innerHTML = '<div class="det" style="--line-c:var(--c' + c.cls + ')">' +
+    '<div class="det-head"><span class="badge b-' + c.cls + '">' + c.n + '</span>' +
+      '<div><div class="eyebrow">كابل رقم ' + c.n + ' · ' + SRC[c.src] + '</div><h2>' + ltr(c.title) + '</h2></div>' +
+      '<button type="button" class="icon-btn" id="detClose" aria-label="رجوع لكل الكوابل">' + ICON.close + '</button></div>' +
+    '<div class="metrics">' +
+      '<div><span class="k">الطول</span><span class="v big">' + fmt(c.len) + ' <small>م</small></span></div>' +
+      '<div><span class="k">المقطع (مم²)</span><span class="v">' + specHtml(c) + '</span></div>' +
+      '<div><span class="k">الاتجاه</span><span class="v">' + c.dir + '</span></div>' +
+    '</div>' +
+    '<ol class="route">' + endpointBlock('البداية', start, c.path[0]) + endpointBlock('النهاية', end, c.path[c.path.length-1]) + '</ol>' +
+    (c.parent ? '<div><h2 class="sec">يتغذّى من</h2><div class="kids">' + kidChip(byN.get(c.parent)) + '</div></div>' : '') +
+    (c.kids.length ? '<div><h2 class="sec">يطلع منه</h2><div class="kids">' + c.kids.map(k => kidChip(byN.get(k))).join('') + '</div></div>' : '') +
+    (c.note ? '<p class="note">' + ltr(c.note) + '</p>' : '') +
+    '<p class="fine">الطول مقاس على الخريطة على مسار الكابل. عند التمديد زِد 5–10% للارتخاء والنزلات. الاسم في الملف الأصلي: «' + ltr(c.orig.replace(/\s+/g,' ')) + '».</p>' +
+    '<div class="det-nav">' +
+      (prev ? '<button type="button" class="act" data-n="' + prev.n + '">' + ICON.back + 'كابل ' + prev.n + '</button>' : '') +
+      '<button type="button" class="act" id="detAll">كل الكوابل</button>' +
+      (next ? '<button type="button" class="act" data-n="' + next.n + '">كابل ' + next.n + ICON.fwd + '</button>' : '') +
+    '</div></div>';
+  body.scrollTop = 0;
+  body.querySelectorAll('[data-n]').forEach(b => b.addEventListener('click', () => select(+b.dataset.n)));
+  document.getElementById('detClose').addEventListener('click', () => select(null, {fit:false}));
+  document.getElementById('detAll').addEventListener('click', () => { select(null, {fit:false}); fit(groupBounds('all')); });
+  body.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => copy(b.dataset.copy, b)));
+}
+
+const toastEl = document.getElementById('toast'); let toastT;
+function toast(msg){ toastEl.textContent = msg; toastEl.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('show'), 1800); }
+function copy(text, btn){
+  const fallback = () => { const s = btn.parentElement.parentElement.querySelector('.coords'); const r = document.createRange(); r.selectNodeContents(s); const w = getSelection(); w.removeAllRanges(); w.addRange(r); toast('الإحداثيات محددة، انسخها يدويًا'); };
+  try { navigator.clipboard.writeText(text).then(() => toast('تم نسخ الإحداثيات'), fallback); } catch (e) { fallback(); }
+}
+
+/* mobile panel toggle */
+const tgl = document.getElementById('panelToggle');
+function syncToggle(){ const min = app.classList.contains('panel-min'); tgl.setAttribute('aria-expanded', !min); document.getElementById('panelToggleText').textContent = min ? 'إظهار القائمة والتفاصيل' : 'إخفاء القائمة وتكبير الخريطة'; }
+tgl.addEventListener('click', () => { app.classList.toggle('panel-min'); syncToggle(); });
+new ResizeObserver(() => map.invalidateSize({pan:false})).observe(document.getElementById('map'));
+
+/* re-draw the grid when the theme changes */
+const redraw = () => grid.redraw();
+matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', redraw);
+new MutationObserver(redraw).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
+
+renderOverview();
+map.fitBounds(groupBounds('all'), poster ? {padding:[40,40], animate:false} : {paddingTopLeft:[20,64], paddingBottomRight:[20,20], animate:false});
+applyFilters();
+})();
+</script>
