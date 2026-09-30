@@ -589,6 +589,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   --f-display:"Alexandria","IBM Plex Sans Arabic",system-ui,sans-serif;
   --f-body:"IBM Plex Sans Arabic","Segoe UI",Tahoma,system-ui,sans-serif;
   --r:12px;
+  --sat-filter:saturate(.85) brightness(.93);
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
@@ -598,6 +599,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     --c150:#ff5b5b; --c95:#c681ff; --c50:#ffc83d; --c25:#4cc3f5; --cx:#b6c3ce;
     --o150:#1a0404; --o95:#16052a; --o50:#1f1600; --o25:#03182a; --ox:#0b141c;
     --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+    --sat-filter:saturate(.8) brightness(.8);
     color-scheme:dark;
   }
 }
@@ -608,6 +610,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   --c150:#ff5b5b; --c95:#c681ff; --c50:#ffc83d; --c25:#4cc3f5; --cx:#b6c3ce;
   --o150:#1a0404; --o95:#16052a; --o50:#1f1600; --o25:#03182a; --ox:#0b141c;
   --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+  --sat-filter:saturate(.8) brightness(.8);
   color-scheme:dark;
 }
 
@@ -660,6 +663,17 @@ button{font:inherit;color:inherit}
 .north{background:var(--surface);border:1px solid var(--rule);border-radius:10px;box-shadow:var(--shadow);width:44px;padding:4px 0 3px;
   display:grid;justify-items:center;color:var(--ink);font-size:11px;font-weight:700;line-height:1}
 .north svg{width:18px;height:22px}
+
+/* satellite base: slightly muted so the cable colours lead; white casing reads on roofs and trees */
+.sat{filter:var(--sat-filter)}
+.app.sat-on .cas{stroke:#ffffff}
+.app.sat-on .endcap{stroke:#ffffff}
+.sat-ctl button{display:grid;place-items:center;width:40px;height:44px;border:0;background:var(--surface);color:var(--ink);cursor:pointer;padding:2px 0 0;gap:0;font-size:9.5px;font-weight:700;line-height:1}
+.sat-ctl button svg{width:18px;height:18px}
+.sat-ctl button[aria-pressed="true"]{background:var(--navy);color:var(--on-navy)}
+.attrib{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);z-index:700;font-size:10px;color:#fff;background:rgba(0,0,0,.5);
+  padding:2px 8px;border-radius:6px;direction:ltr;white-space:nowrap;pointer-events:none}
+.app:not(.sat-on) .attrib{display:none}
 
 /* cable paths: colour comes from the size tokens so both themes stay legible */
 .cas{stroke:var(--casing)}
@@ -825,16 +839,25 @@ h2.sec small{font-family:var(--f-body);font-weight:500;color:var(--muted);font-s
 }
 @media (max-width:360px){.bar-meta{display:none}}
 
-/* poster: one still sheet for WhatsApp / printing (opened with #poster) */
-.poster body{overflow:visible}
-.app.poster .stage{grid-template-columns:560px minmax(0,1fr);grid-template-rows:minmax(0,1fr);grid-template-areas:"panel map"}
-.app.poster .panel{border-inline-end:1px solid var(--rule);border-top:0}
-.app.poster .panel-toggle,.app.poster .map-tools,.app.poster .leaflet-control-zoom,.app.poster .aside-note{display:none!important}
-.app.poster .panel-body{overflow:visible;padding:18px 20px;gap:18px}
-.app.poster .reg-row{min-height:40px;padding-block:4px}
-.app.poster .size-row{min-height:42px;padding-block:5px}
-.app.poster .eye,.app.poster h2.sec small{display:none}
-.app.poster .size-row{grid-template-columns:62px minmax(0,1fr) auto}
+/* sheet: one still 4K sheet for WhatsApp / printing (opened with #sheet-all, #sheet-abu, #sheet-muf) */
+.app.sheet .stage{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto;grid-template-areas:"map" "panel"}
+.app.sheet .panel{border-top:3px solid var(--brass);border-inline-end:0}
+.app.sheet .panel-toggle,.app.sheet .map-tools,.app.sheet .leaflet-control-zoom,.app.sheet .sat-ctl{display:none!important}
+.app.sheet .panel-body{overflow:visible;padding:14px 18px 14px;gap:12px}
+.sh-sizes{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.sh-size{border:1px solid var(--rule);border-radius:10px;padding:7px 10px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 10px;align-items:center}
+.sh-size .sw{width:44px;height:14px;grid-row:span 2}
+.sh-size b{font-family:var(--f-display);font-weight:700;font-size:.98rem;line-height:1.2}
+.sh-size b small{font-family:var(--f-body);font-weight:500;font-size:.74rem;color:var(--muted)}
+.sh-size span{font-size:.78rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.sh-reg{columns:2;column-gap:24px;column-rule:1px solid var(--rule)}
+.sh-reg .reg-group + .reg-group{margin-top:0}
+.sh-reg .reg-head{break-inside:avoid;break-after:avoid;padding:2px 0 6px}
+.sh-reg .reg-row{break-inside:avoid;cursor:default;min-height:38px;padding-block:3px}
+.sh-reg .reg-row:hover{background:none}
+.sh-foot{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:.76rem;color:var(--muted);align-items:center;border-top:1px solid var(--rule);padding-top:10px}
+.sh-foot span{display:inline-flex;align-items:center;gap:6px}
+.sh-foot svg{width:20px;height:20px}
 
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -864,6 +887,7 @@ h2.sec small{font-family:var(--f-body);font-weight:500;color:var(--muted);font-s
 
     <div class="mapwrap">
       <div id="map" role="application" aria-label="خريطة الكوابل"></div>
+      <div class="attrib">Imagery © Esri, Maxar, Earthstar Geographics</div>
       <div class="map-tools">
         <button class="chip-btn" type="button" data-jump="all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>كل الشبكة</button>
         <button class="chip-btn" type="button" data-jump="abu">مولد أبو زايد</button>
@@ -896,8 +920,10 @@ const ltr = s => String(s).replace(/(\d+[×*]\d+(?:\s*\+\s*(?:\d+[×*])?\d+)*)/g
 const depth = c => c.parent ? 1 + depth(byN.get(c.parent)) : 0;
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const app = document.getElementById('app');
-const poster = location.hash === '#poster';
-if (poster) { app.classList.add('poster'); document.documentElement.classList.add('poster'); }
+const sheetMatch = /^#sheet-(all|abu|muf)$/.exec(location.hash);
+const sheet = sheetMatch ? sheetMatch[1] : null;   /* still 4K sheets rendered for printing and WhatsApp */
+const still = !!sheet;
+if (sheet) app.classList.add('sheet');
 
 const ICON = {
   bolt:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 2 4 13.6h6.3L9 22l10-12.4h-6.4z"/></svg>',
@@ -907,6 +933,7 @@ const ICON = {
   close:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>',
   eye:'<svg class="eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
   eyeOff:'<svg class="eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a9.6 9.6 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>',
+  layers:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></svg>',
   back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>',
   fwd:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg>',
 };
@@ -920,7 +947,7 @@ document.getElementById('m-cnt').textContent = D.cables.length;
 
 /* ---------- map ---------- */
 const map = L.map('map', {zoomControl:false, attributionControl:false, zoomSnap:.25, zoomDelta:.5, minZoom:13, maxZoom:20});
-if (!poster) L.control.zoom({position:'topleft', zoomInTitle:'تكبير', zoomOutTitle:'تصغير'}).addTo(map);
+if (!still) L.control.zoom({position:'topleft', zoomInTitle:'تكبير', zoomOutTitle:'تصغير'}).addTo(map);
 const scale = L.control.scale({position:'bottomleft', imperial:false, maxWidth:150});
 scale._updateScale = function(el, text, ratio){ el.style.width = Math.round(this.options.maxWidth * ratio) + 'px'; el.textContent = text.replace(' km',' كم').replace(' m',' متر'); };
 scale.addTo(map);
@@ -942,6 +969,30 @@ const Grid = L.GridLayer.extend({
   }
 });
 const grid = new Grid({pane:'tilePane'}).addTo(map);
+
+/* satellite imagery ships with the page as 1024px blocks: sat/{zoom}/{x}_{y}.jpg */
+const SATBOX = [31.444227, 34.383145999999996, 31.464823, 34.40135];
+const OFF = still ? 2 : (L.Browser.retina ? 1 : 0);
+const Sat = L.TileLayer.extend({getTileUrl(c){ return 'sat/' + (c.z + OFF) + '/' + c.x + '_' + c.y + '.jpg'; }});
+const sat = new Sat('', {tileSize:1024 >> OFF, minNativeZoom:15 - OFF, maxNativeZoom:19 - OFF, maxZoom:20,
+  bounds:[[SATBOX[0],SATBOX[1]],[SATBOX[2],SATBOX[3]]], className:'sat', keepBuffer:1});
+let satOn = false, satBtn = null;
+function setSat(on){
+  satOn = on;
+  if (on) sat.addTo(map); else map.removeLayer(sat);
+  app.classList.toggle('sat-on', on);
+  if (satBtn) { satBtn.setAttribute('aria-pressed', on); satBtn.lastChild.textContent = on ? 'قمر' : 'أبيض'; }
+}
+const SatCtl = L.Control.extend({onAdd(){
+  const d = L.DomUtil.create('div', 'leaflet-bar sat-ctl');
+  d.innerHTML = '<button type="button" aria-pressed="true" title="القمر الصناعي: تشغيل / إيقاف" aria-label="القمر الصناعي">' + ICON.layers + '<span>قمر</span></button>';
+  satBtn = d.firstChild; L.DomEvent.disableClickPropagation(d);
+  satBtn.addEventListener('click', () => setSat(!satOn));
+  return d;
+}});
+if (!still) new SatCtl({position:'topleft'}).addTo(map);
+setSat(true);
+map.setMaxBounds(L.latLngBounds([[SATBOX[0],SATBOX[1]],[SATBOX[2],SATBOX[3]]]).pad(.35));
 
 for (const [name, z] of [['halo',395],['cas',400],['cab',410],['dots',420],['hit',430],['badges',640],['srcs',650]]) map.createPane(name).style.zIndex = z;
 
@@ -998,7 +1049,7 @@ function groupBounds(g){
 }
 function fit(b, maxZoom){
   const o = {paddingTopLeft:[40,70], paddingBottomRight:[40,40], maxZoom: maxZoom || 18};
-  if (reduce || poster) map.fitBounds(b, Object.assign(o, {animate:false})); else map.flyToBounds(b, Object.assign(o, {duration:.6}));
+  if (reduce || still) map.fitBounds(b, Object.assign(o, {animate:false})); else map.flyToBounds(b, Object.assign(o, {duration:.6}));
 }
 function jump(g){ if (sel) select(null, {fit:false}); fit(groupBounds(g)); }
 document.querySelectorAll('[data-jump]').forEach(b => b.addEventListener('click', () => jump(b.dataset.jump)));
@@ -1010,7 +1061,7 @@ function declutter(){
     taken.push({p, r:36}, {p:p.add([0,36]), r:34}, {p:p.add([-38,36]), r:30}, {p:p.add([38,36]), r:30}); }
   const order = D.cables.filter(c => !hidden.has(c.cls))
     .sort((a,b) => (b.n === sel) - (a.n === sel) || CLS[a.cls].rank - CLS[b.cls].rank || a.n - b.n);
-  const gap = poster ? 30 : 32;
+  const gap = 32;
   for (const c of D.cables) if (hidden.has(c.cls)) el(layers[c.n].badge)?.classList.add('is-off'); else el(layers[c.n].badge)?.classList.remove('is-off');
   for (const c of order) {
     const m = layers[c.n].badge; let placed = false;
@@ -1175,8 +1226,42 @@ const redraw = () => grid.redraw();
 matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', redraw);
 new MutationObserver(redraw).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
 
-renderOverview();
-map.fitBounds(groupBounds('all'), poster ? {padding:[40,40], animate:false} : {paddingTopLeft:[20,64], paddingBottomRight:[20,20], animate:false});
+/* still sheet: map + a band with the colours and the cables of this area */
+function renderSheet(g){
+  const srcs = g === 'all' ? ['abu','muf'] : [g];
+  const list = D.cables.filter(c => srcs.includes(c.src));
+  const t = {}; for (const c of list) { const x = t[c.cls] ||= {len:0, n:0}; x.len += c.len; x.n++; }
+  const len = list.reduce((s,c) => s + c.len, 0);
+  const label = {all:'كل الشبكة', abu:'منطقة مولد أبو زايد', muf:'منطقة المفتي'}[g];
+  document.querySelector('.bar p').textContent = 'خريطة كوابل الكهرباء على صورة القمر الصناعي · ' + label;
+  document.getElementById('m-len').textContent = len >= 1000 ? (len/1000).toFixed(1) + ' كم' : fmt(len) + ' م';
+  document.getElementById('m-cnt').textContent = list.length;
+  document.querySelector('.bar-meta div:nth-child(3) b').textContent = srcs.length;
+  const sizes = SIZE_ORDER.filter(k => t[k]).map(k => '<div class="sh-size">' + swatch(k) +
+    '<b>' + (k === 'x' ? 'غير مكتوب' : ltr(CLS[k].spec) + ' <small>مم²</small>') + '</b>' +
+    '<span>' + plural(t[k].n) + ' · ' + fmt(t[k].len) + ' م</span></div>').join('');
+  const group = (src) => {
+    const rows = []; const walk = (c) => { rows.push(c); c.kids.forEach(k => walk(byN.get(k))); };
+    D.cables.filter(c => c.src === src && !c.parent).forEach(walk);
+    return '<div class="reg-group"><div class="reg-head"><span class="src-mini">' + ICON.bolt + '</span><b>' + SRC[src] + '</b><span>' + plural(rows.length) + ' · ' + fmt(rows.reduce((s,c) => s + c.len, 0)) + ' م</span></div>' +
+      rows.map(c => '<div class="reg-row" data-depth="' + Math.min(depth(c),2) + '"><span class="badge b-' + c.cls + '">' + c.n + '</span>' +
+        '<span class="reg-main"><b>' + ltr(c.title) + '</b><span>' + fromText(c) + ' · باتجاه ' + c.dir + '</span></span>' +
+        '<span class="reg-len">' + fmt(c.len) + ' <small>م</small></span></div>').join('') + '</div>';
+  };
+  body.innerHTML = '<div class="sh-sizes">' + sizes + '</div><div class="sh-reg">' + srcs.map(group).join('') + '</div>' +
+    '<div class="sh-foot">' +
+      '<span><svg viewBox="0 0 26 26"><rect x="2" y="2" width="22" height="22" rx="6" fill="#d7a64f" stroke="#132230" stroke-width="1.5"/><path d="M14.3 5 7.5 14h4.6l-1 7 7.4-9.4h-4.7z" fill="#1b1305"/></svg>مصدر تغذية</span>' +
+      '<span><svg viewBox="0 0 26 26"><line x1="2" y1="13" x2="24" y2="13" stroke="#132230" stroke-width="6"/><line x1="2" y1="13" x2="24" y2="13" style="stroke:var(--c95)" stroke-width="3"/><circle cx="13" cy="13" r="5" fill="#fff" stroke="#132230" stroke-width="2.5"/></svg>نقطة تفرّع</span>' +
+      '<span><svg viewBox="0 0 26 26"><line x1="2" y1="13" x2="18" y2="13" stroke="#132230" stroke-width="6" stroke-linecap="round"/><line x1="2" y1="13" x2="18" y2="13" style="stroke:var(--c50)" stroke-width="3" stroke-linecap="round"/><circle cx="18" cy="13" r="4.5" style="fill:var(--c50)" stroke="#132230" stroke-width="2"/></svg>نهاية الكابل</span>' +
+      '<span>الأطوال على الخريطة؛ زِد 5–10% للارتخاء والنزلات</span>' +
+      '<span style="direction:ltr">Imagery © Esri, Maxar, Earthstar Geographics</span>' +
+    '</div>';
+}
+
+if (sheet) renderSheet(sheet); else renderOverview();
+if (sheet) map.fitBounds(groupBounds(sheet), {padding:[34,34], animate:false});
+else map.fitBounds(groupBounds('all'), {paddingTopLeft:[20,64], paddingBottomRight:[20,20], animate:false});
+
 applyFilters();
 })();
 </script>
