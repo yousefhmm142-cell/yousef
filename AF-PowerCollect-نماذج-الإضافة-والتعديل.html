@@ -1,0 +1,580 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>نماذج الإضافة والتعديل · AF PowerCollect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@500;600;700;800&family=El+Messiri:wght@600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+
+:root{
+  --page:#eff1f4;--surface:#fff;--raised:#f7f8fa;--sunken:#f2f3f5;
+  --line:#e2e5e9;--line2:#eceef1;--ink:#111820;--ink2:#353c46;--muted:#4c5460;--faint:#5e6773;
+  --brand:#a51d26;--brand-hi:#b8232c;--brand-lo:#7d121b;
+  --success:#047857;--success-t:#0478571a;--info:#1d5bcc;--info-t:#1d5bcc14;--warn:#b45309;--warn-t:#b453091a;--danger:#c81e1e;--danger-t:#c81e1e14;
+  --focus:#111820;--shadow:0 1px 2px #10182808,0 14px 34px -18px #1018282e;--pop:0 30px 60px -24px #10182866,0 2px 6px #1018280d;
+  --hero:linear-gradient(135deg,#262c34,#1c2127 55%,#111418);
+}
+:root[data-theme=dark]{
+  --page:#0b0d10;--surface:#14171c;--raised:#1b1f25;--sunken:#101317;
+  --line:#343a44;--line2:#252a32;--ink:#f4f5f7;--ink2:#e0e3e7;--muted:#9ea6b1;--faint:#8b94a0;
+  --success:#34d399;--success-t:#34d3991a;--info:#7dafe8;--info-t:#7dafe81a;--warn:#fbbf24;--warn-t:#fbbf241a;--danger:#fc7d7d;--danger-t:#fc7d7d1a;
+  --focus:#c9ced5;--shadow:0 20px 40px -24px #000;--pop:0 30px 60px -20px #000;
+  --hero:linear-gradient(135deg,#1c2127,#161a1f 55%,#0b0d10);
+}
+*{box-sizing:border-box}html,body{margin:0}
+body{min-height:100vh;background:var(--page);color:var(--ink);font:16px/1.6 'IBM Plex Sans Arabic',system-ui,sans-serif;-webkit-font-smoothing:antialiased;transition:background .3s}
+button,input,select{font:inherit;color:inherit}
+.num{font-family:Alexandria,'IBM Plex Sans Arabic',sans-serif;font-variant-numeric:tabular-nums}
+svg.i{width:18px;height:18px;flex:none}
+kbd{font:600 11.5px Alexandria;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:0 6px;background:var(--surface);color:var(--muted)}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+.demo-bar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 24px;background:color-mix(in srgb,var(--page) 82%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line2);font-size:14px;color:var(--muted)}
+.demo-bar b{color:var(--ink);font-family:'El Messiri',serif;font-size:17px}
+.seg{display:inline-flex;gap:2px;padding:3px;border-radius:12px;background:var(--sunken);border:1px solid var(--line2)}
+.seg button{border:0;background:transparent;padding:5px 12px;border-radius:9px;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed=true]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px #10182822}
+
+.wrap{max-width:1320px;margin:0 auto;padding:26px 24px 120px}
+.ph{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.ph h1{margin:0;font:700 34px/1.2 'El Messiri',serif}
+.ph p{margin:4px 0 0;color:var(--faint);font-size:14.5px}
+.ph .acts{margin-inline-start:auto;display:flex;gap:10px}
+.btn{height:44px;border-radius:13px;padding:0 16px;font-weight:700;font-size:15px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink2);transition:.18s}
+.btn:hover{background:var(--sunken)}
+.btn.pr{border:0;color:#fff;background:linear-gradient(180deg,var(--brand-hi),var(--brand-lo));box-shadow:0 12px 26px -12px #a51d26,inset 0 1px 0 #ffffff33}
+.btn.pr:hover{filter:brightness(1.07)}
+
+/* KPI filter cards */
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:22px}
+.kpi{position:relative;text-align:start;border:1px solid var(--line2);background:var(--surface);border-radius:20px;padding:14px 16px;cursor:pointer;box-shadow:var(--shadow);transition:.18s;overflow:hidden}
+.kpi:hover{transform:translateY(-1px);border-color:var(--line)}
+.kpi small{display:flex;align-items:center;gap:8px;color:var(--faint);font-size:13.5px;font-weight:600}
+.kpi small i{width:8px;height:8px;border-radius:50%}
+.kpi b{display:block;font:800 28px/1.2 Alexandria;margin-top:6px}
+.kpi span{font-size:12.5px;color:var(--faint)}
+.kpi[aria-pressed=true]{border-color:var(--ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--ink) 8%,transparent),var(--shadow)}
+.kpi.debt{background:var(--hero);color:#fff;border-color:transparent;cursor:default}
+.kpi.debt small{color:#aeb6c1}.kpi.debt span{color:#aeb6c1}
+.kpi.debt::after{content:"";position:absolute;inset-inline:0;top:0;height:3px;background:linear-gradient(90deg,#5c0d14,#a51d26 40%,#9aa3ae 75%,#dfe3e8)}
+.kpi .spark{position:absolute;inset-inline-end:16px;bottom:16px;display:flex;align-items:flex-end;gap:3px;height:26px;opacity:.9}
+.kpi .spark i{width:5px;border-radius:2px;background:#a51d26}
+
+/* card + toolbar */
+.card{margin-top:18px;background:var(--surface);border:1px solid var(--line2);border-radius:24px;box-shadow:var(--shadow)}
+.tb{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:16px 18px;border-bottom:1px solid var(--line2)}
+.search{position:relative;flex:1;min-width:240px;max-width:420px}
+.search svg{position:absolute;inset-inline-start:14px;top:50%;transform:translateY(-50%);color:var(--faint)}
+.search input{width:100%;height:46px;border:1.5px solid var(--line);border-radius:14px;background:var(--raised);padding:0 44px;font-size:15.5px;transition:.18s}
+.search input:focus{outline:none;background:var(--surface);border-color:var(--focus);box-shadow:0 0 0 4px color-mix(in srgb,var(--focus) 10%,transparent)}
+.search kbd{position:absolute;inset-inline-end:12px;top:50%;transform:translateY(-50%)}
+.chip-f{height:40px;display:inline-flex;align-items:center;gap:8px;border:1px dashed var(--line);border-radius:12px;padding:0 12px;background:transparent;cursor:pointer;font-size:14.5px;font-weight:600;color:var(--muted);position:relative}
+.chip-f.on{border-style:solid;border-color:var(--ink);color:var(--ink);background:var(--sunken)}
+.chip-f .n{font:700 12px Alexandria;background:var(--ink);color:var(--surface);border-radius:7px;padding:0 6px}
+.dd{position:absolute;top:calc(100% + 6px);inset-inline-start:0;z-index:15;min-width:220px;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--pop);padding:6px;display:none}
+.dd.open{display:block;animation:pop .14s ease}
+@keyframes pop{from{opacity:0;transform:translateY(-4px) scale(.97)}}
+.dd label{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;cursor:pointer;font-size:14.5px;font-weight:500;color:var(--ink2)}
+.dd label:hover{background:var(--sunken)}
+.dd input{accent-color:#a51d26;width:16px;height:16px}
+.dd .c{margin-inline-start:auto;font:600 12.5px Alexandria;color:var(--faint)}
+.tb .sp{margin-inline-start:auto;display:flex;align-items:center;gap:10px}
+.clear{border:0;background:transparent;color:var(--brand);font-weight:700;cursor:pointer;font-size:14px}
+.dens{display:inline-flex;gap:2px;padding:3px;border-radius:12px;background:var(--sunken);border:1px solid var(--line2)}
+.dens button{border:0;background:transparent;width:34px;height:32px;border-radius:9px;display:grid;place-items:center;cursor:pointer;color:var(--faint)}
+.dens button[aria-pressed=true]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px #10182822}
+
+/* table */
+.tw{overflow-x:auto;padding:4px 12px 8px}
+table{width:100%;border-collapse:separate;border-spacing:0 8px;font-size:15.5px}
+th{position:sticky;top:0;text-align:start;font-size:14px;font-weight:600;color:var(--muted);padding:10px 14px 4px;white-space:nowrap;user-select:none}
+th button{border:0;background:transparent;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-weight:600;color:inherit;padding:4px 8px;margin:-4px -8px;border-radius:9px}
+th button:hover{background:var(--sunken);color:var(--ink)}
+th button .ar{display:inline-flex;flex-direction:column;line-height:0;opacity:.35}
+th button[data-dir] {color:var(--ink);background:color-mix(in srgb,var(--brand) 8%,transparent)}
+th button[data-dir] .ar{opacity:1;color:var(--brand)}
+td{background:var(--surface);padding:14px;border-block:1px solid var(--line2);white-space:nowrap;vertical-align:middle;transition:background .15s,border-color .15s}
+td:first-child{border-inline-start:1px solid var(--line2);border-start-start-radius:16px;border-end-start-radius:16px;width:44px;padding-inline-end:4px}
+td:last-child{border-inline-end:1px solid var(--line2);border-start-end-radius:16px;border-end-end-radius:16px}
+tbody tr{cursor:pointer;animation:rowin .3s both}
+@keyframes rowin{from{opacity:0;transform:translateY(4px)}}
+tbody tr:hover td,tbody tr.kb td{border-color:var(--line);background:color-mix(in srgb,var(--surface) 96%,var(--ink))}
+tbody tr:hover td:first-child,tbody tr.kb td:first-child{box-shadow:inset -3px 0 0 var(--brand)}
+tbody tr.sel td{background:color-mix(in srgb,var(--brand) 5%,var(--surface));border-color:color-mix(in srgb,var(--brand) 22%,var(--line2))}
+[data-density=compact] td{padding-block:8px}[data-density=compact] .av{width:32px;height:32px;border-radius:10px;font-size:12px}
+.ck{width:20px;height:20px;border-radius:7px;border:1.5px solid color-mix(in srgb,var(--line) 50%,var(--faint));display:grid;place-items:center;cursor:pointer;background:var(--surface);transition:.15s}
+.ck svg{width:13px;height:13px;stroke-width:3;opacity:0}
+.ck[aria-checked=true],.ck[aria-checked=mixed]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.ck[aria-checked=true] svg,.ck[aria-checked=mixed] svg{opacity:1}
+.id{display:flex;align-items:center;gap:12px}
+.av{position:relative;width:40px;height:40px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(135deg,#4a525d,#161a1f);color:#fff;font:700 13px Alexandria;flex:none}
+.av i{position:absolute;bottom:-2px;left:-2px;width:12px;height:12px;border-radius:50%;border:2.5px solid var(--surface)}
+.id b{display:block;font-weight:700;font-size:15.5px}
+.id small{display:block;color:var(--faint);font:500 13.5px Alexandria;direction:ltr;text-align:right}
+mark{background:#f5c04a55;color:inherit;border-radius:4px;padding:0 1px}
+.box{font:600 13.5px ui-monospace,monospace;background:var(--sunken);border:1px solid var(--line2);border-radius:9px;padding:3px 9px;color:var(--ink2)}
+.muted{color:var(--faint)}
+.type{display:inline-flex;align-items:center;gap:7px;color:var(--ink2)}
+.type svg{color:var(--faint);width:16px;height:16px}
+.bal{display:flex;flex-direction:column;gap:5px;min-width:130px}
+.bal b{font:700 15.5px Alexandria;direction:ltr;text-align:right}
+.bal b.db{color:var(--danger)}.bal b.cr{color:var(--success)}.bal b.z{color:var(--faint)}
+.bal b em{font:600 12.5px 'IBM Plex Sans Arabic';font-style:normal;margin-inline-end:4px}
+.bal .m{height:4px;border-radius:99px;background:var(--sunken);overflow:hidden}
+.bal .m i{display:block;height:100%;border-radius:99px;background:var(--danger);opacity:.75}
+.pill{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:700;border-radius:99px;padding:3px 11px;border:1px solid}
+.pill i{width:7px;height:7px;border-radius:50%;background:currentColor}
+.p-active{color:var(--success);background:var(--success-t);border-color:color-mix(in srgb,var(--success) 25%,transparent)}
+.p-active i{box-shadow:0 0 0 3px color-mix(in srgb,var(--success) 20%,transparent)}
+.p-susp{color:var(--warn);background:var(--warn-t);border-color:color-mix(in srgb,var(--warn) 25%,transparent)}
+.p-cut{color:var(--danger);background:var(--danger-t);border-color:color-mix(in srgb,var(--danger) 28%,transparent)}
+.d-active{background:#10b981}.d-susp{background:#f59e0b}.d-cut{background:#dc2626}
+.when{font-size:14.5px;color:var(--ink2)}.when small{display:block;font-size:12.5px;color:var(--faint)}
+
+/* row actions */
+.ra{display:flex;align-items:center;justify-content:flex-end;gap:6px}
+.split{display:inline-flex;height:36px;border-radius:11px;background:var(--hero);color:#fff;box-shadow:0 8px 16px -8px #111820b3,inset 0 1px 0 #ffffff1f;overflow:hidden}
+.split button{border:0;background:transparent;color:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:0 12px;font-weight:700;font-size:14px}
+.split button+button{padding:0 8px;border-inline-start:1px solid #ffffff26}
+.split button svg{width:16px;height:16px}
+tbody tr:hover .split,tbody tr.kb .split{background:linear-gradient(180deg,var(--brand-hi),var(--brand-lo));box-shadow:0 10px 20px -8px #a51d26cc,inset 0 1px 0 #ffffff33}
+:root[data-theme=dark] .split{background:linear-gradient(180deg,#f4f5f7,#c9ced5);color:#111820}
+:root[data-theme=dark] .split button+button{border-color:#11182022}
+.ib{width:36px;height:36px;border-radius:11px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer;color:var(--ink2);transition:.15s}
+.ib svg{width:17px;height:17px}
+.ib:hover{background:var(--sunken)}
+.ib.ed{color:var(--info)}.ib.ed:hover{background:var(--info-t);border-color:color-mix(in srgb,var(--info) 35%,transparent)}
+.ib.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+
+/* more menu */
+.menu{position:fixed;z-index:30;width:320px;background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:var(--pop);overflow:hidden;display:none;font-size:14.5px}
+.menu.open{display:block;animation:pop .14s ease}
+.menu .mh{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line2)}
+.menu .mh b{display:block;font-size:14.5px}.menu .mh small{color:var(--faint);font:500 12.5px Alexandria}
+.menu .ms{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--line2);color:var(--faint)}
+.menu .ms input{flex:1;border:0;background:transparent;height:34px;font-size:14.5px}
+.menu .ms input:focus{outline:none}
+.menu .mb{max-height:330px;overflow:auto;padding:6px}
+.mg{font-size:12px;font-weight:700;color:var(--faint);padding:8px 10px 3px}
+.mi{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:12px;cursor:pointer;color:var(--ink2)}
+.mi .mic{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;background:var(--sunken);flex:none}
+.mi .mic svg{width:16px;height:16px}
+.mi .t{flex:1}
+.mi:hover,.mi.act{background:var(--sunken);color:var(--ink)}
+.mi:hover .mic,.mi.act .mic{background:linear-gradient(180deg,var(--brand-hi),var(--brand-lo));color:#fff}
+.mi.lk{opacity:.5;cursor:not-allowed}.mi.lk:hover .mic{background:var(--sunken);color:inherit}
+.mi .s{font-size:12px;color:var(--faint);display:inline-flex;align-items:center;gap:4px}
+.menu .mf{display:flex;gap:12px;padding:8px 14px;border-top:1px solid var(--line2);background:var(--raised);font-size:12px;color:var(--faint)}
+
+/* footer + pagination */
+.tf{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 18px 16px;border-top:1px solid var(--line2);font-size:14.5px;color:var(--faint)}
+.pg{margin-inline-start:auto;display:flex;align-items:center;gap:4px}
+.pg button{min-width:38px;height:38px;border-radius:11px;border:1px solid transparent;background:transparent;cursor:pointer;font:600 14.5px Alexandria;color:var(--ink2)}
+.pg button:hover{background:var(--sunken)}
+.pg button[aria-current=page]{background:var(--ink);color:var(--surface)}
+.pg button:disabled{opacity:.35;cursor:default}
+.per{display:inline-flex;gap:2px;padding:3px;border-radius:12px;background:var(--sunken);border:1px solid var(--line2)}
+.per button{border:0;background:transparent;min-width:36px;height:30px;border-radius:9px;cursor:pointer;font:600 13px Alexandria;color:var(--faint)}
+.per button[aria-pressed=true]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px #10182822}
+.empty{text-align:center;padding:56px 20px;color:var(--faint)}
+.empty .e{width:64px;height:64px;margin:0 auto 12px;border-radius:20px;display:grid;place-items:center;background:var(--sunken);color:var(--muted)}
+.empty b{display:block;color:var(--ink);font-size:18px;font-family:'El Messiri',serif}
+
+/* bulk bar */
+.bulk{position:fixed;bottom:22px;left:50%;transform:translate(-50%,120%);opacity:0;z-index:25;display:flex;align-items:center;gap:4px;background:#111820;color:#fff;border-radius:18px;padding:7px;box-shadow:0 24px 50px -18px #000c;transition:.28s cubic-bezier(.22,1,.36,1)}
+.bulk.on{transform:translate(-50%,0);opacity:1}
+.bulk .n{display:flex;align-items:center;gap:8px;padding:0 12px 0 14px;border-inline-end:1px solid #ffffff26;margin-inline-end:4px;font-weight:600}
+.bulk .n b{font:700 13px Alexandria;background:#fff;color:#111820;border-radius:8px;padding:1px 8px}
+.bulk button{border:0;background:transparent;color:#e6e9ed;cursor:pointer;display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:12px;font-weight:600;font-size:14.5px}
+.bulk button:hover{background:#ffffff14;color:#fff}
+.bulk button svg{width:16px;height:16px}
+
+/* drawer */
+.scrim{position:fixed;inset:0;z-index:40;background:#0b0d1066;backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:.25s}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;inset-block:12px;left:12px;z-index:41;width:min(440px,calc(100% - 24px));background:var(--surface);border:1px solid var(--line2);border-radius:26px;box-shadow:var(--pop);display:flex;flex-direction:column;overflow:hidden;transform:translateX(-110%);transition:transform .3s cubic-bezier(.22,1,.36,1)}
+.drawer.on{transform:none}
+.dhero{background:var(--hero);color:#fff;padding:18px 20px 20px;position:relative}
+.dhero::after{content:"";position:absolute;inset-inline:0;bottom:0;height:3px;background:linear-gradient(90deg,#5c0d14,#a51d26 40%,#9aa3ae 75%,#dfe3e8)}
+.dtop{display:flex;align-items:center;gap:6px}
+.dtop .ib{background:#ffffff14;border-color:#ffffff1f;color:#fff}
+.dtop .ib:hover{background:#ffffff26}
+.dtop small{margin-inline-end:auto;color:#aeb6c1;font:600 13px Alexandria}
+.dwho{display:flex;align-items:center;gap:14px;margin-top:14px}
+.dwho .av{width:56px;height:56px;border-radius:18px;font-size:18px;background:linear-gradient(135deg,#5a636f,#1c2127);box-shadow:inset 0 1px 0 #ffffff26}
+.dwho .av i{border-color:#1c2127}
+.dwho b{display:block;font:700 22px 'El Messiri',serif}
+.dwho small{color:#c9ced5;font-size:13.5px}
+.dk{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+.dk div{background:#ffffff0f;border:1px solid #ffffff17;border-radius:14px;padding:9px 11px}
+.dk small{display:block;color:#aeb6c1;font-size:12px}
+.dk b{font:700 17px Alexandria;direction:ltr;display:block;text-align:right}
+.dtabs{display:flex;gap:4px;padding:0 18px;border-bottom:1px solid var(--line2)}
+.dtabs button{border:0;background:transparent;padding:12px 10px;font-weight:600;color:var(--faint);cursor:pointer;font-size:14.5px}
+.dtabs button[aria-selected=true]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--brand)}
+.dbody{flex:1;overflow:auto;padding:14px 20px}
+.tl{position:relative;display:grid;gap:4px}
+.tl::before{content:"";position:absolute;inset-block:10px;inset-inline-start:15px;width:2px;background:var(--line2)}
+.tl div{position:relative;display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;padding:8px 0;font-size:14.5px}
+.tl .d{width:32px;height:32px;border-radius:11px;display:grid;place-items:center;background:var(--sunken);color:var(--muted);z-index:1}
+.tl .d svg{width:15px;height:15px}
+.tl .d.pay{background:var(--success-t);color:var(--success)}
+.tl b{font-weight:600}.tl small{display:block;color:var(--faint);font-size:12.5px}
+.tl .amt{font:700 14.5px Alexandria;direction:ltr}
+.info{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.info div{background:var(--raised);border:1px solid var(--line2);border-radius:14px;padding:10px 12px}
+.info small{display:block;font-size:12.5px;color:var(--faint)}.info b{font-size:14.5px}
+.dfoot{display:flex;gap:8px;padding:14px 18px;border-top:1px solid var(--line2);background:var(--raised)}
+.dfoot .btn{height:44px;flex:1;justify-content:center;padding:0 10px}
+.dfoot .btn.pay{flex:1.4;border:0;color:#fff;background:linear-gradient(180deg,#0f9f76,#047857);box-shadow:0 12px 24px -12px #047857}
+
+.toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,20px);opacity:0;z-index:50;display:flex;align-items:center;gap:12px;background:#111820;color:#fff;border-radius:16px;padding:10px 12px 10px 16px;box-shadow:0 20px 40px -18px #000a;font-size:14.5px;transition:.3s;pointer-events:none}
+.toast.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast .ok{width:26px;height:26px;border-radius:9px;background:#34d3992b;color:#34d399;display:grid;place-items:center}
+.toast button{border:0;background:#ffffff1a;color:#fff;border-radius:10px;padding:5px 12px;font-weight:700;cursor:pointer}
+.hintbar{margin-top:14px;display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--faint)}
+.hintbar span{display:inline-flex;align-items:center;gap:6px}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}.kpi.debt{grid-column:span 3}.col-branch,.col-when{display:none}}
+@media (max-width:760px){
+  .wrap{padding:18px 14px 120px}.ph h1{font-size:28px}.ph .acts{width:100%}.ph .acts .btn{flex:1;justify-content:center}
+  .kpis{grid-template-columns:1fr 1fr}.kpi.debt{grid-column:span 2}
+  .search{max-width:none;min-width:100%}
+  thead{display:none}table,tbody,tr,td{display:block}
+  table{border-spacing:0}.tw{padding:8px 12px}
+  tbody tr{position:relative;background:var(--surface);border:1px solid var(--line2);border-radius:18px;padding:12px 14px 12px 14px;margin-bottom:10px;display:grid;grid-template-columns:auto 1fr auto;gap:10px 12px;align-items:center}
+  td,td:first-child,td:last-child{border:0!important;padding:0;background:transparent!important;border-radius:0;width:auto;box-shadow:none!important}
+  td.c-id{grid-column:2}td.c-status{grid-column:3;grid-row:1}
+  td.c-box,td.c-type,td.col-branch,td.col-when{display:none}
+  td.c-bal{grid-column:1/-1}td.c-act{grid-column:1/-1}
+  .ra{justify-content:stretch}.split{flex:1}.split button:first-child{flex:1;justify-content:center}
+  .hintbar{display:none}.tf{justify-content:center}.pg{margin:0}
+  .bulk{width:calc(100% - 24px);overflow-x:auto}.bulk button span{display:none}
+}
+
+[hidden]{display:none!important}
+.demo-bar{z-index:45;flex-wrap:wrap}
+.dbr{display:flex;gap:8px;flex-wrap:wrap}
+.bgp{max-width:1320px;margin:0 auto;padding:26px 24px;opacity:.5;filter:saturate(.5);pointer-events:none}
+.bgp .rowx{height:62px;border-radius:16px;background:var(--surface);border:1px solid var(--line2);margin-top:8px}
+.reopen{position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:5}
+.scr{position:fixed;inset:57px 0 0;z-index:40;background:#0b0d1073;backdrop-filter:blur(3px);overflow-y:auto;padding:28px 16px}
+.win{width:min(1060px,100%);margin:0 auto;background:var(--page);border:1px solid var(--line2);border-radius:26px;box-shadow:var(--pop);overflow:hidden;animation:pop .18s ease}
+.wh{display:flex;align-items:center;gap:14px;padding:16px 22px;background:var(--hero);color:#fff;position:relative}
+.wh::before{content:"";position:absolute;inset-inline:0;top:0;height:3px;background:linear-gradient(90deg,#5c0d14,#a51d26 40%,#9aa3ae 75%,#dfe3e8)}
+.wh .gi{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:#ffffff14;flex:none}
+.wh .gi svg{width:22px;height:22px}
+.wh h2{margin:0;font:700 21px 'El Messiri',serif}
+.wh p{margin:0;font-size:13.5px;color:#aeb6c1}
+.wh .x{margin-inline-start:auto;width:38px;height:38px;border-radius:11px;border:1px solid #ffffff26;background:#ffffff0f;color:#e6e9ed;display:grid;place-items:center;cursor:pointer}
+.wh .x:hover{background:#ffffff1f}
+.wb{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;padding:20px 22px}
+.sec{background:var(--surface);border:1px solid var(--line2);border-radius:20px;padding:16px 18px;box-shadow:var(--shadow)}
+.sec+.sec{margin-top:14px}
+.sec h3{margin:0 0 2px;font:700 17px 'El Messiri',serif;display:flex;align-items:center;gap:10px}
+.sec h3 .n{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font:700 12.5px Alexandria;background:var(--sunken);color:var(--ink2)}
+.sec h3 .n.done{background:var(--success);color:#fff}
+.sec>p{margin:0 0 4px;font-size:13px;color:var(--faint)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}
+.full{grid-column:1/-1}
+.fld{margin-top:12px;min-width:0}
+.fld label.l{display:flex;align-items:center;gap:6px;font-weight:700;font-size:13.5px;margin-bottom:6px;color:var(--ink2)}
+.fld label.l .rq{color:var(--brand)}
+.fld label.l small{margin-inline-start:auto;font-weight:500;font-size:12px;color:var(--faint);display:inline-flex;align-items:center;gap:4px}
+.fld label.l small svg{width:12px;height:12px}
+.inp{position:relative}
+.inp input,.inp select,.inp textarea{width:100%;height:46px;border:1.5px solid var(--line);border-radius:13px;background:var(--surface);padding:0 13px;font-size:15px;color:var(--ink);transition:.15s;font-family:inherit}
+.inp textarea{height:74px;padding:10px 13px;resize:vertical}
+.inp select{appearance:none;background-image:none;padding-inline-end:36px;cursor:pointer}
+.inp .chev{position:absolute;inset-inline-end:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--faint)}
+.inp .chev svg{width:16px;height:16px}
+.inp input:hover:not(:disabled),.inp select:hover:not(:disabled),.inp textarea:hover{border-color:color-mix(in srgb,var(--brand) 35%,var(--line))}
+.inp input:focus,.inp select:focus,.inp textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 4px color-mix(in srgb,var(--brand) 12%,transparent)}
+.inp input:disabled,.inp select:disabled{background:var(--sunken);color:var(--muted);border-style:dashed;cursor:not-allowed}
+.inp input.ltr{direction:ltr;text-align:left;font-family:Alexandria;font-weight:500}
+.inp .pre{position:absolute;inset-inline-end:12px;top:50%;transform:translateY(-50%);font:600 12.5px Alexandria;color:var(--faint);pointer-events:none}
+.inp .suf{position:absolute;inset-inline-start:12px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--faint);pointer-events:none}
+.inp .st{position:absolute;inset-inline-start:10px;top:50%;transform:translateY(-50%);display:grid;place-items:center}
+.inp .st svg{width:17px;height:17px}
+.inp .ib2{position:absolute;inset-inline-start:6px;top:50%;transform:translateY(-50%);height:34px;border-radius:9px;border:0;background:transparent;padding:0 8px;cursor:pointer;color:var(--faint);display:inline-flex;align-items:center;gap:5px;font-weight:700;font-size:12.5px}
+.inp .ib2:hover{background:color-mix(in srgb,var(--brand) 8%,transparent);color:var(--brand)}
+.inp .ib2 svg{width:16px;height:16px}
+.fld.bad .inp input,.fld.bad .inp select{border-color:var(--danger);background:color-mix(in srgb,var(--danger) 4%,var(--surface))}
+.fld.good .inp input{border-color:color-mix(in srgb,var(--success) 50%,var(--line))}
+.fe{color:var(--danger);font-size:12.5px;font-weight:600;margin-top:5px}
+.fh{color:var(--faint);font-size:12.5px;margin-top:5px}
+.fok{color:var(--success);font-size:12.5px;font-weight:600;margin-top:5px}
+/* choice cards & chips */
+.cards{display:grid;gap:8px}
+.cards.c2{grid-template-columns:1fr 1fr}.cards.c3{grid-template-columns:repeat(3,1fr)}
+.cd{position:relative;text-align:start;border:1.5px solid var(--line);background:var(--surface);border-radius:14px;padding:10px 12px;cursor:pointer;font:inherit;color:inherit;transition:.15s}
+.cd:hover{border-color:color-mix(in srgb,var(--brand) 40%,var(--line))}
+.cd[aria-pressed=true]{border-color:var(--brand);background:color-mix(in srgb,var(--brand) 7%,var(--surface))}
+.cd[aria-pressed=true] b{color:var(--brand)}
+.cd b{display:flex;align-items:center;gap:7px;font-size:14.5px}
+.cd b i{width:8px;height:8px;border-radius:50%}
+.cd small{display:block;font-size:12px;color:var(--faint);margin-top:2px;line-height:1.5}
+.cd .tick{position:absolute;top:8px;inset-inline-end:8px;width:18px;height:18px;border-radius:50%;background:var(--brand);color:#fff;display:none;place-items:center}
+.cd .tick svg{width:11px;height:11px;stroke-width:3}
+.cd[aria-pressed=true] .tick{display:grid}
+.cd:disabled{opacity:.45;cursor:not-allowed}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chp{height:36px;border-radius:11px;border:1.5px solid var(--line);background:var(--surface);padding:0 12px;font-weight:700;font-size:13.5px;cursor:pointer;color:var(--ink2);display:inline-flex;align-items:center;gap:6px}
+.chp small{font:600 11.5px Alexandria;color:var(--faint)}
+.chp:hover{border-color:color-mix(in srgb,var(--brand) 40%,var(--line));color:var(--brand)}
+.chp[aria-pressed=true]{border-color:var(--brand);background:color-mix(in srgb,var(--brand) 8%,var(--surface));color:var(--brand)}
+.chp[aria-pressed=true] small{color:inherit}
+.lockrow{display:flex;align-items:center;gap:8px}
+.lockrow .inp{flex:1}
+.unl{height:46px;border-radius:13px;border:1px dashed var(--line);background:transparent;padding:0 11px;font-weight:700;font-size:12.5px;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.unl:hover{color:var(--brand);border-color:color-mix(in srgb,var(--brand) 40%,var(--line))}
+.unl svg{width:14px;height:14px}
+.sw{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:14px;border:1px solid var(--line2);background:var(--raised)}
+.sw b{display:block;font-size:14px}.sw small{display:block;font-size:12.5px;color:var(--faint)}
+.tg{margin-inline-start:auto;width:46px;height:26px;border-radius:99px;border:0;background:var(--line);position:relative;cursor:pointer;flex:none;transition:.2s}
+.tg::after{content:"";position:absolute;top:3px;inset-inline-start:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px #0003;transition:.2s}
+.tg[aria-checked=true]{background:var(--success)}
+.tg[aria-checked=true]::after{inset-inline-start:23px}
+/* side summary */
+.side{position:sticky;top:0;align-self:start;display:grid;gap:12px}
+.sum{background:var(--hero);color:#fff;border-radius:20px;padding:16px;position:relative;overflow:hidden}
+.sum::after{content:"";position:absolute;width:200px;height:200px;border-radius:50%;background:#a51d26;opacity:.22;filter:blur(60px);bottom:-120px;inset-inline-end:-40px}
+.sum>*{position:relative;z-index:1}
+.sum small.h{font-size:12.5px;color:#aeb6c1;font-weight:600}
+.sum .who{display:flex;align-items:center;gap:10px;margin-top:8px}
+.sum .who .av{width:42px;height:42px;border-radius:13px;font-size:14px;background:linear-gradient(135deg,#d8414b,#7d121b)}
+.sum .who b{display:block;font-size:16px}
+.sum .who span{font:600 12.5px Alexandria;color:#aeb6c1;direction:ltr;display:inline-block}
+.sum dl{margin:12px 0 0;display:grid;gap:6px;font-size:13.5px}
+.sum dl div{display:flex;justify-content:space-between;gap:8px;border-top:1px solid #ffffff14;padding-top:6px}
+.sum dt{color:#8b94a0}.sum dd{margin:0;font-weight:700;text-align:end}
+.sum dd.num{font-family:Alexandria}
+.prog2{background:var(--surface);border:1px solid var(--line2);border-radius:18px;padding:12px 14px;font-size:13px;color:var(--faint)}
+.prog2 .bar{height:7px;border-radius:99px;background:var(--sunken);overflow:hidden;margin-top:7px}
+.prog2 .bar i{display:block;height:100%;background:var(--success);border-radius:99px;transition:width .3s}
+.prog2 ul{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:4px}
+.prog2 li{display:flex;align-items:center;gap:7px}
+.prog2 li i{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center}
+.prog2 li i svg{width:10px;height:10px;stroke-width:3;opacity:0}
+.prog2 li.on{color:var(--ink2)}.prog2 li.on i{background:var(--success);border-color:var(--success);color:#fff}.prog2 li.on i svg{opacity:1}
+.infob{display:flex;gap:9px;align-items:flex-start;padding:10px 12px;border-radius:14px;font-size:13px;line-height:1.7;background:var(--info-t);border:1px solid color-mix(in srgb,var(--info) 22%,transparent);color:var(--ink2)}
+.infob svg{width:16px;height:16px;color:var(--info);flex:none;margin-top:3px}
+.infob.w{background:var(--warn-t);border-color:color-mix(in srgb,var(--warn) 25%,transparent)}.infob.w svg{color:var(--warn)}
+.perms{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.perms span{font-size:12px;font-weight:600;border-radius:7px;padding:1px 8px;background:var(--success-t);color:var(--success)}
+/* footer */
+.wf{display:flex;align-items:center;gap:10px;padding:14px 22px;border-top:1px solid var(--line2);background:var(--surface);position:sticky;bottom:0;flex-wrap:wrap}
+.wf .err{color:var(--danger);font-weight:600;font-size:13.5px;display:inline-flex;align-items:center;gap:6px}
+.wf .err svg{width:16px;height:16px}
+.wf .sp{margin-inline-start:auto;display:flex;gap:8px;flex-wrap:wrap}
+.btn:not(.pr):hover{border-color:color-mix(in srgb,var(--brand) 40%,var(--line));color:var(--brand);background:color-mix(in srgb,var(--brand) 5%,var(--surface))}
+.btn svg{width:17px;height:17px}
+.btn.dgo{color:var(--danger)}
+.notes{margin:16px 22px 20px;border:1px dashed var(--line);border-radius:18px;padding:4px 18px;background:var(--surface);font-size:14px;color:var(--ink2)}
+.notes summary{cursor:pointer;font-weight:700;padding:10px 0}
+.notes summary:hover{color:var(--brand)}
+.notes ul{margin:0 0 12px;padding-inline-start:20px;display:grid;gap:4px}
+.notes code{font:12.5px ui-monospace,monospace;background:var(--sunken);border-radius:6px;padding:1px 6px}
+.shake{animation:shake .35s}
+@keyframes shake{25%,75%{transform:translateX(-5px)}50%{transform:translateX(5px)}}
+:root[data-theme=dark] .cd[aria-pressed=true] b,:root[data-theme=dark] .chp[aria-pressed=true],:root[data-theme=dark] .chp:hover,:root[data-theme=dark] .btn:not(.pr):hover,:root[data-theme=dark] .notes summary:hover,:root[data-theme=dark] .fld label.l .rq{color:#f28b93}
+:root[data-theme=dark] .cd[aria-pressed=true],:root[data-theme=dark] .chp[aria-pressed=true]{border-color:#e0707a}
+@media (max-width:900px){.wb{grid-template-columns:minmax(0,1fr)}.side{position:static}.prog2{display:none}}
+@media (max-width:640px){
+  .scr{padding:0}.win{border-radius:0;min-height:100%}
+  .wh{padding:14px}.wb{padding:12px}.sec{padding:14px 12px}
+  .g2,.cards.c2,.cards.c3{grid-template-columns:1fr}
+  .wf{padding:12px}.wf .sp{width:100%}.wf .sp .btn{flex:1;justify-content:center}
+  .notes{margin:12px}
+}
+</style>
+</head>
+<body>
+<div class="demo-bar">
+  <div><b>نماذج الإضافة والتعديل</b> · نموذج تفاعلي</div>
+  <div class="dbr">
+    <div class="seg" id="formSeg" role="group" aria-label="النموذج"><button data-f="sub" aria-pressed="true">مشترك</button><button data-f="user" aria-pressed="false">مستخدم</button><button data-f="box" aria-pressed="false">طبلون</button></div>
+    <div class="seg" id="modeSeg" role="group" aria-label="الحالة"><button data-m="add" aria-pressed="true">إضافة</button><button data-m="edit" aria-pressed="false">تعديل</button></div>
+    <div class="seg" id="roleSeg" role="group" aria-label="بصفة"><button data-r="admin" aria-pressed="true">مدير عام</button><button data-r="branch" aria-pressed="false">مدير فرع</button></div>
+    <div class="seg" id="themeSeg" role="group" aria-label="الوضع"><button data-theme="light" aria-pressed="true">نهاري</button><button data-theme="dark" aria-pressed="false">ليلي</button></div>
+  </div>
+</div>
+<div class="bgp" aria-hidden="true"><div class="ph"><div><h1 id="bgT">المشتركون</h1></div></div><div style="margin-top:20px"><div class="rowx"></div><div class="rowx"></div><div class="rowx"></div><div class="rowx"></div><div class="rowx"></div><div class="rowx"></div><div class="rowx"></div><div class="rowx"></div></div></div>
+<button class="btn pr reopen" id="reopen" hidden></button>
+<div class="scr" id="scr"><div class="win" role="dialog" aria-modal="true" aria-labelledby="wt" id="win"></div></div>
+<div class="toast" id="toast"><span class="ok" id="tIc"></span><span id="tmsg"></span><button id="undo" hidden>تراجع</button></div>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const P={user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.5-5.5 6.5-5.5s5.5 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.5c1.6.7 2.6 2.4 3 5.5"/>',box:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h4"/>',x:'<path d="M6 6l12 12M18 6 6 18"/>',check:'<path d="m5 12.5 4.5 4.5L19 7"/>',alert:'<circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/>',lock:'<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',unlock:'<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 7.5-2"/>',down:'<path d="m6 9 6 6 6-6"/>',info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',save:'<path d="M5 3h11l3 3v15H5z"/><path d="M8 3v5h7M8 21v-7h8v7"/>',plus:'<path d="M12 5v14M5 12h14"/>',dice:'<rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.2" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/>',eye:'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',copy:'<rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/>',spin:'<path d="M21 12a9 9 0 1 1-6.2-8.6"/>'};
+const ic=(k,s=18)=>`<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${P[k]}</svg>`;
+const n2=v=>(+v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+// ---------- reference data (from the system) ----------
+const BRANCHES=[{id:1,n:'النصيرات',area:'النصيرات'},{id:2,n:'دير البلح',area:'دير البلح'},{id:3,n:'البريج',area:'البريج'}];
+const SUBAREAS={1:['الشاطئ','المعسكر','البلوك الجديد','سوق النصيرات'],2:['بحر الدير','المحطة','سوق الدير'],3:['غرب البريج','البركة']};
+const BOXES=[{id:1,no:'455',n:'نادي الأهلي',b:1,sa:'الشاطئ',c:186},{id:2,no:'458',n:'سوق النصيرات',b:1,sa:'سوق النصيرات',c:204},{id:3,no:'463',n:'البلوك الجديد',b:1,sa:'البلوك الجديد',c:171},{id:4,no:'466',n:'المعسكر',b:1,sa:'المعسكر',c:223},{id:5,no:'512',n:'المحطة',b:2,sa:'المحطة',c:140},{id:6,no:'530',n:'البركة',b:3,sa:'البركة',c:96}];
+const TARIFFS=[{id:1,n:'منزلي',rate:3,seg:['أسر محتاجة','موظفون']},{id:2,n:'تجاري',rate:4.5,seg:['مساجد','مدارس','محلات']}];
+const BREAKERS=[{a:4,m:20},{a:6,m:25},{a:10,m:30},{a:16,m:45},{a:20,m:60},{a:32,m:90}];
+const TAKEN_ID=['801234567'],TAKEN_USER=['yousef','sami','hala'],TAKEN_BOX=['455','458','463','466','512','530'];
+const ROLES=[{k:'branch_admin',n:'مدير فرع',d:'يدير فرعه: المشتركون، المستخدمون، الطبلونات',c:'#a51d26',admin:1,p:['المشتركون','المستخدمون','الطبلونات','القراءات','التحصيل']},
+ {k:'accountant',n:'محاسب',d:'السجل المالي، الخصم والتحميل، تأكيد الدفعات',c:'#1d5bcc',admin:1,p:['السجل المالي','الخصم والتحميل','تأكيد الدفعات']},
+ {k:'collector',n:'محصّل',d:'تسجيل الدفعات من الموقع وتطبيق الميدان',c:'#047857',p:['البحث عن مشترك','تسجيل دفعة']},
+ {k:'data_entry',n:'مدخل بيانات',d:'إدخال القراءات وإضافة المشتركين',c:'#b45309',p:['إدخال القراءات','إضافة مشترك']},
+ {k:'financial_auditor',n:'مدقق مالي',d:'مراجعة القراءات واعتمادها',c:'#6d28d9',p:['مراجعة القراءات','اعتماد القراءات']}];
+// ---------- state ----------
+const S={f:'sub',m:'add',r:'admin',open:true,tried:false,data:{}};
+const EDIT={sub:{full_name:'محمد أحمد الشاعر',national_id:'801234567',phone:'0599123456',address:'النصيرات، قرب نادي الأهلي',branch:1,sa:'الشاطئ',box:1,tariff:1,seg:'',breaker:10,minimum:30,minUnlocked:false,status:'active',initial:'3480',fee:'',date:'2026-01-30',notes:'',acc:'2026-0412'},
+ user:{name:'سامي الحلو',username:'sami',role:'data_entry',branch:1,active:true},
+ box:{name:'نادي الأهلي',no:'455',branch:1,sa:'الشاطئ',location:'شارع النادي، مقابل المسجد'}};
+function blank(f){return f==='sub'?{full_name:'',national_id:'',phone:'',address:'',branch:S.r==='admin'?'':1,sa:'',box:'',tariff:1,seg:'',breaker:'',minimum:'',minUnlocked:false,status:'active',initial:'',fee:'',date:'2026-10-01',notes:''}
+ :f==='user'?{name:'',username:'',pw:'',pw2:'',role:'',branch:S.r==='admin'?'':1,active:true}:{name:'',no:'',branch:S.r==='admin'?'':1,sa:'',location:''}}
+function reset(){S.data=S.m==='edit'?structuredClone(EDIT[S.f]):blank(S.f);if(S.r==='branch'&&'branch' in S.data)S.data.branch=1;S.tried=false;S.touched={}}
+// ---------- validation ----------
+const PHONE=/^05[69]\d{7}$/;
+function errors(){const d=S.data,e={};const me=S.m==='edit'?EDIT[S.f]:{};
+ if(S.f==='sub'){if(!d.full_name.trim())e.full_name='الاسم الكامل مطلوب.';
+  if(!/^\d{9}$/.test(d.national_id))e.national_id='رقم الهوية 9 أرقام.';else if(TAKEN_ID.includes(d.national_id)&&d.national_id!==me.national_id)e.national_id='رقم الهوية مسجّل لمشترك آخر: محمد أحمد الشاعر.';
+  if(!PHONE.test(d.phone))e.phone='رقم الجوال يبدأ بـ 059 أو 056 ويتكون من 10 أرقام.';
+  if(!d.branch)e.branch='اختر الفرع.';if(!d.tariff)e.tariff='اختر نوع الاشتراك.';
+  if(d.minimum===''||isNaN(+d.minimum)||+d.minimum<0)e.minimum='الحد الأدنى مطلوب.';
+  if(d.initial===''||isNaN(+d.initial)||+d.initial<0)e.initial='القراءة الابتدائية مطلوبة.';}
+ if(S.f==='user'){if(!d.name.trim())e.name='الاسم مطلوب.';
+  if(!d.username)e.username='اسم المستخدم مطلوب.';else if(!/^[\w.-]+$/.test(d.username))e.username='أحرف إنجليزية وأرقام و . - _ فقط، بدون مسافات.';else if(TAKEN_USER.includes(d.username.toLowerCase())&&d.username!==me.username)e.username='اسم المستخدم مستخدم.';
+  if(S.m==='add'||d.pw){if((d.pw||'').length<8)e.pw='8 أحرف على الأقل.';if(d.pw!==d.pw2)e.pw2='كلمتا المرور غير متطابقتين.'}
+  if(!d.role)e.role='اختر الدور.';if(!d.branch)e.branch='اختر الفرع.'}
+ if(S.f==='box'){if(!d.name.trim())e.name='اسم الطبلون مطلوب.';if(!d.no.trim())e.no='رقم الطبلون مطلوب.';else if(TAKEN_BOX.includes(d.no.trim())&&d.no!==me.no)e.no=`الرقم ${d.no} مستخدم لطبلون آخر.`;if(!d.branch)e.branch='اختر الفرع.'}
+ return e}
+const show=k=>S.tried||S.touched[k];
+function fe(e,k,hint){return e[k]&&show(k)?`<div class="fe">${e[k]}</div>`:hint?`<div class="fh">${hint}</div>`:''}
+const cls=(e,k)=>e[k]&&show(k)?'bad':(!e[k]&&S.touched[k]&&S.data[k]!==''?'good':'');
+const okI=(e,k)=>!e[k]&&S.touched[k]&&S.data[k]?`<span class="st" style="color:var(--success)">${ic('check',17)}</span>`:'';
+const sel=(k,opts,ph,dis)=>`<div class="inp"><select data-k="${k}" ${dis?'disabled':''}><option value="">${ph}</option>${opts.map(([v,t])=>`<option value="${v}" ${String(S.data[k])===String(v)?'selected':''}>${t}</option>`).join('')}</select><span class="chev">${ic('down',16)}</span></div>`;
+const RQ='<span class="rq">*</span>';
+// ---------- subscriber ----------
+function fSub(e){const d=S.data,adm=S.r==='admin',br=BRANCHES.find(b=>b.id==d.branch),boxes=BOXES.filter(b=>b.b==d.branch&&(!d.sa||b.sa===d.sa)),t=TARIFFS.find(x=>x.id==d.tariff),bk=BREAKERS.find(x=>x.a==d.breaker);
+ return`<section class="sec"><h3><span class="n ${['full_name','national_id','phone'].every(k=>!e[k])?'done':''}">1</span>البيانات الشخصية</h3><p>كما في بطاقة الهوية.</p>
+  <div class="g2">
+   <div class="fld full ${cls(e,'full_name')}"><label class="l" for="f_full_name">الاسم الكامل ${RQ}</label><div class="inp"><input id="f_full_name" data-k="full_name" value="${d.full_name}" placeholder="الاسم الرباعي" autocomplete="off"></div>${fe(e,'full_name')}</div>
+   <div class="fld ${cls(e,'national_id')}"><label class="l" for="f_national_id">رقم الهوية ${RQ}</label><div class="inp"><input id="f_national_id" data-k="national_id" class="ltr" value="${d.national_id}" inputmode="numeric" maxlength="9" placeholder="9 أرقام">${okI(e,'national_id')}</div>${fe(e,'national_id')}</div>
+   <div class="fld ${cls(e,'phone')}"><label class="l" for="f_phone">رقم الجوال ${RQ}</label><div class="inp"><input id="f_phone" data-k="phone" class="ltr" value="${d.phone}" inputmode="tel" maxlength="10" placeholder="059xxxxxxx">${okI(e,'phone')}</div>${fe(e,'phone','جوال أو وطنية: 059 أو 056')}</div>
+   <div class="fld full"><label class="l" for="f_address">العنوان<small>اختياري</small></label><div class="inp"><input id="f_address" data-k="address" value="${d.address}" placeholder="المنطقة، الشارع، أقرب معلم"></div></div>
+  </div></section>
+ <section class="sec"><h3><span class="n ${d.branch&&d.tariff?'done':''}">2</span>الاشتراك والطبلون</h3><p>اختر الفرع ثم المنطقة لتظهر طبلوناتها فقط.</p>
+  <div class="g2">
+   <div class="fld ${cls(e,'branch')}"><label class="l">الفرع ${RQ}${adm?'':`<small>${ic('lock',12)}فرعك</small>`}</label>${sel('branch',BRANCHES.map(b=>[b.id,'فرع '+b.n]),'اختر الفرع',!adm)}${fe(e,'branch')}</div>
+   <div class="fld"><label class="l">منطقة 2<small>اختياري</small></label>${sel('sa',(SUBAREAS[d.branch]||[]).map(s=>[s,s]),d.branch?'كل المناطق':'اختر الفرع أولًا',!d.branch)}</div>
+   <div class="fld full"><label class="l">الطبلون<small>${boxes.length} طبلون</small></label>${sel('box',boxes.map(b=>[b.id,`${b.no} · ${b.n} (${b.c} مشترك)`]),d.branch?'بدون طبلون':'اختر الفرع أولًا',!d.branch)}</div>
+   <div class="fld full"><label class="l">نوع الاشتراك ${RQ}</label><div class="cards c2">${TARIFFS.map(x=>`<button type="button" class="cd" data-tariff="${x.id}" aria-pressed="${d.tariff==x.id}"><span class="tick">${ic('check',11)}</span><b>${x.n}</b><small>${n2(x.rate)} ₪ للكيلو</small></button>`).join('')}</div></div>
+   ${t&&t.seg.length?`<div class="fld full"><label class="l">تصنيف الزبون<small>اختياري</small></label><div class="chips">${['',...t.seg].map(s=>`<button type="button" class="chp" data-seg="${s}" aria-pressed="${d.seg===s}">${s||'بدون تصنيف'}</button>`).join('')}</div></div>`:''}
+   <div class="fld full"><label class="l">عيار القاطع<small>يحدد الحد الأدنى الأسبوعي</small></label><div class="chips">${BREAKERS.map(b=>`<button type="button" class="chp" data-bk="${b.a}" aria-pressed="${d.breaker==b.a}">${b.a} أمبير <small>${b.m} ₪</small></button>`).join('')}</div></div>
+   <div class="fld ${cls(e,'minimum')}"><label class="l" for="f_min">الحد الأدنى الأسبوعي ${RQ}</label><div class="lockrow"><div class="inp"><input id="f_min" data-k="minimum" class="ltr" value="${d.minimum}" ${d.minUnlocked?'':'disabled'} inputmode="decimal" placeholder="من القاطع"><span class="suf">₪</span></div>${adm?`<button type="button" class="unl" id="unl">${ic(d.minUnlocked?'unlock':'lock',14)}${d.minUnlocked?'يدوي':'تعديل يدوي'}</button>`:''}</div>${fe(e,'minimum',d.minUnlocked?'قيمة يدوية لهذا المشترك فقط.':bk?`من القاطع ${bk.a} أمبير.`:'اختر القاطع أو عدّله يدويًا.')}</div>
+   <div class="fld"><label class="l">الحالة ${RQ}</label><div class="cards c3">${[['active','فعّال','#047857'],['installing','قيد التركيب','#b45309'],['disconnected','مقطوع','#c81e1e']].map(([k,t,c])=>`<button type="button" class="cd" data-st="${k}" aria-pressed="${d.status===k}" style="padding:8px 10px"><b><i style="background:${c}"></i>${t}</b></button>`).join('')}</div></div>
+  </div></section>
+ <section class="sec"><h3><span class="n ${!e.initial?'done':''}">3</span>العداد والرسوم</h3><p>القراءة الابتدائية هي أول قراءة يُحسب منها الاستهلاك.</p>
+  <div class="g2">
+   <div class="fld ${cls(e,'initial')}"><label class="l" for="f_initial">القراءة الابتدائية للعداد ${RQ}</label><div class="inp"><input id="f_initial" data-k="initial" class="ltr" value="${d.initial}" inputmode="decimal" placeholder="0" ${S.m==='edit'?'disabled':''}></div>${fe(e,'initial',S.m==='edit'?'لا تُعدّل بعد تسجيل أول قراءة.':'')}</div>
+   <div class="fld"><label class="l" for="f_fee">رسوم الاشتراك<small>اختياري</small></label><div class="inp"><input id="f_fee" data-k="fee" class="ltr" value="${d.fee}" inputmode="decimal" placeholder="0.00" ${S.m==='edit'?'disabled':''}><span class="suf">₪</span></div>${+d.fee>0&&S.m==='add'?`<div class="fh">تُضاف كحركة "رسوم اشتراك" في كشف الحساب.</div>`:''}</div>
+   <div class="fld"><label class="l" for="f_date">تاريخ الاشتراك</label><div class="inp"><input id="f_date" data-k="date" type="date" value="${d.date}" class="ltr"></div></div>
+   <div class="fld"><label class="l">رقم الحساب<small>${ic('lock',12)}تلقائي</small></label><div class="inp"><input class="ltr" disabled value="${S.m==='edit'?d.acc:'2026-0413'}"></div><div class="fh">${S.m==='edit'?'لا يتغير.':'يُولَّد عند الحفظ.'}</div></div>
+   <div class="fld full"><label class="l" for="f_notes">ملاحظات<small>اختياري</small></label><div class="inp"><textarea id="f_notes" data-k="notes" placeholder="أي معلومة تفيد الفريق">${d.notes}</textarea></div></div>
+  </div></section>`}
+function sSub(e){const d=S.data,t=TARIFFS.find(x=>x.id==d.tariff),bx=BOXES.find(b=>b.id==d.box),br=BRANCHES.find(b=>b.id==d.branch);
+ const ini=d.full_name.trim().split(/\s+/).filter(w=>w&&w!=='أبو'&&w!=='عبد').slice(0,2).map(w=>w.replace(/^ال/,'')[0]).join('')||'؟';
+ const req=[['full_name','الاسم'],['national_id','رقم الهوية'],['phone','الجوال'],['branch','الفرع'],['minimum','الحد الأدنى'],['initial','القراءة الابتدائية']],done=req.filter(([k])=>!e[k]).length;
+ return`<div class="sum"><small class="h">${S.m==='edit'?'تعديل مشترك':'مشترك جديد'}</small><div class="who"><span class="av">${ini}</span><div><b>${d.full_name||'—'}</b><span>${d.phone||'05x xxx xxxx'}</span></div></div>
+  <dl><div><dt>الفرع</dt><dd>${br?br.n:'—'}</dd></div><div><dt>الطبلون</dt><dd>${bx?bx.no+' · '+bx.n:'—'}</dd></div><div><dt>النوع</dt><dd>${t?t.n+(d.seg?' · '+d.seg:''):'—'}</dd></div><div><dt>الحد الأدنى</dt><dd class="num">${d.minimum!==''?n2(d.minimum)+' ₪':'—'}</dd></div><div><dt>الحالة</dt><dd>${{active:'فعّال',installing:'قيد التركيب',disconnected:'مقطوع'}[d.status]}</dd></div></dl></div>
+ <div class="prog2">الحقول المطلوبة: <b style="color:var(--ink)">${done} من ${req.length}</b><div class="bar"><i style="width:${done/req.length*100}%"></i></div><ul>${req.map(([k,t])=>`<li class="${e[k]?'':'on'}"><i>${ic('check',10)}</i>${t}</li>`).join('')}</ul></div>
+ ${d.status==='installing'?`<div class="infob w">${ic('info',16)}<div>المشترك قيد التركيب لا تُدخل له قراءات ولا رسوم أسبوعية حتى يصبح فعّالًا.</div></div>`:''}`}
+// ---------- user ----------
+function genPw(){const c='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';let p='';for(let i=0;i<10;i++)p+=c[Math.floor(Math.random()*c.length)];return p.slice(0,7)+Math.floor(Math.random()*90+10)}
+function fUser(e){const d=S.data,adm=S.r==='admin',roles=ROLES.filter(r=>adm||!r.admin);
+ return`<section class="sec"><h3><span class="n ${!e.name&&!e.username?'done':''}">1</span>بيانات الدخول</h3><p>اسم المستخدم هو ما يكتبه الموظف عند تسجيل الدخول.</p>
+  <div class="g2">
+   <div class="fld full ${cls(e,'name')}"><label class="l" for="f_name">الاسم الكامل ${RQ}</label><div class="inp"><input id="f_name" data-k="name" value="${d.name}" placeholder="اسم الموظف كما يظهر في النظام"></div>${fe(e,'name')}</div>
+   <div class="fld ${cls(e,'username')}"><label class="l" for="f_username">اسم المستخدم ${RQ}</label><div class="inp"><input id="f_username" data-k="username" class="ltr" value="${d.username}" placeholder="مثال: sami.h" autocapitalize="none" spellcheck="false">${okI(e,'username')}</div>${e.username&&show('username')?fe(e,'username'):d.username&&!e.username?'<div class="fok">✓ متاح</div>':'<div class="fh">أحرف إنجليزية وأرقام بدون مسافات.</div>'}</div>
+   <div class="fld"><label class="l">الحالة</label><div class="sw"><div><b>${d.active?'الحساب فعّال':'الحساب موقوف'}</b><small>${d.active?'يستطيع تسجيل الدخول':'لا يستطيع الدخول، وتبقى سجلاته'}</small></div><button type="button" class="tg" id="actT" role="switch" aria-checked="${d.active}" aria-label="تفعيل الحساب"></button></div></div>
+   <div class="fld ${cls(e,'pw')}"><label class="l" for="f_pw">كلمة المرور ${S.m==='add'?RQ:'<small>اتركها فارغة لعدم التغيير</small>'}</label><div class="inp"><input id="f_pw" data-k="pw" class="ltr" type="password" value="${d.pw||''}" autocomplete="new-password" style="padding-inline-start:96px"><button type="button" class="ib2" id="gen">${ic('dice',16)}توليد</button></div>${fe(e,'pw','8 أحرف على الأقل.')}</div>
+   <div class="fld ${cls(e,'pw2')}"><label class="l" for="f_pw2">تأكيد كلمة المرور ${S.m==='add'?RQ:''}</label><div class="inp"><input id="f_pw2" data-k="pw2" class="ltr" type="password" value="${d.pw2||''}" autocomplete="new-password"></div>${fe(e,'pw2')}</div>
+  </div></section>
+ <section class="sec"><h3><span class="n ${d.role&&d.branch?'done':''}">2</span>الدور والفرع</h3><p>الدور يحدد الصلاحيات المبدئية، ويمكن تعديلها لاحقًا من صفحة الصلاحيات.</p>
+  <div class="fld ${cls(e,'role')}"><label class="l">الدور ${RQ}</label><div class="cards c2">${roles.map(r=>`<button type="button" class="cd" data-role="${r.k}" aria-pressed="${d.role===r.k}"><span class="tick">${ic('check',11)}</span><b><i style="background:${r.c}"></i>${r.n}</b><small>${r.d}</small></button>`).join('')}</div>${fe(e,'role',adm?'':'مدير الفرع يضيف المحصّلين ومدخلي البيانات والمدققين فقط.')}</div>
+  <div class="fld ${cls(e,'branch')}"><label class="l">الفرع ${RQ}${adm?'':`<small>${ic('lock',12)}فرعك</small>`}</label>${sel('branch',BRANCHES.map(b=>[b.id,'فرع '+b.n]),'اختر الفرع',!adm)}${fe(e,'branch')}</div>
+ </section>`}
+function sUser(e){const d=S.data,r=ROLES.find(x=>x.k===d.role),br=BRANCHES.find(b=>b.id==d.branch);
+ const ini=d.name.trim().split(/\s+/).filter(w=>w&&w!=='أبو').slice(0,2).map(w=>w.replace(/^ال/,'')[0]).join('')||'؟';
+ return`<div class="sum"><small class="h">${S.m==='edit'?'تعديل مستخدم':'مستخدم جديد'}</small><div class="who"><span class="av">${ini}</span><div><b>${d.name||'—'}</b><span>${d.username?'@'+d.username:'@username'}</span></div></div>
+  <dl><div><dt>الدور</dt><dd>${r?r.n:'—'}</dd></div><div><dt>الفرع</dt><dd>${br?br.n:'—'}</dd></div><div><dt>الحالة</dt><dd>${d.active?'فعّال':'موقوف'}</dd></div></dl></div>
+ ${r?`<div class="prog2"><b style="color:var(--ink)">صلاحيات ${r.n} المبدئية</b><div class="perms">${r.p.map(x=>`<span>${x}</span>`).join('')}</div></div>`:''}
+ ${S.m==='add'&&d.pw&&!errors().pw?`<div class="infob">${ic('info',16)}<div>سلّم كلمة المرور للموظف مباشرة، وسيُطلب منه تغييرها عند أول دخول. <button type="button" class="chp" id="cp" style="height:28px;margin-top:4px">${ic('copy',14)}نسخ</button></div></div>`:''}`}
+// ---------- meter box ----------
+function fBox(e){const d=S.data,adm=S.r==='admin';
+ return`<section class="sec"><h3><span class="n ${!e.name&&!e.no?'done':''}">1</span>بيانات الطبلون</h3><p>رقم الطبلون فريد في كل النظام.</p>
+  <div class="g2">
+   <div class="fld ${cls(e,'no')}"><label class="l" for="f_no">رقم الطبلون ${RQ}</label><div class="inp"><input id="f_no" data-k="no" class="ltr" value="${d.no}" placeholder="مثال: 472">${okI(e,'no')}</div>${e.no&&show('no')?fe(e,'no'):d.no&&!e.no?'<div class="fok">✓ الرقم متاح</div>':''}</div>
+   <div class="fld ${cls(e,'name')}"><label class="l" for="f_bname">اسم الطبلون ${RQ}</label><div class="inp"><input id="f_bname" data-k="name" value="${d.name}" placeholder="اسم مميز، مثل أقرب معلم"></div>${fe(e,'name')}</div>
+  </div></section>
+ <section class="sec"><h3><span class="n ${d.branch?'done':''}">2</span>المكان</h3><p>الفرع يحدد من يرى الطبلون ومشتركيه.</p>
+  <div class="g2">
+   <div class="fld ${cls(e,'branch')}"><label class="l">الفرع ${RQ}${adm?'':`<small>${ic('lock',12)}فرعك</small>`}</label>${sel('branch',BRANCHES.map(b=>[b.id,'فرع '+b.n]),'اختر الفرع',!adm)}${fe(e,'branch')}</div>
+   <div class="fld"><label class="l">منطقة 2<small>من مناطق الفرع</small></label>${sel('sa',(SUBAREAS[d.branch]||[]).map(s=>[s,s]),d.branch?'اختر المنطقة':'اختر الفرع أولًا',!d.branch)}</div>
+   <div class="fld full"><label class="l" for="f_loc">الموقع<small>اختياري</small></label><div class="inp"><input id="f_loc" data-k="location" value="${d.location}" placeholder="الشارع، أقرب معلم"></div></div>
+  </div></section>`}
+function sBox(e){const d=S.data,br=BRANCHES.find(b=>b.id==d.branch),bx=S.m==='edit'?BOXES.find(b=>b.no===EDIT.box.no):null;
+ return`<div class="sum"><small class="h">${S.m==='edit'?'تعديل طبلون':'طبلون جديد'}</small><div class="who"><span class="av" style="font-size:12px">${d.no||'#'}</span><div><b>${d.name||'—'}</b><span>${br?'فرع '+br.n:''}</span></div></div>
+  <dl><div><dt>منطقة 2</dt><dd>${d.sa||'—'}</dd></div><div><dt>الموقع</dt><dd>${d.location||'—'}</dd></div>${bx?`<div><dt>المشتركون</dt><dd class="num">${bx.c}</dd></div>`:''}</dl></div>
+ ${bx?`<div class="infob w">${ic('info',16)}<div>على هذا الطبلون ${bx.c} مشتركًا. تغيير الفرع ينقلهم جميعًا إلى الفرع الجديد.</div></div>`:''}`}
+// ---------- render ----------
+const META={sub:{t:'مشترك',ic:'users',bg:'المشتركون',p:'البيانات الأساسية، والاشتراك، والعداد.'},user:{t:'مستخدم',ic:'user',bg:'المستخدمون',p:'حساب دخول لموظف، ودوره وفرعه.'},box:{t:'طبلون',ic:'box',bg:'الطبلونات',p:'رقم الطبلون ومكانه.'}};
+function render(focus){const e=errors(),M=META[S.f],n=Object.keys(e).length,edit=S.m==='edit';
+ $('#bgT').textContent=M.bg;$('#reopen').innerHTML=ic('plus',17)+(edit?'تعديل ':'إضافة ')+M.t;
+ $('#win').innerHTML=`<header class="wh"><span class="gi">${ic(M.ic,22)}</span><div><h2 id="wt">${edit?'تعديل '+M.t+(S.f==='sub'?': '+EDIT.sub.full_name:S.f==='user'?': '+EDIT.user.name:': '+EDIT.box.no):M.t+' جديد'}</h2><p>${M.p} الحقول المعلّمة بـ <span style="color:#f28b93">*</span> مطلوبة.</p></div><button class="x" id="cx" aria-label="إغلاق">${ic('x',18)}</button></header>
+  <form id="frm" novalidate><div class="wb"><div>${S.f==='sub'?fSub(e):S.f==='user'?fUser(e):fBox(e)}</div><aside class="side">${S.f==='sub'?sSub(e):S.f==='user'?sUser(e):sBox(e)}</aside></div>
+  <footer class="wf">${S.tried&&n?`<span class="err">${ic('alert',16)}${n===1?'حقل واحد يحتاج تصحيحًا':n===2?'حقلان يحتاجان تصحيحًا':n+' حقول تحتاج تصحيحًا'}</span>`:''}
+   <div class="sp"><button type="button" class="btn" id="cancel">إلغاء</button>${!edit&&S.f!=='user'?`<button type="submit" class="btn" data-again="1">${ic('plus',17)}حفظ وإضافة آخر</button>`:''}<button type="submit" class="btn pr">${ic('save',17)}${edit?'حفظ التعديلات':'حفظ '+M.t}</button></div></footer>
+  <details class="notes"><summary>ملاحظات للمبرمج</summary><ul>${NOTES[S.f]}</ul></details></form>`;
+ bind();if(focus){const el=$(`[data-k="${focus.k}"]`);if(el){el.focus();if(focus.pos!=null&&el.setSelectionRange&&el.type!=='date')try{el.setSelectionRange(focus.pos,focus.pos)}catch(_){}}}}
+const NOTES={sub:`<li>الحقول نفسها في <code>StoreSubscriberRequest</code>: الاسم، الهوية (9 أرقام وفريدة)، الجوال (<code>05[69]</code> + 7 أرقام)، العنوان، الفرع، الطبلون، التعرفة والتصنيف، القاطع، الحد الأدنى، الحالة، القراءة الابتدائية، رسوم الاشتراك، التاريخ، الملاحظات.</li><li>رقم الحساب يُولَّد تلقائيًا (<code>nextAccountNumber</code>) ويُعرض فقط.</li><li>"قيد التركيب" حالة جديدة طلبتها الإدارة بدل "موقوف" أو إلى جانبها (<code>SubscriberStatus</code>).</li><li>الحد الأدنى يُنسخ من القاطع، والتعديل اليدوي فقط لمن لديه <code>UpdateSubscriberMinimumCharge</code> (موجود).</li><li>الطبلونات تُصفّى حسب الفرع ثم منطقة 2، ويُفضّل جلبها عند فتح النموذج فقط.</li><li>رقم الهوية الفريد يمنع تعدد الاشتراكات للشخص نفسه؛ راجع "طلبات الإدارة" في تقرير المراجعة.</li>`,
+ user:`<li>الحقول نفسها في <code>StoreUserRequest</code>: الاسم، اسم المستخدم (<code>[\\w.-]</code> وفريد)، كلمة المرور مع التأكيد، الدور، والفرع للمدير العام فقط.</li><li>مدير الفرع يرى أدوار <code>staffRoles()</code> فقط (محصّل، مدخل بيانات، مدقق مالي)، والفرع يُفرض عليه.</li><li>"متاح" بجانب اسم المستخدم يحتاج فحصًا خفيفًا من الخادم أثناء الكتابة (أو يكفي خطأ التحقق عند الحفظ).</li><li>زر "توليد" ونسخ كلمة المرور في الواجهة فقط. إجبار تغييرها عند أول دخول ميزة جديدة مقترحة.</li><li>الصلاحيات المبدئية من <code>UserRole::starterPermissions()</code>.</li><li>إيقاف الحساب يستخدم <code>is_active</code> الموجود بدل الحذف.</li>`,
+ box:`<li>الحقول نفسها في <code>StoreMeterBoxRequest</code>: الاسم، الرقم (فريد)، الفرع للمدير العام فقط، منطقة 2 (ضمن منطقة الفرع)، الموقع.</li><li>في التعديل: يظهر عدد المشتركين على الطبلون، وتحذير عند تغيير الفرع.</li>`};
+function bind(){
+ $$('[data-k]').forEach(el=>{const k=el.dataset.k,ev=el.tagName==='SELECT'||el.type==='date'?'change':'input';
+  el.addEventListener(ev,()=>{let v=el.value;if(['national_id','phone'].includes(k))v=v.replace(/\D/g,'');S.data[k]=v;if(['username','no'].includes(k)&&v)S.touched[k]=true;if((k==='national_id'&&v.length===9)||(k==='phone'&&v.length===10))S.touched[k]=true;
+   if(k==='branch'){S.data.sa='';if('box' in S.data)S.data.box=''}if(k==='sa'&&'box' in S.data)S.data.box='';
+   S.touched[k]=S.touched[k]||el.tagName==='SELECT';render({k,pos:el.selectionStart})});
+  el.addEventListener('blur',ev=>{if(S.touched[k]||el.value==='')return;S.touched[k]=true;const rt=ev.relatedTarget;if(!rt)render();else if(rt.dataset&&rt.dataset.k)render({k:rt.dataset.k})})});
+ $$('[data-tariff]').forEach(b=>b.onclick=()=>{S.data.tariff=+b.dataset.tariff;S.data.seg='';render()});
+ $$('[data-seg]').forEach(b=>b.onclick=()=>{S.data.seg=b.dataset.seg;render()});
+ $$('[data-bk]').forEach(b=>b.onclick=()=>{S.data.breaker=+b.dataset.bk;if(!S.data.minUnlocked)S.data.minimum=String(BREAKERS.find(x=>x.a==b.dataset.bk).m);S.touched.minimum=true;render()});
+ $$('[data-st]').forEach(b=>b.onclick=()=>{S.data.status=b.dataset.st;render()});
+ $$('[data-role]').forEach(b=>b.onclick=()=>{S.data.role=b.dataset.role;S.touched.role=true;render()});
+ const u=$('#unl');if(u)u.onclick=()=>{S.data.minUnlocked=!S.data.minUnlocked;if(!S.data.minUnlocked){const bk=BREAKERS.find(x=>x.a==S.data.breaker);S.data.minimum=bk?String(bk.m):''}render(S.data.minUnlocked?{k:'minimum'}:null)};
+ const a=$('#actT');if(a)a.onclick=()=>{S.data.active=!S.data.active;render()};
+ const g=$('#gen');if(g)g.onclick=()=>{const p=genPw();S.data.pw=p;S.data.pw2=p;S.touched.pw=S.touched.pw2=true;render();const i=$('#f_pw');i.type='text';toast('تم توليد كلمة مرور: '+p)};
+ const cp=$('#cp');if(cp)cp.onclick=()=>{try{navigator.clipboard.writeText(S.data.pw)}catch(_){}toast('نُسخت كلمة المرور')};
+ $('#cx').onclick=close;$('#cancel').onclick=close;
+ $('#frm').onsubmit=ev=>{ev.preventDefault();const again=ev.submitter&&ev.submitter.dataset.again;S.tried=true;const e=errors();
+  if(Object.keys(e).length){render();const first=$('.fld.bad');if(first){first.scrollIntoView({block:'center',behavior:'smooth'});const i=first.querySelector('input,select');if(i)i.focus()}$('#win').classList.remove('shake');void $('#win').offsetWidth;$('#win').classList.add('shake');return}
+  const M=META[S.f],nm=S.data.full_name||S.data.name||S.data.no;
+  if(again){toast(`حُفظ ${M.t}: ${nm}. أدخل التالي.`);const keep=S.f==='sub'?{branch:S.data.branch,sa:S.data.sa,box:S.data.box,tariff:S.data.tariff}:{branch:S.data.branch,sa:S.data.sa};reset();Object.assign(S.data,keep);render({k:S.f==='sub'?'full_name':'no'});return}
+  close();toast(S.m==='edit'?`حُفظت تعديلات ${nm}`:`أُضيف ${M.t}: ${nm}`)};
+}
+function close(){$('#scr').hidden=true;$('#reopen').hidden=false}
+$('#reopen').onclick=()=>{reset();$('#scr').hidden=false;$('#reopen').hidden=true;render()};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#scr').hidden)close()});
+$('#scr').onclick=e=>{if(e.target.id==='scr')close()};
+function toast(m){const t=$('#toast');$('#tmsg').textContent=m;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),3400)}
+$('#tIc').innerHTML=ic('check',16);
+const segs=(id,key,fn)=>$$(`#${id} button`).forEach(b=>b.onclick=()=>{$$(`#${id} button`).forEach(x=>x.setAttribute('aria-pressed',x===b));fn(b.dataset[key])});
+segs('formSeg','f',v=>{S.f=v;reset();$('#scr').hidden=false;$('#reopen').hidden=true;render()});
+segs('modeSeg','m',v=>{S.m=v;reset();$('#scr').hidden=false;$('#reopen').hidden=true;render()});
+segs('roleSeg','r',v=>{S.r=v;reset();render()});
+segs('themeSeg','theme',v=>document.documentElement.dataset.theme=v);
+const qf=new URLSearchParams(location.hash.slice(1));if(qf.get('f')){S.f=qf.get('f');$$('#formSeg button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.f===S.f))}
+const fitTop=()=>{$('#scr').style.top=$('.demo-bar').offsetHeight+'px'};new ResizeObserver(fitTop).observe($('.demo-bar'));document.fonts&&document.fonts.ready.then(fitTop);fitTop();
+reset();render();
+</script>
+</body>
+</html>
