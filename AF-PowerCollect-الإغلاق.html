@@ -1,0 +1,834 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>الإغلاق · AF PowerCollect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@500;600;700;800&family=El+Messiri:wght@600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+
+:root{
+  --page:#eff1f4;--surface:#fff;--raised:#f7f8fa;--sunken:#f2f3f5;
+  --line:#e2e5e9;--line2:#eceef1;--ink:#111820;--ink2:#353c46;--muted:#4c5460;--faint:#5e6773;
+  --brand:#a51d26;--brand-hi:#b8232c;--brand-lo:#7d121b;
+  --success:#047857;--success-t:#0478571a;--info:#1d5bcc;--info-t:#1d5bcc14;--warn:#b45309;--warn-t:#b453091a;--danger:#c81e1e;--danger-t:#c81e1e14;
+  --focus:#111820;--shadow:0 1px 2px #10182808,0 14px 34px -18px #1018282e;--pop:0 30px 60px -24px #10182866,0 2px 6px #1018280d;
+  --hero:linear-gradient(135deg,#262c34,#1c2127 55%,#111418);
+}
+:root[data-theme=dark]{
+  --page:#0b0d10;--surface:#14171c;--raised:#1b1f25;--sunken:#101317;
+  --line:#343a44;--line2:#252a32;--ink:#f4f5f7;--ink2:#e0e3e7;--muted:#9ea6b1;--faint:#8b94a0;
+  --success:#34d399;--success-t:#34d3991a;--info:#7dafe8;--info-t:#7dafe81a;--warn:#fbbf24;--warn-t:#fbbf241a;--danger:#fc7d7d;--danger-t:#fc7d7d1a;
+  --focus:#c9ced5;--shadow:0 20px 40px -24px #000;--pop:0 30px 60px -20px #000;
+  --hero:linear-gradient(135deg,#1c2127,#161a1f 55%,#0b0d10);
+}
+*{box-sizing:border-box}html,body{margin:0}
+body{min-height:100vh;background:var(--page);color:var(--ink);font:16px/1.6 'IBM Plex Sans Arabic',system-ui,sans-serif;-webkit-font-smoothing:antialiased;transition:background .3s}
+button,input,select{font:inherit;color:inherit}
+.num{font-family:Alexandria,'IBM Plex Sans Arabic',sans-serif;font-variant-numeric:tabular-nums}
+svg.i{width:18px;height:18px;flex:none}
+kbd{font:600 11.5px Alexandria;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:0 6px;background:var(--surface);color:var(--muted)}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+.demo-bar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 24px;background:color-mix(in srgb,var(--page) 82%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line2);font-size:14px;color:var(--muted)}
+.demo-bar b{color:var(--ink);font-family:'El Messiri',serif;font-size:17px}
+.seg{display:inline-flex;gap:2px;padding:3px;border-radius:12px;background:var(--sunken);border:1px solid var(--line2)}
+.seg button{border:0;background:transparent;padding:5px 12px;border-radius:9px;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed=true]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px #10182822}
+
+.wrap{max-width:1320px;margin:0 auto;padding:26px 24px 120px}
+.ph{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.ph h1{margin:0;font:700 34px/1.2 'El Messiri',serif}
+.ph p{margin:4px 0 0;color:var(--faint);font-size:14.5px}
+.ph .acts{margin-inline-start:auto;display:flex;gap:10px}
+.btn{height:44px;border-radius:13px;padding:0 16px;font-weight:700;font-size:15px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink2);transition:.18s}
+.btn:hover{background:var(--sunken)}
+.btn.pr{border:0;color:#fff;background:linear-gradient(180deg,var(--brand-hi),var(--brand-lo));box-shadow:0 12px 26px -12px #a51d26,inset 0 1px 0 #ffffff33}
+.btn.pr:hover{filter:brightness(1.07)}
+
+/* KPI filter cards */
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:22px}
+.kpi{position:relative;text-align:start;border:1px solid var(--line2);background:var(--surface);border-radius:20px;padding:14px 16px;cursor:pointer;box-shadow:var(--shadow);transition:.18s;overflow:hidden}
+.kpi:hover{transform:translateY(-1px);border-color:var(--line)}
+.kpi small{display:flex;align-items:center;gap:8px;color:var(--faint);font-size:13.5px;font-weight:600}
+.kpi small i{width:8px;height:8px;border-radius:50%}
+.kpi b{display:block;font:800 28px/1.2 Alexandria;margin-top:6px}
+.kpi span{font-size:12.5px;color:var(--faint)}
+.kpi[aria-pressed=true]{border-color:var(--ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--ink) 8%,transparent),var(--shadow)}
+.kpi.debt{background:var(--hero);color:#fff;border-color:transparent;cursor:default}
+.kpi.debt small{color:#aeb6c1}.kpi.debt span{color:#aeb6c1}
+.kpi.debt::after{content:"";position:absolute;inset-inline:0;top:0;height:3px;background:linear-gradient(90deg,#5c0d14,#a51d26 40%,#9aa3ae 75%,#dfe3e8)}
+.kpi .spark{position:absolute;inset-inline-end:16px;bottom:16px;display:flex;align-items:flex-end;gap:3px;height:26px;opacity:.9}
+.kpi .spark i{width:5px;border-radius:2px;background:#a51d26}
+
+/* card + toolbar */
+.card{margin-top:18px;background:var(--surface);border:1px solid var(--line2);border-radius:24px;box-shadow:var(--shadow)}
+.tb{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:16px 18px;border-bottom:1px solid var(--line2)}
+.search{position:relative;flex:1;min-width:240px;max-width:420px}
+.search svg{position:absolute;inset-inline-start:14px;top:50%;transform:translateY(-50%);color:var(--faint)}
+.search input{width:100%;height:46px;border:1.5px solid var(--line);border-radius:14px;background:var(--raised);padding:0 44px;font-size:15.5px;transition:.18s}
+.search input:focus{outline:none;background:var(--surface);border-color:var(--focus);box-shadow:0 0 0 4px color-mix(in srgb,var(--focus) 10%,transparent)}
+.search kbd{position:absolute;inset-inline-end:12px;top:50%;transform:translateY(-50%)}
+.chip-f{height:40px;display:inline-flex;align-items:center;gap:8px;border:1px dashed var(--line);border-radius:12px;padding:0 12px;background:transparent;cursor:pointer;font-size:14.5px;font-weight:600;color:var(--muted);position:relative}
+.chip-f.on{border-style:solid;border-color:var(--ink);color:var(--ink);background:var(--sunken)}
+.chip-f .n{font:700 12px Alexandria;background:var(--ink);color:var(--surface);border-radius:7px;padding:0 6px}
+.dd{position:absolute;top:calc(100% + 6px);inset-inline-start:0;z-index:15;min-width:220px;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--pop);padding:6px;display:none}
+.dd.open{display:block;animation:pop .14s ease}
+@keyframes pop{from{opacity:0;transform:translateY(-4px) scale(.97)}}
+.dd label{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;cursor:pointer;font-size:14.5px;font-weight:500;color:var(--ink2)}
+.dd label:hover{background:var(--sunken)}
+.dd input{accent-color:#a51d26;width:16px;height:16px}
+.dd .c{margin-inline-start:auto;font:600 12.5px Alexandria;color:var(--faint)}
+.tb .sp{margin-inline-start:auto;display:flex;align-items:center;gap:10px}
+.clear{border:0;background:transparent;color:var(--brand);font-weight:700;cursor:pointer;font-size:14px}
+.dens{display:inline-flex;gap:2px;padding:3px;border-radius:12px;background:var(--sunken);border:1px solid var(--line2)}
+.dens button{border:0;background:transparent;width:34px;height:32px;border-radius:9px;display:grid;place-items:center;cursor:pointer;color:var(--faint)}
+.dens button[aria-pressed=true]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px #10182822}
+
+/* table */
+.tw{overflow-x:auto;padding:4px 12px 8px}
+table{width:100%;border-collapse:separate;border-spacing:0 8px;font-size:15.5px}
+th{position:sticky;top:0;text-align:start;font-size:14px;font-weight:600;color:var(--muted);padding:10px 14px 4px;white-space:nowrap;user-select:none}
+th button{border:0;background:transparent;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-weight:600;color:inherit;padding:4px 8px;margin:-4px -8px;border-radius:9px}
+th button:hover{background:var(--sunken);color:var(--ink)}
+th button .ar{display:inline-flex;flex-direction:column;line-height:0;opacity:.35}
+th button[data-dir] {color:var(--ink);background:color-mix(in srgb,var(--brand) 8%,transparent)}
+th button[data-dir] .ar{opacity:1;color:var(--brand)}
+td{background:var(--surface);padding:14px;border-block:1px solid var(--line2);white-space:nowrap;vertical-align:middle;transition:background .15s,border-color .15s}
+td:first-child{border-inline-start:1px solid var(--line2);border-start-start-radius:16px;border-end-start-radius:16px;width:44px;padding-inline-end:4px}
+td:last-child{border-inline-end:1px solid var(--line2);border-start-end-radius:16px;border-end-end-radius:16px}
+tbody tr{cursor:pointer;animation:rowin .3s both}
+@keyframes rowin{from{opacity:0;transform:translateY(4px)}}
+tbody tr:hover td,tbody tr.kb td{border-color:var(--line);background:color-mix(in srgb,var(--surface) 96%,var(--ink))}
+tbody tr:hover td:first-child,tbody tr.kb td:first-child{box-shadow:inset -3px 0 0 var(--brand)}
+tbody tr.sel td{background:color-mix(in srgb,var(--brand) 5%,var(--surface));border-color:color-mix(in srgb,var(--brand) 22%,var(--line2))}
+[data-density=compact] td{padding-block:8px}[data-density=compact] .av{width:32px;height:32px;border-radius:10px;font-size:12px}
+.ck{width:20px;height:20px;border-radius:7px;border:1.5px solid color-mix(in srgb,var(--line) 50%,var(--faint));display:grid;place-items:center;cursor:pointer;background:var(--surface);transition:.15s}
+.ck svg{width:13px;height:13px;stroke-width:3;opacity:0}
+.ck[aria-checked=true],.ck[aria-checked=mixed]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.ck[aria-checked=true] svg,.ck[aria-checked=mixed] svg{opacity:1}
+.id{display:flex;align-items:center;gap:12px}
+.av{position:relative;width:40px;height:40px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(135deg,#4a525d,#161a1f);color:#fff;font:700 13px Alexandria;flex:none}
+.av i{position:absolute;bottom:-2px;left:-2px;width:12px;height:12px;border-radius:50%;border:2.5px solid var(--surface)}
+.id b{display:block;font-weight:700;font-size:15.5px}
+.id small{display:block;color:var(--faint);font:500 13.5px Alexandria;direction:ltr;text-align:right}
+mark{background:#f5c04a55;color:inherit;border-radius:4px;padding:0 1px}
+.box{font:600 13.5px ui-monospace,monospace;background:var(--sunken);border:1px solid var(--line2);border-radius:9px;padding:3px 9px;color:var(--ink2)}
+.muted{color:var(--faint)}
+.type{display:inline-flex;align-items:center;gap:7px;color:var(--ink2)}
+.type svg{color:var(--faint);width:16px;height:16px}
+.bal{display:flex;flex-direction:column;gap:5px;min-width:130px}
+.bal b{font:700 15.5px Alexandria;direction:ltr;text-align:right}
+.bal b.db{color:var(--danger)}.bal b.cr{color:var(--success)}.bal b.z{color:var(--faint)}
+.bal b em{font:600 12.5px 'IBM Plex Sans Arabic';font-style:normal;margin-inline-end:4px}
+.bal .m{height:4px;border-radius:99px;background:var(--sunken);overflow:hidden}
+.bal .m i{display:block;height:100%;border-radius:99px;background:var(--danger);opacity:.75}
+.pill{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:700;border-radius:99px;padding:3px 11px;border:1px solid}
+.pill i{width:7px;height:7px;border-radius:50%;background:currentColor}
+.p-active{color:var(--success);background:var(--success-t);border-color:color-mix(in srgb,var(--success) 25%,transparent)}
+.p-active i{box-shadow:0 0 0 3px color-mix(in srgb,var(--success) 20%,transparent)}
+.p-susp{color:var(--warn);background:var(--warn-t);border-color:color-mix(in srgb,var(--warn) 25%,transparent)}
+.p-cut{color:var(--danger);background:var(--danger-t);border-color:color-mix(in srgb,var(--danger) 28%,transparent)}
+.d-active{background:#10b981}.d-susp{background:#f59e0b}.d-cut{background:#dc2626}
+.when{font-size:14.5px;color:var(--ink2)}.when small{display:block;font-size:12.5px;color:var(--faint)}
+
+/* row actions */
+.ra{display:flex;align-items:center;justify-content:flex-end;gap:6px}
+.split{display:inline-flex;height:36px;border-radius:11px;background:var(--hero);color:#fff;box-shadow:0 8px 16px -8px #111820b3,inset 0 1px 0 #ffffff1f;overflow:hidden}
+.split button{border:0;background:transparent;color:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:0 12px;font-weight:700;font-size:14px}
+.split button+button{padding:0 8px;border-inline-start:1px solid #ffffff26}
+.split button svg{width:16px;height:16px}
+tbody tr:hover .split,tbody tr.kb .split{background:linear-gradient(180deg,var(--brand-hi),var(--brand-lo));box-shadow:0 10px 20px -8px #a51d26cc,inset 0 1px 0 #ffffff33}
+:root[data-theme=dark] .split{background:linear-gradient(180deg,#f4f5f7,#c9ced5);color:#111820}
+:root[data-theme=dark] .split button+button{border-color:#11182022}
+.ib{width:36px;height:36px;border-radius:11px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer;color:var(--ink2);transition:.15s}
+.ib svg{width:17px;height:17px}
+.ib:hover{background:var(--sunken)}
+.ib.ed{color:var(--info)}.ib.ed:hover{background:var(--info-t);border-color:color-mix(in srgb,var(--info) 35%,transparent)}
+.ib.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+
+/* more menu */
+.menu{position:fixed;z-index:30;width:320px;background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:var(--pop);overflow:hidden;display:none;font-size:14.5px}
+.menu.open{display:block;animation:pop .14s ease}
+.menu .mh{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line2)}
+.menu .mh b{display:block;font-size:14.5px}.menu .mh small{color:var(--faint);font:500 12.5px Alexandria}
+.menu .ms{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--line2);color:var(--faint)}
+.menu .ms input{flex:1;border:0;background:transparent;height:34px;font-size:14.5px}
+.menu .ms input:focus{outline:none}
+.menu .mb{max-height:330px;overflow:auto;padding:6px}
+.mg{font-size:12px;font-weight:700;color:var(--faint);padding:8px 10px 3px}
+.mi{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:12px;cursor:pointer;color:var(--ink2)}
+.mi .mic{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;background:var(--sunken);flex:none}
+.mi .mic svg{width:16px;height:16px}
+.mi .t{flex:1}
+.mi:hover,.mi.act{background:var(--sunken);color:var(--ink)}
+.mi:hover .mic,.mi.act .mic{background:linear-gradient(180deg,var(--brand-hi),var(--brand-lo));color:#fff}
+.mi.lk{opacity:.5;cursor:not-allowed}.mi.lk:hover .mic{background:var(--sunken);color:inherit}
+.mi .s{font-size:12px;color:var(--faint);display:inline-flex;align-items:center;gap:4px}
+.menu .mf{display:flex;gap:12px;padding:8px 14px;border-top:1px solid var(--line2);background:var(--raised);font-size:12px;color:var(--faint)}
+
+/* footer + pagination */
+.tf{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 18px 16px;border-top:1px solid var(--line2);font-size:14.5px;color:var(--faint)}
+.pg{margin-inline-start:auto;display:flex;align-items:center;gap:4px}
+.pg button{min-width:38px;height:38px;border-radius:11px;border:1px solid transparent;background:transparent;cursor:pointer;font:600 14.5px Alexandria;color:var(--ink2)}
+.pg button:hover{background:var(--sunken)}
+.pg button[aria-current=page]{background:var(--ink);color:var(--surface)}
+.pg button:disabled{opacity:.35;cursor:default}
+.per{display:inline-flex;gap:2px;padding:3px;border-radius:12px;background:var(--sunken);border:1px solid var(--line2)}
+.per button{border:0;background:transparent;min-width:36px;height:30px;border-radius:9px;cursor:pointer;font:600 13px Alexandria;color:var(--faint)}
+.per button[aria-pressed=true]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px #10182822}
+.empty{text-align:center;padding:56px 20px;color:var(--faint)}
+.empty .e{width:64px;height:64px;margin:0 auto 12px;border-radius:20px;display:grid;place-items:center;background:var(--sunken);color:var(--muted)}
+.empty b{display:block;color:var(--ink);font-size:18px;font-family:'El Messiri',serif}
+
+/* bulk bar */
+.bulk{position:fixed;bottom:22px;left:50%;transform:translate(-50%,120%);opacity:0;z-index:25;display:flex;align-items:center;gap:4px;background:#111820;color:#fff;border-radius:18px;padding:7px;box-shadow:0 24px 50px -18px #000c;transition:.28s cubic-bezier(.22,1,.36,1)}
+.bulk.on{transform:translate(-50%,0);opacity:1}
+.bulk .n{display:flex;align-items:center;gap:8px;padding:0 12px 0 14px;border-inline-end:1px solid #ffffff26;margin-inline-end:4px;font-weight:600}
+.bulk .n b{font:700 13px Alexandria;background:#fff;color:#111820;border-radius:8px;padding:1px 8px}
+.bulk button{border:0;background:transparent;color:#e6e9ed;cursor:pointer;display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:12px;font-weight:600;font-size:14.5px}
+.bulk button:hover{background:#ffffff14;color:#fff}
+.bulk button svg{width:16px;height:16px}
+
+/* drawer */
+.scrim{position:fixed;inset:0;z-index:40;background:#0b0d1066;backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:.25s}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;inset-block:12px;left:12px;z-index:41;width:min(440px,calc(100% - 24px));background:var(--surface);border:1px solid var(--line2);border-radius:26px;box-shadow:var(--pop);display:flex;flex-direction:column;overflow:hidden;transform:translateX(-110%);transition:transform .3s cubic-bezier(.22,1,.36,1)}
+.drawer.on{transform:none}
+.dhero{background:var(--hero);color:#fff;padding:18px 20px 20px;position:relative}
+.dhero::after{content:"";position:absolute;inset-inline:0;bottom:0;height:3px;background:linear-gradient(90deg,#5c0d14,#a51d26 40%,#9aa3ae 75%,#dfe3e8)}
+.dtop{display:flex;align-items:center;gap:6px}
+.dtop .ib{background:#ffffff14;border-color:#ffffff1f;color:#fff}
+.dtop .ib:hover{background:#ffffff26}
+.dtop small{margin-inline-end:auto;color:#aeb6c1;font:600 13px Alexandria}
+.dwho{display:flex;align-items:center;gap:14px;margin-top:14px}
+.dwho .av{width:56px;height:56px;border-radius:18px;font-size:18px;background:linear-gradient(135deg,#5a636f,#1c2127);box-shadow:inset 0 1px 0 #ffffff26}
+.dwho .av i{border-color:#1c2127}
+.dwho b{display:block;font:700 22px 'El Messiri',serif}
+.dwho small{color:#c9ced5;font-size:13.5px}
+.dk{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+.dk div{background:#ffffff0f;border:1px solid #ffffff17;border-radius:14px;padding:9px 11px}
+.dk small{display:block;color:#aeb6c1;font-size:12px}
+.dk b{font:700 17px Alexandria;direction:ltr;display:block;text-align:right}
+.dtabs{display:flex;gap:4px;padding:0 18px;border-bottom:1px solid var(--line2)}
+.dtabs button{border:0;background:transparent;padding:12px 10px;font-weight:600;color:var(--faint);cursor:pointer;font-size:14.5px}
+.dtabs button[aria-selected=true]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--brand)}
+.dbody{flex:1;overflow:auto;padding:14px 20px}
+.tl{position:relative;display:grid;gap:4px}
+.tl::before{content:"";position:absolute;inset-block:10px;inset-inline-start:15px;width:2px;background:var(--line2)}
+.tl div{position:relative;display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;padding:8px 0;font-size:14.5px}
+.tl .d{width:32px;height:32px;border-radius:11px;display:grid;place-items:center;background:var(--sunken);color:var(--muted);z-index:1}
+.tl .d svg{width:15px;height:15px}
+.tl .d.pay{background:var(--success-t);color:var(--success)}
+.tl b{font-weight:600}.tl small{display:block;color:var(--faint);font-size:12.5px}
+.tl .amt{font:700 14.5px Alexandria;direction:ltr}
+.info{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.info div{background:var(--raised);border:1px solid var(--line2);border-radius:14px;padding:10px 12px}
+.info small{display:block;font-size:12.5px;color:var(--faint)}.info b{font-size:14.5px}
+.dfoot{display:flex;gap:8px;padding:14px 18px;border-top:1px solid var(--line2);background:var(--raised)}
+.dfoot .btn{height:44px;flex:1;justify-content:center;padding:0 10px}
+.dfoot .btn.pay{flex:1.4;border:0;color:#fff;background:linear-gradient(180deg,#0f9f76,#047857);box-shadow:0 12px 24px -12px #047857}
+
+.toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,20px);opacity:0;z-index:50;display:flex;align-items:center;gap:12px;background:#111820;color:#fff;border-radius:16px;padding:10px 12px 10px 16px;box-shadow:0 20px 40px -18px #000a;font-size:14.5px;transition:.3s;pointer-events:none}
+.toast.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast .ok{width:26px;height:26px;border-radius:9px;background:#34d3992b;color:#34d399;display:grid;place-items:center}
+.toast button{border:0;background:#ffffff1a;color:#fff;border-radius:10px;padding:5px 12px;font-weight:700;cursor:pointer}
+.hintbar{margin-top:14px;display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--faint)}
+.hintbar span{display:inline-flex;align-items:center;gap:6px}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}.kpi.debt{grid-column:span 3}.col-branch,.col-when{display:none}}
+@media (max-width:760px){
+  .wrap{padding:18px 14px 120px}.ph h1{font-size:28px}.ph .acts{width:100%}.ph .acts .btn{flex:1;justify-content:center}
+  .kpis{grid-template-columns:1fr 1fr}.kpi.debt{grid-column:span 2}
+  .search{max-width:none;min-width:100%}
+  thead{display:none}table,tbody,tr,td{display:block}
+  table{border-spacing:0}.tw{padding:8px 12px}
+  tbody tr{position:relative;background:var(--surface);border:1px solid var(--line2);border-radius:18px;padding:12px 14px 12px 14px;margin-bottom:10px;display:grid;grid-template-columns:auto 1fr auto;gap:10px 12px;align-items:center}
+  td,td:first-child,td:last-child{border:0!important;padding:0;background:transparent!important;border-radius:0;width:auto;box-shadow:none!important}
+  td.c-id{grid-column:2}td.c-status{grid-column:3;grid-row:1}
+  td.c-box,td.c-type,td.col-branch,td.col-when{display:none}
+  td.c-bal{grid-column:1/-1}td.c-act{grid-column:1/-1}
+  .ra{justify-content:stretch}.split{flex:1}.split button:first-child{flex:1;justify-content:center}
+  .hintbar{display:none}.tf{justify-content:center}.pg{margin:0}
+  .bulk{width:calc(100% - 24px);overflow-x:auto}.bulk button span{display:none}
+}
+
+[hidden]{display:none!important}
+.demo-bar{flex-wrap:wrap}
+.dbr{display:flex;gap:8px;flex-wrap:wrap}
+.wrap{max-width:1380px}
+/* tabs */
+.tabs{display:inline-flex;gap:4px;margin-top:18px;padding:4px;border-radius:15px;background:var(--surface);border:1px solid var(--line2);box-shadow:var(--shadow)}
+.tabs button{border:0;background:transparent;height:42px;padding:0 16px;border-radius:11px;cursor:pointer;font-weight:700;font-size:15px;color:var(--muted);display:inline-flex;align-items:center;gap:8px}
+.tabs button svg{width:17px;height:17px}
+.tabs button:hover{color:var(--brand)}
+.tabs button[aria-pressed=true]{background:var(--ink);color:var(--surface)}
+.tabs .n{font:700 11.5px Alexandria;border-radius:7px;padding:0 7px;background:var(--brand);color:#fff}
+/* controls */
+.ctl{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:16px}
+.ctl .cb{height:44px;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:13px;background:var(--surface);padding:0 12px;font-weight:700;font-size:14.5px}
+.ctl .cb small{font:500 12.5px 'IBM Plex Sans Arabic';color:var(--faint)}
+.ctl .cb svg{width:16px;height:16px;color:var(--faint)}
+.ctl .cb b{font-family:Alexandria;font-weight:600}
+.ctl .nav{padding:0 4px;gap:2px}
+.ctl .nav button{width:34px;height:34px;border:0;background:transparent;border-radius:10px;cursor:pointer;display:grid;place-items:center;color:var(--ink2)}
+.ctl .nav button:hover:not(:disabled){background:color-mix(in srgb,var(--brand) 8%,transparent);color:var(--brand)}
+.ctl .nav button:disabled{opacity:.3;cursor:default}
+.ctl .sp{margin-inline-start:auto}
+/* hero */
+.hero{margin-top:14px;position:relative;overflow:hidden;border-radius:26px;background:var(--hero);color:#fff;padding:20px 24px;display:grid;grid-template-columns:auto 1fr auto;gap:28px;align-items:center;box-shadow:0 24px 50px -28px #10182899}
+.hero::before{content:"";position:absolute;inset-inline:0;top:0;height:3px;background:linear-gradient(90deg,#5c0d14,#a51d26 40%,#9aa3ae 75%,#dfe3e8)}
+.hero::after{content:"";position:absolute;width:340px;height:340px;border-radius:50%;background:#a51d26;opacity:.2;filter:blur(90px);bottom:-220px;inset-inline-start:30%;pointer-events:none}
+.hero>*{position:relative;z-index:1}
+.hero small.k{font-size:13px;color:#aeb6c1;font-weight:600}
+.hero h2{margin:2px 0;font:700 26px 'El Messiri',serif;display:flex;align-items:center;gap:10px}
+.hero h2 .no{font:800 24px Alexandria}
+.hero .meta{font-size:13.5px;color:#aeb6c1}
+.hero .meta b{color:#fff;font-family:Alexandria;font-weight:600}
+.st{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:700;border-radius:99px;padding:3px 11px;border:1px solid}
+.st i{width:7px;height:7px;border-radius:50%;background:currentColor}
+.st.draft{color:#c9ced5;background:#ffffff12;border-color:#ffffff26}
+.st.sent{color:#7dafe8;background:#7dafe81a;border-color:#7dafe844}
+.st.returned{color:#fc7d7d;background:#fc7d7d1a;border-color:#fc7d7d44}
+.st.approved{color:#34d399;background:#34d3991a;border-color:#34d39944}
+.steps{display:flex;align-items:flex-start;justify-content:center;gap:0;min-width:0}
+.stp{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;max-width:150px;text-align:center;position:relative}
+.stp::before{content:"";position:absolute;top:15px;inset-inline-start:calc(50% + 18px);width:calc(100% - 36px);height:2px;background:#ffffff1f}
+.stp:last-child::before{display:none}
+.stp.done::before{background:#34d39988}
+.stp .c{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font:700 13px Alexandria;background:#ffffff14;border:1.5px solid #ffffff2e;color:#c9ced5}
+.stp .c svg{width:15px;height:15px;stroke-width:2.6}
+.stp.done .c{background:#34d399;border-color:#34d399;color:#06281d}
+.stp.cur .c{background:#fff;border-color:#fff;color:#111820;box-shadow:0 0 0 5px #ffffff1f}
+.stp.bad .c{background:#fc7d7d;border-color:#fc7d7d;color:#3b0a0a}
+.stp span{font-size:12.5px;color:#aeb6c1;font-weight:600;line-height:1.4}
+.stp.cur span,.stp.done span{color:#fff}
+.tot{text-align:end}
+.tot b{display:block;font:800 34px/1.1 Alexandria;background:linear-gradient(180deg,#fff,#9aa3ae);-webkit-background-clip:text;background-clip:text;color:transparent;direction:ltr}
+.tot span{font-size:13px;color:#aeb6c1}
+.tot .pend{display:block;color:#fbbf24;font-size:12.5px;margin-top:2px}
+/* banners */
+.ban{display:flex;gap:12px;align-items:flex-start;margin-top:14px;padding:12px 16px;border-radius:16px;font-size:14px;line-height:1.75;border:1px solid}
+.ban svg{width:19px;height:19px;flex:none;margin-top:3px}
+.ban b{display:block;font-size:14.5px}
+.ban.inf{background:var(--info-t);border-color:color-mix(in srgb,var(--info) 25%,transparent);color:var(--ink2)}.ban.inf svg,.ban.inf b{color:var(--info)}
+.ban.bad{background:var(--danger-t);border-color:color-mix(in srgb,var(--danger) 28%,transparent);color:var(--ink2)}.ban.bad svg,.ban.bad b{color:var(--danger)}
+.ban.ok{background:var(--success-t);border-color:color-mix(in srgb,var(--success) 28%,transparent);color:var(--ink2)}.ban.ok svg,.ban.ok b{color:var(--success)}
+.ban.warn{background:var(--warn-t);border-color:color-mix(in srgb,var(--warn) 28%,transparent);color:var(--ink2)}.ban.warn svg,.ban.warn b{color:var(--warn)}
+/* accounts */
+.accs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}
+.ac{background:var(--surface);border:1px solid var(--line2);border-radius:20px;padding:14px 16px;box-shadow:var(--shadow);position:relative}
+.ac .hd{display:flex;align-items:center;gap:10px}
+.ac .lg{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;background:var(--sunken);flex:none;overflow:hidden}
+.ac .lg img{width:30px;height:30px;object-fit:contain;border-radius:7px;background:#fff}
+.ac .lg svg{width:19px;height:19px;color:var(--success)}
+.ac .hd b{font-size:14.5px}.ac .hd small{display:block;font-size:12px;color:var(--faint)}
+.ac .am{font:800 23px Alexandria;margin-top:8px;direction:ltr;text-align:right}
+.ac .am em{font-style:normal;font-size:13px;color:var(--faint);margin-inline-end:4px}
+.ac .ms{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;margin-top:4px}
+.ac .ms svg{width:14px;height:14px}
+.ms.ok{color:var(--success)}.ms.no{color:var(--warn)}.ms.bad{color:var(--danger)}.ms.n{color:var(--faint)}
+.ac.pend{background:var(--raised);border-style:dashed}
+/* grid */
+.g2{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;margin-top:16px;align-items:start}
+.g2>div{min-width:0;display:grid;grid-template-columns:minmax(0,1fr);gap:16px}.g2>div>*{min-width:0}
+.pn{background:var(--surface);border:1px solid var(--line2);border-radius:22px;box-shadow:var(--shadow);padding:16px 18px}
+.pn h3{margin:0;font:700 18px 'El Messiri',serif;display:flex;align-items:center;gap:10px}
+.pn h3 .ix{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;background:var(--sunken);color:var(--ink2)}
+.pn h3 .ix svg{width:16px;height:16px}
+.pn h3 .r{margin-inline-start:auto;font:600 12.5px 'IBM Plex Sans Arabic';color:var(--faint)}
+.pn>p.s{margin:3px 0 0;font-size:13px;color:var(--faint)}
+/* payments table */
+.pt{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px}
+.pt th{position:static;text-align:start;font-size:12.5px;color:var(--faint);font-weight:600;padding:8px 8px;border-bottom:1px solid var(--line2);white-space:nowrap}
+.pt td{background:transparent;border:0;border-bottom:1px solid var(--line2);border-radius:0!important;padding:10px 8px;width:auto!important;white-space:nowrap;vertical-align:middle}
+.pt tbody tr{animation:none;cursor:default}
+.pt tbody tr:hover td{background:color-mix(in srgb,var(--brand) 3%,var(--surface))}
+.pt tbody tr:hover td:first-child{box-shadow:inset -3px 0 0 var(--brand)}
+.pt tfoot td{border:0;border-top:1.5px solid var(--line);font-weight:700;padding-top:10px}
+.pid b{display:block;font:600 13.5px Alexandria;direction:ltr;text-align:right}
+.pid small{display:block;font:500 11.5px Alexandria;color:var(--faint);direction:ltr;text-align:right}
+.psub b{display:block;font-size:14px}.psub small{display:block;font-size:12px;color:var(--faint)}
+.pacc{display:inline-flex;align-items:center;gap:7px}
+.pacc img{width:24px;height:24px;border-radius:7px;object-fit:contain;background:#fff;border:1px solid var(--line2)}
+.pacc .ci{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;background:var(--success-t);color:var(--success)}
+.pacc .ci svg{width:14px;height:14px}
+.pref{font:500 12.5px Alexandria;color:var(--ink2);direction:ltr;display:inline-block}
+.pam{font:700 14.5px Alexandria;direction:ltr;text-align:right;white-space:nowrap}
+.mt{height:32px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);padding:0 10px;font-weight:700;font-size:12.5px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;color:var(--ink2)}
+.mt svg{width:14px;height:14px}
+.mt:hover:not(:disabled){border-color:color-mix(in srgb,var(--success) 45%,var(--line));color:var(--success)}
+.mt[aria-pressed=true]{background:var(--success);border-color:var(--success);color:#fff}
+.mt:disabled{cursor:default;opacity:.85}
+.mt.cash{border-style:dashed;color:var(--faint)}
+.mv{border:0;background:transparent;color:var(--faint);font-size:12px;font-weight:600;cursor:pointer;padding:2px 4px;text-decoration:underline;text-underline-offset:3px}
+.mv:hover{color:var(--warn)}
+.pendl{margin-top:14px;border:1px dashed var(--line);border-radius:16px;padding:10px 12px;background:var(--raised)}
+.pendl h4{margin:0;font-size:14px;display:flex;align-items:center;gap:8px;color:var(--warn)}
+.pendl h4 svg{width:16px;height:16px}
+.pendl h4 span{margin-inline-start:auto;font:600 12px 'IBM Plex Sans Arabic';color:var(--faint)}
+.pendl .it{display:flex;align-items:center;gap:10px;padding:8px 2px;font-size:13.5px}
+.pendl .it+.it{border-top:1px solid var(--line2)}
+.pendl .it .why{font-size:12px;color:var(--faint);display:block}
+.pendl .it .pam{margin-inline-start:auto}
+/* cash count */
+.formula{margin-top:10px;border-radius:14px;background:var(--raised);border:1px solid var(--line2);padding:10px 12px;font-size:13.5px}
+.formula .row{display:flex;justify-content:space-between;align-items:center;padding:3px 0}
+.formula .row span{color:var(--faint)}
+.formula .row b{font:600 14px Alexandria;direction:ltr}
+.formula .row.t{border-top:1.5px solid var(--line);margin-top:4px;padding-top:7px}
+.formula .row.t span{color:var(--ink);font-weight:700}
+.formula .row.t b{font-weight:800;font-size:15.5px}
+.den{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.den label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--faint);font-weight:600}
+.den label .v{display:flex;align-items:center;border:1.5px solid var(--line);border-radius:11px;background:var(--surface);overflow:hidden;transition:.15s}
+.den label .v:focus-within{border-color:var(--brand);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 12%,transparent)}
+.den label .v em{font:700 12.5px Alexandria;font-style:normal;padding:0 8px;color:var(--ink2);background:var(--sunken);height:36px;display:grid;place-items:center;border-inline-end:1px solid var(--line2);min-width:40px}
+.den label .v input{width:100%;min-width:0;border:0;background:transparent;height:36px;padding:0 8px;font:600 14px Alexandria;direction:ltr;text-align:left;color:var(--ink)}
+.den label .v input:focus{outline:none}
+.den label .v input:disabled{color:var(--muted)}
+.den .coin em{background:color-mix(in srgb,var(--warn) 10%,var(--sunken))}
+.cnt{display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding:12px 14px;border-radius:14px;border:1.5px solid var(--line2)}
+.cnt span{font-size:13.5px;color:var(--faint);font-weight:600}
+.cnt b{font:800 20px Alexandria;direction:ltr}
+.cnt.ok{border-color:color-mix(in srgb,var(--success) 40%,transparent);background:var(--success-t)}
+.cnt.ok b,.cnt.ok .d{color:var(--success)}
+.cnt.bad{border-color:color-mix(in srgb,var(--danger) 40%,transparent);background:var(--danger-t)}
+.cnt.bad b,.cnt.bad .d{color:var(--danger)}
+.cnt .d{display:block;font:700 13px 'IBM Plex Sans Arabic';text-align:end}
+.reason{margin-top:10px}
+.reason .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.reason .chips button{height:32px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);padding:0 10px;font-weight:600;font-size:12.5px;cursor:pointer;color:var(--ink2)}
+.reason .chips button:hover{border-color:color-mix(in srgb,var(--brand) 40%,var(--line));color:var(--brand)}
+.reason .chips button[aria-pressed=true]{border-color:var(--brand);background:color-mix(in srgb,var(--brand) 8%,var(--surface));color:var(--brand)}
+.reason textarea{width:100%;min-height:64px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);padding:9px 12px;font:14px 'IBM Plex Sans Arabic';color:var(--ink);resize:vertical}
+.reason textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 12%,transparent)}
+.reason.req textarea{border-color:var(--danger)}
+.reason .lab{font-size:13px;font-weight:700;color:var(--danger);margin-bottom:6px;display:block}
+.reason .lab svg{width:14px;height:14px;vertical-align:-2px}
+.reason:not(.ed) .lab{color:var(--muted)}
+/* timeline */
+.tml{list-style:none;margin:10px 0 0;padding:0}
+.tml li{position:relative;padding:0 24px 12px 0;font-size:13.5px}
+.tml li::before{content:"";position:absolute;right:5px;top:7px;width:10px;height:10px;border-radius:50%;background:var(--line);box-shadow:0 0 0 3px var(--surface)}
+.tml li::after{content:"";position:absolute;right:9.5px;top:18px;bottom:-1px;width:1px;background:var(--line2)}
+.tml li:last-child::after{display:none}
+.tml li.g::before{background:var(--success)}.tml li.b::before{background:var(--info)}.tml li.r::before{background:var(--danger)}.tml li.w::before{background:var(--warn)}
+.tml b{font-weight:700;display:block}
+.tml small{display:block;color:var(--faint);font-size:12px}
+.tml .q{display:block;margin-top:3px;padding:6px 9px;border-radius:9px;background:var(--raised);border:1px solid var(--line2);font-size:12.5px;color:var(--ink2)}
+/* action bar */
+.abar{position:sticky;bottom:12px;z-index:20;margin-top:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:20px;padding:10px 12px 10px 14px;box-shadow:var(--pop)}
+.chk{display:flex;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--faint)}
+.chk span{display:inline-flex;align-items:center;gap:6px}
+.chk i{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center}
+.chk i svg{width:11px;height:11px;stroke-width:3;opacity:0}
+.chk .on{color:var(--ink2)}.chk .on i{background:var(--success);border-color:var(--success);color:#fff}.chk .on i svg{opacity:1}
+.abar .sp{margin-inline-start:auto;display:flex;gap:8px;flex-wrap:wrap}
+.btn svg{width:17px;height:17px}
+.btn:disabled{opacity:.45;cursor:not-allowed;filter:none;box-shadow:none}
+.btn:not(.pr):not(.ok2):not(.dg):hover:not(:disabled){border-color:color-mix(in srgb,var(--brand) 40%,var(--line));color:var(--brand);background:color-mix(in srgb,var(--brand) 5%,var(--surface))}
+.btn.ok2{border:0;color:#fff;background:linear-gradient(180deg,#059669,#047857);box-shadow:0 12px 24px -12px #047857}
+.btn.ok2:hover{filter:brightness(1.07)}
+.btn.dg{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 35%,var(--line))}
+.btn.dg:hover{background:var(--danger-t)}
+.wait{font-size:13.5px;color:var(--faint);display:inline-flex;align-items:center;gap:8px}
+.wait svg{width:17px;height:17px}
+/* handover */
+.flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:10px;align-items:center;margin-top:14px}
+.node{background:var(--surface);border:1.5px solid var(--line2);border-radius:20px;padding:14px 16px;box-shadow:var(--shadow);text-align:center;transition:.3s}
+.node small{display:block;font-size:12.5px;color:var(--faint);font-weight:600}
+.node b{display:block;font:800 24px Alexandria;margin-top:4px;direction:ltr}
+.node span{display:block;font-size:12px;color:var(--faint);margin-top:2px}
+.node.hot{border-color:var(--warn);background:var(--warn-t)}
+.node.hot b{color:var(--warn)}
+.node.got{border-color:var(--success);background:var(--success-t)}
+.node.got b{color:var(--success)}
+.arr{color:var(--faint);display:grid;place-items:center}
+.arr svg{width:26px;height:26px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px;margin-top:10px}
+.fld label.l{display:flex;align-items:center;gap:6px;font-weight:700;font-size:13px;margin-bottom:5px;color:var(--ink2)}
+.fld label.l small{margin-inline-start:auto;font-weight:500;font-size:12px;color:var(--faint);display:inline-flex;align-items:center;gap:4px}
+.fld label.l small svg{width:12px;height:12px}
+.fld .inp{position:relative}
+.fld input,.fld select,.fld textarea{width:100%;height:44px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);padding:0 12px;font:15px 'IBM Plex Sans Arabic';color:var(--ink)}
+.fld textarea{height:64px;padding:9px 12px;resize:vertical}
+.fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 12%,transparent)}
+.fld input:disabled,.fld select:disabled{background:var(--sunken);color:var(--muted);border-style:dashed}
+.fld input.ltr{direction:ltr;text-align:left;font-family:Alexandria;font-weight:600}
+.fld .suf{position:absolute;inset-inline-start:12px;top:50%;transform:translateY(-50%);color:var(--faint);font-size:13px}
+.full{grid-column:1/-1}
+.seg2{display:flex;gap:6px}
+.seg2 button{flex:1;height:44px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);font-weight:700;font-size:13.5px;cursor:pointer;color:var(--ink2)}
+.seg2 button[aria-pressed=true]{border-color:var(--brand);background:color-mix(in srgb,var(--brand) 8%,var(--surface));color:var(--brand)}
+.proof{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;border:1.5px dashed var(--line);background:var(--raised);cursor:pointer;font-size:13.5px;color:var(--ink2);width:100%;font-family:inherit;text-align:start}
+.proof:hover{border-color:color-mix(in srgb,var(--brand) 40%,var(--line));color:var(--brand)}
+.proof svg{width:18px;height:18px}
+.proof.has{border-style:solid;border-color:color-mix(in srgb,var(--success) 40%,var(--line));color:var(--success);background:var(--success-t)}
+.rec{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+.rec div{border:1px solid var(--line2);border-radius:14px;padding:9px 12px;background:var(--raised)}
+.rec small{display:block;font-size:12px;color:var(--faint)}
+.rec b{display:block;font-size:14px;margin-top:2px}
+.rec b.num{font-family:Alexandria}
+/* periods */
+.segx{display:inline-flex;gap:2px;padding:3px;border-radius:12px;background:var(--surface);border:1px solid var(--line2)}
+.segx button{border:0;background:transparent;height:36px;padding:0 14px;border-radius:9px;cursor:pointer;font-size:14px;font-weight:700;color:var(--muted)}
+.segx button[aria-pressed=true]{background:var(--ink);color:var(--surface)}
+.kp{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:14px}
+.kp div{background:var(--surface);border:1px solid var(--line2);border-radius:18px;padding:12px 14px;box-shadow:var(--shadow)}
+.kp small{display:block;font-size:12.5px;color:var(--faint);font-weight:600}
+.kp b{display:block;font:800 21px Alexandria;margin-top:4px;direction:ltr;text-align:right}
+.kp span{font-size:12px;color:var(--faint)}
+.kp .w b{color:var(--warn)}.kp .r b{color:var(--danger)}
+.mx{width:100%;border-collapse:separate;border-spacing:0;font-size:13.5px;margin-top:10px}
+.mx th{position:static;font-size:12.5px;color:var(--faint);font-weight:600;padding:8px 6px;text-align:center;border-bottom:1px solid var(--line2);white-space:nowrap}
+.mx th:first-child{text-align:start}
+.mx th small{display:block;font:500 11.5px Alexandria}
+.mx th.today{color:var(--brand)}
+.mx td{background:transparent;border:0;border-bottom:1px solid var(--line2);border-radius:0!important;padding:7px 6px;text-align:center;width:auto!important;white-space:nowrap}
+.mx td:first-child{text-align:start;font-weight:700}
+.mx tbody tr{animation:none;cursor:default}
+.mx tbody tr:hover td{background:color-mix(in srgb,var(--brand) 3%,var(--surface))}
+.mx tbody tr:hover td:first-child{box-shadow:none}
+.mx tfoot td{font-weight:800;border-top:1.5px solid var(--line);border-bottom:0;font-family:Alexandria}
+.mx tfoot td:first-child{font-family:'IBM Plex Sans Arabic'}
+.cell{width:30px;height:30px;border-radius:9px;display:inline-grid;place-items:center;border:0;font:inherit;cursor:default}
+.cell svg{width:15px;height:15px;stroke-width:2.4}
+.cell.approved{background:var(--success-t);color:var(--success)}
+.cell.sent{background:var(--info-t);color:var(--info)}
+.cell.returned{background:var(--danger-t);color:var(--danger)}
+.cell.draft{background:var(--sunken);color:var(--muted)}
+.cell.open{background:transparent;color:var(--warn);box-shadow:inset 0 0 0 1.5px var(--warn)}
+.cell.future{background:transparent;color:var(--line)}
+button.cell.link{cursor:pointer;outline:2px solid var(--brand);outline-offset:2px}
+.mx .tv{font:700 13.5px Alexandria;direction:ltr}
+.mx .tv.w{color:var(--warn)}
+.lgd{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:12.5px;color:var(--faint)}
+.lgd span{display:inline-flex;align-items:center;gap:6px}
+.lgd .cell{width:20px;height:20px;border-radius:6px}
+.lgd .cell svg{width:11px;height:11px}
+.chl{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px}
+.chl li{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;padding:9px 11px;border-radius:13px;border:1px solid var(--line2)}
+.chl li .d{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;flex:none}
+.chl li .d svg{width:13px;height:13px;stroke-width:2.6}
+.chl li.ok .d{background:var(--success);color:#fff}
+.chl li.no .d{background:var(--warn-t);color:var(--warn);border:1.5px solid var(--warn)}
+.chl li b{display:block}.chl li small{display:block;color:var(--faint);font-size:12.5px}
+.nest{margin-top:12px;border-radius:18px;border:1.5px solid color-mix(in srgb,var(--brand) 35%,var(--line));padding:12px;background:color-mix(in srgb,var(--brand) 4%,var(--surface))}
+.nest .in{margin-top:10px;border-radius:14px;border:1.5px solid color-mix(in srgb,var(--info) 35%,var(--line));padding:10px;background:var(--surface)}
+.nest .in .in{border-color:color-mix(in srgb,var(--success) 40%,var(--line));background:var(--success-t)}
+.nest .h{display:flex;align-items:baseline;gap:8px;font-size:13px;color:var(--faint)}
+.nest .h b{font-size:14px;color:var(--ink)}
+.nest .h em{margin-inline-start:auto;font:800 17px Alexandria;font-style:normal;color:var(--ink);direction:ltr}
+.msplit{margin-top:12px;display:grid;grid-template-columns:5fr 2fr;border-radius:12px;overflow:hidden;border:1px solid var(--line2);font-size:12.5px;text-align:center}
+.msplit div{padding:8px 6px}
+.msplit .a{background:color-mix(in srgb,var(--brand) 9%,var(--surface));color:var(--ink2)}
+.msplit .b{background:var(--sunken);color:var(--faint);border-inline-start:1px dashed var(--line)}
+.msplit b{display:block;font:700 13px Alexandria;color:var(--ink)}
+/* modal */
+.mdl{position:fixed;inset:0;z-index:60;background:#0b0d1080;backdrop-filter:blur(3px);display:grid;place-items:center;padding:16px}
+.mdl .bx{width:min(500px,100%);background:var(--surface);border:1px solid var(--line2);border-radius:22px;box-shadow:var(--pop);padding:22px;animation:pop .16s ease;max-height:90vh;overflow:auto}
+.mdl .ic{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;margin-bottom:10px}
+.mdl .ic svg{width:22px;height:22px}
+.mdl h4{margin:0 0 4px;font:700 21px 'El Messiri',serif}
+.mdl p{margin:0;color:var(--faint);font-size:14px;line-height:1.7}
+.mdl dl{margin:12px 0 0;display:grid;gap:6px;font-size:14px}
+.mdl dl div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line2);padding-bottom:6px}
+.mdl dt{color:var(--faint)}.mdl dd{margin:0;font-weight:700}
+.mdl dd.num{font-family:Alexandria;direction:ltr}
+.mdl .ft{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+.mdl .err{color:var(--danger);font-size:13px;font-weight:600;margin-top:6px}
+.note2{margin-top:10px;display:flex;gap:8px;align-items:flex-start;font-size:12.5px;color:var(--faint);line-height:1.7}
+.note2 svg{width:15px;height:15px;flex:none;margin-top:3px}
+.notes{margin-top:18px;border:1px dashed var(--line);border-radius:18px;padding:4px 18px;background:var(--surface);font-size:14.5px;color:var(--ink2)}
+.notes summary{cursor:pointer;font-weight:700;padding:10px 0}
+.notes summary:hover{color:var(--brand)}
+.notes ul{margin:0 0 12px;padding-inline-start:20px;display:grid;gap:5px}
+.notes code{font:12.5px ui-monospace,monospace;background:var(--sunken);border-radius:6px;padding:1px 6px}
+:root[data-theme=dark] .tabs button:hover,:root[data-theme=dark] .notes summary:hover,:root[data-theme=dark] .reason .chips button[aria-pressed=true],:root[data-theme=dark] .seg2 button[aria-pressed=true],:root[data-theme=dark] .mx th.today{color:#f28b93}
+:root[data-theme=dark] .tabs button[aria-pressed=true]:hover{color:var(--surface)}
+:root[data-theme=dark] .btn.ok2{color:#fff}
+@media (max-width:1180px){.hero{grid-template-columns:1fr;gap:16px}.tot{text-align:start}.g2{grid-template-columns:minmax(0,1fr)}.accs{grid-template-columns:1fr 1fr}.kp{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:760px){
+  .tabs{display:flex;overflow-x:auto}.tabs button{flex:1;padding:0 8px;font-size:13.5px;white-space:nowrap}
+  .steps{overflow-x:auto;justify-content:flex-start}.stp{min-width:78px}
+  .accs{grid-template-columns:1fr 1fr;gap:8px}.ac{padding:12px}.ac .am{font-size:19px}
+  .pt thead{display:none}.pt,.pt tbody,.pt tr,.pt td,.pt tfoot{display:block}
+  .pt tbody tr{display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:10px 2px;border-bottom:1px solid var(--line2)}
+  .pt td{border:0!important;padding:0!important;white-space:normal}
+  .pt td.c-sub{grid-column:1;grid-row:1}.pt td.c-am{grid-column:2;grid-row:1}.pt td.c-acc{grid-column:1}.pt td.c-mt{grid-column:2;grid-row:2;text-align:end}
+  .pt td.c-id,.pt td.c-by,.pt td.c-ref{display:none!important}
+  .pt tfoot tr{display:flex;justify-content:space-between;padding-top:8px}
+  .pt tfoot td.x{display:none}
+  .den{grid-template-columns:1fr 1fr}
+  .abar{bottom:6px}.abar .sp{width:100%}.abar .sp .btn{flex:1;justify-content:center}.chk{font-size:12px}
+  .flow{grid-template-columns:1fr}.arr{transform:rotate(-90deg)}
+  .fgrid,.rec{grid-template-columns:1fr}
+  .kp{grid-template-columns:1fr 1fr}
+  .mxw{overflow-x:auto}
+  .mx{display:table!important;min-width:620px}.mx thead{display:table-header-group!important}.mx tbody{display:table-row-group!important}.mx tfoot{display:table-footer-group!important}
+  .mx tr,.mx tbody tr{display:table-row!important;background:none;border:0;border-radius:0;padding:0;margin:0}
+  .mx td,.mx th{display:table-cell!important;padding:7px 5px!important;border-bottom:1px solid var(--line2)!important}
+  .mx tfoot td{border-bottom:0!important;border-top:1.5px solid var(--line)!important}
+  .mx td:first-child,.mx th:first-child{position:sticky;right:0;z-index:1;background:var(--surface)!important;padding-inline-end:10px!important}
+  .pn h3{flex-wrap:wrap;row-gap:2px}.pn h3 .r{flex-basis:100%;margin:0;padding-inline-start:40px}
+}
+@media (max-width:480px){.tabs{width:100%}.tabs button{padding:0 4px;gap:4px;font-size:13px;justify-content:center}.tabs button svg{display:none}}
+</style>
+</head>
+<body>
+<div class="demo-bar">
+  <div><b>الإغلاق</b> · نموذج تفاعلي</div>
+  <div class="dbr">
+    <div class="seg" id="roleSeg" role="group" aria-label="بصفة"><button data-r="prep" aria-pressed="true">المحاسب (يُعدّ الكشف)</button><button data-r="audit" aria-pressed="false">المدقق</button></div>
+    <div class="seg" id="jumpSeg" role="group" aria-label="انتقل إلى حالة"><button data-j="draft" aria-pressed="true">مسودة</button><button data-j="sent" aria-pressed="false">مرسل</button><button data-j="returned" aria-pressed="false">معاد</button><button data-j="approved" aria-pressed="false">معتمد</button></div>
+    <div class="seg" id="themeSeg" role="group" aria-label="الوضع"><button data-theme="light" aria-pressed="true">نهاري</button><button data-theme="dark" aria-pressed="false">ليلي</button></div>
+  </div>
+</div>
+<main class="wrap">
+  <div class="ph"><div><h1>الإغلاق</h1><p>مطابقة تحصيل الفرع وتدقيقه، ثم تسليم النقد للشركة، ثم إغلاقات الأسبوع والشهر من نفس الدفعات.</p></div></div>
+  <div class="tabs" role="group" aria-label="القسم" id="tabs"></div>
+  <div id="view"></div>
+  <details class="notes">
+    <summary>ملاحظات للمبرمج</summary>
+    <ul>
+      <li><b>هذه الصفحة جديدة بالكامل</b> وتحتاج بيانات غير موجودة حاليًا. ترتيب البناء كما في دليل الإغلاق: الحسابات ← ربط الدفعات ← الإغلاق اليومي ← التدقيق ← التسليم والتقارير.</li>
+      <li><b>الحسابات:</b> جدول <code>accounts</code> (صندوق نقد لكل فرع، وحساب لكل بنك أو محفظة، مع إمكانية حساب مركزي للشركة). كل دفعة تُربط بـ <code>account_id</code> المستلم، إضافة إلى الفرع والموظف والمبلغ والتاريخ وحالة التأكيد.</li>
+      <li><b>الكشوف:</b> جدول <code>closings</code> (النوع: يومي/أسبوعي/شهري، الرقم، الفرع، الفترة، وقت القطع، الحالة: <code>draft / submitted / returned / approved</code>، من أعدّه ومتى، من اعتمده ومتى، سبب الإرجاع). جدول <code>closing_payments</code> بقيد <code>unique(payment_id)</code> للإغلاق اليومي حتى لا تُدرج دفعة في كشفين.</li>
+      <li><b>عدّ النقد:</b> فئات العملة المعدودة، الرصيد المتوقع = رصيد البداية + المقبوضات النقدية − المصروفات والرديات − التسليمات للخزينة، والفرق مع سببه الإلزامي.</li>
+      <li><b>البنوك والمحافظ:</b> مطابقة كل دفعة مع حركة الحساب المستلم. غير المطابَق يُنقل إلى "معلّق" ولا يدخل في إجمالي الكشف.</li>
+      <li><b>التدقيق:</b> صلاحيتان جديدتان مقترحتان <code>closings.prepare</code> و<code>closings.audit</code>. المحاسب قد يملك الاثنتين، لكن يُفضّل منع أو التحذير من اعتماد الشخص لكشف أعدّه بنفسه.</li>
+      <li><b>بعد الاعتماد:</b> الكشف مقفل. أي تصحيح لاحق حركة تسوية مرتبطة بالكشف الأصلي، تمر بالتدقيق، ولها أثر في سجل الكشف.</li>
+      <li><b>تسليم النقد:</b> جدول <code>cash_transfers</code> (من صندوق الفرع إلى خزينة الشركة، المرسل، المستلم، المبلغ، التاريخ، إثبات التسليم، الحالة: قيد النقل / تم الاستلام، رقم الكشف المرتبط). تحويل داخلي لا يُحتسب تحصيلًا.</li>
+      <li><b>الإغلاق الأسبوعي والشهري:</b> لا يجمعان إجماليات الكشوف اليومية، بل الدفعات الأصلية حسب تاريخها. الأسبوع الممتد بين شهرين: يأخذ الشهر أيامه فقط.</li>
+      <li>وقت القطع وبداية الأسبوع إعدادات للشركة، مثل صفحة مواعيد القراءات.</li>
+    </ul>
+  </details>
+</main>
+<div class="toast" id="toast"><span class="ok" id="tIc"></span><span id="tmsg"></span><button id="undo" hidden>تراجع</button></div>
+<div id="layer"></div>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const P={check:'<path d="m5 12.5 4.5 4.5L19 7"/>',x:'<path d="M6 6l12 12M18 6 6 18"/>',cash:'<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/>',lock:'<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',send:'<path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/>',undo:'<path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-2"/>',alert:'<circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/>',info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',pin:'<path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',next:'<path d="m15 18-6-6 6-6"/>',prev:'<path d="m9 18 6-6-6-6"/>',list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',count:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M16 11h0M8 15h2M12 15h2M8 19h0"/>',hist:'<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>',truck:'<path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>',layers:'<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/>',arrowL:'<path d="M19 12H5M11 18l-6-6 6-6"/>',cam:'<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',edit:'<path d="M4 20h4L19 9l-4-4L4 16z"/>',print:'<path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/>',bank:'<path d="M3 10 12 4l9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18"/>',shield:'<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/>',draft:'<path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4"/>',dot:'<circle cx="12" cy="12" r="3" fill="currentColor"/>',minus:'<path d="M6 12h12"/>'};
+const ic=(k,s=18)=>`<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${P[k]}</svg>`;
+const n2=v=>(+v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),n0=v=>Math.round(v).toLocaleString('en-US');
+const LOGO={bop:'data:image/webp;base64,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',jp:'data:image/webp;base64,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',pp:'data:image/webp;base64,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'};
+const ACC={cash:{n:'الصندوق النقدي',s:'صندوق فرع النصيرات'},bop:{n:'بنك فلسطين',s:'حساب الشركة · تحويل بنكي'},jp:{n:'جوال باي',s:'محفظة الشركة'},pp:{n:'بال باي',s:'محفظة الشركة'}};
+const PREP='يوسف أبو زايد',AUD='هالة عوض';
+const DEN=[200,100,50,20,10,5,2,1];
+// --------- state ---------
+const S={tab:'day',role:'prep',per:'week',ho:null,hoForm:null,corr:[]};
+function freshDay(){return{st:'draft',pays:[
+  {id:'10421',v:'000421',sub:'محمد أحمد الشاعر',box:455,acc:'cash',am:1000,by:'يوسف أبو زايد',t:'09:14',ref:'',inc:true,mt:true},
+  {id:'10422',v:'000422',sub:'خالد محمود النجار',box:458,acc:'bop',am:600,by:'يوسف أبو زايد',t:'10:42',ref:'FT26272X8Q41',inc:true,mt:false},
+  {id:'10423',v:'000423',sub:'نبيل أحمد أبو عودة',box:455,acc:'jp',am:200,by:'ماجد النجار',t:'12:05',ref:'JP-8841207',inc:true,mt:false}],
+ pending:[{id:'10424',sub:'هاني أحمد شعث',acc:'pp',am:150,ref:'PP-5520013',by:'ماجد النجار',t:'13:30',why:'إيصال غير مؤكد: لم يظهر في حركة المحفظة بعد'}],
+ count:Object.fromEntries(DEN.map(d=>[d,''])),reason:'',rtype:'',ret:null,events:[{c:'',t:'أُنشئ الكشف 5001 تلقائيًا عند وقت القطع',s:'النظام · 30/09 23:59'},{c:'',t:'رُبطت 3 دفعات مؤكدة بالكشف، وإيصال واحد معلّق',s:'النظام · 30/09 23:59'}]}}
+let D=freshDay();
+function preset(st){D=freshDay();S.ho=null;S.corr=[];
+ if(st==='draft')return;
+ D.pays.forEach(p=>p.mt=true);Object.assign(D.count,{200:4,100:1,50:1});D.reason='نقص 50 ₪: أعاد المحصّل باقيًا زائدًا لمشترك، ويُتابع استرداده.';D.rtype='خطأ في الباقي';
+ D.events.push({c:'b',t:'عُدّ النقد: 950.00 ₪ (المتوقع 1,000.00 ₪)، وطوبقت حركات البنك والمحفظة',s:PREP+' · 01/10 08:40'},{c:'b',t:'أُرسل الكشف للتدقيق',s:PREP+' · 01/10 08:46'});
+ if(st==='sent'){D.st='sent';return}
+ if(st==='returned'){D.st='returned';D.ret='نقص الصندوق 50 ₪ يحتاج توقيع المحصّل على سبب الفرق، وإرفاق إشعار بنك فلسطين للدفعة 10422.';D.events.push({c:'r',t:'أُعيد الكشف للتصحيح',s:AUD+' · 01/10 10:05',q:D.ret});D.reason='';return}
+ D.st='approved';D.events.push({c:'g',t:'اعتُمد الكشف وقُفل من التعديل المباشر',s:AUD+' · 01/10 10:20'})}
+// --------- helpers ---------
+const counted=()=>DEN.reduce((a,d)=>a+d*(+D.count[d]||0),0);
+const hasCount=()=>DEN.some(d=>D.count[d]!=='');
+const inc=()=>D.pays.filter(p=>p.inc);
+const sumAcc=k=>inc().filter(p=>p.acc===k).reduce((a,p)=>a+p.am,0);
+const total=()=>inc().reduce((a,p)=>a+p.am,0);
+const OPEN=0,REFUND=0,HANDED=0;
+const expected=()=>OPEN+sumAcc('cash')-REFUND-HANDED;
+const diff=()=>counted()-expected();
+const editable=()=>S.role==='prep'&&(D.st==='draft'||D.st==='returned');
+const bankOk=()=>inc().filter(p=>p.acc!=='cash').every(p=>p.mt);
+const reasonOk=()=>!hasCount()||diff()===0||D.reason.trim().length>=5;
+const ready=()=>hasCount()&&reasonOk()&&bankOk();
+const STL={draft:'مسودة',sent:'مرسل للتدقيق',returned:'معاد للتصحيح',approved:'معتمد'};
+// --------- tabs ---------
+function tabs(){const pend=D.st==='sent'&&S.role==='audit'?1:0;
+ $('#tabs').innerHTML=[['day','الإغلاق اليومي','list',pend],['ho','تسليم النقد','truck',S.ho&&S.ho.st==='transit'?1:0],['per','الأسبوعي والشهري','layers',0]].map(([k,t,i,n])=>`<button data-tab="${k}" aria-pressed="${S.tab===k}">${ic(i,17)}${t}${n?`<span class="n">${n}</span>`:''}</button>`).join('');
+ $$('[data-tab]').forEach(b=>b.onclick=()=>{S.tab=b.dataset.tab;render();scrollTo({top:0})})}
+// --------- daily ---------
+function stepper(){const st=D.st;const s=[['ربط الدفعات'],['العدّ والمطابقة'],['التدقيق'],['الاعتماد']];
+ const cur=st==='draft'?(ready()?2:1):st==='returned'?1:st==='sent'?2:4;
+ return`<div class="steps">${s.map(([t],i)=>{const done=i<cur||(st==='approved'),c=i===cur&&st!=='approved',bad=st==='returned'&&i===1;
+  return`<div class="stp ${done?'done':''} ${c?'cur':''} ${bad?'bad':''}"><span class="c">${done?ic('check',15):bad?ic('undo',15):i+1}</span><span>${bad?'معاد للتصحيح':t}</span></div>`}).join('')}</div>`}
+function accCard(k){const tot=sumAcc(k),cnt=inc().filter(p=>p.acc===k).length,lg=k==='cash'?`<span class="lg">${ic('cash',19)}</span>`:`<span class="lg"><img src="${LOGO[k]}" alt=""></span>`;
+ let ms;if(k==='cash'){ms=!hasCount()?`<span class="ms no">${ic('count',14)}لم يُعدّ بعد</span>`:diff()===0?`<span class="ms ok">${ic('check',14)}المعدود مطابق</span>`:`<span class="ms bad">${ic('alert',14)}${diff()<0?'نقص':'زيادة'} ${n2(Math.abs(diff()))} ₪</span>`}
+ else{const all=inc().filter(p=>p.acc===k);ms=!all.length?`<span class="ms n">لا دفعات</span>`:all.every(p=>p.mt)?`<span class="ms ok">${ic('check',14)}مطابق مع الحساب</span>`:`<span class="ms no">${ic('clock',14)}${all.filter(p=>!p.mt).length} بانتظار المطابقة</span>`}
+ return`<div class="ac"><div class="hd">${lg}<div><b>${ACC[k].n}</b><small>${cnt} ${cnt===1?'دفعة':cnt===2?'دفعتان':'دفعات'}</small></div></div><div class="am">${n2(tot)}<em>₪</em></div>${ms}</div>`}
+function payRows(){return inc().map(p=>{const ed=editable();
+ const mt=p.acc==='cash'?`<button class="mt cash" disabled>${ic('cash',14)}يُطابق بالعدّ</button>`:`<button class="mt" data-mt="${p.id}" aria-pressed="${p.mt}" ${ed?'':'disabled'}>${ic('check',14)}${p.mt?'مطابق':'طابِق'}</button>${ed&&!p.mt?`<br><button class="mv" data-mv="${p.id}">غير موجود في الحساب؟</button>`:''}`;
+ return`<tr><td class="c-id"><span class="pid"><b>#${p.id}</b><small>سند ${p.v}</small></span></td>
+  <td class="c-sub"><span class="psub"><b>${p.sub}</b><small>الطبلون ${p.box}</small></span></td>
+  <td class="c-acc"><span class="pacc">${p.acc==='cash'?`<span class="ci">${ic('cash',14)}</span>`:`<img src="${LOGO[p.acc]}" alt="">`}${ACC[p.acc].n}</span></td>
+  <td class="c-by">${p.by}<small style="display:block;font:500 12px Alexandria;color:var(--faint)">${p.t}</small></td>
+  <td class="c-ref">${p.ref?`<span class="pref">${p.ref}</span>`:'<span class="muted">—</span>'}</td>
+  <td class="c-am"><span class="pam">${n2(p.am)} ₪</span></td>
+  <td class="c-mt">${mt}</td></tr>`}).join('')}
+function cashPanel(){const ed=editable(),c=counted(),df=diff(),e=expected();
+ return`<section class="pn"><h3><span class="ix">${ic('count',16)}</span>مطابقة الصندوق النقدي<span class="r">بالشيكل</span></h3>
+  <div class="formula"><div class="row"><span>رصيد البداية</span><b>${n2(OPEN)}</b></div><div class="row"><span>+ المقبوضات النقدية</span><b>${n2(sumAcc('cash'))}</b></div><div class="row"><span>− المصروفات والرديات النقدية</span><b>${n2(REFUND)}</b></div><div class="row"><span>− التسليمات للخزينة</span><b>${n2(HANDED)}</b></div><div class="row t"><span>الرصيد المتوقع</span><b>${n2(e)}</b></div></div>
+  <div class="den">${DEN.map(d=>`<label class="${d<20?'coin':''}">${d<20?'عملة':'ورقة'}<span class="v"><em>${d}</em><input data-den="${d}" value="${D.count[d]}" inputmode="numeric" placeholder="0" ${ed?'':'disabled'} aria-label="عدد فئة ${d}"></span></label>`).join('')}</div>
+  <div class="cnt ${!hasCount()?'':df===0?'ok':'bad'}"><span>النقد المعدود</span><div><b>${hasCount()?n2(c):'—'}</b>${hasCount()?`<span class="d">${df===0?'✓ مطابق للمتوقع':(df<0?'نقص ':'زيادة ')+n2(Math.abs(df))+' ₪'}</span>`:''}</div></div>
+  ${hasCount()&&df!==0?`<div class="reason ${ed?'ed':''} ${ed&&!reasonOk()?'req':''}"><span class="lab">${ed?ic('alert',14)+' سبب الفرق مطلوب قبل الإرسال':ic('draft',14)+' سبب الفرق المسجّل'}</span>${ed?`<div class="chips">${['خطأ في الباقي','عملة تالفة','دفعة لم تُسجَّل','أخرى'].map(r=>`<button data-rt="${r}" aria-pressed="${D.rtype===r}">${r}</button>`).join('')}</div>`:''}<textarea id="reason" placeholder="اشرح الفرق ومن المسؤول عن متابعته" ${ed?'':'disabled'}>${D.reason}</textarea></div>`:''}
+ </section>`}
+function timeline(){const ev=[...D.events,...S.corr.map(c=>({c:'w',t:`طلب تصحيح ${c.no} مرتبط بالكشف 5001: ${c.t}`,s:`${c.by} · ${c.at} · بانتظار التدقيق`,q:c.note}))];
+ return`<section class="pn"><h3><span class="ix">${ic('hist',16)}</span>سجل الكشف</h3><ul class="tml">${[...ev].reverse().map(e=>`<li class="${e.c}"><b>${e.t}</b><small>${e.s}</small>${e.q?`<span class="q">${e.q}</span>`:''}</li>`).join('')}</ul></section>`}
+function banner(){const st=D.st,r=S.role;
+ if(st==='returned')return`<div class="ban bad">${ic('undo',19)}<div><b>أعاد ${AUD} الكشف للتصحيح</b>${D.ret}<br>${r==='prep'?'صحّح ثم أعد المطابقة والإرسال.':'الكشف الآن عند المحاسب.'}</div></div>`;
+ if(st==='sent')return r==='audit'?`<div class="ban inf">${ic('shield',19)}<div><b>الكشف بانتظار تدقيقك</b>أعدّه ${PREP}، وأنت شخص مختلف عن مُعدّه ✓. راجع الدفعات وعدّ النقد والفرق، ثم اعتمد أو أرجِع مع السبب.</div></div>`:`<div class="ban inf">${ic('clock',19)}<div><b>أُرسل للتدقيق</b>الكشف مقفل حتى يعتمده المدقق أو يعيده إليك.</div></div>`;
+ if(st==='approved')return`<div class="ban ok">${ic('lock',19)}<div><b>معتمد ومحمي من التعديل المباشر</b>اعتمده ${AUD} في 01/10 10:20. أي تصحيح لاحق يكون حركة موثّقة مرتبطة بهذا الكشف.</div></div>`;
+ if(r==='audit')return`<div class="ban warn">${ic('info',19)}<div><b>الكشف ما زال مسودة عند المحاسب</b>يظهر لك للاطلاع فقط حتى يُرسل للتدقيق.</div></div>`;
+ return''}
+function actions(){const st=D.st,r=S.role;
+ const chk=`<div class="chk"><span class="${hasCount()?'on':''}"><i>${ic('check',11)}</i>عدّ النقد</span><span class="${hasCount()&&reasonOk()?'on':''}"><i>${ic('check',11)}</i>توثيق الفروق</span><span class="${bankOk()?'on':''}"><i>${ic('check',11)}</i>مطابقة البنوك والمحافظ</span></div>`;
+ let b='';
+ if(r==='prep'&&(st==='draft'||st==='returned'))b=`<button class="btn" id="saveD">حفظ المسودة</button><button class="btn pr" id="submit" ${ready()?'':'disabled'}>${ic('send',17)}${st==='returned'?'إعادة الإرسال للتدقيق':'إرسال للتدقيق'}</button>`;
+ else if(r==='audit'&&st==='sent')b=`<button class="btn dg" id="ret">${ic('undo',17)}إرجاع مع السبب</button><button class="btn ok2" id="appr">${ic('check',17)}اعتماد الكشف</button>`;
+ else if(st==='approved')b=`<button class="btn" id="prnt">${ic('print',17)}طباعة الكشف</button><button class="btn" id="corr">${ic('edit',17)}تصحيح موثّق</button>${r==='prep'?`<button class="btn pr" id="goHo">${ic('truck',17)}تسليم النقد للشركة</button>`:''}`;
+ else b=`<span class="wait">${ic('clock',17)}${st==='sent'?'بانتظار المدقق':'بانتظار المحاسب'}</span>`;
+ return`<div class="abar">${st==='approved'?`<span class="wait" style="color:var(--success)">${ic('lock',17)}الكشف 5001 معتمد</span>`:chk}<div class="sp">${b}</div></div>`}
+function dayView(){const p=D.pending,pt=p.reduce((a,x)=>a+x.am,0);
+ return`<div class="ctl"><span class="cb">${ic('pin',16)}<small>الفرع</small>فرع النصيرات</span><span class="cb nav"><button aria-label="اليوم السابق">${ic('prev',16)}</button><span style="padding:0 6px">الأربعاء <b>30/09/2026</b></span><button aria-label="اليوم التالي" disabled>${ic('next',16)}</button></span><span class="cb">${ic('clock',16)}<small>وقت القطع</small><b>23:59</b></span></div>
+ <section class="hero"><div><small class="k">كشف إغلاق يومي</small><h2>رقم <span class="no">5001</span></h2><div class="meta">فرع النصيرات · الأربعاء <b>30/09/2026</b> · أعدّه ${PREP}</div><div style="margin-top:8px"><span class="st ${D.st}"><i></i>${STL[D.st]}</span></div></div>
+  ${stepper()}
+  <div class="tot"><span>إجمالي التحصيل المؤكد</span><b>${n2(total())} ₪</b><span>${inc().length} ${inc().length===3?'دفعات مؤكدة':'دفعات'} · تفاصيل كل دفعة أدناه</span>${p.length?`<span class="pend">${p.length} ${p.length===1?'إيصال معلّق':'إيصالات معلّقة'} (${n2(pt)} ₪) خارج الإجمالي</span>`:''}</div></section>
+ ${banner()}
+ <div class="accs">${['cash','bop','jp'].map(accCard).join('')}<div class="ac pend"><div class="hd"><span class="lg">${ic('clock',19)}</span><div><b>معلّق</b><small>غير مؤكد، خارج الإجمالي</small></div></div><div class="am" style="color:var(--warn)">${n2(pt)}<em>₪</em></div><span class="ms n">${p.length} ${p.length===1?'إيصال':'إيصالات'}</span></div></div>
+ <div class="g2"><div>
+  <section class="pn"><h3><span class="ix">${ic('list',16)}</span>دفعات الكشف<span class="r">كل دفعة تبقى بهويتها ومشتركها وسندها</span></h3>
+   <div style="overflow-x:auto"><table class="pt"><thead><tr><th>الدفعة</th><th>المشترك</th><th>الحساب المستلم</th><th>الموظف</th><th>المرجع</th><th>المبلغ</th><th>المطابقة</th></tr></thead><tbody>${payRows()}</tbody>
+   <tfoot><tr><td class="x"></td><td>الإجمالي</td><td class="x"></td><td class="x"></td><td class="x"></td><td><span class="pam">${n2(total())} ₪</span></td><td class="x"></td></tr></tfoot></table></div>
+   ${p.length?`<div class="pendl"><h4>${ic('clock',16)}إيصالات معلّقة<span>منفصلة عن التحصيل المؤكد</span></h4>${p.map(x=>`<div class="it">${x.acc==='cash'?'':`<img src="${LOGO[x.acc]}" alt="" style="width:24px;height:24px;border-radius:7px;background:#fff;border:1px solid var(--line2)">`}<div><b>#${x.id} · ${x.sub}</b><span class="why">${x.why}</span></div><span class="pam">${n2(x.am)} ₪</span>${x.back&&editable()?`<button class="mv" data-back="${x.id}">إرجاع للكشف</button>`:''}</div>`).join('')}</div>`:''}
+   <div class="note2">${ic('info',15)}<span>رقم الكشف يجمع الدفعات للمراجعة ولا ينشئ دفعات جديدة. كل دفعة تُدرج في كشف إغلاق يومي واحد فقط.</span></div>
+  </section>
+ </div><div>${cashPanel()}${timeline()}</div></div>
+ ${actions()}`}
+// --------- handover ---------
+function hoView(){const c=hasCount()?counted():0,ho=S.ho;
+ if(!hasCount())return`<div class="pn" style="margin-top:16px;text-align:center;padding:40px 20px"><div style="width:60px;height:60px;border-radius:18px;background:var(--sunken);display:grid;place-items:center;margin:0 auto 10px;color:var(--muted)">${ic('count',26)}</div><b style="font:700 19px 'El Messiri',serif">عُدّ النقد أولًا</b><p style="color:var(--faint);margin:4px 0 12px">يُسجَّل التسليم بالمبلغ المعدود في كشف الإغلاق اليومي 5001.</p><button class="btn pr" id="toDay">${ic('list',17)}الذهاب للإغلاق اليومي</button></div>`;
+ const box=ho?(ho.st==='transit'||ho.st==='received'?0:c):c,tr=ho&&ho.st==='transit'?ho.am:0,co=ho&&ho.st==='received'?ho.am:0;
+ const flow=`<div class="flow"><div class="node ${!ho?'hot':''}"><small>صندوق فرع النصيرات</small><b>${n2(box)} ₪</b><span>${!ho?'جاهز للتسليم':'بعد الخروج'}</span></div><span class="arr">${ic('arrowL',26)}</span>
+  <div class="node ${tr?'hot':''}"><small>أموال قيد النقل</small><b>${n2(tr)} ₪</b><span>${tr?'خرجت ولم يُؤكَّد استلامها':'—'}</span></div><span class="arr">${ic('arrowL',26)}</span>
+  <div class="node ${co?'got':''}"><small>خزينة الشركة</small><b>${co?'+':''}${n2(co)} ₪</b><span>${co?'تم الاستلام':tr?'بانتظار تأكيد الاستلام':'—'}</span></div></div>`;
+ const info=`<div class="ban inf" style="margin-top:14px">${ic('info',19)}<div><b>تحويل داخلي، وليس تحصيلًا جديدًا</b>تحصيل المشتركين في الكشف 5001 يبقى ${n2(total())} ₪. بنك فلسطين (${n2(sumAcc('bop'))} ₪) وجوال باي (${n2(sumAcc('jp'))} ₪) وردت لحسابات الشركة مباشرة وتُنسب للفرع دون قبض جديد، فالذي يُسلَّم هو النقد فقط.</div></div>`;
+ if(!ho){const f=S.hoForm||(S.hoForm={am:String(c),to:'هالة عوض · أمين الخزينة',method:'hand',when:'2026-10-01T09:00',proof:false,ref:'',notes:''});
+  return`${flow}${info}<section class="pn" style="margin-top:16px"><h3><span class="ix">${ic('truck',16)}</span>تسجيل تسليم نقد<span class="r">مرتبط بالكشف 5001</span></h3>
+   <div class="fgrid">
+    <div class="fld"><label class="l">المبلغ المسلَّم<small>المعدود ${n2(c)} ₪</small></label><div class="inp"><input class="ltr" id="hAm" value="${f.am}" inputmode="decimal"><span class="suf">₪</span></div></div>
+    <div class="fld"><label class="l">التاريخ والوقت<small>يدخل في تسليمات يوم 01/10</small></label><input type="datetime-local" class="ltr" id="hWhen" value="${f.when}"></div>
+    <div class="fld"><label class="l">من<small>${ic('lock',12)}</small></label><input disabled value="صندوق فرع النصيرات · ${PREP}"></div>
+    <div class="fld"><label class="l">المستلم</label><select id="hTo">${['هالة عوض · أمين الخزينة','المدير العام'].map(x=>`<option ${f.to===x?'selected':''}>${x}</option>`).join('')}</select></div>
+    <div class="fld full"><label class="l">طريقة التسليم</label><div class="seg2"><button type="button" data-hm="hand" aria-pressed="${f.method==='hand'}">تسليم يدوي للخزينة</button><button type="button" data-hm="dep" aria-pressed="${f.method==='dep'}">إيداع في حساب الشركة</button></div></div>
+    <div class="fld full"><label class="l">إثبات التسليم<small>${f.method==='dep'?'إشعار الإيداع':'سند استلام موقّع'}</small></label><button type="button" class="proof ${f.proof?'has':''}" id="hProof">${ic(f.proof?'check':'cam',18)}${f.proof?'أُرفقت صورة الإثبات · اضغط للتغيير':'تصوير أو إرفاق صورة الإثبات'}</button></div>
+    <div class="fld full"><label class="l">ملاحظات<small>اختياري</small></label><textarea id="hNotes" placeholder="مثل: سُلّم المبلغ ناقصًا 50 ₪ حسب فرق الكشف">${f.notes}</textarea></div>
+   </div>
+   <div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="btn pr" id="hSave" ${f.proof&&+f.am>0?'':'disabled'}>${ic('truck',17)}تسجيل التسليم</button></div>
+   ${!f.proof?'<div class="note2" style="justify-content:flex-end">'+ic('info',15)+'<span>أرفق إثبات التسليم لتفعيل الحفظ.</span></div>':''}
+  </section>`}
+ return`${flow}${info}<section class="pn" style="margin-top:16px"><h3><span class="ix">${ic('truck',16)}</span>حركة تسليم ${ho.no}<span class="r"><span class="st ${ho.st==='received'?'approved':'sent'}" style="font-size:12px"><i></i>${ho.st==='received'?'تم الاستلام':'قيد النقل'}</span></span></h3>
+  <div class="rec"><div><small>المبلغ</small><b class="num">${n2(ho.am)} ₪</b></div><div><small>من</small><b>صندوق فرع النصيرات · ${PREP}</b></div><div><small>إلى</small><b>خزينة الشركة · ${ho.to.split(' · ')[0]}</b></div><div><small>مرتبط بالكشف</small><b class="num">5001</b></div>
+   <div><small>التاريخ</small><b class="num"><span dir="ltr">${((d,t)=>d.split('-').reverse().join('/')+' '+t)(...ho.when.split('T'))}</span></b></div><div><small>الطريقة</small><b>${ho.method==='dep'?'إيداع في حساب الشركة':'تسليم يدوي'}</b></div><div><small>الإثبات</small><b style="color:var(--success)">✓ صورة مرفقة</b></div><div><small>الاستلام</small><b>${ho.st==='received'?'أكّده '+ho.to.split(' · ')[0]+' · 01/10 11:05':'بانتظار التأكيد'}</b></div></div>
+  ${ho.notes?`<div class="note2">${ic('info',15)}<span>${ho.notes}</span></div>`:''}
+  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">${ho.st==='transit'?(S.role==='audit'?`<button class="btn ok2" id="hRecv">${ic('check',17)}تأكيد الاستلام</button>`:`<span class="wait">${ic('clock',17)}بانتظار تأكيد الخزينة (بدّل إلى "المدقق" للتجربة)</span>`):`<span class="wait" style="color:var(--success)">${ic('lock',17)}اكتمل التسليم</span>`}</div></section>`}
+// --------- periods ---------
+const BR=['النصيرات','دير البلح','غزة','البريج','المغازي','الزوايدة','المخيم الجديد','مخيم 2','السوارحة'];
+const DAYS=[['السبت','26/09'],['الأحد','27/09'],['الإثنين','28/09'],['الثلاثاء','29/09'],['الأربعاء','30/09'],['الخميس','01/10'],['الجمعة','02/10']];
+const NUS=[1250,1330,1180,1440,1800];
+let sd=5;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;
+const WK=BR.map((b,i)=>b==='النصيرات'?NUS:[0,1,2,3,4].map(()=>Math.round((600+rnd()*1300)*(1-i*0.06)/10)*10));
+const ST0={1:{3:'sent',4:'sent'},2:{4:'approved'},3:{2:'returned',4:'draft'},4:{4:'sent'},5:{3:'draft',4:'draft'},6:{4:'approved'},7:{4:'sent'},8:{1:'sent',4:'draft'}};
+function dayStatus(bi,di){if(di===5)return'open';if(di===6)return'future';if(bi===0&&di===4)return D.st;return(ST0[bi]&&ST0[bi][di])||'approved'}
+const CI={approved:'check',sent:'send',returned:'undo',draft:'draft',open:'dot',future:'minus'};
+const CT={approved:'معتمد',sent:'مرسل للتدقيق',returned:'معاد للتصحيح',draft:'مسودة',open:'اليوم مفتوح',future:'لم يبدأ'};
+function perView(){const wk=S.per==='week';
+ const seg=`<div class="ctl"><div class="segx"><button data-per="week" aria-pressed="${wk}">أسبوعي</button><button data-per="month" aria-pressed="${!wk}">شهري</button></div><span class="cb">${ic('cal',16)}${wk?'<small>الأسبوع</small><b>26/09 – 02/10/2026</b>':'<small>الشهر</small>أيلول <b>2026</b>'}</span><span class="cb"><small>الرقم</small><b>${wk?'W-2026-39':'M-2026-09'}</b></span><span class="cb"><span class="st draft" style="color:var(--muted);background:var(--sunken);border-color:var(--line)"><i></i>مسودة</span></span></div>`;
+ return seg+(wk?weekView():monthView())+nestCard()}
+function weekView(){let notAp=0,tot=0;BR.forEach((b,bi)=>[0,1,2,3,4].forEach(di=>{if(dayStatus(bi,di)!=='approved')notAp++}));
+ WK.forEach(r=>r.forEach(v=>tot+=v));
+ const rows=BR.map((b,bi)=>{const s=WK[bi].reduce((a,v)=>a+v,0),ap=[0,1,2,3,4].filter(di=>dayStatus(bi,di)==='approved').length;
+  return`<tr><td>${b}</td>${DAYS.map((_,di)=>{const st=dayStatus(bi,di),lk=bi===0&&di===4;return`<td>${lk?`<button class="cell ${st} link" data-goday title="${CT[st]} · افتح الكشف 5001">${ic(CI[st],15)}</button>`:`<span class="cell ${st}" title="${b} ${DAYS[di][1]}: ${CT[st]}">${ic(CI[st],15)}</span>`}</td>`}).join('')}<td><span class="tv">${n0(s)}</span></td><td><span class="tv ${ap<5?'w':''}">${ap}/5</span></td></tr>`}).join('');
+ const blockers=[['الأسبوع لم ينتهِ بعد','ينتهي يوم الجمعة 02/10 عند وقت القطع.'],[`${notAp} إغلاقات يومية غير معتمدة`,'كل يوم في كل فرع يجب أن يُعتمد قبل الإغلاق الأسبوعي.'],['فرق موثّق في النصيرات (−50 ₪)','يُراجع ضمن الفروق المعلّقة للأسبوع.']];
+ return`<div class="kp"><div><small>التحصيل حتى الآن</small><b>${n0(tot)} ₪</b><span>26/09 – 30/09 · كل الفروع</span></div><div class="w"><small>إغلاقات يومية غير معتمدة</small><b>${notAp}</b><span>من ${BR.length*5}</span></div><div class="r"><small>الفروق الموثّقة</small><b>−50.00 ₪</b><span>فرع واحد</span></div><div class="w"><small>إيصالات معلّقة</small><b>${n2(150+320)} ₪</b><span>3 إيصالات</span></div><div><small>أموال قيد النقل</small><b>${n2(S.ho&&S.ho.st==='transit'?S.ho.am:0)} ₪</b><span>${S.ho&&S.ho.st==='transit'?'تسليم النصيرات':'لا يوجد'}</span></div></div>
+ <div class="g2"><div><section class="pn"><h3><span class="ix">${ic('cal',16)}</span>الإغلاقات اليومية للأسبوع<span class="r">اضغط خانة النصيرات 30/09 لفتح الكشف 5001</span></h3>
+  <div class="mxw" style="overflow-x:auto"><table class="mx"><thead><tr><th>الفرع</th>${DAYS.map(([d,t],i)=>`<th class="${i===5?'today':''}">${d}<small>${t}</small></th>`).join('')}<th>التحصيل ₪</th><th>المعتمد</th></tr></thead><tbody>${rows}</tbody>
+  <tfoot><tr><td>المجموع</td>${DAYS.map((_,di)=>`<td>${di<5?n0(WK.reduce((a,r)=>a+r[di],0)):'—'}</td>`).join('')}<td>${n0(tot)}</td><td></td></tr></tfoot></table></div>
+  <div class="lgd">${['approved','sent','returned','draft','open','future'].map(k=>`<span><span class="cell ${k}">${ic(CI[k],11)}</span>${CT[k]}</span>`).join('')}</div></section></div>
+ <div><section class="pn"><h3><span class="ix">${ic('shield',16)}</span>قبل اعتماد الأسبوع</h3><p class="s">يُحفظ الكشف الأسبوعي برقم وحالة واسم المدقق وتوقيت الاعتماد.</p>
+  <ul class="chl">${blockers.map(([b,s])=>`<li class="no"><span class="d">${ic('clock',13)}</span><div><b>${b}</b><small>${s}</small></div></li>`).join('')}<li class="ok"><span class="d">${ic('check',13)}</span><div><b>التحويلات والرديات مراجعة</b><small>لا رديات هذا الأسبوع.</small></div></li></ul>
+  <div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn ok2" disabled>${ic('check',17)}اعتماد الإغلاق الأسبوعي</button></div></section></div></div>`}
+function monthView(){const M=BR.map((b,i)=>b==='النصيرات'?30000:Math.round((26000-i*1900+rnd()*3000)/10)*10);const tot=M.reduce((a,v)=>a+v,0);
+ const rows=BR.map((b,i)=>{const w=i===0?'4/5':i%3===0?'3/5':'4/5',cash=Math.round(M[i]*.58/10)*10;return`<tr><td>${b}</td><td><span class="tv">${n0(M[i])}</span></td><td><span class="tv">${n0(cash)}</span></td><td><span class="tv">${n0(M[i]-cash)}</span></td><td><span class="tv ${i===0&&S.ho&&S.ho.st==='transit'?'w':''}">${i===0&&S.ho&&S.ho.st==='transit'?n0(S.ho.am):'0'}</span></td><td><span class="tv ${i<3?'w':''}">${i===0?'150':i===1?'320':i===2?'90':'0'}</span></td><td><span class="tv w">${w}</span></td></tr>`}).join('');
+ const checks=[[1,'مطابقة أرصدة النقد والبنوك والمحافظ','كل الحسابات مطابقة حتى 29/09.'],[0,'الإيصالات المعلّقة','3 إيصالات بقيمة 560 ₪ تحتاج تأكيدًا أو استبعادًا.'],[S.ho&&S.ho.st==='received'?1:0,'الأموال قيد النقل',S.ho&&S.ho.st==='transit'?`${n2(S.ho.am)} ₪ من النصيرات لم يُؤكَّد استلامها.`:S.ho&&S.ho.st==='received'?'لا أموال قيد النقل.':'نقد النصيرات 30/09 لم يُسلَّم بعد.'],[1,'التسويات','لا تسويات معلّقة.'],[1,'مطابقة أرصدة المشتركين مع سجلات التحصيل','مطابقة.'],[0,'الأسبوع الأخير لم يُغلق','أسبوع 26/09 – 02/10 يمتد إلى تشرين الأول؛ يدخل منه أيلول 26–30/09 فقط.']];
+ return`<div class="kp"><div><small>تحصيل أيلول</small><b>${n0(tot)} ₪</b><span>كل الفروع · حسب تاريخ الدفعات</span></div><div class="w"><small>الأسابيع المعتمدة</small><b>33/45</b><span>9 فروع × 5 أسابيع</span></div><div class="w"><small>إيصالات معلّقة</small><b>560.00 ₪</b><span>3 إيصالات</span></div><div class="${S.ho&&S.ho.st==='transit'?'w':''}"><small>أموال قيد النقل</small><b>${n2(S.ho&&S.ho.st==='transit'?S.ho.am:0)} ₪</b><span>آخر الشهر</span></div><div><small>التسويات</small><b>0</b><span>لا يوجد</span></div></div>
+ <div class="g2"><div><section class="pn"><h3><span class="ix">${ic('layers',16)}</span>تجميع الشركة لشهر أيلول<span class="r">بالشيكل</span></h3>
+  <div style="overflow-x:auto"><table class="mx"><thead><tr><th>الفرع</th><th>التحصيل</th><th>نقد</th><th>بنوك ومحافظ</th><th>قيد النقل</th><th>معلّق</th><th>الأسابيع المعتمدة</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><td>المجموع</td><td>${n0(tot)}</td><td colspan="5"></td></tr></tfoot></table></div>
+  <div class="msplit"><div class="a"><b>أيلول</b>26 – 30/09 من الأسبوع W-39</div><div class="b"><b>تشرين الأول</b>01 – 02/10</div></div>
+  <div class="note2">${ic('info',15)}<span>الأسبوع الممتد بين شهرين لا يُضاف كاملًا: يأخذ إغلاق أيلول الحركات الواقعة داخل أيلول فقط، والباقي لإغلاق تشرين الأول.</span></div></section></div>
+ <div><section class="pn"><h3><span class="ix">${ic('shield',16)}</span>قبل اعتماد الشهر</h3><p class="s">بعد الاعتماد يُقيَّد التعديل على الفترة، وأي تصحيح يكون تسوية موثّقة.</p>
+  <ul class="chl">${checks.map(([ok,b,s])=>`<li class="${ok?'ok':'no'}"><span class="d">${ic(ok?'check':'clock',13)}</span><div><b>${b}</b><small>${s}</small></div></li>`).join('')}</ul>
+  <div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn ok2" disabled>${ic('lock',17)}اعتماد الإغلاق الشهري</button></div></section></div></div>`}
+function nestCard(){return`<section class="pn" style="margin-top:16px"><h3><span class="ix">${ic('layers',16)}</span>نفس المال على أكثر من مستوى<span class="r">فرع النصيرات</span></h3><p class="s">الإغلاقات تراجع نفس الدفعات ولا تُنشئ تحصيلًا جديدًا. إجماليات اليوم والأسبوع أجزاء من الشهر، فلا تُضاف إليه مرة أخرى.</p>
+ <div class="nest"><div class="h"><b>شهري · أيلول</b>يشمل دفعات الأسبوع<em>30,000 ₪</em></div><div class="in"><div class="h"><b>أسبوعي · 26–30/09</b>يشمل دفعات اليوم<em>7,000 ₪</em></div><div class="in"><div class="h"><b>يومي · 30/09 · الكشف 5001</b>3 دفعات<em>1,800 ₪</em></div></div></div></div></section>`}
+// --------- render & bind ---------
+function render(){tabs();$('#view').innerHTML=S.tab==='day'?dayView():S.tab==='ho'?hoView():perView();bind()}
+function bind(){
+ $$('[data-den]').forEach(i=>i.oninput=()=>{const pos=i.selectionStart;D.count[i.dataset.den]=i.value.replace(/\D/g,'');render();const n=$(`[data-den="${i.dataset.den}"]`);n.focus();try{n.setSelectionRange(pos,pos)}catch(_){}});
+ const rs=$('#reason');if(rs)rs.oninput=()=>{D.reason=rs.value;const pos=rs.selectionStart;render();const n=$('#reason');n.focus();n.setSelectionRange(pos,pos)};
+ $$('[data-rt]').forEach(b=>b.onclick=()=>{D.rtype=b.dataset.rt;if(!D.reason.trim()&&b.dataset.rt!=='أخرى')D.reason=b.dataset.rt+': ';render();const n=$('#reason');n.focus();n.setSelectionRange(99,99)});
+ $$('[data-mt]').forEach(b=>b.onclick=()=>{const p=D.pays.find(x=>x.id===b.dataset.mt);p.mt=!p.mt;render()});
+ $$('[data-mv]').forEach(b=>b.onclick=()=>{const p=D.pays.find(x=>x.id===b.dataset.mv);p.inc=false;D.pending.push({id:p.id,sub:p.sub,acc:p.acc,am:p.am,ref:p.ref,by:p.by,t:p.t,why:'لم تظهر في حركة '+ACC[p.acc].n+' عند المطابقة',back:1});D.events.push({c:'w',t:`نُقلت الدفعة #${p.id} إلى المعلّق`,s:PREP+' · الآن'});render();toast(`نُقلت #${p.id} إلى المعلّق، وأُنقص الإجمالي ${n2(p.am)} ₪`)});
+ $$('[data-back]').forEach(b=>b.onclick=()=>{const k=D.pending.findIndex(x=>x.id===b.dataset.back),x=D.pending[k];D.pending.splice(k,1);const p=D.pays.find(y=>y.id===x.id);p.inc=true;p.mt=false;render()});
+ const sv=$('#saveD');if(sv)sv.onclick=()=>toast('حُفظت المسودة');
+ const sb=$('#submit');if(sb)sb.onclick=()=>{D.st='sent';D.events.push({c:'b',t:`${D.ret?'أُعيد إرسال':'أُرسل'} الكشف للتدقيق · المعدود ${n2(counted())} ₪`,s:PREP+' · الآن',q:diff()?'سبب الفرق: '+D.reason:''});D.ret=null;jumpUI();render();toast('أُرسل الكشف 5001 للتدقيق')};
+ const ap=$('#appr');if(ap)ap.onclick=approveModal;
+ const rt=$('#ret');if(rt)rt.onclick=returnModal;
+ const co=$('#corr');if(co)co.onclick=corrModal;
+ const pr=$('#prnt');if(pr)pr.onclick=()=>toast('يُطبع الكشف 5001 بشعار الشركة مع تفاصيل كل دفعة');
+ const gh=$('#goHo');if(gh)gh.onclick=()=>{S.tab='ho';render();scrollTo({top:0})};
+ const td=$('#toDay');if(td)td.onclick=()=>{S.tab='day';render()};
+ $$('[data-per]').forEach(b=>b.onclick=()=>{S.per=b.dataset.per;render()});
+ const gd=$('[data-goday]');if(gd)gd.onclick=()=>{S.tab='day';render();scrollTo({top:0})};
+ // handover form
+ const f=S.hoForm;
+ if($('#hAm')){$('#hAm').oninput=e=>{f.am=e.target.value.replace(/[^\d.]/g,'');const p=e.target.selectionStart;render();const n=$('#hAm');n.focus();n.setSelectionRange(p,p)};
+  $('#hWhen').onchange=e=>f.when=e.target.value;$('#hTo').onchange=e=>f.to=e.target.value;$('#hNotes').oninput=e=>f.notes=e.target.value;
+  $$('[data-hm]').forEach(b=>b.onclick=()=>{f.method=b.dataset.hm;render()});
+  $('#hProof').onclick=()=>{f.proof=true;render();toast('أُرفقت صورة إثبات التسليم')};
+  $('#hSave').onclick=()=>{S.ho={...f,am:+f.am,no:'TR-0087',st:'transit'};D.events.push({c:'w',t:`سُجّل تسليم نقد ${n2(+f.am)} ₪ للخزينة (TR-0087)، قيد النقل`,s:PREP+' · الآن'});render();toast('سُجّل التسليم، والمبلغ الآن قيد النقل')}}
+ const hr=$('#hRecv');if(hr)hr.onclick=()=>{S.ho.st='received';D.events.push({c:'g',t:`أُكّد استلام ${n2(S.ho.am)} ₪ في خزينة الشركة (TR-0087)`,s:AUD+' · الآن'});render();toast('تم تأكيد الاستلام، وزادت خزينة الشركة')};
+}
+function modal(html){$('#layer').innerHTML=`<div class="mdl" id="mdl"><div class="bx" role="dialog" aria-modal="true">${html}</div></div>`;$('#mdl').onclick=e=>{if(e.target.id==='mdl')close()};document.onkeydown=e=>{if(e.key==='Escape')close()}}
+const close=()=>$('#layer').innerHTML='';
+function approveModal(){modal(`<div class="ic" style="background:var(--success-t);color:var(--success)">${ic('lock',22)}</div><h4>اعتماد الكشف 5001؟</h4><p>بعد الاعتماد يُقفل الكشف من التعديل المباشر، ويدخل في الإغلاقات الأسبوعية والشهرية.</p>
+ <dl><div><dt>التحصيل المؤكد</dt><dd class="num">${n2(total())} ₪</dd></div><div><dt>النقد المعدود / المتوقع</dt><dd class="num">${n2(counted())} / ${n2(expected())}</dd></div><div><dt>الفرق</dt><dd style="color:${diff()?'var(--danger)':'var(--success)'}">${diff()?(diff()<0?'نقص ':'زيادة ')+n2(Math.abs(diff()))+' ₪ · موثّق':'لا يوجد'}</dd></div><div><dt>المعلّق (خارج الإجمالي)</dt><dd class="num">${n2(D.pending.reduce((a,x)=>a+x.am,0))} ₪</dd></div><div><dt>أعدّه / يعتمده</dt><dd>${PREP} / ${AUD} ✓</dd></div></dl>
+ <div class="ft"><button class="btn" id="mc">مراجعة مرة أخرى</button><button class="btn ok2" id="mo">${ic('check',17)}نعم، اعتمد</button></div>`);
+ $('#mc').onclick=close;$('#mo').onclick=()=>{close();D.st='approved';D.events.push({c:'g',t:'اعتُمد الكشف وقُفل من التعديل المباشر',s:AUD+' · الآن'});jumpUI();render();toast('اعتُمد الكشف 5001')}}
+function returnModal(){let why='';modal(`<div class="ic" style="background:var(--danger-t);color:var(--danger)">${ic('undo',22)}</div><h4>إرجاع الكشف مع السبب</h4><p>يعود الكشف للمحاسب للتصحيح، ثم يعيد المطابقة والإرسال.</p>
+ <div class="reason" style="margin-top:12px"><div class="chips">${['فرق النقد غير موضّح','دفعة تحتاج إشعارًا','مطابقة بنك ناقصة','أخرى'].map(r=>`<button data-rr="${r}" aria-pressed="false">${r}</button>`).join('')}</div><textarea id="rr" placeholder="اكتب ما يجب تصحيحه بالتحديد"></textarea><div class="err" id="re"></div></div>
+ <div class="ft"><button class="btn" id="mc">إلغاء</button><button class="btn dg" id="mo">${ic('undo',17)}إرجاع للمحاسب</button></div>`);
+ $$('[data-rr]').forEach(b=>b.onclick=()=>{$$('[data-rr]').forEach(x=>x.setAttribute('aria-pressed',x===b));if(!$('#rr').value.trim())$('#rr').value=b.dataset.rr+': ';$('#rr').focus()});
+ $('#mc').onclick=close;$('#mo').onclick=()=>{why=$('#rr').value.trim();if(why.length<5){$('#re').textContent='اكتب سبب الإرجاع.';return}close();D.st='returned';D.ret=why;D.events.push({c:'r',t:'أُعيد الكشف للتصحيح',s:AUD+' · الآن',q:why});jumpUI();render();toast('أُعيد الكشف للمحاسب')}}
+function corrModal(){modal(`<div class="ic" style="background:var(--warn-t);color:var(--warn)">${ic('edit',22)}</div><h4>تصحيح موثّق للكشف 5001</h4><p>لا يُعدَّل الكشف المعتمد مباشرة. يُنشأ طلب تصحيح مرتبط به، يمر بالتدقيق، ويبقى أثره في السجل.</p>
+ <div class="fgrid"><div class="fld full"><label class="l">نوع التصحيح</label><select id="ct"><option>تعديل مبلغ دفعة</option><option>دفعة مُدرجة في يوم خاطئ</option><option>تسوية فرق الصندوق</option></select></div>
+ <div class="fld full"><label class="l">الدفعة</label><select id="cp">${D.pays.map(p=>`<option>#${p.id} · ${p.sub} · ${n2(p.am)} ₪</option>`).join('')}</select></div>
+ <div class="fld full"><label class="l">الشرح</label><textarea id="cn" placeholder="ما الخطأ، وما القيمة الصحيحة، ومن أين الدليل"></textarea></div></div><div class="err" id="ce"></div>
+ <div class="ft"><button class="btn" id="mc">إلغاء</button><button class="btn pr" id="mo">${ic('send',17)}إرسال للتدقيق</button></div>`);
+ $('#mc').onclick=close;$('#mo').onclick=()=>{const n=$('#cn').value.trim();if(n.length<5){$('#ce').textContent='اكتب شرح التصحيح.';return}const c={no:'C-'+(S.corr.length+1).toString().padStart(3,'0'),t:$('#ct').value+' '+$('#cp').value.split(' · ')[0],note:n,by:S.role==='prep'?PREP:AUD,at:'الآن'};S.corr.push(c);close();render();toast(`أُنشئ طلب التصحيح ${c.no} وأُرسل للتدقيق`)}}
+function jumpUI(){$$('#jumpSeg button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.j===D.st))}
+function toast(m){const t=$('#toast');$('#tmsg').textContent=m;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),3400)}
+$('#tIc').innerHTML=ic('check',16);
+$$('#roleSeg button').forEach(b=>b.onclick=()=>{$$('#roleSeg button').forEach(x=>x.setAttribute('aria-pressed',x===b));S.role=b.dataset.r;render()});
+$$('#jumpSeg button').forEach(b=>b.onclick=()=>{preset(b.dataset.j);S.hoForm=null;jumpUI();S.tab='day';render()});
+$$('#themeSeg button').forEach(b=>b.onclick=()=>{$$('#themeSeg button').forEach(x=>x.setAttribute('aria-pressed',x===b));document.documentElement.dataset.theme=b.dataset.theme});
+const h=location.hash.slice(1);if(h)preset(h),jumpUI();
+render();
+</script>
+</body>
+</html>
