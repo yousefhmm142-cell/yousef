@@ -845,6 +845,17 @@ h2.sec small{font-family:var(--f-body);font-weight:500;color:var(--muted);font-s
 @media (max-width:360px){.bar-meta{display:none}}
 
 /* sheet: one still 4K sheet for WhatsApp / printing (opened with #sheet-all, #sheet-abu, #sheet-muf) */
+.app.print{grid-template-rows:minmax(0,1fr)}
+.app.print .bar,.app.print .panel,.app.print .map-tools,.app.print .leaflet-control-zoom,.app.print .sat-ctl{display:none!important}
+.app.print .stage{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr);grid-template-areas:"map"}
+.key-box{stroke:var(--brass);fill:var(--brass)}
+.app.print-key .badge-wrap,.app.print-key .src-name,.app.print-key .mark{display:none}
+.page-chip{position:absolute;top:48px;left:0;transform:translateX(-50%);white-space:nowrap;background:var(--brass);color:#1b1305;border:2px solid var(--navy);
+  border-radius:7px;padding:1px 8px;font-family:var(--f-display);font-weight:700;font-size:12px;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.key-tag{position:absolute;bottom:6px;left:0;transform:translateX(-50%);white-space:nowrap;direction:rtl;display:flex;align-items:center;gap:8px;
+  background:var(--navy);color:var(--on-navy);border:2px solid var(--brass);border-radius:9px;padding:4px 10px;font-family:var(--f-display);box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.key-tag b{font-size:14px;font-weight:700}
+.key-tag span{font-size:12px;font-weight:700;background:var(--brass);color:#1b1305;border-radius:6px;padding:1px 7px}
 .app.sheet .stage{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto;grid-template-areas:"map" "panel"}
 .app.sheet .panel{border-top:3px solid var(--brass);border-inline-end:0}
 .app.sheet .panel-toggle,.app.sheet .map-tools,.app.sheet .leaflet-control-zoom,.app.sheet .sat-ctl{display:none!important}
@@ -975,8 +986,12 @@ const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const app = document.getElementById('app');
 const sheetMatch = /^#sheet-(all|[as]\d+)$/.exec(location.hash);
 const sheet = sheetMatch ? sheetMatch[1] : null;   /* still 4K sheets rendered for printing and WhatsApp */
-const still = !!sheet;
+const printMatch = /^#print-(key|all|[as]\d+|zs\d+)$/.exec(location.hash);   /* zsN = close-up around source N */
+const printG = printMatch ? printMatch[1] : null;   /* bare map renders for the printed booklet */
+const still = !!sheet || !!printG;
 if (sheet) app.classList.add('sheet');
+if (printG) app.classList.add('print');
+if (printG === 'key') app.classList.add('print-key');
 const STORE = 'shabaka-network-kml';
 const store = {
   get(){ try { return localStorage.getItem(STORE); } catch (e) { return null; } },
@@ -1170,7 +1185,7 @@ const grid = new Grid({pane:'tilePane'}).addTo(map);
 
 /* satellite imagery ships with the page as 1024px blocks: sat/{zoom}/{x}_{y}.jpg (or embedded in window.SAT_DATA).
    Zoom 18-19 exists only along the cables; a zoom-17 layer underneath fills the rest. */
-const SAT = {"regions": [[31.440472, 34.383146, 31.464823, 34.40135], [31.410584, 34.342988, 31.432584, 34.358841], [31.52562, 34.444752, 31.54762, 34.458752]], "keys": ["15/4877_3341", "15/4877_3342", "15/4878_3341", "15/4879_3338", "15/4879_3339", "15/4880_3338", "15/4880_3339", "16/9754_6683", "16/9754_6684", "16/9755_6683", "16/9755_6684", "16/9756_6682", "16/9756_6683", "16/9757_6682", "16/9757_6683", "16/9759_6677", "16/9759_6678", "16/9760_6677", "16/9760_6678", "17/19509_13367", "17/19509_13368", "17/19509_13369", "17/19510_13367", "17/19510_13368", "17/19510_13369", "17/19511_13367", "17/19511_13368", "17/19511_13369", "17/19513_13364", "17/19513_13365", "17/19513_13366", "17/19514_13364", "17/19514_13365", "17/19514_13366", "17/19515_13364", "17/19515_13365", "17/19515_13366", "17/19519_13355", "17/19519_13356", "17/19519_13357", "17/19520_13355", "17/19520_13356", "17/19520_13357", "18/39019_26735", "18/39019_26736", "18/39020_26735", "18/39020_26736", "18/39020_26737", "18/39020_26738", "18/39020_26739", "18/39021_26735", "18/39021_26736", "18/39021_26737", "18/39021_26738", "18/39021_26739", "18/39022_26736", "18/39022_26737", "18/39022_26738", "18/39022_26739", "18/39027_26728", "18/39027_26729", "18/39027_26730", "18/39027_26731", "18/39027_26732", "18/39027_26733", "18/39028_26728", "18/39028_26729", "18/39028_26730", "18/39028_26731", "18/39028_26732", "18/39028_26733", "18/39029_26728", "18/39029_26729", "18/39029_26730", "18/39029_26731", "18/39029_26732", "18/39029_26733", "18/39030_26730", "18/39030_26731", "18/39030_26732", "18/39030_26733", "18/39038_26712", "18/39038_26713", "18/39039_26712", "18/39039_26713", "18/39040_26712", "18/39040_26713", "19/78040_53472", "19/78040_53473", "19/78040_53476", "19/78040_53477", "19/78041_53472", "19/78041_53473", "19/78041_53474", "19/78041_53475", "19/78041_53476", "19/78041_53477", "19/78042_53472", "19/78042_53473", "19/78042_53474", "19/78042_53475", "19/78042_53476", "19/78042_53477", "19/78043_53473", "19/78043_53474", "19/78043_53475", "19/78043_53476", "19/78043_53477", "19/78044_53474", "19/78044_53475", "19/78044_53476", "19/78044_53477", "19/78045_53476", "19/78045_53477", "19/78055_53457", "19/78055_53458", "19/78055_53459", "19/78055_53460", "19/78055_53463", "19/78055_53464", "19/78055_53465", "19/78056_53457", "19/78056_53458", "19/78056_53459", "19/78056_53460", "19/78056_53461", "19/78056_53462", "19/78056_53463", "19/78056_53464", "19/78056_53465", "19/78057_53457", "19/78057_53458", "19/78057_53459", "19/78057_53460", "19/78057_53461", "19/78057_53462", "19/78057_53463", "19/78057_53464", "19/78057_53465", "19/78058_53457", "19/78058_53458", "19/78058_53459", "19/78058_53460", "19/78058_53461", "19/78058_53462", "19/78058_53463", "19/78058_53464", "19/78058_53465", "19/78058_53466", "19/78059_53461", "19/78059_53462", "19/78059_53463", "19/78059_53464", "19/78059_53465", "19/78059_53466", "19/78060_53461", "19/78060_53462", "19/78060_53463", "19/78060_53464", "19/78060_53465", "19/78060_53466", "19/78077_53425", "19/78077_53426", "19/78078_53425", "19/78078_53426", "19/78079_53425", "19/78079_53426", "19/78080_53424", "19/78080_53425", "19/78080_53426", "19/78081_53424", "19/78081_53425", "19/78081_53426"]};
+const SAT = {"regions": [[31.440472, 34.383146, 31.464823, 34.40135], [31.410584, 34.342988, 31.432584, 34.358841], [31.52562, 34.444752, 31.54762, 34.458752]], "overview": [31.390584, 34.322988, 31.56762, 34.478752], "keys": ["12/609_417", "12/610_417", "13/1219_834", "13/1219_835", "13/1220_834", "13/1220_835", "14/2438_1669", "14/2438_1670", "14/2438_1671", "14/2439_1669", "14/2439_1670", "14/2439_1671", "14/2440_1669", "14/2440_1670", "14/2440_1671", "15/4877_3341", "15/4877_3342", "15/4878_3341", "15/4879_3338", "15/4879_3339", "15/4880_3338", "15/4880_3339", "16/9754_6683", "16/9754_6684", "16/9755_6683", "16/9755_6684", "16/9756_6682", "16/9756_6683", "16/9757_6682", "16/9757_6683", "16/9759_6677", "16/9759_6678", "16/9760_6677", "16/9760_6678", "17/19509_13367", "17/19509_13368", "17/19509_13369", "17/19510_13367", "17/19510_13368", "17/19510_13369", "17/19511_13367", "17/19511_13368", "17/19511_13369", "17/19513_13364", "17/19513_13365", "17/19513_13366", "17/19514_13364", "17/19514_13365", "17/19514_13366", "17/19515_13364", "17/19515_13365", "17/19515_13366", "17/19519_13355", "17/19519_13356", "17/19519_13357", "17/19520_13355", "17/19520_13356", "17/19520_13357", "18/39019_26735", "18/39019_26736", "18/39020_26735", "18/39020_26736", "18/39020_26737", "18/39020_26738", "18/39020_26739", "18/39021_26735", "18/39021_26736", "18/39021_26737", "18/39021_26738", "18/39021_26739", "18/39022_26736", "18/39022_26737", "18/39022_26738", "18/39022_26739", "18/39027_26728", "18/39027_26729", "18/39027_26730", "18/39027_26731", "18/39027_26732", "18/39027_26733", "18/39028_26728", "18/39028_26729", "18/39028_26730", "18/39028_26731", "18/39028_26732", "18/39028_26733", "18/39029_26728", "18/39029_26729", "18/39029_26730", "18/39029_26731", "18/39029_26732", "18/39029_26733", "18/39030_26730", "18/39030_26731", "18/39030_26732", "18/39030_26733", "18/39038_26712", "18/39038_26713", "18/39039_26712", "18/39039_26713", "18/39040_26712", "18/39040_26713", "19/78040_53472", "19/78040_53473", "19/78040_53476", "19/78040_53477", "19/78041_53472", "19/78041_53473", "19/78041_53474", "19/78041_53475", "19/78041_53476", "19/78041_53477", "19/78042_53472", "19/78042_53473", "19/78042_53474", "19/78042_53475", "19/78042_53476", "19/78042_53477", "19/78043_53473", "19/78043_53474", "19/78043_53475", "19/78043_53476", "19/78043_53477", "19/78044_53474", "19/78044_53475", "19/78044_53476", "19/78044_53477", "19/78045_53476", "19/78045_53477", "19/78055_53457", "19/78055_53458", "19/78055_53459", "19/78055_53460", "19/78055_53463", "19/78055_53464", "19/78055_53465", "19/78056_53457", "19/78056_53458", "19/78056_53459", "19/78056_53460", "19/78056_53461", "19/78056_53462", "19/78056_53463", "19/78056_53464", "19/78056_53465", "19/78057_53457", "19/78057_53458", "19/78057_53459", "19/78057_53460", "19/78057_53461", "19/78057_53462", "19/78057_53463", "19/78057_53464", "19/78057_53465", "19/78058_53457", "19/78058_53458", "19/78058_53459", "19/78058_53460", "19/78058_53461", "19/78058_53462", "19/78058_53463", "19/78058_53464", "19/78058_53465", "19/78058_53466", "19/78059_53461", "19/78059_53462", "19/78059_53463", "19/78059_53464", "19/78059_53465", "19/78059_53466", "19/78060_53461", "19/78060_53462", "19/78060_53463", "19/78060_53464", "19/78060_53465", "19/78060_53466", "19/78077_53425", "19/78077_53426", "19/78078_53425", "19/78078_53426", "19/78079_53425", "19/78079_53426", "19/78080_53424", "19/78080_53425", "19/78080_53426", "19/78081_53424", "19/78081_53425", "19/78081_53426"]};
 const satKeys = new Set(SAT.keys);
 const OFF = still ? 2 : (L.Browser.retina ? 1 : 0);
 const Sat = L.TileLayer.extend({getTileUrl(c){
@@ -1181,7 +1196,9 @@ const Sat = L.TileLayer.extend({getTileUrl(c){
 const SAT_MAX = window.SAT_DATA ? Math.max(...Object.keys(window.SAT_DATA).map(k => +k.split('/')[0])) : 19;  // the single-file copy stops at zoom 18
 const sat = L.layerGroup();
 const satArea = L.latLngBounds([]);
-for (const b of SAT.regions) {
+if (SAT.overview) { const o = SAT.overview;      /* the whole coast at low zoom, under everything else */
+  sat.addLayer(new Sat('', {tileSize:1024 >> OFF, minNativeZoom:12 - OFF, maxNativeZoom:14 - OFF, maxZoom:20, bounds:[[o[0],o[1]],[o[2],o[3]]], className:'sat', keepBuffer:1})); }
+for (const b of (printG === 'key' ? [] : SAT.regions)) {   // the locator map uses the coast layer only (no seams)
   const bounds = L.latLngBounds([[b[0],b[1]],[b[2],b[3]]]); satArea.extend(bounds);
   const o = {tileSize:1024 >> OFF, maxZoom:20, bounds, className:'sat', keepBuffer:1};
   sat.addLayer(new Sat('', Object.assign({minNativeZoom:15 - OFF, maxNativeZoom:17 - OFF}, o)));
@@ -1268,10 +1285,12 @@ function build(net, isCustom){
     D.sources.filter(s => s.ll).map(s => '<button class="chip-btn" type="button" data-jump="' + s.id + '">' + esc(s.name) + '</button>').join('');
   document.querySelectorAll('[data-jump]').forEach(b => b.addEventListener('click', () => jump(b.dataset.jump)));
 
-  if (sheet) renderSheet(sheet); else renderOverview();
+  if (sheet) renderSheet(sheet); else if (!printG) renderOverview();
   map.setMaxBounds(L.latLngBounds(satArea.getSouthWest(), satArea.getNorthEast()).extend(groupBounds('all')).pad(.35));
-  const b = groupBounds(sheet || 'all');
-  if (sheet) map.fitBounds(b, {padding:[34,34], animate:false});
+  const zsrc = printG && printG[0] === 'z' && D.sources.find(x => x.id === printG.slice(1));
+  const b = zsrc ? L.latLng(zsrc.ll).toBounds(340) : groupBounds(sheet || (printG && printG !== 'key' ? printG : 'all'));
+  if (printG) { map.fitBounds(b, printG === 'key' ? {paddingTopLeft:[150,90], paddingBottomRight:[150,40], animate:false} : {padding:[28,28], animate:false}); drawKey(); }
+  else if (sheet) map.fitBounds(b, {padding:[34,34], animate:false});
   else map.fitBounds(b, {paddingTopLeft:[20,64], paddingBottomRight:[20,56], animate:false});
   applyFilters();
 }
@@ -1297,6 +1316,22 @@ function fit(b, maxZoom){
   if (reduce || still) map.fitBounds(b, Object.assign(o, {animate:false})); else map.flyToBounds(b, Object.assign(o, {duration:.6}));
 }
 function jump(g){ if (sel) select(null, {fit:false}); fit(groupBounds(g)); }
+
+/* booklet maps: a framed box per area, or a page chip under a source, pointing to its page (window.PRINT_PAGES = {id: [label, page, 'box'|'tag']}) */
+function drawKey(){
+  for (const [g, [label, page, mode]] of Object.entries(window.PRINT_PAGES || {})) {
+    if (mode === 'tag') {
+      const s = D.sources.find(x => x.id === g); if (!s) continue;
+      drawn.addLayer(L.marker(s.ll, {pane:'srcs', interactive:false, keyboard:false, icon:L.divIcon({className:'', iconSize:[0,0],
+        html:'<div class="page-chip">صفحة ' + page + '</div>'})}));
+      continue;
+    }
+    const b = groupBounds(g).pad(.12);
+    drawn.addLayer(L.rectangle(b, {pane:'halo', className:'key-box', weight:3, dashArray:'10 7', fill:true, fillOpacity:.06, interactive:false, color:'#000'}));
+    drawn.addLayer(L.marker([b.getNorth(), b.getCenter().lng], {pane:'srcs', interactive:false, keyboard:false, icon:L.divIcon({className:'', iconSize:[0,0],
+      html:'<div class="key-tag"><b>' + esc(label) + '</b><span>صفحة ' + page + '</span></div>'})}));
+  }
+}
 
 /* keep number badges readable: try a few spots along each cable, skip ones that would overlap */
 function declutter(){
