@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>قصة نجاح – آلاء القريناوي</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  @page { size: A4; margin: 0; }
+  :root {
+    --ink: #1b1f3b;
+    --muted: #5b6080;
+    --indigo: #4338ca;
+    --violet: #7c3aed;
+    --teal: #0d9488;
+    --amber: #f59e0b;
+    --rose: #e11d48;
+    --line: #e6e8f2;
+    --soft: #f5f6fc;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 210mm; height: 297mm; background: #fff; }
+  body {
+    font-family: "Cairo", sans-serif;
+    color: var(--ink);
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .en { font-family: "Inter", sans-serif; direction: ltr; unicode-bidi: isolate; white-space: nowrap; }
+  .page { width: 210mm; height: 297mm; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+
+  /* Header */
+  .hero {
+    position: relative;
+    padding: 10mm 14mm 8mm;
+    color: #fff;
+    background:
+      radial-gradient(circle at 12% 20%, rgba(255,255,255,.14) 0 18%, transparent 19%),
+      radial-gradient(circle at 4% 95%, rgba(245,158,11,.35) 0 14%, transparent 15%),
+      linear-gradient(120deg, #312e81 0%, #4338ca 40%, #7c3aed 75%, #0d9488 120%);
+  }
+  .hero-top { display: flex; align-items: center; gap: 7mm; }
+  .avatar {
+    width: 25mm; height: 25mm; border-radius: 50%; flex: none;
+    display: grid; place-items: center;
+    font-size: 34pt; font-weight: 800; line-height: 1;
+    background: linear-gradient(140deg, #fbbf24, #f97316);
+    border: 3px solid rgba(255,255,255,.85);
+    box-shadow: 0 6px 18px rgba(0,0,0,.25);
+  }
+  .tag {
+    display: inline-block; font-size: 10pt; font-weight: 700;
+    background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.35);
+    padding: 1mm 4mm; border-radius: 99px; margin-bottom: 2mm;
+  }
+  h1 { font-size: 25pt; font-weight: 800; line-height: 1.25; }
+  .sub { font-size: 11.5pt; opacity: .92; margin-top: 1mm; }
+  .badges { display: flex; gap: 3mm; margin-top: 5.5mm; flex-wrap: nowrap; }
+  .badge {
+    display: flex; align-items: center; gap: 2.5mm;
+    background: #fff; color: var(--ink);
+    padding: 2mm 4mm; border-radius: 3mm; white-space: nowrap;
+    font-size: 9pt; font-weight: 700;
+    box-shadow: 0 4px 12px rgba(20,20,60,.18);
+  }
+  .badge .dot { width: 3mm; height: 3mm; border-radius: 50%; flex: none; }
+
+  main { padding: 6mm 14mm 5mm; flex: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 4mm; }
+
+  h2 {
+    font-size: 13pt; font-weight: 800; color: var(--indigo);
+    display: flex; align-items: center; gap: 2.5mm; margin-bottom: 2mm;
+  }
+  h2::before { content: ""; width: 1.6mm; height: 5mm; border-radius: 1mm; background: linear-gradient(var(--violet), var(--teal)); }
+
+  /* Journey */
+  .journey { display: flex; align-items: stretch; gap: 0; }
+  .step { flex: 1; text-align: center; position: relative; }
+  .step .circle {
+    width: 10mm; height: 10mm; margin: 0 auto 1.5mm; border-radius: 50%;
+    display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 12pt;
+    position: relative; z-index: 2; box-shadow: 0 3px 8px rgba(0,0,0,.15);
+  }
+  .step:not(:last-child)::after {
+    content: ""; position: absolute; top: 5mm; left: -50%; width: 100%; height: 1.2mm;
+    background: var(--line); z-index: 1;
+  }
+  .step .label { font-size: 9.5pt; font-weight: 700; line-height: 1.35; }
+  .step .label small { display: block; font-weight: 500; color: var(--muted); font-size: 8.5pt; }
+  .s1 .circle { background: var(--indigo); }
+  .s2 .circle { background: var(--violet); }
+  .s3 .circle { background: #c026d3; }
+  .s4 .circle { background: var(--teal); }
+  .s5 .circle { background: linear-gradient(140deg, #fbbf24, #f97316); }
+  .s5 .label { color: #c2410c; }
+
+  /* Story */
+  .story p { font-size: 10.5pt; line-height: 1.75; text-align: right; margin-bottom: 1.8mm; }
+  .story p:last-child { margin-bottom: 0; }
+  .story b { color: var(--indigo); }
+  .hl { background: linear-gradient(transparent 55%, #fde68a 55%); font-weight: 700; }
+
+  /* Value cards */
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; }
+  .card {
+    border-radius: 3.5mm; padding: 3mm 3.5mm; background: var(--soft);
+    border-top: 1.4mm solid var(--c);
+  }
+  .card .ic {
+    width: 7.5mm; height: 7.5mm; border-radius: 2mm; background: var(--c); flex: none;
+    display: grid; place-items: center;
+  }
+  .card .ic svg { width: 4.6mm; height: 4.6mm; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .card .head { display: flex; align-items: center; gap: 2.5mm; margin-bottom: 1.5mm; }
+  .card h3 { font-size: 10.5pt; font-weight: 800; }
+  .card p { font-size: 9pt; color: var(--muted); line-height: 1.6; }
+
+  /* Quote */
+  .quote {
+    position: relative; border-radius: 4mm; padding: 4.5mm 9mm;
+    background: linear-gradient(120deg, #eef2ff, #f5f3ff 50%, #ecfdf5);
+    border: 1px solid #e0e3fb;
+  }
+  .quote::before {
+    content: "”"; position: absolute; top: -5mm; right: 5mm;
+    font-size: 60pt; line-height: 1; color: var(--violet); font-family: Georgia, serif;
+  }
+  .quote p { font-size: 12pt; font-weight: 700; line-height: 1.75; color: #312e81; }
+  .quote .who { font-size: 9.5pt; color: var(--muted); margin-top: 1.5mm; font-weight: 600; }
+
+  footer {
+    margin-top: auto; padding: 4mm 14mm; display: flex; justify-content: space-between; align-items: center;
+    font-size: 9pt; color: #fff;
+    background: linear-gradient(120deg, #312e81, #4338ca 50%, #0d9488);
+  }
+  footer .en { font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="hero">
+    <div class="hero-top">
+      <div class="avatar">آ</div>
+      <div>
+        <span class="tag">قصة نجاح</span>
+        <h1>آلاء بسام القريناوي</h1>
+        <div class="sub">طالبة هندسة أنظمة الحاسوب · جامعة الأزهر – غزة</div>
+      </div>
+    </div>
+    <div class="badges">
+      <div class="badge"><span class="dot" style="background:#7c3aed"></span>خريجة برنامج <span class="en">SkillStack Paths: AI</span></div>
+      <div class="badge"><span class="dot" style="background:#f59e0b"></span><span class="en">ML &amp; AI Engineer Intern</span> · <span class="en">Esprit Engineering School</span> – تونس</div>
+    </div>
+  </header>
+
+  <main>
+
+    <section>
+      <h2>رحلة التعلّم</h2>
+      <div class="journey">
+        <div class="step s1"><div class="circle">1</div><div class="label">هياكل البيانات<br>والخوارزميات<small class="en">DSA</small></div></div>
+        <div class="step s2"><div class="circle">2</div><div class="label">الذكاء<br>الاصطناعي<small class="en">AI</small></div></div>
+        <div class="step s3"><div class="circle">3</div><div class="label">تعلّم<br>الآلة<small class="en">ML</small></div></div>
+        <div class="step s4"><div class="circle">4</div><div class="label">الرؤية<br>الحاسوبية<small class="en">Computer Vision</small></div></div>
+        <div class="step s5"><div class="circle">★</div><div class="label">تدريب عملي<br>في تونس<small class="en">Internship</small></div></div>
+      </div>
+    </section>
+
+    <section class="story">
+      <h2>قصتي</h2>
+      <p>كنتُ وما زلتُ فخورة بأنني إحدى خريجات <b>غزة سكاي جيكس</b>، وبالتحديد برنامج <b class="en">SkillStack Paths: AI</b>؛ التجربة التي شكّلت نقطة تحوّل حقيقية في مسيرتي. بدأتُ من الجذور مع هياكل البيانات والخوارزميات، ثم صعدتُ خطوة بخطوة نحو عالم الذكاء الاصطناعي وتعلّم الآلة، وصولًا إلى الرؤية الحاسوبية.</p>
+      <p>لم يكن البرنامج مجرّد دروس تقنية، بل كان مدرسة في طريقة التفكير. تعلّمتُ كيف أفكّك المشكلة المعقّدة إلى أجزاء، وكيف أبني الحل بمنطق واضح، فدخلتُ مجالًا عميقًا وواسعًا كالذكاء الاصطناعي <span class="hl">بخطى ثابتة وواثقة</span>.</p>
+      <p>وبعد إتمام التدريب جاءت ثمرة هذا الجهد: حصلتُ على <span class="hl">تدريب عملي بمسمّى <span class="en">ML &amp; AI Engineer</span> في <span class="en">Esprit Engineering School</span> في تونس</span>. منحني البرنامج سيرة ذاتية قوية تقدّمتُ بها بكل ثقة، ومُنحتُ هذه الفرصة بناءً على الثقة التي يحملها اسم غزة سكاي جيكس وسمعة خريجيه.</p>
+      <p>أؤمن أن تدريبات غزة سكاي جيكس لا تكتفي بتعليم المهارات، بل تمهّد الطريق فعليًا نحو سوق العمل، وتصنع كفاءات قادرة على الاعتماد على نفسها والمنافسة عالميًا انطلاقًا من غزة. وما هذه إلا البداية… فرحلة التعلّم عندي مستمرة.</p>
+    </section>
+
+    <section>
+      <h2>ماذا أضاف لي البرنامج؟</h2>
+      <div class="cards">
+        <div class="card" style="--c:#4338ca">
+          <div class="head"><div class="ic"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg></div><h3>حل المشكلات</h3></div>
+          <p>أساس متين في الخوارزميات وتفكير منظّم قبل أي نموذج.</p>
+        </div>
+        <div class="card" style="--c:#7c3aed">
+          <div class="head"><div class="ic"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13l2 2 4-4"/></svg></div><h3>سيرة ذاتية أقوى</h3></div>
+          <p>مهارات حقيقية جعلتني أتقدّم للفرص بكل ثقة.</p>
+        </div>
+        <div class="card" style="--c:#0d9488">
+          <div class="head"><div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg></div><h3>جاهزية لسوق العمل</h3></div>
+          <p>من قاعة التدريب إلى فرصة دولية في تونس.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="quote">
+      <p>من هياكل البيانات إلى الرؤية الحاسوبية… لم تعلّمني غزة سكاي جيكس التقنية فقط، بل علّمتني أن أثق بنفسي.</p>
+      <div class="who">— آلاء القريناوي، خريجة <span class="en">SkillStack Paths: AI</span></div>
+    </section>
+
+  </main>
+
+  <footer>
+    <span>غزة سكاي جيكس · <span class="en">Gaza Sky Geeks</span></span>
+    <span class="en">SkillStack Paths: AI — Success Story</span>
+  </footer>
+
+</div>
+</body>
+</html>
