@@ -17,7 +17,7 @@
   @page { size: A4; margin: 0; }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: #fff; }
-  body { font-family: "Amiri", serif; color: #111; font-size: 14pt; line-height: 1.75; }
+  body { font-family: "Amiri", serif; color: #111; font-size: 14pt; line-height: 1.58; }
 
   .page {
     width: 210mm; height: 297mm; padding: 9mm; position: relative;
@@ -43,7 +43,7 @@
     padding: 0 2mm;
   }
 
-  .meta { display: flex; justify-content: flex-end; font-size: 12.5pt; margin-bottom: 1mm; }
+  .meta { display: flex; justify-content: flex-end; gap: 10mm; font-size: 12.5pt; margin-bottom: 1mm; }
   .fill { display: inline-block; min-width: 32mm; border-bottom: 0.6pt dotted #333; }
 
   .addressee { font-weight: 700; font-size: 15pt; margin: 1mm 0 0; }
@@ -71,14 +71,14 @@
   table.amounts td.v { text-align: center; width: 34%; }
   table.amounts tr.total td { background: #1b2a4a; color: #fff; font-weight: 700; }
 
-  .closing { text-align: center; font-weight: 700; margin: 2mm 0 0; }
+  .closing { text-align: center; font-weight: 700; margin: 0; }
 
   .sign {
-    margin-top: auto; padding-top: 1mm; display: flex; justify-content: flex-start; padding-left: 4mm;
+    margin-top: auto; padding-top: 0; display: flex; justify-content: flex-start; padding-left: 4mm;
   }
-  .sign-box { width: 78mm; text-align: center; font-size: 13pt; line-height: 1.6; margin-right: auto; }
+  .sign-box { width: 78mm; text-align: center; font-size: 13pt; line-height: 1.45; margin-right: auto; }
   .sign-box .lbl { font-weight: 700; }
-  .sign-box img { height: 16mm; mix-blend-mode: multiply; display: block; margin: 0 auto -1mm; }
+  .sign-box img { height: 14mm; mix-blend-mode: multiply; display: block; margin: 0 auto -1mm; }
   .sign-box .sig-line { border-top: 0.6pt solid #333; width: 60mm; margin: 0 auto; padding-top: 0.5mm; font-size: 12pt; }
 </style>
 </head>
@@ -90,10 +90,12 @@
   <div class="title-bar"><div class="line"></div><h1>شكوى رسمية</h1><div class="line"></div></div>
 
   <div class="meta">
-    <div>التاريخ: <span class="num">25/9/2026</span></div>
+    <div>اليوم: الثلاثاء</div>
+    <div>التاريخ: <span class="num">13/10/2026</span></div>
   </div>
 
-  <div class="addressee">السيد/ رئيس جهاز القضاء العسكري <span class="resp">المحترم</span></div>
+  <div class="addressee">الأخ اللواء/ علام السقا <span class="resp">المحترم</span></div>
+  <div class="addressee">مدير عام الشرطة الفلسطينية</div>
   <p class="greeting">تحية طيبة وبعد،،،</p>
 
   <div class="subject"><span>الموضوع: شكوى نصب واحتيال والمطالبة باسترداد مبلغ مالي</span></div>
