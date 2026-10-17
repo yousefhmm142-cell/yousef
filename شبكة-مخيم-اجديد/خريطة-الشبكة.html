@@ -1006,7 +1006,7 @@ const ltr = s => String(s).replace(/(\d+[×*]\d+(?:\s*\+\s*(?:\d+[×*])?\d+)*)/g
 const esc = s => String(s).replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const app = document.getElementById('app');
-const sheetMatch = /^#sheet-(all|[as]\d+)$/.exec(location.hash);
+const sheetMatch = /^#sheet-(all|[as]\d+|view)$/.exec(location.hash);   /* view = a framed close-up set in window.SHEET_VIEW = {bounds, label, srcs} */
 const sheet = sheetMatch ? sheetMatch[1] : null;   /* still 4K sheets rendered for printing and WhatsApp */
 const printMatch = /^#print-(key|all|[as]\d+|zs\d+)$/.exec(location.hash);   /* zsN = close-up around source N */
 const printG = printMatch ? printMatch[1] : null;   /* bare map renders for the printed booklet */
@@ -1388,7 +1388,7 @@ function build(net, isCustom){
   if (sheet) renderSheet(sheet); else if (!printG) renderOverview();
   map.setMaxBounds(L.latLngBounds(satArea.getSouthWest(), satArea.getNorthEast()).extend(groupBounds('all')).pad(.35));
   const zsrc = printG && printG[0] === 'z' && D.sources.find(x => x.id === printG.slice(1));
-  const b = zsrc ? L.latLng(zsrc.ll).toBounds(340) : groupBounds(sheet || (printG && printG !== 'key' ? printG : 'all'));
+  const b = zsrc ? L.latLng(zsrc.ll).toBounds(340) : sheet === 'view' ? L.latLngBounds(window.SHEET_VIEW.bounds) : groupBounds(sheet || (printG && printG !== 'key' ? printG : 'all'));
   if (printG) { map.fitBounds(b, printG === 'key' ? {paddingTopLeft:[150,90], paddingBottomRight:[150,40], animate:false} : {padding:[28,28], animate:false}); drawKey(); }
   else if (sheet) map.fitBounds(b, {padding:[34,34], animate:false});
   else map.fitBounds(b, {paddingTopLeft:[20,64], paddingBottomRight:[20,56], animate:false});
@@ -1641,11 +1641,13 @@ new MutationObserver(redraw).observe(document.documentElement, {attributes:true,
 
 /* still sheet: map + a band with the colours and the cables of this area */
 function renderSheet(g){
-  const srcs = srcsOf(g);
-  const list = D.cables.filter(c => srcs.includes(c.src));
+  const V = g === 'view' ? window.SHEET_VIEW : null;
+  const srcs = V ? V.srcs : srcsOf(g);
+  const vb = V && L.latLngBounds(V.bounds);
+  const list = D.cables.filter(c => srcs.includes(c.src) && (!vb || c.path.some(p => vb.contains(p))));
   const t = {}; for (const c of list) { const x = t[c.cls] ||= {len:0, n:0}; x.len += c.len; x.n++; }
   const len = list.reduce((s,c) => s + c.len, 0);
-  document.getElementById('subtitle').textContent = 'خريطة كوابل الكهرباء على صورة القمر الصناعي · ' + (g === 'all' ? 'كل الشبكة' : srcs.length > 1 ? srcs.map(id => SRC[id]).join('، ') : 'منطقة ' + SRC[g]);
+  document.getElementById('subtitle').textContent = 'خريطة كوابل الكهرباء على صورة القمر الصناعي · ' + (V ? V.label : g === 'all' ? 'كل الشبكة' : srcs.length > 1 ? srcs.map(id => SRC[id]).join('، ') : 'منطقة ' + SRC[g]);
   document.getElementById('m-len').textContent = len >= 1000 ? (len/1000).toFixed(1) + ' كم' : fmt(len) + ' م';
   document.getElementById('m-cnt').textContent = list.length;
   document.getElementById('m-src').textContent = srcs.length;
@@ -1653,7 +1655,7 @@ function renderSheet(g){
     '<b>' + (k === 'x' ? 'غير مكتوب' : ltr(CLS[k].spec) + ' <small>مم²</small>') + '</b>' +
     '<span>' + plural(t[k].n) + ' · ' + fmt(t[k].len) + ' م</span></div>').join('');
   const group = (src) => {
-    const rows = treeOf(src);
+    const rows = treeOf(src).filter(c => list.includes(c));
     return '<div class="reg-group"><div class="reg-head"><span class="src-mini">' + ICON.bolt + '</span><b>' + esc(SRC[src]) + '</b><span>' + plural(rows.length) + ' · ' + fmt(rows.reduce((s,c) => s + c.len, 0)) + ' م</span></div>' +
       rows.map(c => '<div class="reg-row" data-depth="' + Math.min(depth(c),2) + '"><span class="badge b-' + ck(c) + '">' + c.n + '</span>' +
         '<span class="reg-main"><b>' + ltr(esc(c.title)) + '</b><span>' + fromText(c) + ' · باتجاه ' + c.dir + '</span></span>' +
