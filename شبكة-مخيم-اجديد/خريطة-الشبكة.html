@@ -1008,7 +1008,7 @@ const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const app = document.getElementById('app');
 const sheetMatch = /^#sheet-(all|[as]\d+|view)$/.exec(location.hash);   /* view = a framed close-up set in window.SHEET_VIEW = {bounds, label, srcs} */
 const sheet = sheetMatch ? sheetMatch[1] : null;   /* still 4K sheets rendered for printing and WhatsApp */
-const printMatch = /^#print-(key|all|[as]\d+|zs\d+)$/.exec(location.hash);   /* zsN = close-up around source N */
+const printMatch = /^#print-(key|all|view|[as]\d+|zs\d+)$/.exec(location.hash);   /* zsN = close-up around source N */
 const printG = printMatch ? printMatch[1] : null;   /* bare map renders for the printed booklet */
 const still = !!sheet || !!printG;
 if (sheet) app.classList.add('sheet');
@@ -1388,7 +1388,7 @@ function build(net, isCustom){
   if (sheet) renderSheet(sheet); else if (!printG) renderOverview();
   map.setMaxBounds(L.latLngBounds(satArea.getSouthWest(), satArea.getNorthEast()).extend(groupBounds('all')).pad(.35));
   const zsrc = printG && printG[0] === 'z' && D.sources.find(x => x.id === printG.slice(1));
-  const b = zsrc ? L.latLng(zsrc.ll).toBounds(340) : sheet === 'view' ? L.latLngBounds(window.SHEET_VIEW.bounds) : groupBounds(sheet || (printG && printG !== 'key' ? printG : 'all'));
+  const b = zsrc ? L.latLng(zsrc.ll).toBounds(340) : (sheet === 'view' || printG === 'view') ? L.latLngBounds(window.SHEET_VIEW.bounds) : groupBounds(sheet || (printG && printG !== 'key' ? printG : 'all'));
   if (printG) { map.fitBounds(b, printG === 'key' ? {paddingTopLeft:[150,90], paddingBottomRight:[150,40], animate:false} : {padding:[28,28], animate:false}); drawKey(); }
   else if (sheet) map.fitBounds(b, {padding:[34,34], animate:false});
   else map.fitBounds(b, {paddingTopLeft:[20,64], paddingBottomRight:[20,56], animate:false});
