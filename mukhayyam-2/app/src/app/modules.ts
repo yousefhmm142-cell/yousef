@@ -1,5 +1,4 @@
 import {
-  ClipboardList,
   LayoutGrid,
   ListChecks,
   ScanLine,
@@ -11,7 +10,6 @@ import {
 export type ModuleKey =
   | 'generation'
   | 'distribution'
-  | 'distribution-entry'
   | 'tasks'
   | 'my-tasks'
   | 'attendance-board'
@@ -42,13 +40,6 @@ export const modules: Record<ModuleKey, ModuleInfo> = {
     icon: LayoutGrid,
     step: 4,
     features: ['عدد الساعات لكل منطقة', 'أحمال الفازات الثلاث لكل تشغيلة', 'التنقّل بين الأيام والاعتماد', 'طباعة بنفس شكل الورقة'],
-  },
-  'distribution-entry': {
-    title: 'كشف اليوم',
-    summary: 'تشغيلات المناطق وأحمالها، منطقة بعد منطقة.',
-    icon: ClipboardList,
-    step: 4,
-    features: ['المناطق الست جاهزة بالترتيب', 'أحمال L1 و L2 و L3 بالأمبير أو الكيلوواط', 'يُحفظ على جوالك حتى بدون إنترنت', 'زر «إرسال للمدير» بدل التوقيع'],
   },
   tasks: {
     title: 'المهام الميدانية',

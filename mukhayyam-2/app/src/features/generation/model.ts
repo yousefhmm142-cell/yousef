@@ -1,13 +1,15 @@
 import type { ISODate } from '../../lib/dates'
 import { sum } from '../../lib/numbers'
-import type { Tone } from '../../ui/primitives'
+import type { LoadUnit, Loads } from '../sheets/loads'
+import { blankMeta, newId, type SheetMeta } from '../sheets/workflow'
+
+export { isEditableStatus, newId, statusInfo, type SheetStatus } from '../sheets/workflow'
+export type { LoadUnit, Loads } from '../sheets/loads'
 
 // The device keeps one report as a single document; the server stores the same data in
 // site_reports, site_report_fuel, generator_day_logs, generator_runs and maintenance_logs
 // (supabase/migrations), one line id per row.
 
-export type SheetStatus = 'draft' | 'submitted' | 'returned' | 'approved'
-export type LoadUnit = 'A' | 'kW'
 export type PressureUnit = 'bar' | 'psi'
 export type MaintenanceType =
   | 'oil_change'
@@ -95,8 +97,6 @@ export interface GeneratorRun {
   end: string
 }
 
-export type Loads = [number | null, number | null, number | null]
-
 export interface GeneratorLog {
   id: string
   generatorId: number
@@ -120,23 +120,12 @@ export interface MaintenanceEntry {
   description: string
 }
 
-export interface SiteReport {
-  id: string
+export interface SiteReport extends SheetMeta {
   reportDate: ISODate
-  status: SheetStatus
   fuel: FuelLine[]
   generators: GeneratorLog[]
   maintenance: MaintenanceEntry[]
   generalNotes: string
-  createdBy: string
-  submittedBy: string | null
-  submittedAt: string | null
-  approvedBy: string | null
-  approvedAt: string | null
-  returnedReason: string | null
-  /** Sent while the phone had no internet; the manager sees a mark. */
-  recordedOffline: boolean
-  updatedAt: string
 }
 
 export const MAX_RUNS = 3
@@ -160,17 +149,6 @@ export const MAINTENANCE_TYPES: ReadonlyArray<{ value: MaintenanceType; label: s
 
 export const maintenanceLabel = (t: MaintenanceType) => MAINTENANCE_TYPES.find((m) => m.value === t)?.label ?? t
 
-export const statusInfo: Record<SheetStatus, { label: string; tone: Tone }> = {
-  draft: { label: 'قيد التعبئة', tone: 'neutral' },
-  submitted: { label: 'بانتظار الاعتماد', tone: 'warn' },
-  returned: { label: 'أُعيد للتصحيح', tone: 'danger' },
-  approved: { label: 'معتمد', tone: 'ok' },
-}
-
-export const isEditableStatus = (s: SheetStatus) => s === 'draft' || s === 'returned'
-
-export const newId = () => crypto.randomUUID()
-
 export function emptyRun(runNo: number): GeneratorRun {
   return { id: newId(), runNo, start: '', end: '' }
 }
@@ -189,9 +167,9 @@ export function newReport(
 ): SiteReport {
   const prevLog = (id: number) => previous?.generators.find((g) => g.generatorId === id)
   return {
+    ...blankMeta(createdBy, now),
     id: newId(),
     reportDate,
-    status: 'draft',
     fuel: fuelTypes
       .filter((f) => f.isActive)
       .map((f) => ({
@@ -222,14 +200,6 @@ export function newReport(
       })),
     maintenance: [],
     generalNotes: '',
-    createdBy,
-    submittedBy: null,
-    submittedAt: null,
-    approvedBy: null,
-    approvedAt: null,
-    returnedReason: null,
-    recordedOffline: false,
-    updatedAt: now,
   }
 }
 

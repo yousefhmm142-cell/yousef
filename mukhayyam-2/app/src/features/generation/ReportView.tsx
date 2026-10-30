@@ -1,8 +1,8 @@
-import { ArrowLeft, Clock, Droplet, Gauge, NotebookPen, TriangleAlert, WifiOff, Wrench, Zap, CircleCheck } from 'lucide-react'
-import { formatTime, formatWeekday } from '../../lib/format'
+import { ArrowLeft, Clock, Droplet, Gauge, NotebookPen, TriangleAlert, Wrench, Zap } from 'lucide-react'
 import { formatAmount } from '../../lib/numbers'
 import { Pill, type Tone } from '../../ui/primitives'
-import { computeAlerts, consumptionStats, fuelOutlook, type Alert } from './alerts'
+import { AlertsCard, Signatures } from '../sheets/ui'
+import { computeAlerts, consumptionStats, fuelOutlook } from './alerts'
 import {
   maintenanceLabel,
   reportTotals,
@@ -37,7 +37,6 @@ export function useReportContext(report: SiteReport | null | undefined) {
   return { ready, generators: generators ?? [], fuelTypes: fuelTypes ?? [], settings, history: history ?? [], names, alerts }
 }
 
-export const stamp = (iso: string | null) => (iso ? `${formatWeekday(new Date(iso))} · ${formatTime(new Date(iso))}` : '')
 
 function readingTone(value: number, warn: number, danger: number, higherIsWorse: boolean): Tone {
   if (higherIsWorse) return value >= danger ? 'danger' : value >= warn ? 'warn' : 'ok'
@@ -136,46 +135,8 @@ export function ReportView({ report, ctx }: { report: SiteReport; ctx: ReturnTyp
         </section>
       </div>
 
-      <div className="sign">
-        <div>
-          <span className={`sign-ico ${report.submittedAt ? 'ok' : 'wait'}`}>{report.submittedAt ? <CircleCheck size={18} /> : <Clock size={18} />}</span>
-          <div>
-            <b>{report.submittedAt ? `أرسله ${names.get(report.submittedBy ?? '') ?? 'مشغّل الموقع'}` : 'لم يُرسل بعد'}</b>
-            <span>
-              {stamp(report.submittedAt)} · بتوقيت الخادم
-              {report.recordedOffline && <><WifiOff size={13} className="inline-ico" /> أُرسل بدون اتصال</>}
-            </span>
-          </div>
-        </div>
-        <div>
-          <span className={`sign-ico ${report.approvedAt ? 'ok' : 'wait'}`}>{report.approvedAt ? <CircleCheck size={18} /> : <Clock size={18} />}</span>
-          <div>
-            <b>{report.approvedAt ? `اعتمده ${names.get(report.approvedBy ?? '') ?? 'المدير'}` : 'اعتماد المدير'}</b>
-            <span>{report.approvedAt ? stamp(report.approvedAt) : report.status === 'returned' ? 'أُعيد للتصحيح' : 'بانتظار الاعتماد'}</span>
-          </div>
-        </div>
-      </div>
+      <Signatures sheet={report} names={names} sender="مشغّل الموقع" />
     </div>
-  )
-}
-
-function AlertsCard({ alerts }: { alerts: Alert[] }) {
-  return (
-    <section className="card">
-      <div className="card-h"><span className="ico-round"><TriangleAlert size={16} /></span><h2>تنبيهات هذا اليوم</h2></div>
-      <ul className="alerts">
-        {alerts.map((a) => (
-          <li key={a.id} className={`alert ${a.level}`}>
-            <span className="alert-ico" aria-hidden="true"><TriangleAlert size={17} /></span>
-            <div>
-              <b>{a.title}</b>
-              <span>{a.detail}</span>
-            </div>
-            <span className="sr-only">{a.level === 'danger' ? 'خطر' : 'تحذير'}</span>
-          </li>
-        ))}
-      </ul>
-    </section>
   )
 }
 

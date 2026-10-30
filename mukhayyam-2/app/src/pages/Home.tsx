@@ -14,10 +14,12 @@ import { useOnline } from '../lib/useOnline'
 import { formatPhone } from '../lib/phone'
 import { roleLabel } from '../types'
 import { Avatar, Pill } from '../ui/primitives'
+import { DistributionEntryPage } from '../features/distribution/EntryPage'
+import { useLatestSentSheet } from '../features/distribution/repo'
 import { EntryPage } from '../features/generation/EntryPage'
-import { statusInfo } from '../features/generation/model'
 import { useLatestSentReport } from '../features/generation/repo'
-import { dayName } from '../lib/dates'
+import { statusInfo, type SheetStatus } from '../features/sheets/workflow'
+import { dayName, type ISODate } from '../lib/dates'
 import { ModuleSoon } from './ModuleSoon'
 
 /** Each person opens the app straight on their own job. */
@@ -30,7 +32,7 @@ export function Home() {
     case 'generation_operator':
       return <EntryPage />
     case 'distribution_supervisor':
-      return <ModuleSoon module="distribution-entry" />
+      return <DistributionEntryPage />
     case 'technician':
       return <ModuleSoon module="my-tasks" />
     case 'staff':
@@ -79,7 +81,7 @@ function ManagerHome() {
               <b>{m.title}</b>
               <span className="mod-summary">{m.summary}</span>
               <span className="mod-foot">
-                {key === 'generation' ? <GenerationStatus /> : <Pill tone="brand" dot={false}>الخطوة {m.step}</Pill>}
+                {key === 'generation' ? <GenerationStatus /> : key === 'distribution' ? <DistributionStatus /> : <Pill tone="brand" dot={false}>الخطوة {m.step}</Pill>}
                 <ArrowLeft size={18} aria-hidden="true" />
               </span>
             </Link>
@@ -95,13 +97,22 @@ function ManagerHome() {
   )
 }
 
-/** Live state of the newest report, so the manager sees at a glance if one waits for approval. */
+/** Live state of the newest sent form, so the manager sees at a glance if one waits for approval. */
+function LatestStatus({ latest, noun }: { latest: { date: ISODate; status: SheetStatus } | null | undefined; noun: string }) {
+  if (!latest) return <Pill dot={false}>لا شيء بعد</Pill>
+  const day = dayName(latest.date)
+  if (latest.status === 'submitted') return <Pill tone="warn">{noun} {day} بانتظار اعتمادك</Pill>
+  return <Pill tone={statusInfo[latest.status].tone}>{noun} {day}: {statusInfo[latest.status].label}</Pill>
+}
+
 function GenerationStatus() {
-  const latest = useLatestSentReport()
-  if (!latest) return <Pill dot={false}>لا تقارير بعد</Pill>
-  const day = dayName(latest.reportDate)
-  if (latest.status === 'submitted') return <Pill tone="warn">تقرير {day} بانتظار اعتمادك</Pill>
-  return <Pill tone={statusInfo[latest.status].tone}>تقرير {day}: {statusInfo[latest.status].label}</Pill>
+  const r = useLatestSentReport()
+  return <LatestStatus noun="تقرير" latest={r && { date: r.reportDate, status: r.status }} />
+}
+
+function DistributionStatus() {
+  const s = useLatestSentSheet()
+  return <LatestStatus noun="كشف" latest={s && { date: s.sheetDate, status: s.status }} />
 }
 
 function TeamCard() {

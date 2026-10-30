@@ -1,3 +1,4 @@
+import { ensureDemoDistribution } from '../features/distribution/demo'
 import { ensureDemoGeneration } from '../features/generation/demo'
 import { db } from './db'
 import type { Employee, Role } from '../types'
@@ -29,7 +30,7 @@ export const demoEmployees: Employee[] = people.map(([fullName, role, phone, tra
 
 const idOf = (role: Role) => demoEmployees.find((e) => e.role === role)!.id
 
-/** Puts the sample team and sample reports on this device once. Safe to call on every start. */
+/** Puts the sample team, reports and sheets on this device once. Safe to call on every start. */
 export async function ensureDemoData(): Promise<void> {
   if ((await db.demoAccounts.count()) === 0) {
     await db.transaction('rw', db.employees, db.demoAccounts, async () => {
@@ -40,4 +41,5 @@ export async function ensureDemoData(): Promise<void> {
     })
   }
   await ensureDemoGeneration(idOf('manager'), idOf('generation_operator'))
+  await ensureDemoDistribution(idOf('manager'), idOf('distribution_supervisor'))
 }

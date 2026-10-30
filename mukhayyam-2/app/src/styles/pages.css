@@ -87,7 +87,10 @@
 }
 .mod-card b { font-size: 16.5px; font-weight: 800; }
 .mod-summary { font-size: 13.5px; color: var(--muted); }
-.mod-foot { margin-top: auto; padding-top: 10px; display: flex; align-items: center; justify-content: space-between; color: var(--faint); }
+.mod-grid > * { min-width: 0; }
+.mod-foot { margin-top: auto; padding-top: 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--faint); }
+.mod-foot .pill { white-space: normal; height: auto; min-height: 26px; padding-block: 3px; line-height: 1.45; }
+.mod-foot svg { flex: none; }
 
 .home-row { display: grid; grid-template-columns: 1.25fr 1fr; gap: 16px; align-items: start; }
 .team-list, .sys-list { list-style: none; margin: 0; padding: 4px 0; }

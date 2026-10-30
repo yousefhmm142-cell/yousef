@@ -1,21 +1,22 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ArrowLeft, ArrowRight, Check, CircleAlert, CircleCheck, Clock, Droplet, Send, WifiOff, Wrench, Zap } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { ArrowLeft, ArrowRight, CircleAlert, Droplet, Send, WifiOff, Wrench, Zap } from 'lucide-react'
+import { useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
 import { useEmployee } from '../../auth/AuthProvider'
-import { db } from '../../data/db'
 import { serverNow } from '../../lib/clock'
-import { addDays, dayName, describeDay, isISODate, todayISO, type ISODate } from '../../lib/dates'
+import { dayName, describeDay, isISODate, todayISO, type ISODate } from '../../lib/dates'
+import { formatAmount } from '../../lib/numbers'
 import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import { useOnline } from '../../lib/useOnline'
-import { formatAmount } from '../../lib/numbers'
 import { advanceOnEnter } from '../../ui/form'
-import { Button, Pill } from '../../ui/primitives'
+import { Button } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
+import { SaveBadge, SentHeader, Stepper, UnsentBanner } from '../sheets/ui'
+import { useConfirmTap, useDraft } from '../sheets/useDraft'
 import { FuelStep, MaintenanceStep, MissingList, NotesField, RunsStep } from './EntrySteps'
-import { isEditableStatus, missingItems, newReport, reconcileReport, reportTotals, statusInfo, type FuelType, type Generator, type SiteReport } from './model'
-import { lastReportBefore, saveDraft, submitReport, useFuelTypes, useGenerators, useReport } from './repo'
-import { ReportView, stamp, useReportContext } from './ReportView'
+import { isEditableStatus, missingItems, newReport, reconcileReport, reportTotals, type FuelType, type Generator, type SiteReport } from './model'
+import { lastReportBefore, saveDraft, submitReport, useFuelTypes, useGenerators, useReport, useUnsentBefore } from './repo'
+import { ReportView, useReportContext } from './ReportView'
 
 const STEPS = [
   { key: 'fuel', label: 'المحروقات', icon: Droplet },
@@ -23,8 +24,6 @@ const STEPS = [
   { key: 'maintenance', label: 'الصيانات', icon: Wrench },
   { key: 'send', label: 'الإرسال', icon: Send },
 ] as const
-
-const SAVE_DELAY_MS = 350
 
 /** The site operator's report for one day: today by default, or /entry/:date. */
 export function EntryPage() {
@@ -67,62 +66,17 @@ function EntryForm({ date, initial, fuelTypes, generators, previous }: {
   const toast = useToast()
   const [params, setParams] = useSearchParams()
   const stepIndex = Math.max(0, STEPS.findIndex((s) => s.key === params.get('step')))
-
-  const [report, setReport] = useState<SiteReport>(() =>
-    initial
-      ? initial.status === 'draft' ? reconcileReport(initial, fuelTypes, generators) : initial
-      : newReport(date, fuelTypes, generators, employee.id, previous, serverNow().toISOString()),
+  const { doc: report, update, flush, saveState, latest } = useDraft<SiteReport>(
+    () =>
+      initial
+        ? initial.status === 'draft' ? reconcileReport(initial, fuelTypes, generators) : initial
+        : newReport(date, fuelTypes, generators, employee.id, previous, serverNow().toISOString()),
+    saveDraft,
+    !!initial,
   )
-  const latest = useRef(report)
-  const timer = useRef<number | undefined>(undefined)
-  const [saveState, setSaveState] = useState<'saved' | 'saving' | 'error' | 'idle'>(initial ? 'saved' : 'idle')
-  const [confirming, setConfirming] = useState(false)
+  const [armed, arm, disarm] = useConfirmTap()
   const [sending, setSending] = useState(false)
-
-  const flush = useCallback(async () => {
-    window.clearTimeout(timer.current)
-    timer.current = undefined
-    try {
-      setSaveState('saving')
-      await saveDraft(latest.current)
-      setSaveState('saved')
-    } catch {
-      setSaveState('error')
-    }
-  }, [])
-
-  const update = useCallback(
-    (change: (draft: SiteReport) => void) => {
-      const next = structuredClone(latest.current)
-      change(next)
-      latest.current = next
-      setReport(next)
-      setSaveState('saving')
-      window.clearTimeout(timer.current)
-      timer.current = window.setTimeout(() => void flush(), SAVE_DELAY_MS)
-    },
-    [flush],
-  )
-
-  // Never lose typing: save when the app goes to the background or this screen closes.
-  useEffect(() => {
-    const onHide = () => {
-      if (timer.current !== undefined) void flush()
-    }
-    document.addEventListener('visibilitychange', onHide)
-    window.addEventListener('pagehide', onHide)
-    return () => {
-      document.removeEventListener('visibilitychange', onHide)
-      window.removeEventListener('pagehide', onHide)
-      onHide()
-    }
-  }, [flush])
-
-  useEffect(() => {
-    if (!confirming) return
-    const id = window.setTimeout(() => setConfirming(false), 4000)
-    return () => window.clearTimeout(id)
-  }, [confirming])
+  const unsent = useUnsentBefore(date)
 
   const goTo = (i: number) => {
     setParams(i === 0 ? {} : { step: STEPS[i]!.key })
@@ -137,10 +91,9 @@ function EntryForm({ date, initial, fuelTypes, generators, previous }: {
     ...missingIn({ generators: report.generators }).map((text) => ({ text, step: 1 })),
     ...missingIn({ maintenance: report.maintenance }).map((text) => ({ text, step: 2 })),
   ]
-  const stepDone = (i: number) => (i === 3 ? false : !missing.some((m) => m.step === i))
 
   async function send() {
-    if (!confirming) return setConfirming(true)
+    if (!armed) return arm()
     setSending(true)
     try {
       await flush()
@@ -149,7 +102,7 @@ function EntryForm({ date, initial, fuelTypes, generators, previous }: {
     } catch {
       toast('تعذّر الإرسال. حاول مرة أخرى.', 'danger')
       setSending(false)
-      setConfirming(false)
+      disarm()
     }
   }
 
@@ -173,23 +126,14 @@ function EntryForm({ date, initial, fuelTypes, generators, previous }: {
           <p>أعاده المدير للتصحيح<span>{report.returnedReason}</span></p>
         </div>
       )}
-      {date === todayISO() && <UnsentEarlier before={date} />}
+      {date === todayISO() && <UnsentBanner sheets={unsent ?? []} hrefFor={(d) => `/entry/${d}`} title="تقارير لم تُرسل بعد" />}
 
-      <nav className="stepper" aria-label="خطوات التقرير">
-        {STEPS.map((s, i) => (
-          <button
-            key={s.key}
-            type="button"
-            className="step"
-            aria-current={i === stepIndex ? 'step' : undefined}
-            data-done={stepDone(i) || undefined}
-            onClick={() => goTo(i)}
-          >
-            <span className="step-dot">{stepDone(i) && i !== stepIndex ? <Check size={14} strokeWidth={3} /> : <s.icon size={15} />}</span>
-            <span className="step-label">{s.label}</span>
-          </button>
-        ))}
-      </nav>
+      <Stepper
+        label="خطوات التقرير"
+        current={stepIndex}
+        onSelect={goTo}
+        items={STEPS.map((s, i) => ({ ...s, done: i < 3 && !missing.some((m) => m.step === i) }))}
+      />
 
       <div className="entry-body" onKeyDown={advanceOnEnter}>
         {step.key === 'fuel' && <FuelStep report={report} fuelTypes={fuelTypes} previous={previous} update={update} />}
@@ -204,12 +148,7 @@ function EntryForm({ date, initial, fuelTypes, generators, previous }: {
               <div className="summary-row"><Wrench size={17} /><span>الصيانات</span><b className="num">{report.maintenance.length ? `${report.maintenance.length} عملية` : 'لا شيء'}</b></div>
             </section>
             <MissingList items={missing} onJump={goTo} />
-            {!online && (
-              <div className="banner">
-                <WifiOff size={18} />
-                <p>لا يوجد اتصال الآن<span>اضغط إرسال كالمعتاد؛ يُحفظ على جوالك ويصل للمدير وحده عند عودة الاتصال.</span></p>
-              </div>
-            )}
+            {!online && <OfflineSendNote />}
           </>
         )}
       </div>
@@ -227,7 +166,7 @@ function EntryForm({ date, initial, fuelTypes, generators, previous }: {
           </Button>
         ) : (
           <Button variant="primary" size="lg" block busy={sending} icon={<Send size={18} />} onClick={() => void send()}>
-            {confirming ? (missing.length ? `تأكيد الإرسال مع ${missing.length} حقول فارغة` : 'اضغط مرة ثانية للتأكيد') : 'إرسال للمدير'}
+            {armed ? (missing.length ? `تأكيد الإرسال مع ${missing.length} حقول فارغة` : 'اضغط مرة ثانية للتأكيد') : 'إرسال للمدير'}
           </Button>
         )}
       </footer>
@@ -235,38 +174,11 @@ function EntryForm({ date, initial, fuelTypes, generators, previous }: {
   )
 }
 
-function SaveBadge({ state, online }: { state: 'saved' | 'saving' | 'error' | 'idle'; online: boolean }) {
-  if (state === 'error') return <Pill tone="danger">تعذّر الحفظ</Pill>
-  if (state === 'idle') return <span className="save-badge muted">يُحفظ أثناء الكتابة</span>
+export function OfflineSendNote() {
   return (
-    <span className={`save-badge ${online ? '' : 'offline'}`} role="status">
-      {state === 'saving' ? <span className="spinner sm" /> : online ? <CircleCheck size={16} /> : <WifiOff size={16} />}
-      {state === 'saving' ? 'يُحفظ…' : 'محفوظ على الجهاز'}
-    </span>
-  )
-}
-
-/** Reminds the operator about an earlier day that was started or returned but not sent. */
-function UnsentEarlier({ before }: { before: ISODate }) {
-  const earlier = useLiveQuery(
-    async () => (await db.siteReports.where('reportDate').between(addDays(before, -14), before).toArray()).filter((r) => isEditableStatus(r.status)),
-    [before],
-  )
-  if (!earlier?.length) return null
-  return (
-    <div className="banner info">
-      <Clock size={18} />
-      <p>
-        تقارير لم تُرسل بعد
-        <span>
-          {earlier.map((r, i) => (
-            <span key={r.id}>
-              {i > 0 && '، '}
-              <Link to={`/entry/${r.reportDate}`}>تقرير {dayName(r.reportDate)} ({statusInfo[r.status].label})</Link>
-            </span>
-          ))}
-        </span>
-      </p>
+    <div className="banner">
+      <WifiOff size={18} />
+      <p>لا يوجد اتصال الآن<span>اضغط إرسال كالمعتاد؛ يُحفظ على جوالك ويصل للمدير وحده عند عودة الاتصال.</span></p>
     </div>
   )
 }
@@ -274,23 +186,11 @@ function UnsentEarlier({ before }: { before: ISODate }) {
 /** After sending: what was sent, and whether the manager approved it. */
 function SentReport({ report }: { report: SiteReport }) {
   const ctx = useReportContext(report)
-  const approved = report.status === 'approved'
-  const { weekday, date } = describeDay(report.reportDate)
+  const unsent = useUnsentBefore(report.reportDate)
   return (
     <div className="entry">
-      <section className={`sent glass ${approved ? 'ok' : 'wait'}`}>
-        <span className="sent-ring" aria-hidden="true">{approved ? <CircleCheck size={30} /> : <Send size={26} />}</span>
-        <div>
-          <h1>{approved ? 'اعتمد المدير التقرير' : 'أُرسل التقرير للمدير'}</h1>
-          <p>
-            {weekday} · <span className="num">{date}</span>
-            {' · '}
-            {approved ? stamp(report.approvedAt) : `أُرسل ${stamp(report.submittedAt)}`}
-          </p>
-        </div>
-        <Pill tone={statusInfo[report.status].tone}>{statusInfo[report.status].label}</Pill>
-      </section>
-      {report.reportDate === todayISO() && <UnsentEarlier before={report.reportDate} />}
+      <SentHeader sheet={report} date={report.reportDate} noun="التقرير" />
+      {report.reportDate === todayISO() && <UnsentBanner sheets={unsent ?? []} hrefFor={(d) => `/entry/${d}`} title="تقارير لم تُرسل بعد" />}
       {ctx.ready ? <ReportView report={report} ctx={ctx} /> : <div className="loading-block" aria-busy="true" />}
     </div>
   )

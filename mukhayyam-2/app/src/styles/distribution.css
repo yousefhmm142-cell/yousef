@@ -1,0 +1,75 @@
+/* =========================================================
+   Distribution sheet: zone-by-zone entry, day bar, run grid
+   ========================================================= */
+
+/* Many short steps (six zones + send): one scrolling row. */
+.stepper.scroll {
+  display: flex; overflow-x: auto; scrollbar-width: none; scroll-snap-type: x proximity; border-radius: 999px;
+}
+.stepper.scroll::-webkit-scrollbar { display: none; }
+.stepper.scroll .step { flex: none; padding: 0 14px; scroll-snap-align: center; white-space: nowrap; }
+.stepper.scroll .step-dot .num { font-size: 12px; font-weight: 800; }
+@media (max-width: 560px) {
+  .stepper.scroll { border-radius: 999px; }
+  .stepper.scroll .step { flex-direction: row; gap: 6px; font-size: 13px; padding: 0 12px; border-radius: 999px; }
+}
+
+.fcard[data-off] { background: var(--surface-2); }
+.fcard[data-off] .fcard-title { color: var(--muted); }
+.zrun-card { gap: 12px; }
+
+.summary-row.as-button {
+  width: 100%; border: 0; background: none; text-align: start; font: inherit; color: inherit; cursor: pointer;
+}
+.summary-row.as-button:hover { background: var(--surface-2); }
+.summary-row.total { background: var(--surface-2); }
+.summary-row.total b { color: var(--ink); font-weight: 800; }
+.entry.wide { max-width: 1280px; }
+
+.kpi-text { font-size: 22px; letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- Day bar ---------- */
+.tl { padding: 12px 18px 16px; display: grid; gap: 8px; }
+.tl-row { display: grid; grid-template-columns: 130px 1fr; align-items: center; gap: 14px; }
+.tl-label b { display: block; font-size: 14px; }
+.tl-label small { display: block; font-size: 12px; color: var(--muted); }
+.tl-ticks { position: relative; height: 18px; }
+.tl-ticks i {
+  position: absolute; top: 0; transform: translateX(50%); font-style: normal; font-size: 11px; color: var(--faint); white-space: nowrap;
+}
+.tl-ticks i:first-child { transform: none; }
+.tl-track {
+  position: relative; height: 26px; border-radius: 8px; overflow: hidden;
+  background:
+    repeating-linear-gradient(to left, transparent 0 calc(12.5% - 1px), var(--line-2) calc(12.5% - 1px) 12.5%),
+    var(--sunken);
+}
+.tl-track[data-off] { background: repeating-linear-gradient(45deg, var(--sunken) 0 6px, var(--surface-2) 6px 12px); }
+.tl-seg {
+  position: absolute; top: 3px; bottom: 3px; border-radius: 6px;
+  background: linear-gradient(270deg, var(--brand-hi), var(--brand-lo));
+  box-shadow: 0 4px 12px -6px var(--brand), inset 0 1px 0 #ffffff33;
+}
+
+/* ---------- Run grid ---------- */
+.matrix td { vertical-align: top; }
+.zr { display: grid; gap: 4px; }
+.zr-loads { font-size: 13px; font-weight: 700; color: var(--ink-2); }
+.zr-loads small { font-weight: 400; color: var(--faint); }
+.zr-loads.warn { color: var(--warn); }
+
+@media (max-width: 900px) {
+  .tl { padding: 10px 14px 14px; }
+  .tl-row { grid-template-columns: 92px 1fr; gap: 10px; }
+  .tl-ticks i:nth-child(even) { display: none; }
+  .kpi-text { font-size: 18px; }
+}
+
+/* ---------- Printing: the paper form is landscape ---------- */
+@page landscape { size: A4 landscape; margin: 10mm; }
+@media print {
+  .print-sheet.landscape { page: landscape; font-size: 10pt; }
+  .print-sheet.landscape th.narrow { width: 7%; }
+  .ps-gap { height: 10px; }
+  .ps-notes.small { min-height: 0; margin-top: 10px; }
+}

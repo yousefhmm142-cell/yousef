@@ -1,4 +1,4 @@
-import { Clock, Pencil, Plus, Zap } from 'lucide-react'
+import { Clock, LayoutGrid, Pencil, Plus, Zap } from 'lucide-react'
 import { useState } from 'react'
 import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import { formatAmount } from '../../lib/numbers'
@@ -7,6 +7,8 @@ import { NumberField, Segmented, TextField } from '../../ui/form'
 import { Button, Pill } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
 import { GENERATOR_BRANDS, type Generator } from '../generation/model'
+import { saveZone, useZones } from '../distribution/repo'
+import type { Zone } from '../distribution/model'
 import { ReportStateError, saveGenerator, useGenerators } from '../generation/repo'
 
 const OTHER = '__other__'
@@ -64,6 +66,8 @@ export function SettingsPage() {
           </ul>
         )}
       </section>
+
+      <ZonesCard />
 
       <section className="card">
         <div className="card-h"><span className="ico-round"><Clock size={16} /></span><h2>تأتي لاحقاً</h2></div>
@@ -146,6 +150,92 @@ function GeneratorDialog({ generator, onClose }: { generator: Generator | null; 
           <span className="label">الحالة</span>
           <Segmented<'on' | 'off'> label="حالة المولد" value={active} options={activeOptions} onChange={setActive} />
           <span className="field-hint">المولد الموقوف لا يظهر في تقرير اليوم.</span>
+        </div>
+        {error && <p className="field-error" role="alert">{error}</p>}
+      </div>
+    </Dialog>
+  )
+}
+
+/** The areas the distribution supervisor reports on, in the order of the paper form. */
+function ZonesCard() {
+  const zones = useZones()
+  const [editing, setEditing] = useState<Zone | 'new' | null>(null)
+  return (
+    <section className="card">
+      <div className="card-h">
+        <span className="ico-round brand"><LayoutGrid size={16} /></span>
+        <h2>مناطق التوزيع</h2>
+        <Button variant="primary" icon={<Plus size={17} />} onClick={() => setEditing('new')} className="card-h-action">
+          إضافة منطقة
+        </Button>
+      </div>
+      {!zones ? (
+        <div className="loading-block" aria-busy="true" />
+      ) : zones.length === 0 ? (
+        <p className="card-empty">لا مناطق بعد.</p>
+      ) : (
+        <ul className="gen-list">
+          {zones.map((z) => (
+            <li key={z.id}>
+              <span className="gen-badge num">{z.sortOrder}</span>
+              <span className="gen-main"><b>{z.name}</b></span>
+              {z.isActive ? <Pill tone="ok">فعّالة</Pill> : <Pill>موقوفة</Pill>}
+              <button type="button" className="icon-btn" aria-label={`تعديل ${z.name}`} onClick={() => setEditing(z)}>
+                <Pencil size={16} />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {editing && <ZoneDialog zone={editing === 'new' ? null : editing} onClose={() => setEditing(null)} />}
+    </section>
+  )
+}
+
+const zoneActiveOptions = [
+  { value: 'on', label: 'فعّالة' },
+  { value: 'off', label: 'موقوفة' },
+] as const
+
+function ZoneDialog({ zone, onClose }: { zone: Zone | null; onClose(): void }) {
+  const toast = useToast()
+  const [name, setName] = useState(zone?.name ?? '')
+  const [active, setActive] = useState<'on' | 'off'>(zone?.isActive === false ? 'off' : 'on')
+  const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+
+  async function save() {
+    if (!name.trim()) return setError('اكتب اسم المنطقة.')
+    setBusy(true)
+    try {
+      await saveZone({ id: zone?.id, name, isActive: active === 'on' })
+      toast(zone ? 'حُفظ التعديل' : 'أُضيفت المنطقة')
+      onClose()
+    } catch (e) {
+      setError(e instanceof ReportStateError && e.message === 'duplicate_name' ? 'توجد منطقة بهذا الاسم.' : 'تعذّر الحفظ. حاول مرة أخرى.')
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      title={zone ? `تعديل ${zone.name}` : 'إضافة منطقة'}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>إلغاء</Button>
+          <Button variant="primary" busy={busy} onClick={() => void save()}>حفظ</Button>
+        </>
+      }
+    >
+      <div className="form-grid">
+        <TextField label="الاسم" value={name} onChange={setName} placeholder="مثل: الصفطاوي" />
+        <div className="field">
+          <span className="label">الحالة</span>
+          <Segmented<'on' | 'off'> label="حالة المنطقة" value={active} options={zoneActiveOptions} onChange={setActive} />
+          <span className="field-hint">المنطقة الموقوفة لا تظهر في كشف اليوم.</span>
         </div>
         {error && <p className="field-error" role="alert">{error}</p>}
       </div>

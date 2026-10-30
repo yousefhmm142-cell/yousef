@@ -1,7 +1,7 @@
 import { describeDay } from '../../lib/dates'
 import { formatAmount } from '../../lib/numbers'
 import { maintenanceLabel, type FuelType, type Generator, type SiteReport } from './model'
-import { stamp } from './ReportView'
+import { stamp } from '../sheets/ui'
 
 const runHeaders = ['التشغيلة الأولى', 'التشغيلة الثانية', 'التشغيلة الثالثة']
 

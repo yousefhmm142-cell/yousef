@@ -1,4 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie'
+import type { DistributionSheet, Zone } from '../features/distribution/model'
 import type { AlertSettings, FuelType, Generator, SiteReport } from '../features/generation/model'
 import type { Employee } from '../types'
 
@@ -39,6 +40,8 @@ class AppDatabase extends Dexie {
   fuelTypes!: EntityTable<FuelType, 'id'>
   alertSettings!: EntityTable<AlertSettings, 'id'>
   siteReports!: EntityTable<SiteReport, 'id'>
+  zones!: EntityTable<Zone, 'id'>
+  distributionSheets!: EntityTable<DistributionSheet, 'id'>
 
   constructor() {
     super('mukhayyam2')
@@ -53,6 +56,10 @@ class AppDatabase extends Dexie {
       fuelTypes: 'id',
       alertSettings: 'id',
       siteReports: 'id, &reportDate, status',
+    })
+    this.version(3).stores({
+      zones: 'id',
+      distributionSheets: 'id, &sheetDate, status',
     })
   }
 }

@@ -1,11 +1,10 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../data/db'
-import { serverNow } from '../../lib/clock'
-import type { ISODate } from '../../lib/dates'
+import { addDays, type ISODate } from '../../lib/dates'
 import type { Employee } from '../../types'
+import { approveIn, isEditableStatus, returnIn, saveDraftIn, SheetStateError, submitIn } from '../sheets/workflow'
 import {
   defaultAlertSettings,
-  isEditableStatus,
   type AlertSettings,
   type FuelType,
   type Generator,
@@ -15,10 +14,10 @@ import {
 // Every read and write of the generation report goes through this file, so connecting the
 // server later only means adding the send/receive step here.
 
-const nowIso = () => serverNow().toISOString()
-const bySortOrder = <T extends { sortOrder: number; id: number }>(a: T, b: T) => a.sortOrder - b.sortOrder || a.id - b.id
+export const bySortOrder = <T extends { sortOrder: number; id: number }>(a: T, b: T) => a.sortOrder - b.sortOrder || a.id - b.id
 
-export class ReportStateError extends Error {}
+/** Kept under this name for the settings screen. */
+export { SheetStateError as ReportStateError }
 
 // ---------- Reading ----------
 export function useGenerators(): Generator[] | undefined {
@@ -67,63 +66,36 @@ export function useEmployeeNames(): Map<string, string> {
   return new Map((rows ?? []).map((e) => [e.id, e.fullName]))
 }
 
+/** Earlier days (last two weeks) started or returned but not sent. */
+export function useUnsentBefore(date: ISODate) {
+  return useLiveQuery(
+    async () =>
+      (await db.siteReports.where('reportDate').between(addDays(date, -14), date).toArray())
+        .filter((r) => isEditableStatus(r.status))
+        .map((r) => ({ id: r.id, date: r.reportDate, status: r.status })),
+    [date],
+  )
+}
+
 export async function lastReportBefore(date: ISODate): Promise<SiteReport | null> {
   return (await db.siteReports.where('reportDate').below(date).last()) ?? null
 }
 
-// ---------- Writing (site operator) ----------
-export async function saveDraft(report: SiteReport): Promise<void> {
-  await db.transaction('rw', db.siteReports, async () => {
-    const current = await db.siteReports.get(report.id)
-    if (current && !isEditableStatus(current.status)) {
-      throw new ReportStateError('This report was already sent')
-    }
-    await db.siteReports.put({ ...report, updatedAt: nowIso() })
-  })
-}
-
-export async function submitReport(report: SiteReport, by: Employee, offline: boolean): Promise<SiteReport> {
-  if (!isEditableStatus(report.status)) throw new ReportStateError('This report was already sent')
-  const sent: SiteReport = {
-    ...report,
-    status: 'submitted',
-    submittedBy: by.id,
-    submittedAt: nowIso(),
-    returnedReason: null,
-    recordedOffline: offline,
-    updatedAt: nowIso(),
-  }
-  await db.siteReports.put(sent)
-  return sent
-}
-
-// ---------- Writing (manager) ----------
-async function transition(id: string, from: SiteReport['status'], change: (r: SiteReport) => SiteReport) {
-  await db.transaction('rw', db.siteReports, async () => {
-    const r = await db.siteReports.get(id)
-    if (!r || r.status !== from) throw new ReportStateError('The report changed; reload and try again')
-    await db.siteReports.put({ ...change(r), updatedAt: nowIso() })
-  })
-}
-
-export const approveReport = (id: string, by: Employee) =>
-  transition(id, 'submitted', (r) => ({ ...r, status: 'approved', approvedBy: by.id, approvedAt: nowIso() }))
-
-export function returnReport(id: string, reason: string) {
-  const text = reason.trim()
-  if (!text) throw new ReportStateError('A reason is needed')
-  return transition(id, 'submitted', (r) => ({ ...r, status: 'returned', returnedReason: text, approvedBy: null, approvedAt: null }))
-}
+// ---------- Writing ----------
+export const saveDraft = (report: SiteReport) => saveDraftIn<SiteReport>(db.siteReports, report)
+export const submitReport = (report: SiteReport, by: Employee, offline: boolean) => submitIn<SiteReport>(db.siteReports, report, by, offline)
+export const approveReport = (id: string, by: Employee) => approveIn<SiteReport>(db.siteReports, id, by)
+export const returnReport = (id: string, reason: string) => returnIn<SiteReport>(db.siteReports, id, reason)
 
 // ---------- Settings: generators ----------
 export async function saveGenerator(input: Omit<Generator, 'id' | 'sortOrder'> & { id?: number }): Promise<void> {
   await db.transaction('rw', db.generators, async () => {
     const all = await db.generators.toArray()
     const name = input.name.trim()
-    if (all.some((g) => g.name === name && g.id !== input.id)) throw new ReportStateError('duplicate_name')
+    if (all.some((g) => g.name === name && g.id !== input.id)) throw new SheetStateError('duplicate_name')
     if (input.id !== undefined) {
       const existing = all.find((g) => g.id === input.id)
-      if (!existing) throw new ReportStateError('missing')
+      if (!existing) throw new SheetStateError('missing')
       await db.generators.put({ ...existing, ...input, id: input.id, name })
     } else {
       const id = Math.max(0, ...all.map((g) => g.id)) + 1
