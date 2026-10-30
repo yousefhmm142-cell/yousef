@@ -70,7 +70,7 @@ export const router = createBrowserRouter([
           },
           { path: 'stock', element: <RoleGate roles={managers}><StockPage /></RoleGate> },
           { path: 'reports', element: <RoleGate roles={managers}><ReportsPage /></RoleGate> },
-          { path: 'settings', element: <RoleGate roles={['admin']}><SettingsPage /></RoleGate> },
+          { path: 'settings', element: <RoleGate roles={managers}><SettingsPage /></RoleGate> },
           { path: 'account', element: <Account /> },
           { path: 'more', element: <More /> },
           { path: '*', element: <NotFound /> },

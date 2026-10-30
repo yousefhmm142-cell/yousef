@@ -246,8 +246,13 @@ select test.fails($$select public.take_backup()$$, '%permission denied%', 'nobod
 reset role; select test.login('رامي أبو عجوة'); set role authenticated;
 
 -- ---------- People and logins ----------
+reset role; select test.login('موظف إداري'); set role authenticated;
 select test.fails($$select public.admin_save_employee(null, 'زيد', 'technician', '0591111111', '123456', true, true)$$,
-                  'not_allowed', 'only the admin adds people');
+                  'not_allowed', 'only the manager or the admin adds people');
+reset role; select test.login('رامي أبو عجوة'); set role authenticated;
+select test.ok(public.admin_save_employee(null, 'فني من المدير', 'technician', '0591111119', null, true, true) is not null, 'the manager adds people too');
+select public.admin_set_attendance((select id from public.employees where phone = '0591111119'), null, '7788');
+select test.ok((select count(*) from public.attendance_code_holders()) = 2, 'the manager gives attendance codes too');
 reset role; select test.login('مسؤول النظام'); set role authenticated;
 select test.ok(not public.setup_needed(), 'first-time setup is closed once an admin can sign in');
 select test.ok(public.admin_save_employee(null, 'زيد الفني', 'technician', '0591111111', '123456', true, true) is not null,

@@ -6,7 +6,7 @@ import { config, isDemo } from '../config'
 import { formatPhone } from '../lib/phone'
 import { useTheme } from '../lib/theme'
 import { useDocumentTitle } from '../lib/useDocumentTitle'
-import { roleLabel } from '../types'
+import { isManagerRole, roleLabel } from '../types'
 import { Avatar, Button, Pill } from '../ui/primitives'
 import { SyncStatus } from '../ui/status'
 import { APK_PATH, isInstalled } from '../ui/InstallApp'
@@ -62,7 +62,7 @@ export function Account() {
             {isDemo ? <Pill tone="brand">وضع التجربة: على هذا الجهاز فقط</Pill> : <Pill tone="ok">قاعدة البيانات</Pill>}
           </span>
         </div>
-        {employee.role === 'admin' && (
+        {isManagerRole(employee.role) && (
           <Link to="/settings" className="row">
             <span className="ico-round"><Settings size={16} /></span>
             <span className="row-label">الإعدادات</span>

@@ -24,7 +24,17 @@ import { AuthProvider } from './auth/AuthProvider'
 import { ToastProvider } from './ui/Toast'
 
 // Caches the app on the device so it opens without internet, and updates itself quietly.
-registerSW({ immediate: true })
+// New versions: checked when the app opens, every 30 minutes, and whenever it comes back to the
+// screen; the app then reloads by itself into the new version.
+registerSW({
+  immediate: true,
+  onRegisteredSW(_url, registration) {
+    if (!registration) return
+    const check = () => void registration.update().catch(() => undefined)
+    window.setInterval(check, 30 * 60_000)
+    document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && check())
+  },
+})
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

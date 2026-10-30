@@ -22,9 +22,9 @@ const managerItems: NavItem[] = [
 export function navFor(role: Role): NavItem[] {
   switch (role) {
     case 'admin':
-      return [...managerItems, { to: '/settings', label: 'الإعدادات', icon: Settings }]
     case 'manager':
-      return managerItems
+      // The manager runs the whole system, settings included.
+      return [...managerItems, { to: '/settings', label: 'الإعدادات', icon: Settings }]
     case 'generation_operator':
     case 'distribution_supervisor':
       // The site: today's two forms and what was sent before, nothing else.
