@@ -3,7 +3,6 @@ import {
   LayoutGrid,
   ListChecks,
   ScanLine,
-  Settings,
   Users,
   Zap,
   type LucideIcon,
@@ -11,14 +10,12 @@ import {
 
 export type ModuleKey =
   | 'generation'
-  | 'generation-entry'
   | 'distribution'
   | 'distribution-entry'
   | 'tasks'
   | 'my-tasks'
   | 'attendance-board'
   | 'my-attendance'
-  | 'settings'
 
 export interface ModuleInfo {
   title: string
@@ -38,13 +35,6 @@ export const modules: Record<ModuleKey, ModuleInfo> = {
     icon: Zap,
     step: 3,
     features: ['التنقّل بين الأيام بالأسهم أو التقويم', 'تنبيهات الوقود والحرارة وضغط الزيت', 'اعتماد التقرير أو إعادته للتصحيح', 'طباعة بنفس شكل الورقة'],
-  },
-  'generation-entry': {
-    title: 'تقرير اليوم',
-    summary: 'المحروقات، والتشغيل، والصيانات، والملاحظات، خطوة بخطوة.',
-    icon: ClipboardList,
-    step: 3,
-    features: ['لوحة أرقام تفتح وحدها، وانتقال تلقائي للحقل التالي', 'المولدات وأنواع الوقود جاهزة دون إضافتها كل يوم', 'يُحفظ على جوالك حتى بدون إنترنت', 'زر «إرسال للمدير» بدل التوقيع'],
   },
   distribution: {
     title: 'التوزيع والأحمال',
@@ -87,12 +77,5 @@ export const modules: Record<ModuleKey, ModuleInfo> = {
     icon: ScanLine,
     step: 6,
     features: ['زر واحد كبير يتغيّر من حضور إلى انصراف', 'تأكيد فوري: «أهلاً قصي · حضور 7:58 ص»', 'سجل أيامك وساعاتك', 'يعمل حتى بدون إنترنت'],
-  },
-  settings: {
-    title: 'الإعدادات',
-    summary: 'الفريق، والمولدات، وحدود التنبيهات.',
-    icon: Settings,
-    step: 3,
-    features: ['إضافة الموظفين وأرقام جوالاتهم', 'المولدات وماركاتها وقدراتها', 'حدود التنبيهات والدوامات', 'سجل كل التغييرات'],
   },
 }

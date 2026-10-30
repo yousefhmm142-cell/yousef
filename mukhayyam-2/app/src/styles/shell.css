@@ -12,6 +12,7 @@
   max-width: 1280px; margin: 12px auto 0;
   display: flex; align-items: center; gap: 18px;
   padding: 7px 10px 7px 18px; border-radius: 999px;
+  background: var(--glass-bar);
 }
 .app-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; flex: none; }
 .app-brand-text b { display: block; font-size: 17px; font-weight: 800; line-height: 1.15; }
@@ -74,6 +75,7 @@
   .tabbar {
     position: fixed; z-index: 40; inset-inline: 12px; bottom: calc(10px + var(--safe-b));
     display: flex; height: 66px; padding: 6px; border-radius: 26px;
+    background: var(--glass-bar);
   }
   .tab {
     flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;

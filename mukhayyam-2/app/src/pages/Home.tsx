@@ -14,6 +14,10 @@ import { useOnline } from '../lib/useOnline'
 import { formatPhone } from '../lib/phone'
 import { roleLabel } from '../types'
 import { Avatar, Pill } from '../ui/primitives'
+import { EntryPage } from '../features/generation/EntryPage'
+import { statusInfo } from '../features/generation/model'
+import { useLatestSentReport } from '../features/generation/repo'
+import { dayName } from '../lib/dates'
 import { ModuleSoon } from './ModuleSoon'
 
 /** Each person opens the app straight on their own job. */
@@ -24,7 +28,7 @@ export function Home() {
     case 'manager':
       return <ManagerHome />
     case 'generation_operator':
-      return <ModuleSoon module="generation-entry" />
+      return <EntryPage />
     case 'distribution_supervisor':
       return <ModuleSoon module="distribution-entry" />
     case 'technician':
@@ -75,7 +79,7 @@ function ManagerHome() {
               <b>{m.title}</b>
               <span className="mod-summary">{m.summary}</span>
               <span className="mod-foot">
-                <Pill tone="brand" dot={false}>الخطوة {m.step}</Pill>
+                {key === 'generation' ? <GenerationStatus /> : <Pill tone="brand" dot={false}>الخطوة {m.step}</Pill>}
                 <ArrowLeft size={18} aria-hidden="true" />
               </span>
             </Link>
@@ -89,6 +93,15 @@ function ManagerHome() {
       </div>
     </div>
   )
+}
+
+/** Live state of the newest report, so the manager sees at a glance if one waits for approval. */
+function GenerationStatus() {
+  const latest = useLatestSentReport()
+  if (!latest) return <Pill dot={false}>لا تقارير بعد</Pill>
+  const day = dayName(latest.reportDate)
+  if (latest.status === 'submitted') return <Pill tone="warn">تقرير {day} بانتظار اعتمادك</Pill>
+  return <Pill tone={statusInfo[latest.status].tone}>تقرير {day}: {statusInfo[latest.status].label}</Pill>
 }
 
 function TeamCard() {

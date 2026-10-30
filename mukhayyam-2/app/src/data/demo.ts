@@ -1,3 +1,4 @@
+import { ensureDemoGeneration } from '../features/generation/demo'
 import { db } from './db'
 import type { Employee, Role } from '../types'
 
@@ -26,13 +27,17 @@ export const demoEmployees: Employee[] = people.map(([fullName, role, phone, tra
   tracksAttendance,
 }))
 
-/** Puts the sample team on this device once. Safe to call on every start. */
+const idOf = (role: Role) => demoEmployees.find((e) => e.role === role)!.id
+
+/** Puts the sample team and sample reports on this device once. Safe to call on every start. */
 export async function ensureDemoData(): Promise<void> {
-  if ((await db.demoAccounts.count()) > 0) return
-  await db.transaction('rw', db.employees, db.demoAccounts, async () => {
-    await db.employees.bulkPut(demoEmployees)
-    await db.demoAccounts.bulkPut(
-      demoEmployees.map((e) => ({ phone: e.phone!, pin: DEMO_PIN, employeeId: e.id })),
-    )
-  })
+  if ((await db.demoAccounts.count()) === 0) {
+    await db.transaction('rw', db.employees, db.demoAccounts, async () => {
+      await db.employees.bulkPut(demoEmployees)
+      await db.demoAccounts.bulkPut(
+        demoEmployees.map((e) => ({ phone: e.phone!, pin: DEMO_PIN, employeeId: e.id })),
+      )
+    })
+  }
+  await ensureDemoGeneration(idOf('manager'), idOf('generation_operator'))
 }

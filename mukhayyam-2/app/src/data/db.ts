@@ -1,4 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie'
+import type { AlertSettings, FuelType, Generator, SiteReport } from '../features/generation/model'
 import type { Employee } from '../types'
 
 /** Small key-value rows: the signed-in session, cached profile, last sync time. */
@@ -34,6 +35,10 @@ class AppDatabase extends Dexie {
   meta!: EntityTable<MetaRow, 'key'>
   outbox!: EntityTable<OutboxRow, 'seq'>
   demoAccounts!: EntityTable<DemoAccount, 'phone'>
+  generators!: EntityTable<Generator, 'id'>
+  fuelTypes!: EntityTable<FuelType, 'id'>
+  alertSettings!: EntityTable<AlertSettings, 'id'>
+  siteReports!: EntityTable<SiteReport, 'id'>
 
   constructor() {
     super('mukhayyam2')
@@ -42,6 +47,12 @@ class AppDatabase extends Dexie {
       meta: 'key',
       outbox: '++seq, clientId',
       demoAccounts: 'phone',
+    })
+    this.version(2).stores({
+      generators: 'id',
+      fuelTypes: 'id',
+      alertSettings: 'id',
+      siteReports: 'id, &reportDate, status',
     })
   }
 }

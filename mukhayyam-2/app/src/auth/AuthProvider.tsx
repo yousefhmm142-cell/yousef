@@ -6,7 +6,8 @@ import { demoBackend, supabaseBackend } from './backends'
 
 export type AuthState =
   | { status: 'loading' }
-  | { status: 'signed_out' }
+  /** byUser: they pressed sign out, so the next person starts from their own home screen. */
+  | { status: 'signed_out'; byUser?: boolean }
   | { status: 'signed_in'; employee: Employee }
 
 interface AuthContextValue {
@@ -58,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     await backend.signOut()
-    setState({ status: 'signed_out' })
+    setState({ status: 'signed_out', byUser: true })
   }, [backend])
 
   const value = useMemo(() => ({ state, signIn, signOut }), [state, signIn, signOut])

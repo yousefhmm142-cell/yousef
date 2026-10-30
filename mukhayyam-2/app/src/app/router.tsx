@@ -1,5 +1,9 @@
 import { createBrowserRouter } from 'react-router'
 import { useEmployee } from '../auth/AuthProvider'
+import { EntryPage } from '../features/generation/EntryPage'
+import { HistoryPage } from '../features/generation/HistoryPage'
+import { ReportPage } from '../features/generation/ReportPage'
+import { SettingsPage } from '../features/settings/SettingsPage'
 import { Account } from '../pages/Account'
 import { Home } from '../pages/Home'
 import { LoginRoute } from '../pages/Login'
@@ -10,6 +14,12 @@ import { AppShell } from './AppShell'
 import { RequireAuth, RoleGate } from './guards'
 
 const managers: Role[] = ['admin', 'manager']
+
+/** The operator sees their earlier reports; managers open on the latest report. */
+function GenerationIndex() {
+  const employee = useEmployee()
+  return employee.role === 'generation_operator' ? <HistoryPage /> : <ReportPage />
+}
 
 /** Managers see the team board; everyone else sees their own attendance. */
 function AttendanceRoute() {
@@ -27,10 +37,9 @@ export const router = createBrowserRouter([
         element: <AppShell />,
         children: [
           { index: true, element: <Home /> },
-          {
-            path: 'generation',
-            element: <RoleGate roles={[...managers, 'generation_operator']}><ModuleSoon module="generation" /></RoleGate>,
-          },
+          { path: 'generation', element: <RoleGate roles={[...managers, 'generation_operator']}><GenerationIndex /></RoleGate> },
+          { path: 'generation/:date', element: <RoleGate roles={[...managers, 'generation_operator']}><ReportPage /></RoleGate> },
+          { path: 'entry/:date', element: <RoleGate roles={['generation_operator']}><EntryPage /></RoleGate> },
           {
             path: 'distribution',
             element: <RoleGate roles={[...managers, 'distribution_supervisor']}><ModuleSoon module="distribution" /></RoleGate>,
@@ -40,7 +49,7 @@ export const router = createBrowserRouter([
             path: 'attendance',
             element: <RoleGate roles={[...managers, 'technician', 'staff', 'distribution_supervisor']}><AttendanceRoute /></RoleGate>,
           },
-          { path: 'settings', element: <RoleGate roles={['admin']}><ModuleSoon module="settings" /></RoleGate> },
+          { path: 'settings', element: <RoleGate roles={['admin']}><SettingsPage /></RoleGate> },
           { path: 'account', element: <Account /> },
           { path: '*', element: <NotFound /> },
         ],

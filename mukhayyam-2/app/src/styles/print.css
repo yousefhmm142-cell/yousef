@@ -1,0 +1,29 @@
+/* The day's report printed like the paper form; nothing else prints. */
+.print-sheet { display: none; }
+
+@media print {
+  @page { size: A4 portrait; margin: 12mm; }
+  html, body { background: #fff !important; color: #000 !important; }
+  .topbar, .tabbar, .toasts, .skip, .report-page > :not(.print-sheet) { display: none !important; }
+  .page { padding: 0 !important; max-width: none !important; }
+  .print-sheet {
+    display: block; color: #000; font-size: 11pt; line-height: 1.5;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .ps-head { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .ps-logo { height: 46px; width: auto; }
+  .ps-title { text-align: center; }
+  .ps-title b { display: block; font-size: 15pt; }
+  .ps-title span { display: inline-block; margin-top: 4px; padding: 2px 18px; background: #e6e6e6; font-weight: 700; }
+  .ps-date { font-size: 10.5pt; }
+  .print-sheet h2 { margin: 12px 0 0; padding: 3px; text-align: center; font-size: 11.5pt; border: 1.5px solid #000; border-bottom: 0; }
+  .print-sheet table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  .print-sheet th, .print-sheet td { border: 1px solid #000; padding: 4px 5px; text-align: center; font-size: 10pt; overflow-wrap: anywhere; }
+  .print-sheet th { font-weight: 700; background: #f2f2f2; }
+  .print-sheet th.wide { width: 40%; }
+  .print-sheet td { height: 26px; }
+  .ps-notes { min-height: 70px; border: 1.5px solid #000; padding: 6px 8px; white-space: pre-wrap; }
+  .ps-foot { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 22px; }
+  .ps-foot b { display: block; }
+  .ps-foot span { display: block; margin-top: 4px; font-size: 10pt; }
+}
