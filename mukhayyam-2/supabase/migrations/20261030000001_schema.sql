@@ -1,6 +1,8 @@
 -- Mukhayyam 2 operations system: tables.
 -- Target: Supabase (PostgreSQL 15+). All times are timestamptz; the business day is Asia/Gaza.
 -- Figures in the generation report and distribution sheet are typed by site staff, never computed here.
+-- Typed figures are plain numeric with only a "not negative" rule: an odd value is flagged by the
+-- app's alerts, never refused, so a phone can always send what was written on site.
 
 -- ---------- Types ----------
 create type public.user_role as enum ('admin', 'manager', 'generation_operator', 'distribution_supervisor', 'technician', 'staff');
@@ -91,7 +93,7 @@ create table public.generators (
   name text not null unique,
   brand text not null,
   model text,
-  capacity_kva numeric(7, 1) check (capacity_kva > 0),
+  capacity_kva numeric check (capacity_kva > 0),
   is_active boolean not null default true,
   sort_order smallint not null default 0,
   created_at timestamptz not null default now()
@@ -122,16 +124,18 @@ create table public.site_reports (
 );
 create trigger site_reports_touch before update on public.site_reports
   for each row execute function public.touch_updated_at();
+-- Devices ask for "what changed since my last look".
+create index site_reports_updated on public.site_reports (updated_at);
 
 create table public.site_report_fuel (
   id uuid primary key default gen_random_uuid(),
   report_id uuid not null references public.site_reports (id) on delete cascade,
   fuel_type_id smallint not null references public.fuel_types (id),
-  opening_balance numeric(10, 1) check (opening_balance >= 0),
-  received_qty numeric(10, 1) check (received_qty >= 0),
-  total_qty numeric(10, 1) check (total_qty >= 0),
-  closing_balance numeric(10, 1) check (closing_balance >= 0),
-  consumption numeric(10, 1) check (consumption >= 0),
+  opening_balance numeric check (opening_balance >= 0),
+  received_qty numeric check (received_qty >= 0),
+  total_qty numeric check (total_qty >= 0),
+  closing_balance numeric check (closing_balance >= 0),
+  consumption numeric check (consumption >= 0),
   shipment_no text,
   notes text,
   updated_at timestamptz not null default now(),
@@ -144,13 +148,15 @@ create table public.generator_day_logs (
   id uuid primary key default gen_random_uuid(),
   report_id uuid not null references public.site_reports (id) on delete cascade,
   generator_id smallint not null references public.generators (id),
-  run_hours numeric(4, 1) check (run_hours between 0 and 24),
+  -- false: the operator marked "did not run today".
+  did_run boolean not null default true,
+  run_hours numeric check (run_hours >= 0),
   load_unit public.load_unit not null default 'A',
-  load_l1 numeric(7, 1) check (load_l1 >= 0),
-  load_l2 numeric(7, 1) check (load_l2 >= 0),
-  load_l3 numeric(7, 1) check (load_l3 >= 0),
-  temperature_c numeric(5, 1) check (temperature_c between -20 and 150),
-  oil_pressure numeric(5, 2) check (oil_pressure >= 0),
+  load_l1 numeric check (load_l1 >= 0),
+  load_l2 numeric check (load_l2 >= 0),
+  load_l3 numeric check (load_l3 >= 0),
+  temperature_c numeric,
+  oil_pressure numeric check (oil_pressure >= 0),
   oil_pressure_unit public.pressure_unit not null default 'bar',
   notes text,
   updated_at timestamptz not null default now(),
@@ -160,12 +166,13 @@ create trigger generator_day_logs_touch before update on public.generator_day_lo
   for each row execute function public.touch_updated_at();
 
 -- end_time earlier than start_time means the run crossed midnight (e.g. 20:00 -> 01:00).
+-- Times may be empty while the report is still a draft.
 create table public.generator_runs (
   id uuid primary key default gen_random_uuid(),
   log_id uuid not null references public.generator_day_logs (id) on delete cascade,
   run_no smallint not null check (run_no between 1 and 6),
-  start_time time not null,
-  end_time time not null,
+  start_time time,
+  end_time time,
   updated_at timestamptz not null default now(),
   unique (log_id, run_no)
 );
@@ -175,9 +182,10 @@ create trigger generator_runs_touch before update on public.generator_runs
 create table public.maintenance_logs (
   id uuid primary key default gen_random_uuid(),
   report_id uuid not null references public.site_reports (id) on delete cascade,
-  generator_id smallint not null references public.generators (id),
-  oil_new_liters numeric(6, 1) check (oil_new_liters >= 0),
-  oil_used_liters numeric(6, 1) check (oil_used_liters >= 0),
+  -- Empty while the operator has not picked the generator yet.
+  generator_id smallint references public.generators (id),
+  oil_new_liters numeric check (oil_new_liters >= 0),
+  oil_used_liters numeric check (oil_used_liters >= 0),
   maintenance_types text[] not null default '{}'
     check (maintenance_types <@ array['oil_change', 'oil_filter', 'fuel_filter', 'air_filter', 'cooling', 'battery', 'belt', 'electrical', 'other']),
   description text,
@@ -212,12 +220,15 @@ create table public.distribution_sheets (
 );
 create trigger distribution_sheets_touch before update on public.distribution_sheets
   for each row execute function public.touch_updated_at();
+create index distribution_sheets_updated on public.distribution_sheets (updated_at);
 
 create table public.zone_day_entries (
   id uuid primary key default gen_random_uuid(),
   sheet_id uuid not null references public.distribution_sheets (id) on delete cascade,
   zone_id smallint not null references public.zones (id),
-  supply_hours numeric(4, 1) check (supply_hours between 0 and 24),
+  -- false: the supervisor marked "not supplied today".
+  supplied boolean not null default true,
+  supply_hours numeric check (supply_hours >= 0),
   updated_at timestamptz not null default now(),
   unique (sheet_id, zone_id)
 );
@@ -231,9 +242,9 @@ create table public.zone_runs (
   start_time time,
   end_time time,
   load_unit public.load_unit not null default 'A',
-  load_l1 numeric(7, 1) check (load_l1 >= 0),
-  load_l2 numeric(7, 1) check (load_l2 >= 0),
-  load_l3 numeric(7, 1) check (load_l3 >= 0),
+  load_l1 numeric check (load_l1 >= 0),
+  load_l2 numeric check (load_l2 >= 0),
+  load_l3 numeric check (load_l3 >= 0),
   updated_at timestamptz not null default now(),
   unique (entry_id, run_no)
 );

@@ -147,9 +147,30 @@ update public.tasks set status = 'cancelled', cancel_reason = 'المشترك غ
 select test.ok((select count(*) from public.tasks where status = 'cancelled' and cancelled_at is not null) = 1, 'the manager cancels with a reason');
 select test.ok((select count(*) from public.attendance_points) = 1, 'the manager can print the attendance sheet');
 
+-- ---------- People and logins ----------
+select test.fails($$select public.admin_save_employee(null, 'زيد', 'technician', '0591111111', '123456', true, true)$$,
+                  'not_allowed', 'only the admin adds people');
+reset role; select test.login('مسؤول النظام'); set role authenticated;
+select test.ok(not public.setup_needed(), 'first-time setup is closed once an admin can sign in');
+select test.ok(public.admin_save_employee(null, 'زيد الفني', 'technician', '0591111111', '123456', true, true) is not null,
+               'the admin adds a technician with a login');
+select test.ok((select auth_user_id is not null from public.employees where phone = '0591111111'), 'the new person has a login');
+select test.fails($$select public.admin_save_employee(null, 'آخر', 'technician', '0591111111', '123456', true, true)$$,
+                  'phone_taken', 'one phone belongs to one person');
+select test.fails($$select public.admin_save_employee(null, 'آخر', 'technician', '0591111112', '12345', true, true)$$,
+                  'bad_pin', 'a PIN is exactly 6 digits');
+select test.fails($$select public.admin_save_employee(null, 'آخر', 'technician', '059111', '123456', true, true)$$,
+                  'bad_phone', 'a phone is 10 digits starting with 05');
+select test.fails($$select public.admin_save_employee(public.current_employee_id(), 'مسؤول النظام', 'admin', '0590000001', null, false, true)$$,
+                  'last_admin', 'the last admin cannot switch themselves off');
+select test.fails($$select public.save_login_account(null, '0591111113', '123456')$$,
+                  '%permission denied%', 'accounts are only made through the admin screen');
+
 -- ---------- Not signed in ----------
 reset role; select set_config('request.jwt.claims', '', false); set role anon;
 select test.fails($$select count(*) from public.employees$$, '%permission denied%', 'nothing is readable without signing in');
+select test.fails($$select public.setup_first_admin('دخيل', '0592222222', '123456')$$, 'already_set_up',
+                  'nobody can claim the first admin once it exists');
 reset role;
 
 \echo 'ALL CHECKS PASSED'
