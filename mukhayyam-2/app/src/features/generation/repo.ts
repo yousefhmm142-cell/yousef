@@ -1,5 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../data/db'
+import { syncSoon } from '../../data/sync'
+import { saveListItem } from '../../data/admin'
 import { addDays, type ISODate } from '../../lib/dates'
 import type { Employee } from '../../types'
 import { approveIn, isEditableStatus, returnIn, saveDraftIn, SheetStateError, submitIn } from '../sheets/workflow'
@@ -11,8 +13,8 @@ import {
   type SiteReport,
 } from './model'
 
-// Every read and write of the generation report goes through this file, so connecting the
-// server later only means adding the send/receive step here.
+// Every read and write of the generation report goes through this file. Writes land on the
+// device first; data/sync.ts then sends them to the server (real mode only).
 
 export const bySortOrder = <T extends { sortOrder: number; id: number }>(a: T, b: T) => a.sortOrder - b.sortOrder || a.id - b.id
 
@@ -82,25 +84,20 @@ export async function lastReportBefore(date: ISODate): Promise<SiteReport | null
 }
 
 // ---------- Writing ----------
-export const saveDraft = (report: SiteReport) => saveDraftIn<SiteReport>(db.siteReports, report)
-export const submitReport = (report: SiteReport, by: Employee, offline: boolean) => submitIn<SiteReport>(db.siteReports, report, by, offline)
-export const approveReport = (id: string, by: Employee) => approveIn<SiteReport>(db.siteReports, id, by)
-export const returnReport = (id: string, reason: string) => returnIn<SiteReport>(db.siteReports, id, reason)
+export const saveDraft = (report: SiteReport) => saveDraftIn<SiteReport>(db.siteReports, report).then(() => syncSoon())
+export const submitReport = (report: SiteReport, by: Employee, offline: boolean) =>
+  submitIn<SiteReport>(db.siteReports, report, by, offline).then((sent) => (syncSoon(true), sent))
+export const approveReport = (id: string, by: Employee) => approveIn<SiteReport>(db.siteReports, id, by).then(() => syncSoon(true))
+export const returnReport = (id: string, reason: string) => returnIn<SiteReport>(db.siteReports, id, reason).then(() => syncSoon(true))
 
 // ---------- Settings: generators ----------
 export async function saveGenerator(input: Omit<Generator, 'id' | 'sortOrder'> & { id?: number }): Promise<void> {
-  await db.transaction('rw', db.generators, async () => {
-    const all = await db.generators.toArray()
-    const name = input.name.trim()
-    if (all.some((g) => g.name === name && g.id !== input.id)) throw new SheetStateError('duplicate_name')
-    if (input.id !== undefined) {
-      const existing = all.find((g) => g.id === input.id)
-      if (!existing) throw new SheetStateError('missing')
-      await db.generators.put({ ...existing, ...input, id: input.id, name })
-    } else {
-      const id = Math.max(0, ...all.map((g) => g.id)) + 1
-      const sortOrder = Math.max(0, ...all.map((g) => g.sortOrder)) + 1
-      await db.generators.put({ ...input, id, sortOrder, name })
-    }
-  })
+  const name = input.name.trim()
+  await saveListItem<Generator>(db.generators, 'generators', { ...input, name }, (g) => ({
+    name: g.name,
+    brand: g.brand,
+    model: g.model,
+    capacity_kva: g.capacityKva,
+    is_active: g.isActive,
+  }))
 }

@@ -10,13 +10,15 @@ import { GENERATOR_BRANDS, type Generator } from '../generation/model'
 import { saveZone, useZones } from '../distribution/repo'
 import type { Zone } from '../distribution/model'
 import { ReportStateError, saveGenerator, useGenerators } from '../generation/repo'
+import { BackupCard } from './BackupCard'
+import { TeamCard } from './TeamCard'
 
 const OTHER = '__other__'
 const activeOptions = [
   { value: 'on', label: 'فعّال' },
   { value: 'off', label: 'موقوف' },
 ] as const
-const soon = ['الفريق وأرقام الجوالات وحسابات الدخول', 'حدود التنبيهات والدوامات', 'سجل كل التغييرات']
+const soon = ['حدود التنبيهات والدوامات', 'سجل كل التغييرات']
 
 export function SettingsPage() {
   useDocumentTitle('الإعدادات')
@@ -28,9 +30,11 @@ export function SettingsPage() {
       <header className="ph">
         <div>
           <h1>الإعدادات</h1>
-          <p className="muted">ما تضيفه هنا يظهر في تقرير المشغّل كل يوم دون أن يضيفه بنفسه.</p>
+          <p className="muted">ما تضيفه هنا يظهر عند الجميع: الموظفون يدخلون بأرقامهم، والمولدات والمناطق تظهر في كشوف كل يوم.</p>
         </div>
       </header>
+
+      <TeamCard />
 
       <section className="card">
         <div className="card-h">
@@ -68,6 +72,8 @@ export function SettingsPage() {
       </section>
 
       <ZonesCard />
+
+      <BackupCard />
 
       <section className="card">
         <div className="card-h"><span className="ico-round"><Clock size={16} /></span><h2>تأتي لاحقاً</h2></div>
@@ -116,7 +122,7 @@ function GeneratorDialog({ generator, onClose }: { generator: Generator | null; 
       toast(generator ? 'حُفظ التعديل' : 'أُضيف المولد')
       onClose()
     } catch (e) {
-      setError(e instanceof ReportStateError && e.message === 'duplicate_name' ? 'يوجد مولد بهذا الاسم.' : 'تعذّر الحفظ. حاول مرة أخرى.')
+      setError(e instanceof ReportStateError && e.message === 'duplicate_name' ? 'يوجد مولد بهذا الاسم.' : e instanceof ReportStateError && e.message === 'offline' ? 'الحفظ يحتاج إنترنت. اتصل وحاول مرة أخرى.' : 'تعذّر الحفظ. حاول مرة أخرى.')
       setBusy(false)
     }
   }
@@ -213,7 +219,7 @@ function ZoneDialog({ zone, onClose }: { zone: Zone | null; onClose(): void }) {
       toast(zone ? 'حُفظ التعديل' : 'أُضيفت المنطقة')
       onClose()
     } catch (e) {
-      setError(e instanceof ReportStateError && e.message === 'duplicate_name' ? 'توجد منطقة بهذا الاسم.' : 'تعذّر الحفظ. حاول مرة أخرى.')
+      setError(e instanceof ReportStateError && e.message === 'duplicate_name' ? 'توجد منطقة بهذا الاسم.' : e instanceof ReportStateError && e.message === 'offline' ? 'الحفظ يحتاج إنترنت. اتصل وحاول مرة أخرى.' : 'تعذّر الحفظ. حاول مرة أخرى.')
       setBusy(false)
     }
   }

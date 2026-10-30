@@ -9,6 +9,7 @@ import { useDocumentTitle } from '../lib/useDocumentTitle'
 import { roleLabel } from '../types'
 import { Avatar, Button, Pill } from '../ui/primitives'
 import { SyncStatus } from '../ui/status'
+import { usePendingCount } from '../data/sync'
 
 export function Account() {
   useDocumentTitle('حسابي')
@@ -17,6 +18,7 @@ export function Account() {
   const [theme, toggleTheme] = useTheme()
   const [confirming, setConfirming] = useState(false)
   const [busy, setBusy] = useState(false)
+  const pending = usePendingCount()
 
   // The sign-out button asks once; the question goes away by itself.
   useEffect(() => {
@@ -86,6 +88,11 @@ export function Account() {
       >
         {confirming ? 'اضغط مرة ثانية للتأكيد' : 'تسجيل الخروج'}
       </Button>
+      {confirming && pending > 0 && (
+        <p className="banner" role="alert">
+          على هذا الجهاز {pending === 1 ? 'كشف لم يصل' : `${pending} كشوف لم تصل`} للخادم بعد. إن دخل شخص آخر على الجهاز تُحذف. اتصل بالإنترنت أولاً إن أمكن.
+        </p>
+      )}
     </div>
   )
 }

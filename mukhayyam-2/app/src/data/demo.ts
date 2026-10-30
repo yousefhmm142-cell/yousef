@@ -26,6 +26,7 @@ export const demoEmployees: Employee[] = people.map(([fullName, role, phone, tra
   phone,
   isActive: true,
   tracksAttendance,
+  hasLogin: true,
 }))
 
 const idOf = (role: Role) => demoEmployees.find((e) => e.role === role)!.id

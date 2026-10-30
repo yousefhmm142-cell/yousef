@@ -166,3 +166,10 @@ button.row:hover, a.row:hover { background: var(--surface-2); }
   .mod-grid { grid-template-columns: 1fr; }
   .demo-list { grid-template-columns: 1fr; }
 }
+
+/* ---------- First-time setup ---------- */
+.setup-note { margin-bottom: 16px; }
+.setup-badge {
+  width: 54px; height: 54px; margin: 0 auto 10px; border-radius: 50%; display: grid; place-items: center; color: #fff;
+  background: linear-gradient(150deg, var(--brand-hi), var(--brand-lo)); box-shadow: 0 14px 30px -14px var(--brand);
+}

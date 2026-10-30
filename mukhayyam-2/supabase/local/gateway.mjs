@@ -31,7 +31,9 @@ http
       return
     }
     if (req.method === 'OPTIONS') {
-      res.writeHead(204, cors).end()
+      // Like Supabase: allow whatever headers the browser asks about (supabase-js adds new ones over time).
+      const asked = req.headers['access-control-request-headers']
+      res.writeHead(204, asked ? { ...cors, 'access-control-allow-headers': asked } : cors).end()
       return
     }
     if (offline) {

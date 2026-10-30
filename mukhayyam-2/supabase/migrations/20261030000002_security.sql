@@ -76,7 +76,9 @@ begin
     end if;
     if new.status = 'submitted' then
       new.submitted_by := me;
-      new.submitted_at := public.event_time(new.recorded_offline, new.device_time, old.created_at);
+      -- No lower bound from created_at: a sheet filled offline reaches the server (and is created
+      -- there) only when the phone reconnects, after it was really sent.
+      new.submitted_at := public.event_time(new.recorded_offline, new.device_time, null);
       new.returned_reason := null;
     elsif new.status = 'approved' then
       new.approved_by := me;

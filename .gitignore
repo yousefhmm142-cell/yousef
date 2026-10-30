@@ -3,3 +3,7 @@ dist/
 __pycache__/
 af-powercollect-handoff/
 AF-PowerCollect-الواجهات/
+
+# Mukhayyam 2 hosting package
+mukhayyam-2/app/dist-hosting/
+mukhayyam-2/mukhayyam2-hosting.zip

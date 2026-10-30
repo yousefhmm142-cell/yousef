@@ -1,0 +1,493 @@
+import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { useSyncExternalStore } from 'react'
+import type { EntityTable, Table } from 'dexie'
+import { isDemo } from '../config'
+import { SHEET_SELECT, sheetFromRow, sheetToRows, type SheetRow } from '../features/distribution/remote'
+import type { DistributionSheet, Zone } from '../features/distribution/model'
+import { REPORT_SELECT, reportFromRow, reportToRows, type ReportRow } from '../features/generation/remote'
+import type { AlertSettings, FuelType, Generator, SiteReport } from '../features/generation/model'
+import type { ChildRows } from '../features/sheets/remote'
+import { isEditableStatus, type SheetMeta, type SheetStatus } from '../features/sheets/workflow'
+import type { Employee, Role } from '../types'
+import { db, deleteMeta, getMeta, setMeta } from './db'
+import { getSupabase } from './supabase'
+
+// Keeps this device and the server in step, so a report typed on the operator's phone appears on
+// the manager's laptop and an approval on the laptop appears on the phone.
+//
+// - Everything is saved on the device first; nothing waits for the network.
+// - A sheet changed on this device (updatedAt moved past syncedAt) is sent in the same steps a
+//   person takes: lines first while it is a draft, then "sent", or "approved" / "returned". The
+//   server checks every step again (sheet_guard), so a phone can never skip one.
+// - What changed on the server since the last look is brought back, except sheets that still have
+//   unsent changes here.
+// - When the server already moved on (for example the report was approved while an old copy was
+//   being edited offline), the server's version wins and replaces the copy on this device.
+
+type SheetDoc = SiteReport | DistributionSheet
+export type SheetKind = 'generation' | 'distribution'
+
+interface KindSpec {
+  kind: SheetKind
+  header: 'site_reports' | 'distribution_sheets'
+  dateCol: 'report_date' | 'sheet_date'
+  dateIndex: 'reportDate' | 'sheetDate'
+  /** Who fills this sheet on site; everyone else who reads it is a manager or the admin. */
+  filler: Role
+  readers: Role[]
+  table: Table<SheetDoc, string>
+  select: string
+  dateOf(doc: SheetDoc): string
+  toRows(doc: SheetDoc): { header: Record<string, unknown>; children: ChildRows[] }
+  fromRow(row: unknown): SheetDoc
+}
+
+const KINDS: KindSpec[] = [
+  {
+    kind: 'generation',
+    header: 'site_reports',
+    dateCol: 'report_date',
+    dateIndex: 'reportDate',
+    filler: 'generation_operator',
+    readers: ['admin', 'manager', 'generation_operator'],
+    table: db.siteReports as unknown as Table<SheetDoc, string>,
+    select: REPORT_SELECT,
+    dateOf: (d) => (d as SiteReport).reportDate,
+    toRows: (d) => reportToRows(d as SiteReport),
+    fromRow: (r) => reportFromRow(r as ReportRow),
+  },
+  {
+    kind: 'distribution',
+    header: 'distribution_sheets',
+    dateCol: 'sheet_date',
+    dateIndex: 'sheetDate',
+    filler: 'distribution_supervisor',
+    readers: ['admin', 'manager', 'distribution_supervisor'],
+    table: db.distributionSheets as unknown as Table<SheetDoc, string>,
+    select: SHEET_SELECT,
+    dateOf: (d) => (d as DistributionSheet).sheetDate,
+    toRows: (d) => sheetToRows(d as DistributionSheet),
+    fromRow: (r) => sheetFromRow(r as SheetRow),
+  },
+]
+
+export const hasUnsent = (d: SheetMeta) => d.syncedAt !== d.updatedAt
+
+/** A sent sheet that reaches the server later than this is marked "sent without internet". */
+const LATE_SEND_MS = 2 * 60_000
+const PAGE = 500
+
+// ---------- Errors ----------
+export class SyncError extends Error {
+  /** True for a lost or slow connection: the same step is simply tried again later. */
+  readonly transient: boolean
+  readonly code: string
+  constructor(message: string, code: string, transient: boolean) {
+    super(message)
+    this.code = code
+    this.transient = transient
+  }
+}
+
+function toSyncError(error: PostgrestError, status: number): SyncError {
+  const code = error.code ?? ''
+  const transient = status === 0 || status >= 500 || code === '' || code.startsWith('PGRST3') || code === 'PGRST002'
+  return new SyncError(error.message, code, transient)
+}
+
+async function run<T>(query: PromiseLike<{ data: T; error: PostgrestError | null; status: number }>): Promise<T> {
+  let res: { data: T; error: PostgrestError | null; status: number }
+  try {
+    res = await query
+  } catch (e) {
+    throw new SyncError(e instanceof Error ? e.message : String(e), '', true)
+  }
+  if (res.error) throw toSyncError(res.error, res.status)
+  return res.data
+}
+
+function client(): SupabaseClient {
+  const sb = getSupabase()
+  if (!sb) throw new SyncError('demo mode', 'demo', false)
+  return sb
+}
+
+// ---------- Status for the screen ----------
+export interface SyncState {
+  phase: 'idle' | 'syncing' | 'error'
+  /** Last time everything went through. */
+  lastOkAt: string | null
+  /** A sheet the server keeps refusing (not a connection problem). */
+  problem: string | null
+}
+
+let state: SyncState = { phase: 'idle', lastOkAt: null, problem: null }
+const listeners = new Set<() => void>()
+function setState(next: Partial<SyncState>) {
+  state = { ...state, ...next }
+  listeners.forEach((l) => l())
+}
+
+export function useSyncState(): SyncState {
+  return useSyncExternalStore(
+    (l) => {
+      listeners.add(l)
+      return () => listeners.delete(l)
+    },
+    () => state,
+  )
+}
+
+/** Changes on this device not on the server yet (sheets and queued actions). */
+export function usePendingCount(): number {
+  return (
+    useLiveQuery(async () => {
+      if (isDemo) return 0
+      const sheets = await Promise.all(KINDS.map((k) => k.table.filter(hasUnsent).count()))
+      return sheets.reduce((a, b) => a + b, 0) + (await db.outbox.count())
+    }, []) ?? 0
+  )
+}
+
+// ---------- Sending one sheet ----------
+type RemoteHead = { id: string; status: SheetStatus } | null
+
+/** Replaces the lines of one table under a sheet: removes lines deleted here, then saves the rest. */
+async function pushChildren(sb: SupabaseClient, sheetId: string, child: ChildRows) {
+  const parents = child.parentIds ?? [sheetId]
+  if (parents.length === 0) return
+  const keep = child.rows.map((r) => r.id)
+  let del = sb.from(child.table).delete().in(child.parent, parents)
+  if (keep.length) del = del.not('id', 'in', `(${keep.join(',')})`)
+  await run(del)
+  if (!child.rows.length) return
+  try {
+    await run(sb.from(child.table).upsert(child.rows, { onConflict: 'id' }))
+  } catch (e) {
+    // Two lines swapped numbers (run 1 <-> run 2): start this table over for the sheet.
+    if (!(e instanceof SyncError) || e.code !== '23505') throw e
+    await run(sb.from(child.table).delete().in(child.parent, parents))
+    await run(sb.from(child.table).insert(child.rows))
+  }
+}
+
+/** Brings one sheet back from the server and puts it on this device in place of localId. */
+async function takeServerCopy(spec: KindSpec, serverId: string, localId: string, onlyIfUpdatedAt?: string) {
+  const sb = client()
+  const row = await run(sb.from(spec.header).select(spec.select).eq('id', serverId).maybeSingle())
+  await db.transaction('rw', spec.table, async () => {
+    const local = await spec.table.get(localId)
+    // Typed on more while this was being sent: keep it; the next round sends it.
+    if (onlyIfUpdatedAt !== undefined && local && local.updatedAt !== onlyIfUpdatedAt) return
+    if (!row) {
+      // Nothing on the server: nothing left to send either.
+      if (local) await spec.table.put({ ...local, syncedAt: local.updatedAt })
+      return
+    }
+    const doc = spec.fromRow(row)
+    if (localId !== serverId) await spec.table.delete(localId)
+    await spec.table.put({ ...doc, syncedAt: doc.updatedAt })
+  })
+}
+
+async function pushSheet(spec: KindSpec, doc: SheetDoc, me: Employee): Promise<void> {
+  const sb = client()
+  const date = spec.dateOf(doc)
+  const remote: RemoteHead = await run(
+    sb.from(spec.header).select('id, status').eq(spec.dateCol, date).maybeSingle<{ id: string; status: SheetStatus }>(),
+  )
+  const filler = me.role === spec.filler
+
+  let current = doc
+  if (remote && remote.id !== doc.id) {
+    // The same day was started on another device.
+    if (filler && isEditableStatus(remote.status) && doc.status !== 'approved') {
+      current = { ...doc, id: remote.id } as SheetDoc
+      await db.transaction('rw', spec.table, async () => {
+        await spec.table.delete(doc.id)
+        await spec.table.put(current)
+      })
+    } else {
+      return takeServerCopy(spec, remote.id, doc.id)
+    }
+  }
+
+  const { header, children } = spec.toRows(current)
+  const { id, ...fields } = header
+  const remoteStatus = remote?.status ?? null
+
+  if (filler) {
+    if (remoteStatus && !isEditableStatus(remoteStatus)) {
+      // Already sent or approved on the server: the server's copy is the true one.
+      return takeServerCopy(spec, current.id, current.id)
+    }
+    if (!remoteStatus) {
+      await run(sb.from(spec.header).insert({ ...header, status: 'draft' }))
+    }
+    for (const child of children) await pushChildren(sb, current.id, child)
+    // Also moves updated_at on, so other devices notice the new lines.
+    await run(sb.from(spec.header).update(fields).eq('id', id))
+    if (current.status === 'submitted') {
+      const late = current.submittedAt ? Date.now() - Date.parse(current.submittedAt) > LATE_SEND_MS : false
+      await run(
+        sb
+          .from(spec.header)
+          .update({ status: 'submitted', recorded_offline: current.recordedOffline || late, device_time: current.submittedAt })
+          .eq('id', id),
+      )
+    }
+  } else if (remoteStatus === 'submitted' && (current.status === 'approved' || current.status === 'returned')) {
+    await run(
+      sb
+        .from(spec.header)
+        .update(current.status === 'approved' ? { status: 'approved' } : { status: 'returned', returned_reason: current.returnedReason })
+        .eq('id', id),
+    )
+  }
+  // Whatever happened, end with the server's copy: it carries the server times and names.
+  await takeServerCopy(spec, current.id, current.id, current.updatedAt)
+}
+
+// ---------- Bringing changes back ----------
+async function pullSheets(spec: KindSpec) {
+  const sb = client()
+  const key = `pull:${spec.kind}`
+  let cursor = await getMeta<string>(key)
+  for (;;) {
+    let q = sb.from(spec.header).select(spec.select).order('updated_at', { ascending: true }).limit(PAGE)
+    if (cursor) q = q.gte('updated_at', cursor)
+    const rows = await run(q) as unknown as Array<{ updated_at: string }>
+    for (const row of rows) await applyRemote(spec, spec.fromRow(row))
+    const last = rows.at(-1)?.updated_at
+    const done = !last || rows.length < PAGE || last === cursor
+    if (last) cursor = last
+    if (done) break
+  }
+  if (cursor) await setMeta(key, cursor)
+}
+
+async function applyRemote(spec: KindSpec, doc: SheetDoc) {
+  await db.transaction('rw', spec.table, async () => {
+    const mine = await spec.table.get(doc.id)
+    if (mine && (hasUnsent(mine) || mine.syncedAt === doc.updatedAt)) return
+    const sameDay = await spec.table.where(spec.dateIndex).equals(spec.dateOf(doc)).first()
+    if (sameDay && sameDay.id !== doc.id) {
+      if (hasUnsent(sameDay)) return
+      await spec.table.delete(sameDay.id)
+    }
+    await spec.table.put({ ...doc, syncedAt: doc.updatedAt })
+  })
+}
+
+// ---------- Lists set by the admin: people, generators, zones, alert limits ----------
+async function replaceAll<T extends { id: string | number }>(table: EntityTable<T, 'id'>, rows: T[]) {
+  await db.transaction('rw', table, async () => {
+    const existing = await table.toArray()
+    const key = (list: T[]) => JSON.stringify([...list].sort((a, b) => String(a.id).localeCompare(String(b.id))))
+    if (key(existing) === key(rows)) return
+    const keepIds = new Set(rows.map((r) => r.id))
+    await table.bulkDelete(existing.filter((e) => !keepIds.has(e.id)).map((e) => e.id) as Parameters<typeof table.bulkDelete>[0])
+    await table.bulkPut(rows)
+  })
+}
+
+interface EmployeeRow {
+  id: string
+  full_name: string
+  phone: string | null
+  role: Role
+  is_active: boolean
+  tracks_attendance: boolean
+  auth_user_id: string | null
+}
+interface ListRow { id: number; name: string; is_active: boolean; sort_order: number }
+interface GeneratorRow extends ListRow { brand: string; model: string | null; capacity_kva: number | null }
+
+export async function pullReference(): Promise<void> {
+  const sb = client()
+  const [people, generators, fuel, zones, settings] = await Promise.all([
+    run(sb.from('employees').select('id, full_name, phone, role, is_active, tracks_attendance, auth_user_id')),
+    run(sb.from('generators').select('id, name, brand, model, capacity_kva, is_active, sort_order')),
+    run(sb.from('fuel_types').select('id, name, is_active, sort_order')),
+    run(sb.from('zones').select('id, name, is_active, sort_order')),
+    run(sb.from('app_settings').select('*').maybeSingle()),
+  ])
+  await replaceAll<Employee>(
+    db.employees,
+    (people as EmployeeRow[]).map((r) => ({
+      id: r.id,
+      fullName: r.full_name,
+      phone: r.phone,
+      role: r.role,
+      isActive: r.is_active,
+      tracksAttendance: r.tracks_attendance,
+      hasLogin: r.auth_user_id !== null,
+    })),
+  )
+  await replaceAll<Generator>(
+    db.generators,
+    (generators as GeneratorRow[]).map((g) => ({
+      id: g.id,
+      name: g.name,
+      brand: g.brand,
+      model: g.model,
+      capacityKva: g.capacity_kva === null ? null : Number(g.capacity_kva),
+      isActive: g.is_active,
+      sortOrder: g.sort_order,
+    })),
+  )
+  const list = (rows: ListRow[]) => rows.map((r) => ({ id: r.id, name: r.name, isActive: r.is_active, sortOrder: r.sort_order }))
+  await replaceAll<FuelType>(db.fuelTypes, list(fuel as ListRow[]))
+  await replaceAll<Zone>(db.zones, list(zones as ListRow[]))
+  if (settings) {
+    const s = settings as Record<string, number | string>
+    const n = (k: string) => Number(s[k])
+    await replaceAll<AlertSettings>(db.alertSettings, [
+      {
+        id: 1,
+        fuelDaysWarn: n('fuel_days_warn'),
+        fuelDaysDanger: n('fuel_days_danger'),
+        consumptionWarnPct: n('consumption_warn_pct'),
+        consumptionDangerPct: n('consumption_danger_pct'),
+        tempWarnC: n('temp_warn_c'),
+        tempDangerC: n('temp_danger_c'),
+        oilWarnBar: n('oil_warn_bar'),
+        oilDangerBar: n('oil_danger_bar'),
+        loadWarnPct: n('load_warn_pct'),
+        loadDangerPct: n('load_danger_pct'),
+        imbalanceWarnPct: n('imbalance_warn_pct'),
+        imbalanceDangerPct: n('imbalance_danger_pct'),
+        oilChangeWarnHours: n('oil_change_warn_hours'),
+        oilChangeDueHours: n('oil_change_due_hours'),
+        phaseVoltage: n('phase_voltage'),
+      },
+    ])
+  }
+}
+
+// ---------- One full round ----------
+let me: Employee | null = null
+let running: Promise<void> | null = null
+let again = false
+let timer: number | undefined
+let failures = 0
+
+async function round(): Promise<void> {
+  if (!me) return
+  const who = me
+  setState({ phase: 'syncing' })
+  let problem: string | null = null
+  try {
+    // 1. Send what changed here, oldest day first.
+    for (const spec of KINDS) {
+      if (!spec.readers.includes(who.role)) continue
+      const unsent = (await spec.table.filter(hasUnsent).toArray()).sort((a, b) => spec.dateOf(a).localeCompare(spec.dateOf(b)))
+      for (const doc of unsent) {
+        try {
+          await pushSheet(spec, doc, who)
+        } catch (e) {
+          if (e instanceof SyncError && e.transient) throw e
+          // Refused by the server for a reason other than the connection: keep it here, report it,
+          // and carry on with the rest.
+          console.error(`sync: ${spec.kind} ${spec.dateOf(doc)} refused`, e)
+          problem = spec.dateOf(doc)
+        }
+      }
+    }
+    // 2. Bring back what changed elsewhere.
+    await pullReference()
+    for (const spec of KINDS) if (spec.readers.includes(who.role)) await pullSheets(spec)
+    failures = 0
+    setState({ phase: problem ? 'error' : 'idle', lastOkAt: new Date().toISOString(), problem })
+  } catch (e) {
+    failures++
+    setState({ phase: 'error', problem })
+    if (!(e instanceof SyncError && e.transient)) console.error('sync failed', e)
+  }
+}
+
+/** Runs a round now (or right after the one in progress) and resolves when it is done. */
+export function syncNow(): Promise<void> {
+  if (isDemo || !me) return Promise.resolve()
+  if (running) {
+    again = true
+    return running
+  }
+  running = round().finally(() => {
+    running = null
+    if (again) {
+      again = false
+      schedule(0)
+    } else {
+      schedule(nextDelay())
+    }
+  })
+  return running
+}
+
+/** Every 30 s while the app is open; after failures, waits longer (up to 2 minutes). */
+function nextDelay() {
+  return failures === 0 ? 30_000 : Math.min(120_000, 5_000 * 2 ** (failures - 1))
+}
+
+function schedule(ms: number) {
+  window.clearTimeout(timer)
+  if (!me) return
+  timer = window.setTimeout(() => {
+    if (document.visibilityState === 'visible' || ms < 30_000) void syncNow()
+    else schedule(30_000)
+  }, ms)
+}
+
+/** Called after every change on this device: sends it a moment later (typing) or at once (send, approve). */
+export function syncSoon(urgent = false) {
+  if (isDemo || !me) return
+  if (running) {
+    again = true
+    return
+  }
+  schedule(urgent ? 0 : 1500)
+}
+
+const wake = () => {
+  if (document.visibilityState === 'visible') void syncNow()
+}
+
+/** Starts keeping this device in step for the signed-in person. */
+export function startSync(employee: Employee) {
+  if (isDemo) return
+  me = employee
+  window.addEventListener('online', wake)
+  document.addEventListener('visibilitychange', wake)
+  void syncNow()
+}
+
+export function stopSync() {
+  me = null
+  window.clearTimeout(timer)
+  window.removeEventListener('online', wake)
+  document.removeEventListener('visibilitychange', wake)
+  setState({ phase: 'idle', problem: null })
+}
+
+/**
+ * Before the first screen after signing in: if someone else used this device before, their sheets
+ * are cleared (they are on the server); then the lists and sheets are loaded once, so the first
+ * screen is already complete. Gives up waiting after a few seconds on a slow connection.
+ */
+export async function prepareDevice(employee: Employee, waitMs = 10_000): Promise<void> {
+  if (isDemo) return
+  const previous = await getMeta<string>('device-user')
+  if (previous !== employee.id) {
+    await db.transaction('rw', [db.siteReports, db.distributionSheets, db.outbox, db.meta], async () => {
+      await db.siteReports.clear()
+      await db.distributionSheets.clear()
+      await db.outbox.clear()
+      for (const spec of KINDS) await deleteMeta(`pull:${spec.kind}`)
+      await setMeta('device-user', employee.id)
+    })
+  }
+  me = employee
+  await Promise.race([syncNow(), new Promise((r) => setTimeout(r, waitMs))])
+}

@@ -1,13 +1,15 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../data/db'
+import { saveListItem } from '../../data/admin'
+import { syncSoon } from '../../data/sync'
 import { addDays, type ISODate } from '../../lib/dates'
 import type { Employee } from '../../types'
 import { bySortOrder } from '../generation/repo'
-import { approveIn, isEditableStatus, returnIn, saveDraftIn, SheetStateError, submitIn } from '../sheets/workflow'
+import { approveIn, isEditableStatus, returnIn, saveDraftIn, submitIn } from '../sheets/workflow'
 import type { DistributionSheet, Zone } from './model'
 
-// Every read and write of the distribution sheet goes through this file, so connecting the
-// server later only means adding the send/receive step here.
+// Every read and write of the distribution sheet goes through this file. Writes land on the
+// device first; data/sync.ts then sends them to the server (real mode only).
 
 export function useZones(): Zone[] | undefined {
   return useLiveQuery(async () => (await db.zones.toArray()).sort(bySortOrder), [])
@@ -45,25 +47,13 @@ export async function lastSheetBefore(date: ISODate): Promise<DistributionSheet 
   return (await db.distributionSheets.where('sheetDate').below(date).last()) ?? null
 }
 
-export const saveSheetDraft = (sheet: DistributionSheet) => saveDraftIn<DistributionSheet>(db.distributionSheets, sheet)
-export const submitSheet = (sheet: DistributionSheet, by: Employee, offline: boolean) => submitIn<DistributionSheet>(db.distributionSheets, sheet, by, offline)
-export const approveSheet = (id: string, by: Employee) => approveIn<DistributionSheet>(db.distributionSheets, id, by)
-export const returnSheet = (id: string, reason: string) => returnIn<DistributionSheet>(db.distributionSheets, id, reason)
+export const saveSheetDraft = (sheet: DistributionSheet) => saveDraftIn<DistributionSheet>(db.distributionSheets, sheet).then(() => syncSoon())
+export const submitSheet = (sheet: DistributionSheet, by: Employee, offline: boolean) =>
+  submitIn<DistributionSheet>(db.distributionSheets, sheet, by, offline).then((sent) => (syncSoon(true), sent))
+export const approveSheet = (id: string, by: Employee) => approveIn<DistributionSheet>(db.distributionSheets, id, by).then(() => syncSoon(true))
+export const returnSheet = (id: string, reason: string) => returnIn<DistributionSheet>(db.distributionSheets, id, reason).then(() => syncSoon(true))
 
 // ---------- Settings: zones ----------
 export async function saveZone(input: { id?: number; name: string; isActive: boolean }): Promise<void> {
-  await db.transaction('rw', db.zones, async () => {
-    const all = await db.zones.toArray()
-    const name = input.name.trim()
-    if (all.some((z) => z.name === name && z.id !== input.id)) throw new SheetStateError('duplicate_name')
-    if (input.id !== undefined) {
-      const existing = all.find((z) => z.id === input.id)
-      if (!existing) throw new SheetStateError('missing')
-      await db.zones.put({ ...existing, name, isActive: input.isActive })
-    } else {
-      const id = Math.max(0, ...all.map((z) => z.id)) + 1
-      const sortOrder = Math.max(0, ...all.map((z) => z.sortOrder)) + 1
-      await db.zones.put({ id, name, isActive: input.isActive, sortOrder })
-    }
-  })
+  await saveListItem<Zone>(db.zones, 'zones', { ...input, name: input.name.trim() }, (z) => ({ name: z.name, is_active: z.isActive }))
 }

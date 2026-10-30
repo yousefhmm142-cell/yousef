@@ -21,6 +21,11 @@ export interface SheetMeta {
   /** Sent while the phone had no internet; the manager sees a mark. */
   recordedOffline: boolean
   updatedAt: string
+  /**
+   * The updatedAt the server has. Any change on this device moves updatedAt on, so a sheet with
+   * syncedAt !== updatedAt still has something to send (data/sync.ts). Unused in demo mode.
+   */
+  syncedAt?: string
 }
 
 export const statusInfo: Record<SheetStatus, { label: string; tone: Tone }> = {

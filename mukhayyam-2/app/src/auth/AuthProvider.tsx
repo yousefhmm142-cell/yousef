@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { isDemo } from '../config'
 import { getSupabase } from '../data/supabase'
+import { prepareDevice, startSync, stopSync } from '../data/sync'
 import type { Employee } from '../types'
 import { demoBackend, supabaseBackend } from './backends'
 
@@ -44,6 +45,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [backend])
 
+  // Real mode: keep this device in step with the server while someone is signed in.
+  const signedIn = state.status === 'signed_in' ? state.employee : null
+  useEffect(() => {
+    if (!signedIn) return
+    startSync(signedIn)
+    return stopSync
+  }, [signedIn])
+
   const signIn = useCallback(
     async (phone: string, pin: string) => {
       const employee = await backend.signIn(phone, pin)
@@ -52,12 +61,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch {
         // Only a convenience.
       }
+      // First screen opens complete: lists and sheets are loaded while the button still spins.
+      await prepareDevice(employee).catch(() => undefined)
       setState({ status: 'signed_in', employee })
     },
     [backend],
   )
 
   const signOut = useCallback(async () => {
+    stopSync()
     await backend.signOut()
     setState({ status: 'signed_out', byUser: true })
   }, [backend])

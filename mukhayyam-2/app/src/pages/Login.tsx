@@ -4,12 +4,14 @@ import { Navigate, useLocation, useNavigate } from 'react-router'
 import { lastPhone, useAuth } from '../auth/AuthProvider'
 import { AuthError, authErrorText, type AuthErrorCode } from '../auth/backends'
 import { isDemo } from '../config'
+import { databaseState, type DatabaseState } from '../data/admin'
 import { DEMO_PIN, demoEmployees } from '../data/demo'
 import { useDocumentTitle } from '../lib/useDocumentTitle'
 import { formatPhone, isValidPhone, normalizePhone } from '../lib/phone'
 import { roleLabel } from '../types'
 import { Button, Logo } from '../ui/primitives'
 import { PinInput } from '../ui/PinInput'
+import { FirstSetup } from './FirstSetup'
 import { Splash } from './Splash'
 
 const PIN_LENGTH = 6
@@ -40,6 +42,17 @@ function Login() {
   const [phoneTouched, setPhoneTouched] = useState(false)
   const phoneRef = useRef<HTMLInputElement>(null)
   const pinRef = useRef<HTMLInputElement>(null)
+  const [db, setDb] = useState<DatabaseState>('unknown')
+
+  // Real mode: a brand-new database opens on first-time setup instead of sign-in.
+  useEffect(() => {
+    if (isDemo) return
+    let alive = true
+    void databaseState().then((s) => alive && setDb(s))
+    return () => {
+      alive = false
+    }
+  }, [])
 
   // Returning people only type the PIN.
   useEffect(() => {
@@ -94,6 +107,22 @@ function Login() {
       </section>
 
       <section className="login-card glass">
+        {db === 'setup' ? (
+          <FirstSetup onDone={() => setDb('ready')} />
+        ) : (
+        <>
+        {db === 'not_installed' && (
+          <div className="banner warn setup-note" role="status">
+            <CircleAlert size={18} />
+            <p>قاعدة البيانات لم تُجهَّز بعد<span>شغّل ملف setup.sql مرة واحدة في Supabase ‏(SQL Editor)، ثم حدّث هذه الصفحة.</span></p>
+          </div>
+        )}
+        {db === 'bad_key' && (
+          <div className="banner danger setup-note" role="alert">
+            <CircleAlert size={18} />
+            <p>بيانات الربط مع Supabase غير صحيحة<span>تأكد من رابط المشروع والمفتاح العام في إعدادات التطبيق.</span></p>
+          </div>
+        )}
         <div className="login-card-head">
           <Logo height={88} className="login-logo-sm" />
           <h2>تسجيل الدخول</h2>
@@ -195,6 +224,8 @@ function Login() {
               ))}
             </div>
           </div>
+        )}
+        </>
         )}
       </section>
     </div>

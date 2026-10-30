@@ -182,6 +182,8 @@ create trigger generator_runs_touch before update on public.generator_runs
 create table public.maintenance_logs (
   id uuid primary key default gen_random_uuid(),
   report_id uuid not null references public.site_reports (id) on delete cascade,
+  -- Order of the entries as typed.
+  line_no smallint not null default 1,
   -- Empty while the operator has not picked the generator yet.
   generator_id smallint references public.generators (id),
   oil_new_liters numeric check (oil_new_liters >= 0),

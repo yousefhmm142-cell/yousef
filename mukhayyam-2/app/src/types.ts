@@ -13,6 +13,8 @@ export interface Employee {
   role: Role
   isActive: boolean
   tracksAttendance: boolean
+  /** Has a phone + PIN login (real mode; demo accounts always do). */
+  hasLogin?: boolean
 }
 
 export const roleLabel: Record<Role, string> = {

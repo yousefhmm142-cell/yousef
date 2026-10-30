@@ -199,6 +199,8 @@ create trigger generator_runs_touch before update on public.generator_runs
 create table public.maintenance_logs (
   id uuid primary key default gen_random_uuid(),
   report_id uuid not null references public.site_reports (id) on delete cascade,
+  -- Order of the entries as typed.
+  line_no smallint not null default 1,
   -- Empty while the operator has not picked the generator yet.
   generator_id smallint references public.generators (id),
   oil_new_liters numeric check (oil_new_liters >= 0),
@@ -476,7 +478,9 @@ begin
     end if;
     if new.status = 'submitted' then
       new.submitted_by := me;
-      new.submitted_at := public.event_time(new.recorded_offline, new.device_time, old.created_at);
+      -- No lower bound from created_at: a sheet filled offline reaches the server (and is created
+      -- there) only when the phone reconnects, after it was really sent.
+      new.submitted_at := public.event_time(new.recorded_offline, new.device_time, null);
       new.returned_reason := null;
     elsif new.status = 'approved' then
       new.approved_by := me;

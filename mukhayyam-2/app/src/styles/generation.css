@@ -265,3 +265,20 @@
 @media (max-width: 360px) {
   .fgrid { grid-template-columns: 1fr; }
 }
+
+/* ---------- Team and logins (settings) ---------- */
+.team-admin li[data-off] { opacity: .6; }
+.team-admin .gen-main small .num { unicode-bidi: isolate; }
+.pin-row { display: flex; gap: 8px; align-items: center; }
+.pin-plain { flex: 1; min-width: 0; letter-spacing: .35em; font-size: 20px; font-weight: 800; text-align: center; }
+.handover { display: grid; gap: 14px; }
+.handover p { margin: 0; }
+.handover dl { margin: 0; display: grid; gap: 8px; }
+.handover dl > div { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-radius: var(--r-in); background: var(--surface-2); }
+.handover dt { color: var(--muted); font-weight: 700; }
+.handover dd { margin: 0; font-weight: 800; font-size: 17px; }
+.handover .pin-big { font-size: 24px; letter-spacing: .3em; color: var(--brand); }
+.handover-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.handover-actions .btn { flex: 1; justify-content: center; }
+.backup-body { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 4px 18px 16px; }
+.backup-body p { margin: 0; flex: 1 1 260px; }
