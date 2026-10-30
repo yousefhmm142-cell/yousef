@@ -9,7 +9,7 @@ import { REPORT_SELECT, reportFromRow, reportToRows, type ReportRow } from '../f
 import type { AlertSettings, FuelType, Generator, SiteReport } from '../features/generation/model'
 import type { ChildRows } from '../features/sheets/remote'
 import { isEditableStatus, type SheetMeta, type SheetStatus } from '../features/sheets/workflow'
-import type { Employee, Role } from '../types'
+import { SITE_ROLES, type Employee, type Role } from '../types'
 import { db, deleteMeta, getMeta, setMeta } from './db'
 import { getSupabase } from './supabase'
 
@@ -34,7 +34,7 @@ interface KindSpec {
   dateCol: 'report_date' | 'sheet_date'
   dateIndex: 'reportDate' | 'sheetDate'
   /** Who fills this sheet on site; everyone else who reads it is a manager or the admin. */
-  filler: Role
+  fillers: Role[]
   readers: Role[]
   table: Table<SheetDoc, string>
   select: string
@@ -49,8 +49,8 @@ const KINDS: KindSpec[] = [
     header: 'site_reports',
     dateCol: 'report_date',
     dateIndex: 'reportDate',
-    filler: 'generation_operator',
-    readers: ['admin', 'manager', 'generation_operator'],
+    fillers: SITE_ROLES,
+    readers: ['admin', 'manager', ...SITE_ROLES],
     table: db.siteReports as unknown as Table<SheetDoc, string>,
     select: REPORT_SELECT,
     dateOf: (d) => (d as SiteReport).reportDate,
@@ -62,8 +62,8 @@ const KINDS: KindSpec[] = [
     header: 'distribution_sheets',
     dateCol: 'sheet_date',
     dateIndex: 'sheetDate',
-    filler: 'distribution_supervisor',
-    readers: ['admin', 'manager', 'distribution_supervisor'],
+    fillers: SITE_ROLES,
+    readers: ['admin', 'manager', ...SITE_ROLES],
     table: db.distributionSheets as unknown as Table<SheetDoc, string>,
     select: SHEET_SELECT,
     dateOf: (d) => (d as DistributionSheet).sheetDate,
@@ -197,7 +197,7 @@ async function pushSheet(spec: KindSpec, doc: SheetDoc, me: Employee): Promise<v
   const remote: RemoteHead = await run(
     sb.from(spec.header).select('id, status').eq(spec.dateCol, date).maybeSingle<{ id: string; status: SheetStatus }>(),
   )
-  const filler = me.role === spec.filler
+  const filler = spec.fillers.includes(me.role)
 
   let current = doc
   if (remote && remote.id !== doc.id) {

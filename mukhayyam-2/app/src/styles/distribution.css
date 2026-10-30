@@ -73,3 +73,9 @@
   .ps-gap { height: 10px; }
   .ps-notes.small { min-height: 0; margin-top: 10px; }
 }
+
+/* ---------- Site history: one switch between the two forms ---------- */
+.site-history { display: grid; gap: 10px; }
+.site-history-switch { max-width: 860px; width: 100%; margin: 0 auto; }
+.site-history-switch .segmented { width: 100%; }
+.site-history-switch .segmented button { flex: 1; }

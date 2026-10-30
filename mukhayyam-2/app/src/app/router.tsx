@@ -11,23 +11,26 @@ import { Account } from '../pages/Account'
 import { Home } from '../pages/Home'
 import { LoginRoute } from '../pages/Login'
 import { ModuleSoon } from '../pages/ModuleSoon'
+import { SiteHistoryPage } from '../features/sheets/SiteHistoryPage'
 import { NotFound, RouteError } from '../pages/states'
-import { isManagerRole, type Role } from '../types'
+import { isManagerRole, isSiteRole, SITE_ROLES, type Role } from '../types'
 import { AppShell } from './AppShell'
 import { RequireAuth, RoleGate } from './guards'
 
 const managers: Role[] = ['admin', 'manager']
 
-/** The operator sees their earlier reports; managers open on the latest report. */
+const site = SITE_ROLES
+
+/** The site sees its earlier reports; managers open on the latest report. */
 function GenerationIndex() {
   const employee = useEmployee()
-  return employee.role === 'generation_operator' ? <HistoryPage /> : <ReportPage />
+  return isSiteRole(employee.role) ? <HistoryPage /> : <ReportPage />
 }
 
-/** The supervisor sees their earlier sheets; managers open on the latest sheet. */
+/** The site sees its earlier sheets; managers open on the latest sheet. */
 function DistributionIndex() {
   const employee = useEmployee()
-  return employee.role === 'distribution_supervisor' ? <DistributionHistoryPage /> : <SheetPage />
+  return isSiteRole(employee.role) ? <DistributionHistoryPage /> : <SheetPage />
 }
 
 /** Managers see the team board; everyone else sees their own attendance. */
@@ -46,16 +49,20 @@ export const router = createBrowserRouter([
         element: <AppShell />,
         children: [
           { index: true, element: <Home /> },
-          { path: 'generation', element: <RoleGate roles={[...managers, 'generation_operator']}><GenerationIndex /></RoleGate> },
-          { path: 'generation/:date', element: <RoleGate roles={[...managers, 'generation_operator']}><ReportPage /></RoleGate> },
-          { path: 'entry/:date', element: <RoleGate roles={['generation_operator']}><EntryPage /></RoleGate> },
-          { path: 'distribution', element: <RoleGate roles={[...managers, 'distribution_supervisor']}><DistributionIndex /></RoleGate> },
-          { path: 'distribution/:date', element: <RoleGate roles={[...managers, 'distribution_supervisor']}><SheetPage /></RoleGate> },
-          { path: 'distribution/entry/:date', element: <RoleGate roles={['distribution_supervisor']}><DistributionEntryPage /></RoleGate> },
+          { path: 'generation', element: <RoleGate roles={[...managers, ...site]}><GenerationIndex /></RoleGate> },
+          { path: 'generation/:date', element: <RoleGate roles={[...managers, ...site]}><ReportPage /></RoleGate> },
+          { path: 'entry/:date', element: <RoleGate roles={site}><EntryPage /></RoleGate> },
+          { path: 'distribution', element: <RoleGate roles={[...managers, ...site]}><DistributionIndex /></RoleGate> },
+          { path: 'distribution/:date', element: <RoleGate roles={[...managers, ...site]}><SheetPage /></RoleGate> },
+          { path: 'sheet', element: <RoleGate roles={site}><DistributionEntryPage /></RoleGate> },
+          { path: 'sheet/:date', element: <RoleGate roles={site}><DistributionEntryPage /></RoleGate> },
+          // Older links.
+          { path: 'distribution/entry/:date', element: <RoleGate roles={site}><DistributionEntryPage /></RoleGate> },
+          { path: 'history', element: <RoleGate roles={site}><SiteHistoryPage /></RoleGate> },
           { path: 'tasks', element: <RoleGate roles={managers}><ModuleSoon module="tasks" /></RoleGate> },
           {
             path: 'attendance',
-            element: <RoleGate roles={[...managers, 'technician', 'staff', 'distribution_supervisor']}><AttendanceRoute /></RoleGate>,
+            element: <RoleGate roles={[...managers, 'technician', 'staff']}><AttendanceRoute /></RoleGate>,
           },
           { path: 'settings', element: <RoleGate roles={['admin']}><SettingsPage /></RoleGate> },
           { path: 'account', element: <Account /> },

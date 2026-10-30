@@ -14,7 +14,6 @@ import { useOnline } from '../lib/useOnline'
 import { formatPhone } from '../lib/phone'
 import { roleLabel } from '../types'
 import { Avatar, Pill } from '../ui/primitives'
-import { DistributionEntryPage } from '../features/distribution/EntryPage'
 import { useLatestSentSheet } from '../features/distribution/repo'
 import { EntryPage } from '../features/generation/EntryPage'
 import { useLatestSentReport } from '../features/generation/repo'
@@ -30,9 +29,8 @@ export function Home() {
     case 'manager':
       return <ManagerHome />
     case 'generation_operator':
-      return <EntryPage />
     case 'distribution_supervisor':
-      return <DistributionEntryPage />
+      return <EntryPage />
     case 'technician':
       return <ModuleSoon module="my-tasks" />
     case 'staff':

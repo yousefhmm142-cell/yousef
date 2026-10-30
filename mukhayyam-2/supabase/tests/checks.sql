@@ -107,7 +107,14 @@ insert into public.zone_runs (entry_id, run_no, start_time, end_time, load_l1, l
 select test.ok((select count(*) from public.zone_runs) = 1, 'supervisor records a run that crosses midnight');
 select test.fails($$insert into public.zone_runs (entry_id, run_no) select id, 7 from public.zone_day_entries$$, '%check constraint%', 'a seventh run is refused');
 reset role; select test.login('مشغّل الموقع'); set role authenticated;
-select test.ok((select count(*) from public.distribution_sheets) = 0, 'the generation operator cannot see the distribution sheet');
+select test.ok((select count(*) from public.distribution_sheets) = 1, 'the site employee also sees the distribution sheet');
+select test.ok(test.affected($$update public.zone_runs set load_l1 = 121$$) = 1, 'any site employee can fix a draft sheet');
+reset role; select test.login('مشرف التوزيع'); set role authenticated;
+select test.ok((select count(*) from public.site_reports) = 1, 'the second site role also sees the generation report');
+update public.distribution_sheets set status = 'submitted' where sheet_date = '2026-10-29';
+reset role; select test.login('مشغّل الموقع'); set role authenticated;
+select test.fails($$update public.distribution_sheets set notes = 'x'$$, '%can no longer be edited%', 'a sent sheet is closed for the whole site');
+select test.ok(test.affected($$update public.zone_runs set load_l1 = 1$$) = 0, 'lines of a sent sheet are closed too');
 
 -- ---------- Tasks ----------
 reset role; select test.login('رامي أبو عجوة'); set role authenticated;

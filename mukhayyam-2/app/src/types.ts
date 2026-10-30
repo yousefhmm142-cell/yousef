@@ -20,10 +20,17 @@ export interface Employee {
 export const roleLabel: Record<Role, string> = {
   admin: 'مسؤول النظام',
   manager: 'المدير',
-  generation_operator: 'مشغّل موقع التوليد',
-  distribution_supervisor: 'مشرف التوزيع',
+  generation_operator: 'موظف موقع التوليد',
+  distribution_supervisor: 'موظف موقع التوليد (التوزيع)',
   technician: 'فني',
   staff: 'موظف',
 }
 
 export const isManagerRole = (role: Role) => role === 'admin' || role === 'manager'
+
+/**
+ * The people at the generation site. They fill both daily forms (generation report and
+ * distribution sheet) and see nothing else. The two role names are kept for older records.
+ */
+export const SITE_ROLES: Role[] = ['generation_operator', 'distribution_supervisor']
+export const isSiteRole = (role: Role) => SITE_ROLES.includes(role)

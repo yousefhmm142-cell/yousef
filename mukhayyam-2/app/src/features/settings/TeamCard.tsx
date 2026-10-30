@@ -13,7 +13,8 @@ import { Avatar, Button, Pill } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
 import { SheetStateError } from '../sheets/workflow'
 
-const roles: Role[] = ['manager', 'generation_operator', 'distribution_supervisor', 'technician', 'staff', 'admin']
+// One site role in the list; older people with the second site role keep it.
+const baseRoles: Role[] = ['manager', 'generation_operator', 'technician', 'staff', 'admin']
 
 const errorText: Record<string, string> = {
   bad_name: 'اكتب الاسم الكامل.',
@@ -145,7 +146,9 @@ function EmployeeDialog({ person, onClose }: { person: Employee | null; onClose(
         <label className="field">
           <span className="label">الدور</span>
           <select className="select" value={role} disabled={self} onChange={(e) => setRole(e.target.value as Role)}>
-            {roles.map((r) => <option key={r} value={r}>{roleLabel[r]}</option>)}
+            {(person?.role === 'distribution_supervisor' ? [...baseRoles, 'distribution_supervisor' as Role] : baseRoles).map((r) => (
+              <option key={r} value={r}>{roleLabel[r]}</option>
+            ))}
           </select>
           {self && <span className="field-hint">لا يمكنك تغيير دورك بنفسك.</span>}
         </label>

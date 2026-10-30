@@ -35,7 +35,7 @@ import { SheetView, useSheetContext } from './SheetView'
 
 type Update = (change: (draft: DistributionSheet) => void) => void
 
-/** The distribution supervisor's sheet for one day: today by default, or /distribution/entry/:date. */
+/** The site's distribution sheet for one day: today at /sheet, or /sheet/:date. */
 export function DistributionEntryPage() {
   const params = useParams()
   const today = todayISO()
@@ -46,7 +46,7 @@ export function DistributionEntryPage() {
   useDocumentTitle(date === today ? 'كشف اليوم' : `كشف ${dayName(date, today)}`)
 
   if (date > today) {
-    return <div className="empty"><h3>لا يمكن تعبئة يوم لم يأتِ بعد</h3><Link to="/" className="btn">كشف اليوم</Link></div>
+    return <div className="empty"><h3>لا يمكن تعبئة يوم لم يأتِ بعد</h3><Link to="/sheet" className="btn">كشف اليوم</Link></div>
   }
   if (stored === undefined || !zones || previous === undefined) return <div className="loading-block" aria-busy="true" />
   if (stored && !isEditableStatus(stored.status)) return <SentSheet sheet={stored} />
@@ -128,7 +128,7 @@ function SheetForm({ date, initial, zones, previous }: {
           <p>أعاده المدير للتصحيح<span>{sheet.returnedReason}</span></p>
         </div>
       )}
-      {date === todayISO() && <UnsentBanner sheets={unsent ?? []} hrefFor={(d) => `/distribution/entry/${d}`} title="كشوف لم تُرسل بعد" />}
+      {date === todayISO() && <UnsentBanner sheets={unsent ?? []} hrefFor={(d) => `/sheet/${d}`} title="كشوف لم تُرسل بعد" />}
 
       <Stepper
         scroll
@@ -281,7 +281,7 @@ function SentSheet({ sheet }: { sheet: DistributionSheet }) {
   return (
     <div className="entry wide">
       <SentHeader sheet={sheet} date={sheet.sheetDate} noun="الكشف" />
-      {sheet.sheetDate === todayISO() && <UnsentBanner sheets={unsent ?? []} hrefFor={(d) => `/distribution/entry/${d}`} title="كشوف لم تُرسل بعد" />}
+      {sheet.sheetDate === todayISO() && <UnsentBanner sheets={unsent ?? []} hrefFor={(d) => `/sheet/${d}`} title="كشوف لم تُرسل بعد" />}
       {ctx.ready ? <SheetView sheet={sheet} ctx={ctx} /> : <div className="loading-block" aria-busy="true" />}
     </div>
   )

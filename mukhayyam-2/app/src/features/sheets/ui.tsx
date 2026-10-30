@@ -340,8 +340,10 @@ export interface HistoryItem {
 }
 
 /** Earlier days for the person who fills the form, newest first, with a shortcut to today's. */
-export function SheetHistory({ title, items, todayMissing, todayLabel, emptyText }: {
+export function SheetHistory({ title, items, todayMissing, todayLabel, todayHref = '/', emptyText }: {
   title: string
+  /** Where today's form is filled. */
+  todayHref?: string
   items: HistoryItem[] | undefined
   todayMissing: boolean
   todayLabel: string
@@ -357,7 +359,7 @@ export function SheetHistory({ title, items, todayMissing, todayLabel, emptyText
         </div>
       </header>
       {todayMissing && (
-        <Link to="/" className="cta glass">
+        <Link to={todayHref} className="cta glass">
           <span className="cta-ico"><ClipboardList size={22} /></span>
           <span><b>{todayLabel} لم يبدأ بعد</b><small>ابدأ التعبئة الآن</small></span>
           <ChevronLeft size={20} />

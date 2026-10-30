@@ -1,4 +1,4 @@
-import { ClipboardList, History, House, LayoutGrid, ListChecks, ScanLine, Settings, Users, Zap, type LucideIcon } from 'lucide-react'
+import { History, House, LayoutGrid, ListChecks, ScanLine, Settings, Users, Zap, type LucideIcon } from 'lucide-react'
 import type { Role } from '../types'
 
 export interface NavItem {
@@ -24,15 +24,12 @@ export function navFor(role: Role): NavItem[] {
     case 'manager':
       return managerItems
     case 'generation_operator':
-      return [
-        { to: '/', label: 'تقرير اليوم', icon: ClipboardList },
-        { to: '/generation', label: 'السابقة', icon: History },
-      ]
     case 'distribution_supervisor':
+      // The site: today's two forms and what was sent before, nothing else.
       return [
-        { to: '/', label: 'كشف اليوم', icon: ClipboardList },
-        { to: '/distribution', label: 'السابقة', icon: History },
-        { to: '/attendance', label: 'الحضور', icon: ScanLine },
+        { to: '/', label: 'التوليد', icon: Zap },
+        { to: '/sheet', label: 'التوزيع', icon: LayoutGrid },
+        { to: '/history', label: 'السابقة', icon: History },
       ]
     case 'technician':
       return [
