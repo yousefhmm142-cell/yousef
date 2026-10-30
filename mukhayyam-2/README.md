@@ -9,7 +9,7 @@
 | الخطوة | الحالة |
 |---|---|
 | 0. مخطط البيانات والقواعد: [docs/01-data-model.md](docs/01-data-model.md) | معتمد |
-| 1. الهوية البصرية: [design/01-visual-directions.html](design/01-visual-directions.html) | للمراجعة: اختيار اتجاه من ثلاثة |
+| 1. الهوية البصرية: [design/02-identity.html](design/02-identity.html) (الاتجاهات الأولى: [design/01-visual-directions.html](design/01-visual-directions.html)) | مزيج معتمد، بقي اختيار الخط |
 | 2. الأساس: قاعدة البيانات، الدخول، الأدوار، التطبيق | لم تبدأ |
 | 3. تقرير موقع التوليد | لم تبدأ |
 | 4. التوزيع والأحمال | لم تبدأ |
