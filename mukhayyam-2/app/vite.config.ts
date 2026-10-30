@@ -30,6 +30,8 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,woff2,png,webp,svg}'],
         navigateFallback: '/index.html',
+        // The Android app file and the app-link proof are real files, never the app page.
+        navigateFallbackDenylist: [/\.apk$/, /^\/\.well-known\//],
       },
     }),
   ],

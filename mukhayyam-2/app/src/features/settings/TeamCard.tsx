@@ -268,7 +268,7 @@ function Handover({ name, phone, pin, code, onClose }: { name: string; phone: st
   const toast = useToast()
   const link = isDemo ? '' : window.location.origin
   const lines = [`مرحباً ${name}،`]
-  if (pin) lines.push('هذا حسابك في نظام مخيم 2:', `رقم الجوال: ${phone}`, `الرمز السري: ${pin}`, ...(link ? [`الرابط: ${link}`] : []))
+  if (pin) lines.push('هذا حسابك في نظام مخيم 2:', `رقم الجوال: ${phone}`, `الرمز السري: ${pin}`, ...(link ? [`الرابط: ${link}`, `تطبيق الأندرويد: ${link}/mukhayyam2.apk`] : []))
   if (code) lines.push(`رمز الحضور: ${code}`, 'أول مرة تصوّر ورقة الحضور في المكتب: اختر اسمك واكتب هذا الرمز. بعدها كل تصويرة تسجّل لحالها.')
   const message = lines.join('\n')
   const wa = phone ? `https://wa.me/970${phone.slice(1)}?text=${encodeURIComponent(message)}` : ''

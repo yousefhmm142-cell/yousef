@@ -1,4 +1,4 @@
-import { ChevronLeft, LogOut, Moon, Settings, Sun } from 'lucide-react'
+import { ChevronLeft, Download, LogOut, Moon, Settings, Smartphone, Sun } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { useAuth, useEmployee } from '../auth/AuthProvider'
@@ -9,6 +9,7 @@ import { useDocumentTitle } from '../lib/useDocumentTitle'
 import { roleLabel } from '../types'
 import { Avatar, Button, Pill } from '../ui/primitives'
 import { SyncStatus } from '../ui/status'
+import { APK_PATH, isInstalled } from '../ui/InstallApp'
 import { usePendingCount } from '../data/sync'
 
 export function Account() {
@@ -67,6 +68,14 @@ export function Account() {
             <span className="row-label">الإعدادات</span>
             <ChevronLeft size={18} className="row-chevron" />
           </Link>
+        )}
+        {!isDemo && (
+          <a className="row" href={APK_PATH} download>
+            <Smartphone size={18} />
+            <span className="row-label">تطبيق الأندرويد</span>
+            <span className="row-value">{isInstalled() ? 'مثبّت' : 'تحميل'}</span>
+            <Download size={16} className="row-chevron" />
+          </a>
         )}
         <div className="row">
           <span className="row-label">الإصدار</span>

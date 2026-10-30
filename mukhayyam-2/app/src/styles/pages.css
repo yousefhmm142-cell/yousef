@@ -173,3 +173,12 @@ button.row:hover, a.row:hover { background: var(--surface-2); }
   width: 54px; height: 54px; margin: 0 auto 10px; border-radius: 50%; display: grid; place-items: center; color: #fff;
   background: linear-gradient(150deg, var(--brand-hi), var(--brand-lo)); box-shadow: 0 14px 30px -14px var(--brand);
 }
+
+/* ---------- Android app download ---------- */
+.install-app {
+  margin-top: 16px; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: var(--r-lg);
+  text-decoration: none; color: var(--ink); border: 1px solid var(--line);
+}
+.install-app > span:nth-child(2) { flex: 1; display: grid; }
+.install-app small { color: var(--muted); font-size: 12px; }
+.install-ico { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--brand-soft); color: var(--brand); flex: none; }

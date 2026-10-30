@@ -12,6 +12,7 @@ import { roleLabel } from '../types'
 import { Button, Logo } from '../ui/primitives'
 import { PinInput } from '../ui/PinInput'
 import { FirstSetup } from './FirstSetup'
+import { InstallAppLink } from '../ui/InstallApp'
 import { Splash } from './Splash'
 
 const PIN_LENGTH = 6
@@ -227,6 +228,7 @@ function Login() {
         )}
         </>
         )}
+        <InstallAppLink />
       </section>
     </div>
   )

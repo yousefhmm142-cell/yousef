@@ -1,0 +1,44 @@
+// The Android app of Mukhayyam 2: a full-screen window on the web app (Trusted Web Activity).
+// Everything the app shows comes from the site, so new versions of the site reach the app by themselves;
+// this shell only needs rebuilding if the site address changes.
+plugins { id 'com.android.application' }
+
+def siteUrl = 'https://mukhayyam2.pages.dev'
+def siteHost = 'mukhayyam2.pages.dev'
+
+android {
+  namespace 'ps.abuzaed.mukhayyam2'
+  compileSdk 36
+  defaultConfig {
+    applicationId 'ps.abuzaed.mukhayyam2'
+    minSdk 24
+    targetSdk 35
+    versionCode 1
+    versionName '1.0'
+    manifestPlaceholders = [siteUrl: siteUrl + '/', siteHost: siteHost]
+    resValue 'string', 'asset_statements', """[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"web","site":"${siteUrl}"}}]"""
+  }
+  signingConfigs {
+    release {
+      // The signing key lives outside the repository (see android/README.md).
+      storeFile file(System.getenv('M2_KEYSTORE') ?: 'missing.keystore')
+      storePassword System.getenv('M2_KEYSTORE_PASSWORD')
+      keyAlias 'mukhayyam2'
+      keyPassword System.getenv('M2_KEYSTORE_PASSWORD')
+    }
+  }
+  buildTypes {
+    release {
+      minifyEnabled false
+      signingConfig signingConfigs.release
+    }
+  }
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
+  }
+}
+
+dependencies {
+  implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.7.4'
+}
