@@ -12,6 +12,8 @@ import { Home } from '../pages/Home'
 import { LoginRoute } from '../pages/Login'
 import { ModuleSoon } from '../pages/ModuleSoon'
 import { SiteHistoryPage } from '../features/sheets/SiteHistoryPage'
+import { TaskLinkPage } from '../features/tasks/LinkPage'
+import { TasksPage } from '../features/tasks/TasksPage'
 import { NotFound, RouteError } from '../pages/states'
 import { isManagerRole, isSiteRole, SITE_ROLES, type Role } from '../types'
 import { AppShell } from './AppShell'
@@ -41,6 +43,8 @@ function AttendanceRoute() {
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginRoute />, errorElement: <RouteError /> },
+  // The technician's page behind the link in the order: no sign-in.
+  { path: '/t/:token', element: <TaskLinkPage />, errorElement: <RouteError /> },
   {
     element: <RequireAuth />,
     errorElement: <RouteError />,
@@ -59,7 +63,7 @@ export const router = createBrowserRouter([
           // Older links.
           { path: 'distribution/entry/:date', element: <RoleGate roles={site}><DistributionEntryPage /></RoleGate> },
           { path: 'history', element: <RoleGate roles={site}><SiteHistoryPage /></RoleGate> },
-          { path: 'tasks', element: <RoleGate roles={managers}><ModuleSoon module="tasks" /></RoleGate> },
+          { path: 'tasks', element: <RoleGate roles={managers}><TasksPage /></RoleGate> },
           {
             path: 'attendance',
             element: <RoleGate roles={[...managers, 'technician', 'staff']}><AttendanceRoute /></RoleGate>,

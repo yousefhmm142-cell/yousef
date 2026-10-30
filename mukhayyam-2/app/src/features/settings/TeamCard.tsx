@@ -6,7 +6,7 @@ import { isDemo } from '../../config'
 import { byRoleThenName, saveEmployee } from '../../data/admin'
 import { db } from '../../data/db'
 import { formatPhone, isValidPhone, normalizePhone, toLatinDigits } from '../../lib/phone'
-import { roleLabel, type Employee, type Role } from '../../types'
+import { isManagerRole, isSiteRole, roleLabel, type Employee, type Role } from '../../types'
 import { Dialog } from '../../ui/Dialog'
 import { Segmented, TextField } from '../../ui/form'
 import { Avatar, Button, Pill } from '../../ui/primitives'
@@ -27,6 +27,9 @@ const errorText: Record<string, string> = {
   offline: 'إضافة الموظفين تحتاج إنترنت. اتصل وحاول مرة أخرى.',
   missing: 'لم يعد هذا الموظف موجوداً. حدّث الصفحة.',
 }
+
+/** Only the manager, the admin and the site sign in; technicians get orders by message, staff use the office QR. */
+const usesApp = (role: Role) => isManagerRole(role) || isSiteRole(role)
 
 const randomPin = () => String(crypto.getRandomValues(new Uint32Array(1))[0]! % 1_000_000).padStart(6, '0')
 
@@ -58,7 +61,15 @@ export function TeamCard() {
                   {e.phone && <> · <span className="num ltr">{formatPhone(e.phone)}</span></>}
                 </small>
               </span>
-              {!e.isActive ? <Pill>موقوف</Pill> : e.hasLogin ? <Pill tone="ok">يدخل بجواله</Pill> : <Pill tone="warn">بدون دخول</Pill>}
+              {!e.isActive ? (
+                <Pill>موقوف</Pill>
+              ) : usesApp(e.role) ? (
+                e.hasLogin ? <Pill tone="ok">يدخل بجواله</Pill> : <Pill tone="warn">بدون دخول</Pill>
+              ) : e.phone ? (
+                <Pill dot={false}>{e.role === 'technician' ? 'تصله المهام برسالة' : 'بدون تطبيق'}</Pill>
+              ) : (
+                <Pill tone="warn">بدون رقم جوال</Pill>
+              )}
               <button type="button" className="icon-btn" aria-label={`تعديل ${e.fullName}`} onClick={() => setEditing(e)}>
                 <Pencil size={16} />
               </button>
@@ -98,8 +109,8 @@ function EmployeeDialog({ person, onClose }: { person: Employee | null; onClose(
   const self = person?.id === me.id
 
   async function save() {
-    const newPin = changePin && phone ? pin : null
-    if (changePin && phone && !/^\d{6}$/.test(pin)) return setError(errorText.bad_pin!)
+    const newPin = usesApp(role) && changePin && phone ? pin : null
+    if (newPin !== null && !/^\d{6}$/.test(pin)) return setError(errorText.bad_pin!)
     if (phone && !isValidPhone(phone)) return setError(errorText.bad_phone!)
     setBusy(true)
     setError(null)
@@ -162,9 +173,9 @@ function EmployeeDialog({ person, onClose }: { person: Employee | null; onClose(
             value={formatPhone(phone)}
             onChange={(e) => setPhone(normalizePhone(e.target.value))}
           />
-          <span className="field-hint">يدخل به الموظف، وتصله عليه رسائل المهام.</span>
+          <span className="field-hint">{usesApp(role) ? 'يدخل به للتطبيق.' : role === 'technician' ? 'تصله عليه أوامر المهام على واتساب أو SMS.' : 'للتواصل.'}</span>
         </label>
-        {phone && (
+        {phone && usesApp(role) && (
           <div className="field">
             <span className="label">الرمز السري</span>
             {changePin ? (

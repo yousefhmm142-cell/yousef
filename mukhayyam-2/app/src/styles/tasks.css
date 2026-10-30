@@ -1,0 +1,83 @@
+/* =========================================================
+   Field tasks: the manager's board and the technician's link page
+   ========================================================= */
+.tasks { max-width: 1180px; margin: 0 auto; display: grid; gap: 16px; }
+.tasks .ph { margin-bottom: 0; }
+.ph-action { margin-inline-start: auto; }
+.kpi[data-tone='danger'] .kpi-value { color: var(--danger); }
+.kpi[data-tone='danger'] .kpi-ico { background: var(--danger-soft); color: var(--danger); }
+
+.task-filters { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.chip-count {
+  min-width: 20px; height: 20px; padding: 0 6px; margin-inline-start: 6px; border-radius: 999px;
+  display: inline-grid; place-items: center; font-size: 11.5px; font-weight: 800; background: var(--brand); color: #fff;
+}
+
+.task-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.task-row {
+  width: 100%; display: flex; align-items: center; gap: 14px; padding: 14px 16px; text-align: start;
+  font: inherit; color: inherit; cursor: pointer; border: 1px solid transparent;
+  transition: transform .15s var(--ease), box-shadow .15s var(--ease), border-color .15s;
+}
+.task-row:hover { transform: translateY(-1px); box-shadow: var(--shadow-lg); }
+.task-row[data-late] { border-color: color-mix(in srgb, var(--danger) 45%, transparent); }
+.task-no {
+  width: 42px; height: 42px; flex: none; border-radius: 50%; display: grid; place-items: center;
+  background: var(--chrome); color: var(--brand-lo); font-weight: 800; font-size: 14px;
+}
+.task-main { flex: 1; min-width: 0; display: grid; gap: 3px; }
+.task-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.task-title b { font-size: 15.5px; }
+.task-details { color: var(--ink-2); font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.task-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); }
+.task-side { display: grid; justify-items: end; gap: 6px; flex: none; }
+.task-clock { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.task-row[data-late] .task-clock { color: var(--danger); font-weight: 700; }
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.task-detail { display: grid; gap: 16px; }
+.task-detail-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.task-facts { margin: 0; display: grid; gap: 8px; }
+.task-facts > div { display: grid; grid-template-columns: 110px 1fr; gap: 10px; padding: 10px 12px; border-radius: var(--r-in); background: var(--surface-2); }
+.task-facts dt { color: var(--muted); font-weight: 700; font-size: 13px; }
+.task-facts dd { margin: 0; }
+.task-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.task-steps li { position: relative; display: flex; justify-content: space-between; padding: 8px 0 8px 0; padding-inline-start: 22px; border-bottom: 1px dashed var(--line-2); font-size: 13.5px; }
+.task-steps li::before {
+  content: ''; position: absolute; inset-inline-start: 4px; top: 50%; width: 9px; height: 9px; margin-top: -4.5px;
+  border-radius: 50%; background: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft);
+}
+.task-actions, .task-cancel { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.task-cancel .input { flex: 1 1 200px; min-width: 0; }
+
+@media (max-width: 900px) {
+  .task-row { align-items: flex-start; padding: 12px 14px; gap: 10px; }
+  .task-no { width: 36px; height: 36px; font-size: 13px; }
+  .task-details { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .ph-action { width: 100%; justify-content: center; }
+}
+@media (max-width: 560px) {
+  .two-col { grid-template-columns: 1fr; }
+  .task-row { flex-wrap: wrap; }
+  .task-side { width: 100%; grid-auto-flow: column; justify-content: space-between; align-items: center; padding-inline-start: 46px; }
+  .task-facts > div { grid-template-columns: 1fr; gap: 2px; }
+}
+
+/* ---------- The technician's page behind the link ---------- */
+.tlink { max-width: 520px; margin: 0 auto; padding: 18px 16px 40px; display: grid; gap: 14px; min-height: 100dvh; align-content: start; }
+.tlink-head { display: flex; align-items: center; gap: 10px; justify-content: center; font-weight: 800; color: var(--muted); }
+.tlink-task { padding: 20px; display: grid; gap: 10px; }
+.tlink-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.tlink-task h1 { margin: 0; font-size: 26px; font-weight: 800; line-height: 1.3; }
+.tlink-details { margin: 0; font-size: 17px; line-height: 1.7; white-space: pre-wrap; }
+.tlink-facts { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 8px; font-size: 15px; }
+.tlink-facts li { display: flex; align-items: center; gap: 8px; }
+.tlink-facts svg { color: var(--brand); flex: none; }
+.tlink-facts a { color: var(--brand); font-weight: 800; text-decoration: none; }
+.tlink-actions { display: grid; gap: 12px; }
+.tlink-finish { min-height: 64px; font-size: 19px; }
+.tlink-started { margin: 0; text-align: center; color: var(--muted); }
+.tlink-done { padding: 28px 20px; display: grid; justify-items: center; gap: 6px; text-align: center; color: var(--ok); }
+.tlink-done h2 { margin: 6px 0 0; color: var(--ink); font-size: 24px; }
+.tlink-done p { margin: 0; color: var(--ink-2); }
+.tlink-done.cancelled { color: var(--muted); }

@@ -1,6 +1,7 @@
 import Dexie, { type EntityTable } from 'dexie'
 import type { DistributionSheet, Zone } from '../features/distribution/model'
 import type { AlertSettings, FuelType, Generator, SiteReport } from '../features/generation/model'
+import type { Task, TaskType } from '../features/tasks/model'
 import type { Employee } from '../types'
 
 /** Small key-value rows: the signed-in session, cached profile, last sync time. */
@@ -42,6 +43,8 @@ class AppDatabase extends Dexie {
   siteReports!: EntityTable<SiteReport, 'id'>
   zones!: EntityTable<Zone, 'id'>
   distributionSheets!: EntityTable<DistributionSheet, 'id'>
+  taskTypes!: EntityTable<TaskType, 'id'>
+  tasks!: EntityTable<Task, 'id'>
 
   constructor() {
     super('mukhayyam2')
@@ -60,6 +63,10 @@ class AppDatabase extends Dexie {
     this.version(3).stores({
       zones: 'id',
       distributionSheets: 'id, &sheetDate, status',
+    })
+    this.version(4).stores({
+      taskTypes: 'id',
+      tasks: 'id, number, status, assigneeId, &linkToken',
     })
   }
 }

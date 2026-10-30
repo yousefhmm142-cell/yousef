@@ -8,8 +8,9 @@ import type { DistributionSheet, Zone } from '../features/distribution/model'
 import { REPORT_SELECT, reportFromRow, reportToRows, type ReportRow } from '../features/generation/remote'
 import type { AlertSettings, FuelType, Generator, SiteReport } from '../features/generation/model'
 import type { ChildRows } from '../features/sheets/remote'
+import type { TaskType } from '../features/tasks/model'
 import { isEditableStatus, type SheetMeta, type SheetStatus } from '../features/sheets/workflow'
-import { SITE_ROLES, type Employee, type Role } from '../types'
+import { isManagerRole, SITE_ROLES, type Employee, type Role } from '../types'
 import { db, deleteMeta, getMeta, setMeta } from './db'
 import { getSupabase } from './supabase'
 
@@ -306,12 +307,13 @@ interface GeneratorRow extends ListRow { brand: string; model: string | null; ca
 
 export async function pullReference(): Promise<void> {
   const sb = client()
-  const [people, generators, fuel, zones, settings] = await Promise.all([
+  const [people, generators, fuel, zones, settings, taskTypes] = await Promise.all([
     run(sb.from('employees').select('id, full_name, phone, role, is_active, tracks_attendance, auth_user_id')),
     run(sb.from('generators').select('id, name, brand, model, capacity_kva, is_active, sort_order')),
     run(sb.from('fuel_types').select('id, name, is_active, sort_order')),
     run(sb.from('zones').select('id, name, is_active, sort_order')),
     run(sb.from('app_settings').select('*').maybeSingle()),
+    run(sb.from('task_types').select('id, name, is_active, sort_order')),
   ])
   await replaceAll<Employee>(
     db.employees,
@@ -340,6 +342,7 @@ export async function pullReference(): Promise<void> {
   const list = (rows: ListRow[]) => rows.map((r) => ({ id: r.id, name: r.name, isActive: r.is_active, sortOrder: r.sort_order }))
   await replaceAll<FuelType>(db.fuelTypes, list(fuel as ListRow[]))
   await replaceAll<Zone>(db.zones, list(zones as ListRow[]))
+  await replaceAll<TaskType>(db.taskTypes, list(taskTypes as ListRow[]))
   if (settings) {
     const s = settings as Record<string, number | string>
     const n = (k: string) => Number(s[k])
@@ -398,6 +401,7 @@ async function round(): Promise<void> {
     // 2. Bring back what changed elsewhere.
     await pullReference()
     for (const spec of KINDS) if (spec.readers.includes(who.role)) await pullSheets(spec)
+    if (isManagerRole(who.role)) await (await import('../features/tasks/repo')).refreshTasks()
     failures = 0
     setState({ phase: problem ? 'error' : 'idle', lastOkAt: new Date().toISOString(), problem })
   } catch (e) {

@@ -20,6 +20,8 @@ import { useLatestSentReport } from '../features/generation/repo'
 import { statusInfo, type SheetStatus } from '../features/sheets/workflow'
 import { dayName, type ISODate } from '../lib/dates'
 import { ModuleSoon } from './ModuleSoon'
+import { isOpen, isOverdue } from '../features/tasks/model'
+import { usePendingCount } from '../data/sync'
 
 /** Each person opens the app straight on their own job. */
 export function Home() {
@@ -79,7 +81,7 @@ function ManagerHome() {
               <b>{m.title}</b>
               <span className="mod-summary">{m.summary}</span>
               <span className="mod-foot">
-                {key === 'generation' ? <GenerationStatus /> : key === 'distribution' ? <DistributionStatus /> : <Pill tone="brand" dot={false}>الخطوة {m.step}</Pill>}
+                {key === 'generation' ? <GenerationStatus /> : key === 'distribution' ? <DistributionStatus /> : key === 'tasks' ? <TasksStatus /> : <Pill tone="brand" dot={false}>الخطوة {m.step}</Pill>}
                 <ArrowLeft size={18} aria-hidden="true" />
               </span>
             </Link>
@@ -111,6 +113,17 @@ function GenerationStatus() {
 function DistributionStatus() {
   const s = useLatestSentSheet()
   return <LatestStatus noun="كشف" latest={s && { date: s.sheetDate, status: s.status }} />
+}
+
+/** Open tasks and how many are late, refreshed with every sync round. */
+function TasksStatus() {
+  const now = useNow(60_000)
+  const tasks = useLiveQuery(() => db.tasks.toArray(), [])
+  if (!tasks) return <Pill dot={false}>…</Pill>
+  const open = tasks.filter(isOpen)
+  const late = open.filter((t) => isOverdue(t, now)).length
+  if (late) return <Pill tone="danger">{late} متأخرة من {open.length} مفتوحة</Pill>
+  return open.length ? <Pill tone="brand">{open.length} مفتوحة</Pill> : <Pill tone="ok">لا مهام مفتوحة</Pill>
 }
 
 function TeamCard() {
@@ -147,7 +160,7 @@ function TeamCard() {
 
 function SystemCard() {
   const online = useOnline()
-  const pending = useLiveQuery(() => db.outbox.count(), [], 0)
+  const pending = usePendingCount()
   const offsetMin = Math.round(clockOffsetMs() / 60_000)
 
   return (

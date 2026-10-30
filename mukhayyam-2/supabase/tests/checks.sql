@@ -154,6 +154,39 @@ update public.tasks set status = 'cancelled', cancel_reason = 'المشترك غ
 select test.ok((select count(*) from public.tasks where status = 'cancelled' and cancelled_at is not null) = 1, 'the manager cancels with a reason');
 select test.ok((select count(*) from public.attendance_points) = 1, 'the manager can print the attendance sheet');
 
+-- Task links: the technician has no login; the link in the message is enough for one task only.
+with t as (
+  insert into public.tasks (task_type_id, assignee_id, expected_minutes, details)
+  values (1, (select id from public.employees where full_name = 'مجد عاشور'), 30, 'شد كابل لبيت أبو محمد')
+  returning id)
+insert into test.ids select 'task2', id from t;
+select test.ok((select length(link_token) = 16 from public.tasks where id = (select v from test.ids where k = 'task2')), 'every task gets its own private link');
+insert into public.outgoing_messages (task_id, channel, to_phone, body)
+  values ((select v from test.ids where k = 'task2'), 'whatsapp', '0590000006', 'مهمة');
+reset role;
+create table test.link as select link_token from public.tasks where id = (select v from test.ids where k = 'task2');
+grant select on test.link to anon, authenticated;
+select test.login('رامي أبو عجوة'); set role authenticated;
+-- The manager opening the link on their own laptop also works.
+select test.ok(public.task_link_act((select link_token from test.link), 'start') ->> 'status' = 'in_progress', 'the link works even for a signed-in manager');
+
+reset role; select set_config('request.jwt.claims', '', false); set role anon;
+select test.ok(public.task_link_view('wrong-token-0000') is null, 'a wrong link shows nothing');
+select test.ok(public.task_link_view((select link_token from test.link)) ->> 'details' = 'شد كابل لبيت أبو محمد', 'the link shows the order without signing in');
+select test.ok((public.task_link_act((select link_token from test.link), 'done', 'تم الشد') ->> 'status') = 'done', 'one tap on the link finishes the task');
+select test.ok((public.task_link_act((select link_token from test.link), 'done') ->> 'status') = 'done', 'pressing twice changes nothing');
+select test.fails($$select count(*) from public.tasks$$, '%permission denied%', 'the link opens no other data');
+reset role;
+select test.ok((select completed_at is not null and completion_notes = 'تم الشد' from public.tasks where id = (select v from test.ids where k = 'task2')),
+               'the manager sees when it was finished and the note');
+select test.ok((select string_agg(event, ',' order by id) from public.task_events where task_id = (select v from test.ids where k = 'task2'))
+               = 'created,sent_whatsapp,started,completed', 'the link steps are in the task history');
+select test.ok((select actor_id = assignee_id from public.task_events e join public.tasks t on t.id = e.task_id
+                where e.task_id = (select v from test.ids where k = 'task2') and event = 'completed'), 'the history names the technician');
+select test.fails($$select public.task_link_act((select link_token from public.tasks where status = 'cancelled' limit 1), 'done')$$,
+                  'cancelled', 'a cancelled task cannot be finished from its link');
+select test.login('رامي أبو عجوة'); set role authenticated;
+
 -- ---------- People and logins ----------
 select test.fails($$select public.admin_save_employee(null, 'زيد', 'technician', '0591111111', '123456', true, true)$$,
                   'not_allowed', 'only the admin adds people');
