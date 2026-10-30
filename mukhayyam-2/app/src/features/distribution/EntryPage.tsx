@@ -100,7 +100,7 @@ function SheetForm({ date, initial, zones, previous }: {
     try {
       await flush()
       await submitSheet(latest.current, employee, !online)
-      toast(online ? 'أُرسل الكشف للمدير' : 'حُفظ الإرسال، ويصل للمدير عند عودة الاتصال')
+      toast(online ? 'أُغلق الكشف ووصل للمدير' : 'أُغلق الكشف، ويصل للمدير عند عودة الاتصال')
     } catch {
       toast('تعذّر الإرسال. حاول مرة أخرى.', 'danger')
       setSending(false)
@@ -125,7 +125,7 @@ function SheetForm({ date, initial, zones, previous }: {
       {sheet.status === 'returned' && (
         <div className="banner danger" role="alert">
           <CircleAlert size={18} />
-          <p>أعاده المدير للتصحيح<span>{sheet.returnedReason}</span></p>
+          <p>أعاد المدير فتح اليوم<span>{sheet.returnedReason}</span></p>
         </div>
       )}
       {date === todayISO() && <UnsentBanner sheets={unsent ?? []} hrefFor={(d) => `/sheet/${d}`} title="كشوف لم تُرسل بعد" />}
@@ -184,7 +184,7 @@ function SheetForm({ date, initial, zones, previous }: {
           </Button>
         ) : (
           <Button variant="primary" size="lg" block busy={sending} icon={<Send size={18} />} onClick={() => void send()}>
-            {armed ? (missing.length ? `تأكيد الإرسال مع ${missing.length} حقول فارغة` : 'اضغط مرة ثانية للتأكيد') : 'إرسال للمدير'}
+            {armed ? (missing.length ? `تأكيد الإرسال مع ${missing.length} حقول فارغة` : 'اضغط مرة ثانية للتأكيد') : 'إغلاق اليوم وإرسال'}
           </Button>
         )}
       </footer>

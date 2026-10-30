@@ -14,7 +14,7 @@ import { useToast } from '../../ui/Toast'
 import { SaveBadge, SentHeader, Stepper, UnsentBanner } from '../sheets/ui'
 import { useConfirmTap, useDraft } from '../sheets/useDraft'
 import { FuelStep, MaintenanceStep, MissingList, NotesField, RunsStep } from './EntrySteps'
-import { isEditableStatus, missingItems, newReport, reconcileReport, reportTotals, type FuelType, type Generator, type SiteReport } from './model'
+import { applyAutoFigures, isEditableStatus, missingItems, newReport, reconcileReport, reportTotals, type FuelType, type Generator, type SiteReport } from './model'
 import { lastReportBefore, saveDraft, submitReport, useFuelTypes, useGenerators, useReport, useUnsentBefore } from './repo'
 import { ReportView, useReportContext } from './ReportView'
 
@@ -66,14 +66,23 @@ function EntryForm({ date, initial, fuelTypes, generators, previous }: {
   const toast = useToast()
   const [params, setParams] = useSearchParams()
   const stepIndex = Math.max(0, STEPS.findIndex((s) => s.key === params.get('step')))
-  const { doc: report, update, flush, saveState, latest } = useDraft<SiteReport>(
+  const { doc: report, update: rawUpdate, flush, saveState, latest } = useDraft<SiteReport>(
     () =>
-      initial
-        ? initial.status === 'draft' ? reconcileReport(initial, fuelTypes, generators) : initial
-        : newReport(date, fuelTypes, generators, employee.id, previous, serverNow().toISOString()),
+      applyAutoFigures(
+        initial
+          ? initial.status === 'draft' ? reconcileReport(initial, fuelTypes, generators) : structuredClone(initial)
+          : newReport(date, fuelTypes, generators, employee.id, previous, serverNow().toISOString()),
+        previous,
+      ),
     saveDraft,
     !!initial,
   )
+  // Every change also refreshes the worked-out figures (totals, remaining, running hours).
+  const update: typeof rawUpdate = (change) =>
+    rawUpdate((r) => {
+      change(r)
+      applyAutoFigures(r, previous)
+    })
   const [armed, arm, disarm] = useConfirmTap()
   const [sending, setSending] = useState(false)
   const unsent = useUnsentBefore(date)
@@ -98,7 +107,7 @@ function EntryForm({ date, initial, fuelTypes, generators, previous }: {
     try {
       await flush()
       await submitReport(latest.current, employee, !online)
-      toast(online ? 'أُرسل التقرير للمدير' : 'حُفظ الإرسال، ويصل للمدير عند عودة الاتصال')
+      toast(online ? 'أُغلق التقرير ووصل للمدير' : 'أُغلق التقرير، ويصل للمدير عند عودة الاتصال')
     } catch {
       toast('تعذّر الإرسال. حاول مرة أخرى.', 'danger')
       setSending(false)
@@ -123,7 +132,7 @@ function EntryForm({ date, initial, fuelTypes, generators, previous }: {
       {report.status === 'returned' && (
         <div className="banner danger" role="alert">
           <CircleAlert size={18} />
-          <p>أعاده المدير للتصحيح<span>{report.returnedReason}</span></p>
+          <p>أعاد المدير فتح اليوم<span>{report.returnedReason}</span></p>
         </div>
       )}
       {date === todayISO() && <UnsentBanner sheets={unsent ?? []} hrefFor={(d) => `/entry/${d}`} title="تقارير لم تُرسل بعد" />}
@@ -166,7 +175,7 @@ function EntryForm({ date, initial, fuelTypes, generators, previous }: {
           </Button>
         ) : (
           <Button variant="primary" size="lg" block busy={sending} icon={<Send size={18} />} onClick={() => void send()}>
-            {armed ? (missing.length ? `تأكيد الإرسال مع ${missing.length} حقول فارغة` : 'اضغط مرة ثانية للتأكيد') : 'إرسال للمدير'}
+            {armed ? (missing.length ? `تأكيد الإرسال مع ${missing.length} حقول فارغة` : 'اضغط مرة ثانية للتأكيد') : 'إغلاق اليوم وإرسال'}
           </Button>
         )}
       </footer>
@@ -178,7 +187,7 @@ export function OfflineSendNote() {
   return (
     <div className="banner">
       <WifiOff size={18} />
-      <p>لا يوجد اتصال الآن<span>اضغط إرسال كالمعتاد؛ يُحفظ على جوالك ويصل للمدير وحده عند عودة الاتصال.</span></p>
+      <p>لا يوجد اتصال الآن<span>اضغط «إغلاق اليوم» كالمعتاد؛ يُحفظ على جوالك ويصل للمدير وحده عند عودة الاتصال.</span></p>
     </div>
   )
 }

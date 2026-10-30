@@ -152,3 +152,17 @@ export function advanceOnEnter(e: KeyboardEvent<HTMLElement>) {
   if (next) next.focus()
   else target.blur()
 }
+
+/** A figure the form works out by itself (greyed out, not typed). */
+export function CalcField({ label, value, unit, hint }: { label: string; value: number | null; unit?: string; hint?: ReactNode }) {
+  return (
+    <div className="nf calc">
+      <span className="nf-label">{label}</span>
+      <div className="nf-box" aria-live="polite">
+        <span className="nf-input num">{value === null ? '—' : formatAmount(value)}</span>
+        {unit && <span className="nf-unit">{unit}</span>}
+      </div>
+      <span className="field-hint">{hint ?? 'يُحسب تلقائياً'}</span>
+    </div>
+  )
+}

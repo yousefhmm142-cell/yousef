@@ -1,4 +1,4 @@
-import { History, House, LayoutGrid, ListChecks, ScanLine, Settings, Users, Zap, type LucideIcon } from 'lucide-react'
+import { Boxes, FileBarChart, History, House, LayoutGrid, ListChecks, ScanLine, Settings, Users, Zap, type LucideIcon } from 'lucide-react'
 import type { Role } from '../types'
 
 export interface NavItem {
@@ -14,6 +14,8 @@ const managerItems: NavItem[] = [
   { to: '/distribution', label: 'التوزيع', icon: LayoutGrid },
   { to: '/tasks', label: 'المهام', icon: ListChecks },
   { to: '/attendance', label: 'الحضور', icon: Users },
+  { to: '/stock', label: 'المخزن', icon: Boxes },
+  { to: '/reports', label: 'التقارير', icon: FileBarChart },
 ]
 
 /** Field roles open straight on their one job; managers get the full set. */

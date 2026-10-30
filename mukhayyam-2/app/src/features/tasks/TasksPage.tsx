@@ -1,5 +1,9 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { AlarmClock, CheckCheck, Copy, Hammer, ListChecks, MessageCircle, MessageSquareText, Plus, TimerReset, XCircle } from 'lucide-react'
+import { AlarmClock, CheckCheck, Copy, Hammer, ListChecks, MessageCircle, MessageSquareText, Plus, TimerReset, Trash2, XCircle } from 'lucide-react'
+import { formatAmount, parseDecimal } from '../../lib/numbers'
+import { addMove, deleteMove } from '../stock/repo'
+import { taskMatrix } from '../reports/build'
+import { ReportTable } from '../reports/ReportsPage'
 import { useEffect, useMemo, useState } from 'react'
 import { useEmployee } from '../../auth/AuthProvider'
 import { db } from '../../data/db'
@@ -188,6 +192,8 @@ export function TasksPage() {
           })}
         </ul>
       )}
+
+      <DailySheet tasks={all.filter((t) => t.status !== 'cancelled' && toISODate(new Date(t.createdAt)) === today)} />
 
       {creating && (
         <NewTaskDialog
@@ -414,6 +420,8 @@ function TaskDialog({ task, tech, typeName, zoneName, now, onClose }: {
           {task.cancelReason && <div><dt>سبب الإلغاء</dt><dd>{task.cancelReason}</dd></div>}
         </dl>
 
+        <TaskMaterials task={task} />
+
         <ol className="task-steps">
           {steps.filter(([, at]) => at).map(([label, at]) => (
             <li key={label}><span>{label}</span><b className="num">{formatTime(new Date(at!))}</b></li>
@@ -452,5 +460,78 @@ function TaskDialog({ task, tech, typeName, zoneName, now, onClose }: {
         )}
       </div>
     </Dialog>
+  )
+}
+
+/** Materials taken from the warehouse for this task: from the technician's link, or added here. */
+function TaskMaterials({ task }: { task: Task }) {
+  const me = useEmployee()
+  const toast = useToast()
+  const moves = useLiveQuery(() => db.stockMoves.where('taskId').equals(task.id).toArray(), [task.id])
+  const items = useLiveQuery(async () => (await db.stockItems.toArray()).filter((i) => i.isActive), [])
+  const [itemId, setItemId] = useState<number | null>(null)
+  const [qty, setQty] = useState('')
+  const [busy, setBusy] = useState(false)
+  const name = (id: number) => items?.find((i) => i.id === id)
+  const out = (moves ?? []).filter((m) => m.kind === 'out')
+
+  async function add() {
+    const q = parseDecimal(qty)
+    const id = itemId ?? items?.[0]?.id
+    if (!id || !q) return
+    setBusy(true)
+    try {
+      await addMove({ itemId: id, kind: 'out', qty: q, note: `مهمة #${task.number}`, taskId: task.id }, me.id)
+      setQty('')
+    } catch (e) {
+      toast(errText(e), 'danger')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  if (!items?.length && !out.length) return null
+  return (
+    <div className="task-materials">
+      <b>المواد المستخدمة</b>
+      {out.length === 0 ? (
+        <p className="muted">لم تُسجَّل مواد.</p>
+      ) : (
+        <ul>
+          {out.map((m) => (
+            <li key={m.id}>
+              <span>{name(m.itemId)?.name ?? 'صنف'} <b className="num">{formatAmount(m.qty)}</b> {name(m.itemId)?.unit}</span>
+              <button type="button" className="icon-btn sm" aria-label="حذف" onClick={() => void deleteMove(m.id).catch((e) => toast(errText(e), 'danger'))}><Trash2 size={14} /></button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {!!items?.length && (
+        <div className="task-mat-add">
+          <select className="select" aria-label="الصنف" value={itemId ?? items[0]!.id} onChange={(e) => setItemId(Number(e.target.value))}>
+            {items.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
+          </select>
+          <input className="input num" inputMode="decimal" aria-label="الكمية" placeholder="الكمية" value={qty} onChange={(e) => setQty(e.target.value)} />
+          <Button variant="secondary" icon={<Plus size={16} />} busy={busy} disabled={!parseDecimal(qty)} onClick={() => void add()}>إضافة</Button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** The paper "daily electricians' tasks" sheet: each technician against each task type, with totals. */
+function DailySheet({ tasks }: { tasks: Task[] }) {
+  const employees = useLiveQuery(() => db.employees.toArray(), [])
+  const types = useTaskTypes()
+  if (!employees || !types || tasks.length === 0) return null
+  const section = taskMatrix(tasks, employees, types, 'today', 'كشف مهام اليوم')
+  return (
+    <section className="card">
+      <div className="card-h">
+        <h2>كشف مهام اليوم</h2>
+        <span className="meta">كل فني حسب نوع المهمة · <span className="num">{tasks.length}</span> مهمة</span>
+      </div>
+      <div className="table-wrap"><ReportTable section={section} /></div>
+    </section>
   )
 }

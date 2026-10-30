@@ -1,10 +1,13 @@
 import { ArrowLeft, CircleAlert, Moon, Plus, StickyNote, Trash2, X } from 'lucide-react'
 import { useState } from 'react'
 import { formatAmount } from '../../lib/numbers'
-import { Chip, NumberField, Segmented, TextField, TimeField } from '../../ui/form'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { db } from '../../data/db'
+import { CalcField, Chip, NumberField, Segmented, TextField, TimeField } from '../../ui/form'
 import {
   crossesMidnight,
   emptyRun,
+  openingFromPrevious,
   MAINTENANCE_TYPES,
   MAX_RUNS,
   newId,
@@ -72,18 +75,22 @@ export function FuelStep({ report, fuelTypes, previous, update }: {
               </span>
             </h3>
             <div className="fgrid">
-              <NumberField
-                label="الرصيد الموجود"
-                unit="لتر"
-                max={200000}
-                value={line.openingBalance}
-                onChange={(v) => set((l) => (l.openingBalance = v))}
-                hint={before !== null && before !== undefined ? `متبقي التقرير السابق: ${formatAmount(before)}` : undefined}
-              />
+              {openingFromPrevious(line, previous) ? (
+                <CalcField label="الرصيد الموجود" unit="لتر" value={line.openingBalance} hint={`متبقي التقرير السابق${before !== null && before !== undefined ? '' : ''}`} />
+              ) : (
+                <NumberField
+                  label="الرصيد الموجود"
+                  unit="لتر"
+                  max={200000}
+                  value={line.openingBalance}
+                  onChange={(v) => set((l) => (l.openingBalance = v))}
+                  hint="أول تقرير: اكتبه مرة واحدة، وبعدها يُؤخذ من متبقي اليوم السابق"
+                />
+              )}
               <NumberField label="الكمية الواردة" unit="لتر" max={200000} value={line.receivedQty} onChange={(v) => set((l) => (l.receivedQty = v))} />
-              <NumberField label="المجموع" unit="لتر" max={200000} value={line.totalQty} onChange={(v) => set((l) => (l.totalQty = v))} />
-              <NumberField label="الرصيد المتبقي" unit="لتر" max={200000} value={line.closingBalance} onChange={(v) => set((l) => (l.closingBalance = v))} />
+              <CalcField label="المجموع" unit="لتر" value={line.totalQty} hint="الرصيد الموجود + الوارد" />
               <NumberField label="الاستهلاك" unit="لتر" max={50000} value={line.consumption} onChange={(v) => set((l) => (l.consumption = v))} />
+              <CalcField label="الرصيد المتبقي" unit="لتر" value={line.closingBalance} hint="المجموع − الاستهلاك" />
               <TextField label="رقم الإرسالية" numeric value={line.shipmentNo} onChange={(v) => set((l) => (l.shipmentNo = v))} />
             </div>
             <NoteToggle value={line.notes} onChange={(v) => set((l) => (l.notes = v))} />
@@ -96,9 +103,37 @@ export function FuelStep({ report, fuelTypes, previous, update }: {
 
 // ---------- Step 2: running and loads ----------
 export function RunsStep({ report, generators, update }: { report: SiteReport; generators: Generator[]; update: Update }) {
+  // How often each generator ran in the reports on this phone: the usual ones come first.
+  const usage = useLiveQuery(async () => {
+    const counts = new Map<number, number>()
+    for (const r of await db.siteReports.toArray()) for (const g of r.generators) if (g.didRun) counts.set(g.generatorId, (counts.get(g.generatorId) ?? 0) + 1)
+    return counts
+  }, [])
+  const order = [...report.generators.keys()].sort((a, b) => {
+    const ga = report.generators[a]!.generatorId
+    const gb = report.generators[b]!.generatorId
+    return (usage?.get(gb) ?? 0) - (usage?.get(ga) ?? 0) || ga - gb
+  })
+  const name = (id: number) => generators.find((g) => g.id === id)?.name ?? 'مولد'
   return (
     <>
-      {report.generators.map((log, i) => {
+      <section className="fcard gen-pick">
+        <h3 className="fcard-title">أي مولد اشتغل اليوم؟</h3>
+        <div className="chips">
+          {order.map((i) => {
+            const log = report.generators[i]!
+            return (
+              <Chip key={log.id} pressed={log.didRun} onClick={() => update((r) => (r.generators[i]!.didRun = !r.generators[i]!.didRun))}>
+                {name(log.generatorId)}
+              </Chip>
+            )
+          })}
+        </div>
+        {!report.generators.some((g) => g.didRun) && <p className="field-hint">اضغط المولد اللي اشتغل لتظهر خاناته.</p>}
+      </section>
+      {order.map((i) => report.generators[i]!).map((log) => {
+        const i = report.generators.indexOf(log)
+        if (!log.didRun) return null
         const gen = generators.find((g) => g.id === log.generatorId)
         const set = (change: (l: typeof log) => void) => update((r) => change(r.generators[i]!))
         return (
@@ -111,7 +146,7 @@ export function RunsStep({ report, generators, update }: { report: SiteReport; g
                   {gen?.capacityKva ? <span className="num"> · {formatAmount(gen.capacityKva)} kVA</span> : null}
                 </small>
               </div>
-              <Chip pressed={!log.didRun} onClick={() => set((l) => (l.didRun = !l.didRun))}>
+              <Chip pressed={false} onClick={() => set((l) => (l.didRun = false))}>
                 <Moon size={15} /> لم يعمل اليوم
               </Chip>
             </header>
@@ -155,7 +190,7 @@ export function RunsStep({ report, generators, update }: { report: SiteReport; g
                 </div>
 
                 <div className="fgrid">
-                  <NumberField label="ساعات التشغيل" unit="ساعة" max={24} value={log.runHours} onChange={(v) => set((l) => (l.runHours = v))} />
+                  <CalcField label="ساعات التشغيل" unit="ساعة" value={log.runHours} hint="من أوقات التشغيلات" />
                 </div>
 
                 <div className="group">

@@ -67,7 +67,7 @@ interface ListItem {
 /** Adds or edits one entry of a numbered list (generators, zones). New entries go to the end. */
 export async function saveListItem<T extends ListItem>(
   table: EntityTable<T, 'id'>,
-  remoteTable: 'generators' | 'zones',
+  remoteTable: 'generators' | 'zones' | 'fuel_types' | 'stock_items',
   input: Omit<T, 'id' | 'sortOrder'> & { id?: number },
   toRow: (item: Omit<T, 'id' | 'sortOrder'>) => Record<string, unknown>,
 ): Promise<void> {
@@ -247,3 +247,30 @@ export async function downloadBackup(): Promise<void> {
 }
 
 export const lastBackupAt = () => getMeta<string>(LAST_BACKUP)
+
+// ---------- Nightly copies kept on the server (real mode) ----------
+export interface ServerBackup {
+  id: number
+  takenAt: string
+  sizeBytes: number
+}
+
+export async function listServerBackups(): Promise<ServerBackup[]> {
+  const sb = getSupabase()
+  if (!sb || isDemo || !navigator.onLine) return []
+  const { data, error } = await sb.rpc('backup_list')
+  if (error || !data) return []
+  return (data as Array<{ id: number; taken_at: string; size_bytes: number }>).map((b) => ({ id: b.id, takenAt: b.taken_at, sizeBytes: b.size_bytes }))
+}
+
+export async function downloadServerBackup(b: ServerBackup): Promise<void> {
+  const sb = online()
+  const { data, error, status } = await sb.from('backups').select('data').eq('id', b.id).single()
+  if (error) failFrom(error, status)
+  const file = new Blob([JSON.stringify((data as { data: unknown }).data)], { type: 'application/json' })
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(file)
+  a.download = `mukhayyam2-backup-auto-${b.takenAt.slice(0, 10)}.json`
+  a.click()
+  setTimeout(() => URL.revokeObjectURL(a.href), 10_000)
+}

@@ -77,11 +77,11 @@ export function SentHeader({ sheet, date, noun }: { sheet: SheetMeta; date: ISOD
     <section className={`sent glass ${approved ? 'ok' : 'wait'}`}>
       <span className="sent-ring" aria-hidden="true">{approved ? <CircleCheck size={30} /> : <Send size={26} />}</span>
       <div>
-        <h1>{approved ? `اعتمد المدير ${noun}` : `أُرسل ${noun} للمدير`}</h1>
+        <h1>{approved ? `اعتمد المدير ${noun}` : `أُغلق ${noun} ووصل للمدير`}</h1>
         <p>
           {weekday} · <span className="num">{longDate}</span>
           {' · '}
-          {approved ? stamp(sheet.approvedAt) : `أُرسل ${stamp(sheet.submittedAt)}`}
+          {approved ? stamp(sheet.approvedAt) : `أُغلق ${stamp(sheet.submittedAt)}`}
         </p>
       </div>
       <Pill tone={statusInfo[sheet.status].tone}>{statusInfo[sheet.status].label}</Pill>
@@ -177,6 +177,7 @@ export function StatusBar({ sheet, source, canAct, onApprove, onReturn, returnPl
   const [reason, setReason] = useState('')
   const info = statusInfo[sheet.status]
   const waiting = canAct && sheet.status === 'submitted'
+  const canReopen = canAct && (sheet.status === 'submitted' || sheet.status === 'approved')
 
   async function approve() {
     if (!armed) return arm()
@@ -199,9 +200,9 @@ export function StatusBar({ sheet, source, canAct, onApprove, onReturn, returnPl
       await onReturn(reason)
       setReturnOpen(false)
       setReason('')
-      toast('أُعيد للتصحيح')
+      toast('أُعيد فتح اليوم')
     } catch {
-      toast('تعذّرت الإعادة. حاول مرة أخرى.', 'danger')
+      toast('تعذّرت إعادة الفتح. حاول مرة أخرى.', 'danger')
     } finally {
       setBusy(false)
     }
@@ -213,12 +214,12 @@ export function StatusBar({ sheet, source, canAct, onApprove, onReturn, returnPl
       <p>
         وصل من {source} <span className="muted">· {stamp(sheet.submittedAt)}</span>
         {sheet.recordedOffline && <span className="muted"> · <WifiOff size={13} className="inline-ico" /> أُرسل بدون اتصال</span>}
-        {sheet.status === 'returned' && <span className="muted"> · السبب: {sheet.returnedReason}</span>}
+        {sheet.status === 'returned' && <span className="muted"> · أُعيد فتحه: {sheet.returnedReason}</span>}
       </p>
       <div className="statusbar-actions">
-        {waiting && (
+        {canReopen && (
           <Button variant="ghost" icon={<Undo2 size={17} />} onClick={() => setReturnOpen(true)}>
-            إعادة للتصحيح
+            إعادة فتح اليوم
           </Button>
         )}
         <Button icon={<Printer size={17} />} onClick={() => window.print()}>
@@ -234,18 +235,18 @@ export function StatusBar({ sheet, source, canAct, onApprove, onReturn, returnPl
       <Dialog
         open={returnOpen}
         onClose={() => setReturnOpen(false)}
-        title="إعادة للتصحيح"
+        title="إعادة فتح اليوم"
         footer={
           <>
             <Button variant="ghost" onClick={() => setReturnOpen(false)}>إلغاء</Button>
             <Button variant="primary" busy={busy} disabled={!reason.trim()} icon={<Undo2 size={17} />} onClick={() => void sendBack()}>
-              إعادة
+              إعادة الفتح
             </Button>
           </>
         }
       >
         <label className="field">
-          <span className="label">ما الذي يحتاج تصحيحاً؟ يظهر هذا أعلى الصفحة عند من أرسلها.</span>
+          <span className="label">لماذا يُعاد فتحه؟ يظهر هذا أعلى الصفحة عند موظف الموقع ليصحّح ثم يغلقه من جديد.</span>
           <textarea className="textarea" rows={3} value={reason} autoFocus onChange={(e) => setReason(e.target.value)} placeholder={returnPlaceholder} />
         </label>
       </Dialog>
@@ -302,7 +303,7 @@ export function Signatures({ sheet, names, sender }: { sheet: SheetMeta; names: 
         <span className={`sign-ico ${sheet.approvedAt ? 'ok' : 'wait'}`}>{sheet.approvedAt ? <CircleCheck size={18} /> : <Clock size={18} />}</span>
         <div>
           <b>{sheet.approvedAt ? `اعتمده ${names.get(sheet.approvedBy ?? '') ?? 'المدير'}` : 'اعتماد المدير'}</b>
-          <span>{sheet.approvedAt ? stamp(sheet.approvedAt) : sheet.status === 'returned' ? 'أُعيد للتصحيح' : 'بانتظار الاعتماد'}</span>
+          <span>{sheet.approvedAt ? stamp(sheet.approvedAt) : sheet.status === 'returned' ? 'أُعيد فتحه' : 'بانتظار الاعتماد'}</span>
         </div>
       </div>
     </div>

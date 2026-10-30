@@ -1,5 +1,5 @@
 import { average, formatAmount } from '../../lib/numbers'
-import { loadKva, reportTotals, toBar, type AlertSettings, type Generator, type SiteReport } from './model'
+import { expectedConsumption, loadKva, reportTotals, toBar, type AlertSettings, type Generator, type SiteReport } from './model'
 
 // Alerts only read the figures the site staff typed; they never change them.
 
@@ -13,6 +13,7 @@ export type AlertKind =
   | 'load'
   | 'imbalance'
   | 'oil_change'
+  | 'expected_consumption'
 
 export interface Alert {
   id: string
@@ -83,6 +84,16 @@ export function computeAlerts(report: SiteReport, ctx: AlertContext): Alert[] {
     add('fuel_days', 'all', level(outlook.days, s.fuelDaysWarn, s.fuelDaysDanger, false),
       days < 1 ? 'الوقود لا يكفي يوماً كاملاً' : 'رصيد الوقود منخفض',
       `${formatAmount(outlook.remaining)} لتر تكفي نحو ${days} يوم بالمعدل الحالي`)
+  }
+
+  // Typed consumption against hours × liters per hour of each generator.
+  const expected = expectedConsumption(report, generators)
+  const typed = reportTotals(report).consumption
+  if (expected && typed > 0 && report.fuel.every((f) => f.consumption !== null)) {
+    const gap = ((typed - expected) / expected) * 100
+    add('expected_consumption', 'all', level(Math.abs(gap), s.expectedWarnPct, s.expectedDangerPct),
+      gap > 0 ? 'الاستهلاك أعلى من المتوقع' : 'الاستهلاك أقل من المتوقع',
+      `المسجّل ${formatAmount(typed)} لتر والمتوقع حسب ساعات التشغيل ${formatAmount(expected)} لتر (فرق ${round(Math.abs(gap))}%)`)
   }
 
   const use = consumptionStats(report, history)

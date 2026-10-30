@@ -88,7 +88,10 @@ update public.site_reports set submitted_at = '2020-01-01' where report_date = '
 select test.ok((select submitted_at > '2026-01-01' from public.site_reports where report_date = '2026-10-29'), 'manager cannot rewrite the send time');
 update public.site_reports set status = 'approved' where report_date = '2026-10-29';
 select test.ok((select approved_at is not null and approved_by = public.current_employee_id() from public.site_reports where report_date = '2026-10-29'), 'approval stamps server time and manager');
-select test.fails($$update public.site_reports set status = 'draft' where report_date = '2026-10-29'$$, '%only approve or return%', 'an approved report stays approved');
+select test.fails($$update public.site_reports set status = 'draft' where report_date = '2026-10-29'$$, '%approve a closed day or reopen%', 'an approved day cannot go back to draft');
+select test.fails($$update public.site_reports set status = 'returned' where report_date = '2026-10-29'$$, '%needs a reason%', 'reopening a day needs a reason');
+update public.site_reports set status = 'returned', returned_reason = 'الاستهلاك غير منطقي' where report_date = '2026-10-29';
+select test.ok((select status = 'returned' and approved_at is null from public.site_reports where report_date = '2026-10-29'), 'the manager reopens even an approved day');
 select test.ok((select count(*) from public.audit_log where table_name = 'site_reports') >= 2, 'changes are kept in the history');
 
 reset role; select test.login('موظف إداري'); set role authenticated;
@@ -173,7 +176,8 @@ select test.ok(public.task_link_act((select link_token from test.link), 'start')
 reset role; select set_config('request.jwt.claims', '', false); set role anon;
 select test.ok(public.task_link_view('wrong-token-0000') is null, 'a wrong link shows nothing');
 select test.ok(public.task_link_view((select link_token from test.link)) ->> 'details' = 'شد كابل لبيت أبو محمد', 'the link shows the order without signing in');
-select test.ok((public.task_link_act((select link_token from test.link), 'done', 'تم الشد') ->> 'status') = 'done', 'one tap on the link finishes the task');
+select test.ok(jsonb_array_length(public.task_link_view((select link_token from test.link)) -> 'items') = 7, 'the link lists the warehouse items to pick from');
+select test.ok((public.task_link_act((select link_token from test.link), 'done', 'تم الشد', '[{"item_id": 5, "qty": 25}, {"item_id": 7, "qty": 1}, {"item_id": 7, "qty": 0}]') ->> 'status') = 'done', 'one tap on the link finishes the task');
 select test.ok((public.task_link_act((select link_token from test.link), 'done') ->> 'status') = 'done', 'pressing twice changes nothing');
 select test.fails($$select count(*) from public.tasks$$, '%permission denied%', 'the link opens no other data');
 reset role;
@@ -183,6 +187,8 @@ select test.ok((select string_agg(event, ',' order by id) from public.task_event
                = 'created,sent_whatsapp,started,completed', 'the link steps are in the task history');
 select test.ok((select actor_id = assignee_id from public.task_events e join public.tasks t on t.id = e.task_id
                 where e.task_id = (select v from test.ids where k = 'task2') and event = 'completed'), 'the history names the technician');
+select test.ok((select count(*) = 2 and bool_and(kind = 'out' and created_by = (select assignee_id from public.tasks where id = (select v from test.ids where k = 'task2')))
+                from public.stock_moves where task_id = (select v from test.ids where k = 'task2')), 'materials from the link come off the warehouse, in the technician''s name');
 select test.fails($$select public.task_link_act((select link_token from public.tasks where status = 'cancelled' limit 1), 'done')$$,
                   'cancelled', 'a cancelled task cannot be finished from its link');
 select test.login('رامي أبو عجوة'); set role authenticated;
@@ -223,6 +229,20 @@ select test.login('رامي أبو عجوة'); set role authenticated;
 select test.ok(test.affected($$update public.attendance_devices set revoked_at = now()$$) = 1, 'the manager can switch a phone off');
 reset role; select set_config('request.jwt.claims', '', false); set role anon;
 select test.fails($$select public.attendance_punch((select code from test.point), (select token from test.dev))$$, 'unknown_device', 'a switched-off phone cannot record');
+reset role; select test.login('رامي أبو عجوة'); set role authenticated;
+
+-- ---------- Warehouse and nightly copies ----------
+reset role; select test.login('رامي أبو عجوة'); set role authenticated;
+insert into public.stock_moves (item_id, kind, qty, ref) values (5, 'in', 500, 'فاتورة 77');
+select test.ok((select sum(case kind when 'in' then qty else -qty end) from public.stock_moves where item_id = 5) = 475, 'balance = in − out');
+select test.ok((select created_by = public.current_employee_id() from public.stock_moves where ref = 'فاتورة 77'), 'every move carries who entered it');
+select test.fails($$insert into public.stock_moves (item_id, kind, qty) values (5, 'out', 0)$$, '%check constraint%', 'a move needs a quantity');
+select test.ok((select count(*) from public.backup_list()) >= 1, 'the manager sees the nightly copies');
+reset role; select test.login('مشغّل الموقع'); set role authenticated;
+select test.ok((select count(*) from public.stock_moves) = 0, 'site staff do not see the warehouse');
+select test.ok((select count(*) from public.backups) = 0 and (select count(*) from public.backup_list()) = 0, 'site staff do not see the copies');
+reset role; select set_config('request.jwt.claims', '', false); set role anon;
+select test.fails($$select public.take_backup()$$, '%permission denied%', 'nobody can trigger a copy from outside');
 reset role; select test.login('رامي أبو عجوة'); set role authenticated;
 
 -- ---------- People and logins ----------

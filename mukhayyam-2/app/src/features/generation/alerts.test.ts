@@ -3,8 +3,8 @@ import { computeAlerts, consumptionStats, fuelOutlook, hoursSinceOilChange } fro
 import { defaultAlertSettings, loadKva, missingItems, newReport, reconcileReport, toBar, type Generator, type SiteReport } from './model'
 
 const generators: Generator[] = [
-  { id: 1, name: 'المولد 1', brand: 'Perkins', model: null, capacityKva: 500, isActive: true, sortOrder: 1 },
-  { id: 2, name: 'المولد 2', brand: 'Cummins', model: null, capacityKva: 400, isActive: true, sortOrder: 2 },
+  { id: 1, name: 'المولد 1', brand: 'Perkins', model: null, capacityKva: 500, litersPerHour: null, isActive: true, sortOrder: 1 },
+  { id: 2, name: 'المولد 2', brand: 'Cummins', model: null, capacityKva: 400, litersPerHour: null, isActive: true, sortOrder: 2 },
 ]
 const fuelTypes = [
   { id: 1, name: 'سولار صناعي', isActive: true, sortOrder: 1 },
@@ -135,7 +135,8 @@ describe('before sending', () => {
   it('lists what is still empty in plain words', () => {
     const blank = newReport('2026-10-29', fuelTypes, generators, 'e1', null, '')
     const items = missingItems(blank, (id) => fuelTypes.find((f) => f.id === id)!.name, (id) => generators.find((g) => g.id === id)!.name)
-    expect(items).toContain('سولار صناعي: الرصيد المتبقي')
-    expect(items).toContain('المولد 1: ساعات التشغيل')
+    expect(items).toContain('سولار صناعي: الرصيد الموجود')
+    expect(items).toContain('سولار صناعي: الاستهلاك')
+    expect(items).toContain('المولد 1: أوقات التشغيل')
   })
 })

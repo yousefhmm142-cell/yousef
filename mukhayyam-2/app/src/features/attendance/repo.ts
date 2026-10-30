@@ -40,12 +40,12 @@ async function replace<T extends { id: string | number }>(table: EntityTable<T, 
   await table.bulkPut(rows)
 }
 
-/** Brings the last 60 days of punches, leaves, holidays, the QR sheet and the phones. */
+/** Brings the last 120 days of punches, leaves, holidays, the QR sheet and the phones. */
 export async function refreshAttendance(): Promise<void> {
   if (isDemo) return
   const sb = getSupabase()
   if (!sb || !navigator.onLine) return
-  const since = new Date(Date.now() - 60 * 86_400_000).toISOString()
+  const since = new Date(Date.now() - 120 * 86_400_000).toISOString()
   const [punches, leaves, holidays, points, devices] = await Promise.all([
     sb.from('attendance_punches').select('id, employee_id, kind, at, method, reason, recorded_by').gte('at', since).order('at').limit(5000),
     sb.from('leaves').select('id, employee_id, from_date, to_date, type, notes').gte('to_date', since.slice(0, 10)),

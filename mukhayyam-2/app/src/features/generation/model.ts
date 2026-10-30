@@ -28,6 +28,8 @@ export interface Generator {
   brand: string
   model: string | null
   capacityKva: number | null
+  /** Diesel per running hour, set by the admin; used to check the consumption the site types. */
+  litersPerHour: number | null
   isActive: boolean
   sortOrder: number
 }
@@ -56,6 +58,9 @@ export interface AlertSettings {
   oilChangeWarnHours: number
   oilChangeDueHours: number
   phaseVoltage: number
+  /** Typed consumption vs hours × liters per hour: gap (%) that raises a warning / a red alert. */
+  expectedWarnPct: number
+  expectedDangerPct: number
 }
 
 export const defaultAlertSettings: AlertSettings = {
@@ -75,6 +80,8 @@ export const defaultAlertSettings: AlertSettings = {
   oilChangeWarnHours: 230,
   oilChangeDueHours: 250,
   phaseVoltage: 230,
+  expectedWarnPct: 15,
+  expectedDangerPct: 30,
 }
 
 export interface FuelLine {
@@ -188,7 +195,8 @@ export function newReport(
       .map((g) => ({
         id: newId(),
         generatorId: g.id,
-        didRun: true,
+        // Most days the same generators run as the day before; the operator taps to change.
+        didRun: prevLog(g.id)?.didRun ?? true,
         runs: [emptyRun(1)],
         runHours: null,
         loadUnit: prevLog(g.id)?.loadUnit ?? 'A',
@@ -233,14 +241,13 @@ export const crossesMidnight = (run: GeneratorRun) => !!run.start && !!run.end &
 export function missingItems(r: SiteReport, fuelName: (id: number) => string, generatorName: (id: number) => string): string[] {
   const out: string[] = []
   for (const f of r.fuel) {
-    if (f.closingBalance === null) out.push(`${fuelName(f.fuelTypeId)}: الرصيد المتبقي`)
+    if (f.openingBalance === null) out.push(`${fuelName(f.fuelTypeId)}: الرصيد الموجود`)
     if (f.consumption === null) out.push(`${fuelName(f.fuelTypeId)}: الاستهلاك`)
   }
   for (const g of r.generators) {
     if (!g.didRun) continue
     const name = generatorName(g.generatorId)
     if (g.runs.length === 0 || g.runs.some((run) => !run.start || !run.end)) out.push(`${name}: أوقات التشغيل`)
-    if (g.runHours === null) out.push(`${name}: ساعات التشغيل`)
     if (g.loads.some((l) => l === null)) out.push(`${name}: الأحمال`)
   }
   for (const m of r.maintenance) {
@@ -257,4 +264,65 @@ export function loadKva(loads: Loads, unit: LoadUnit, phaseVoltage: number): num
   if (loads.some((l) => l === null)) return null
   const total = sum(loads)
   return unit === 'A' ? (phaseVoltage * total) / 1000 : total / 0.8
+}
+
+// ---------- Figures the report works out by itself ----------
+// Only these: the operator still types what was received, what was used, the run times and
+// readings. Everything below is shown greyed out and saved with the report.
+
+const minutes = (hhmm: string) => {
+  const [h, m] = hhmm.split(':').map(Number)
+  return h! * 60 + m!
+}
+
+/** Length of one run in minutes (a run past midnight counts into the next day). */
+export function runMinutes(run: GeneratorRun): number | null {
+  if (!run.start || !run.end) return null
+  const d = minutes(run.end) - minutes(run.start)
+  return d >= 0 ? d : d + 24 * 60
+}
+
+/** Running hours of a generator from its run times, to one decimal; null until a run is complete. */
+export function hoursFromRuns(log: GeneratorLog): number | null {
+  const parts = log.runs.map(runMinutes).filter((m): m is number => m !== null)
+  if (!parts.length) return null
+  return Math.round((parts.reduce((a, b) => a + b, 0) / 60) * 10) / 10
+}
+
+const add = (...xs: Array<number | null>) => (xs.every((x) => x === null) ? null : xs.reduce<number>((a, x) => a + (x ?? 0), 0))
+const round1 = (n: number) => Math.round(n * 10) / 10
+
+/**
+ * Fills the worked-out figures in place:
+ * opening balance = yesterday's remaining (when there is a report before), total = opening + received,
+ * remaining = total − consumption, running hours = sum of the run times.
+ */
+export function applyAutoFigures(r: SiteReport, previous: SiteReport | null): SiteReport {
+  for (const line of r.fuel) {
+    const before = previous?.fuel.find((f) => f.fuelTypeId === line.fuelTypeId)?.closingBalance
+    if (before !== null && before !== undefined) line.openingBalance = before
+    line.totalQty = add(line.openingBalance, line.receivedQty)
+    line.closingBalance = line.totalQty !== null && line.consumption !== null ? round1(line.totalQty - line.consumption) : null
+  }
+  for (const log of r.generators) log.runHours = log.didRun ? hoursFromRuns(log) : null
+  return r
+}
+
+/** True when yesterday's remaining gives today's opening balance (the box is then not typed). */
+export const openingFromPrevious = (line: FuelLine, previous: SiteReport | null) => {
+  const before = previous?.fuel.find((f) => f.fuelTypeId === line.fuelTypeId)?.closingBalance
+  return before !== null && before !== undefined
+}
+
+/** Diesel the generators should have used: hours × liters per hour. Null if no generator has a rate. */
+export function expectedConsumption(r: SiteReport, generators: Map<number, Generator>): number | null {
+  let total = 0
+  let known = false
+  for (const log of r.generators) {
+    const rate = generators.get(log.generatorId)?.litersPerHour
+    if (!log.didRun || !rate || log.runHours === null) continue
+    total += log.runHours * rate
+    known = true
+  }
+  return known ? Math.round(total) : null
 }

@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import { formatAmount } from '../../lib/numbers'
 import { Dialog } from '../../ui/Dialog'
-import { NumberField, Segmented, TextField } from '../../ui/form'
+import { Chip, NumberField, Segmented, TextField } from '../../ui/form'
 import { Button, Pill } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
 import { GENERATOR_BRANDS, type Generator } from '../generation/model'
@@ -11,6 +11,7 @@ import { saveZone, useZones } from '../distribution/repo'
 import type { Zone } from '../distribution/model'
 import { ReportStateError, saveGenerator, useGenerators } from '../generation/repo'
 import { BackupCard } from './BackupCard'
+import { FuelTypesCard, StockItemsCard } from './StockAndFuelCards'
 import { TeamCard } from './TeamCard'
 
 const OTHER = '__other__'
@@ -59,6 +60,7 @@ export function SettingsPage() {
                     {g.brand}
                     {g.model && <span className="num ltr"> · {g.model}</span>}
                     {g.capacityKva && <span className="num"> · {formatAmount(g.capacityKva)} kVA</span>}
+                    {g.litersPerHour && <span className="num"> · {formatAmount(g.litersPerHour)} لتر/ساعة</span>}
                   </small>
                 </span>
                 {g.isActive ? <Pill tone="ok">فعّال</Pill> : <Pill>موقوف</Pill>}
@@ -73,6 +75,10 @@ export function SettingsPage() {
 
       <ZonesCard />
 
+      <FuelTypesCard />
+
+      <StockItemsCard />
+
       <BackupCard />
 
       <section className="card">
@@ -85,6 +91,7 @@ export function SettingsPage() {
       {editing && (
         <GeneratorDialog
           generator={editing === 'new' ? null : editing}
+          others={generators ?? []}
           onClose={() => setEditing(null)}
         />
       )}
@@ -92,7 +99,7 @@ export function SettingsPage() {
   )
 }
 
-function GeneratorDialog({ generator, onClose }: { generator: Generator | null; onClose(): void }) {
+function GeneratorDialog({ generator, others, onClose }: { generator: Generator | null; others: Generator[]; onClose(): void }) {
   const toast = useToast()
   const knownBrand = !generator || (GENERATOR_BRANDS as readonly string[]).includes(generator.brand)
   const [name, setName] = useState(generator?.name ?? '')
@@ -100,6 +107,12 @@ function GeneratorDialog({ generator, onClose }: { generator: Generator | null; 
   const [customBrand, setCustomBrand] = useState(knownBrand ? '' : generator?.brand ?? '')
   const [model, setModel] = useState(generator?.model ?? '')
   const [capacity, setCapacity] = useState<number | null>(generator?.capacityKva ?? null)
+  const [rate, setRate] = useState<number | null>(generator?.litersPerHour ?? null)
+  // Brands already on the site's generators come first, the most common first.
+  const usedBrands = Object.entries(others.reduce<Record<string, number>>((m, g) => ({ ...m, [g.brand]: (m[g.brand] ?? 0) + 1 }), {}))
+    .sort((a, b) => b[1] - a[1])
+    .map(([b]) => b)
+  const brandList = [...usedBrands, ...GENERATOR_BRANDS.filter((b) => !usedBrands.includes(b))]
   const [active, setActive] = useState<'on' | 'off'>(generator?.isActive === false ? 'off' : 'on')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -117,6 +130,7 @@ function GeneratorDialog({ generator, onClose }: { generator: Generator | null; 
         brand,
         model: model.trim() || null,
         capacityKva: capacity,
+        litersPerHour: rate,
         isActive: active === 'on',
       })
       toast(generator ? 'حُفظ التعديل' : 'أُضيف المولد')
@@ -145,13 +159,21 @@ function GeneratorDialog({ generator, onClose }: { generator: Generator | null; 
           <span className="label">الماركة</span>
           <select className="select" value={brandChoice} onChange={(e) => setBrandChoice(e.target.value)}>
             <option value="" disabled>اختر الماركة</option>
-            {GENERATOR_BRANDS.map((b) => <option key={b} value={b}>{b}</option>)}
+            {brandList.map((b) => <option key={b} value={b}>{b}</option>)}
             <option value={OTHER}>أخرى…</option>
           </select>
         </label>
+        {usedBrands.length > 0 && (
+          <div className="chips">
+            {usedBrands.map((b) => (
+              <Chip key={b} pressed={brandChoice === b} onClick={() => setBrandChoice(b)}>{b}</Chip>
+            ))}
+          </div>
+        )}
         {brandChoice === OTHER && <TextField label="اسم الماركة" value={customBrand} onChange={setCustomBrand} />}
         <TextField label="الموديل (اختياري)" value={model} onChange={setModel} />
         <NumberField label="القدرة" unit="kVA" max={5000} value={capacity} onChange={setCapacity} hint="تُستخدم لحساب نسبة الحمل" />
+        <NumberField label="معدل استهلاك السولار" unit="لتر/ساعة" max={1000} value={rate} onChange={setRate} hint="ساعات التشغيل × هذا المعدل = الاستهلاك المتوقع، ويُنبَّه المدير إذا اختلف عن المسجّل" />
         <div className="field">
           <span className="label">الحالة</span>
           <Segmented<'on' | 'off'> label="حالة المولد" value={active} options={activeOptions} onChange={setActive} />

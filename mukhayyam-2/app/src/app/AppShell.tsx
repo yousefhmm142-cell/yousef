@@ -1,4 +1,4 @@
-import { UserRound } from 'lucide-react'
+import { Ellipsis, UserRound } from 'lucide-react'
 import { Link, NavLink, Outlet } from 'react-router'
 import { useEmployee } from '../auth/AuthProvider'
 import { roleLabel } from '../types'
@@ -8,11 +8,13 @@ import { navFor, type NavItem } from './nav'
 
 const MAX_TABS = 5
 const accountTab: NavItem = { to: '/account', label: 'حسابي', icon: UserRound }
+const moreTab: NavItem = { to: '/more', label: 'المزيد', icon: Ellipsis }
 
 export function AppShell() {
   const employee = useEmployee()
   const items = navFor(employee.role)
-  const tabs = items.length < MAX_TABS ? [...items, accountTab] : items.slice(0, MAX_TABS)
+  // Phones: up to five tabs; the rest sit behind «المزيد».
+  const tabs = items.length < MAX_TABS ? [...items, accountTab] : [...items.slice(0, MAX_TABS - 1), moreTab]
 
   return (
     <div className="shell">

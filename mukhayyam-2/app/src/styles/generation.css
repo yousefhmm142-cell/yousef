@@ -282,3 +282,12 @@
 .handover-actions .btn { flex: 1; justify-content: center; }
 .backup-body { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 4px 18px 16px; }
 .backup-body p { margin: 0; flex: 1 1 260px; }
+
+/* ---------- Worked-out figures and the generator picker ---------- */
+.nf.calc .nf-box { background: var(--sunken); border: 1.5px dashed color-mix(in srgb, var(--muted) 35%, transparent); outline: 0; box-shadow: none; }
+.nf.calc .nf-input { display: flex; align-items: center; color: var(--ink-2); font-weight: 800; }
+.nf-label { font-size: 13px; font-weight: 700; color: var(--muted); }
+.gen-pick .chips { margin-top: 4px; }
+.backup-auto { display: grid; gap: 6px; padding: 0 18px 14px; border-top: 1px solid var(--line-2); padding-top: 12px; }
+.backup-auto p { margin: 0; font-size: 13px; }
+.backup-auto .gen-list li { padding-inline: 0; }

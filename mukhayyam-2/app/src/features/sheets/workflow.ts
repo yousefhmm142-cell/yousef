@@ -30,9 +30,9 @@ export interface SheetMeta {
 
 export const statusInfo: Record<SheetStatus, { label: string; tone: Tone }> = {
   draft: { label: 'قيد التعبئة', tone: 'neutral' },
-  submitted: { label: 'بانتظار الاعتماد', tone: 'warn' },
-  returned: { label: 'أُعيد للتصحيح', tone: 'danger' },
-  approved: { label: 'معتمد', tone: 'ok' },
+  submitted: { label: 'مُغلق، بانتظار الاعتماد', tone: 'warn' },
+  returned: { label: 'أُعيد فتحه', tone: 'danger' },
+  approved: { label: 'مُغلق ومعتمد', tone: 'ok' },
 }
 
 export const isEditableStatus = (s: SheetStatus) => s === 'draft' || s === 'returned'
@@ -89,10 +89,10 @@ export async function submitIn<T extends SheetMeta>(table: SheetTable<T>, doc: T
   return sent
 }
 
-async function transition<T extends SheetMeta>(table: SheetTable<T>, id: string, change: (doc: T) => T) {
+async function transition<T extends SheetMeta>(table: SheetTable<T>, id: string, change: (doc: T) => T, from: SheetStatus[] = ['submitted']) {
   await table.db.transaction('rw', table.name, async () => {
     const doc = await table.get(id)
-    if (!doc || doc.status !== 'submitted') throw new SheetStateError('changed')
+    if (!doc || !from.includes(doc.status)) throw new SheetStateError('changed')
     await table.put({ ...change(doc), updatedAt: nowIso() })
   })
 }
@@ -104,5 +104,6 @@ export function approveIn<T extends SheetMeta>(table: SheetTable<T>, id: string,
 export function returnIn<T extends SheetMeta>(table: SheetTable<T>, id: string, reason: string) {
   const text = reason.trim()
   if (!text) return Promise.reject(new SheetStateError('reason_needed'))
-  return transition(table, id, (d) => ({ ...d, status: 'returned', returnedReason: text, approvedBy: null, approvedAt: null }))
+  // The manager reopens a closed day, even one already approved.
+  return transition(table, id, (d) => ({ ...d, status: 'returned', returnedReason: text, approvedBy: null, approvedAt: null }), ['submitted', 'approved'])
 }

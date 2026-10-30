@@ -13,9 +13,9 @@ import {
 // Demo mode only: three weeks of believable reports so averages and alerts have something to work with.
 
 const generators: Generator[] = [
-  { id: 1, name: 'المولد 1', brand: 'Perkins', model: '2806A', capacityKva: 500, isActive: true, sortOrder: 1 },
-  { id: 2, name: 'المولد 2', brand: 'Cummins', model: 'QSX15', capacityKva: 400, isActive: true, sortOrder: 2 },
-  { id: 3, name: 'المولد 3', brand: 'Volvo Penta', model: 'TAD734', capacityKva: 250, isActive: true, sortOrder: 3 },
+  { id: 1, name: 'المولد 1', brand: 'Perkins', model: '2806A', capacityKva: 500, litersPerHour: 60, isActive: true, sortOrder: 1 },
+  { id: 2, name: 'المولد 2', brand: 'Cummins', model: 'QSX15', capacityKva: 400, litersPerHour: 48, isActive: true, sortOrder: 2 },
+  { id: 3, name: 'المولد 3', brand: 'Volvo Penta', model: 'TAD734', capacityKva: 250, litersPerHour: 30, isActive: true, sortOrder: 3 },
 ]
 
 const fuelTypes: FuelType[] = [

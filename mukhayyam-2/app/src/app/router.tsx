@@ -8,12 +8,15 @@ import { HistoryPage } from '../features/generation/HistoryPage'
 import { ReportPage } from '../features/generation/ReportPage'
 import { SettingsPage } from '../features/settings/SettingsPage'
 import { Account } from '../pages/Account'
+import { More } from '../pages/More'
 import { Home } from '../pages/Home'
 import { LoginRoute } from '../pages/Login'
 import { SiteHistoryPage } from '../features/sheets/SiteHistoryPage'
 import { TaskLinkPage } from '../features/tasks/LinkPage'
 import { TasksPage } from '../features/tasks/TasksPage'
 import { AttendancePage } from '../features/attendance/AttendancePage'
+import { StockPage } from '../features/stock/StockPage'
+import { ReportsPage } from '../features/reports/ReportsPage'
 import { AttendanceScanPage } from '../features/attendance/ScanPage'
 import { NotFound, RouteError } from '../pages/states'
 import { isSiteRole, SITE_ROLES, type Role } from '../types'
@@ -65,8 +68,11 @@ export const router = createBrowserRouter([
             path: 'attendance',
             element: <RoleGate roles={managers}><AttendancePage /></RoleGate>,
           },
+          { path: 'stock', element: <RoleGate roles={managers}><StockPage /></RoleGate> },
+          { path: 'reports', element: <RoleGate roles={managers}><ReportsPage /></RoleGate> },
           { path: 'settings', element: <RoleGate roles={['admin']}><SettingsPage /></RoleGate> },
           { path: 'account', element: <Account /> },
+          { path: 'more', element: <More /> },
           { path: '*', element: <NotFound /> },
         ],
       },

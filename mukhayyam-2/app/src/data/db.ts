@@ -3,6 +3,7 @@ import type { DistributionSheet, Zone } from '../features/distribution/model'
 import type { AlertSettings, FuelType, Generator, SiteReport } from '../features/generation/model'
 import type { Leave, Punch, Schedule } from '../features/attendance/rules'
 import type { Task, TaskType } from '../features/tasks/model'
+import type { StockItem, StockMove } from '../features/stock/model'
 import type { Employee } from '../types'
 
 /** Small key-value rows: the signed-in session, cached profile, last sync time. */
@@ -76,6 +77,8 @@ class AppDatabase extends Dexie {
   holidays!: EntityTable<Holiday, 'date'>
   attendancePoints!: EntityTable<AttendancePoint, 'id'>
   attendanceDevices!: EntityTable<AttendanceDevice, 'id'>
+  stockItems!: EntityTable<StockItem, 'id'>
+  stockMoves!: EntityTable<StockMove, 'id'>
 
   constructor() {
     super('mukhayyam2')
@@ -106,6 +109,10 @@ class AppDatabase extends Dexie {
       holidays: 'date',
       attendancePoints: 'id',
       attendanceDevices: 'id, employeeId, tokenHash',
+    })
+    this.version(6).stores({
+      stockItems: 'id',
+      stockMoves: 'id, itemId, taskId, at',
     })
   }
 }

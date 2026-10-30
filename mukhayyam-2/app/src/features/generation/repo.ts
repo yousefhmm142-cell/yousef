@@ -98,6 +98,7 @@ export async function saveGenerator(input: Omit<Generator, 'id' | 'sortOrder'> &
     brand: g.brand,
     model: g.model,
     capacity_kva: g.capacityKva,
+    liters_per_hour: g.litersPerHour,
     is_active: g.isActive,
   }))
 }

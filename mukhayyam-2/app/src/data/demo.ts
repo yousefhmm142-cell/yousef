@@ -2,6 +2,7 @@ import { ensureDemoDistribution } from '../features/distribution/demo'
 import { ensureDemoGeneration } from '../features/generation/demo'
 import { ensureDemoTasks } from '../features/tasks/demo'
 import { ensureDemoAttendance } from '../features/attendance/demo'
+import { ensureDemoStock } from '../features/stock/demo'
 import { db } from './db'
 import type { Employee, Role } from '../types'
 
@@ -47,5 +48,6 @@ export async function ensureDemoData(): Promise<void> {
   await ensureDemoGeneration(idOf('manager'), idOf('generation_operator'))
   await ensureDemoDistribution(idOf('manager'), idOf('distribution_supervisor'))
   await ensureDemoAttendance(await db.employees.toArray())
+  await ensureDemoStock(idOf('manager'))
   await ensureDemoTasks(demoEmployees.filter((e) => e.role === 'technician').map((e) => e.id), idOf('manager'))
 }

@@ -11,6 +11,7 @@ import type { ChildRows } from '../features/sheets/remote'
 import type { TaskType } from '../features/tasks/model'
 import { scheduleFromRow, type ScheduleRow } from '../features/attendance/remote'
 import type { Schedule } from '../features/attendance/rules'
+import type { StockItem } from '../features/stock/model'
 import { isEditableStatus, type SheetMeta, type SheetStatus } from '../features/sheets/workflow'
 import { isManagerRole, SITE_ROLES, type Employee, type Role } from '../types'
 import { db, deleteMeta, getMeta, setMeta } from './db'
@@ -240,7 +241,7 @@ async function pushSheet(spec: KindSpec, doc: SheetDoc, me: Employee): Promise<v
           .eq('id', id),
       )
     }
-  } else if (remoteStatus === 'submitted' && (current.status === 'approved' || current.status === 'returned')) {
+  } else if ((remoteStatus === 'submitted' && (current.status === 'approved' || current.status === 'returned')) || (remoteStatus === 'approved' && current.status === 'returned')) {
     await run(
       sb
         .from(spec.header)
@@ -306,18 +307,19 @@ interface EmployeeRow {
   schedule_id: number | null
 }
 interface ListRow { id: number; name: string; is_active: boolean; sort_order: number }
-interface GeneratorRow extends ListRow { brand: string; model: string | null; capacity_kva: number | null }
+interface GeneratorRow extends ListRow { brand: string; model: string | null; capacity_kva: number | null; liters_per_hour: number | null }
 
 export async function pullReference(): Promise<void> {
   const sb = client()
-  const [people, generators, fuel, zones, settings, taskTypes, schedules] = await Promise.all([
+  const [people, generators, fuel, zones, settings, taskTypes, schedules, items] = await Promise.all([
     run(sb.from('employees').select('id, full_name, phone, role, is_active, tracks_attendance, auth_user_id, schedule_id')),
-    run(sb.from('generators').select('id, name, brand, model, capacity_kva, is_active, sort_order')),
+    run(sb.from('generators').select('id, name, brand, model, capacity_kva, liters_per_hour, is_active, sort_order')),
     run(sb.from('fuel_types').select('id, name, is_active, sort_order')),
     run(sb.from('zones').select('id, name, is_active, sort_order')),
     run(sb.from('app_settings').select('*').maybeSingle()),
     run(sb.from('task_types').select('id, name, is_active, sort_order')),
     run(sb.from('work_schedules').select('*')),
+    run(sb.from('stock_items').select('id, name, unit, min_qty, is_active, sort_order')),
   ])
   await replaceAll<Employee>(
     db.employees,
@@ -340,6 +342,7 @@ export async function pullReference(): Promise<void> {
       brand: g.brand,
       model: g.model,
       capacityKva: g.capacity_kva === null ? null : Number(g.capacity_kva),
+      litersPerHour: g.liters_per_hour === null ? null : Number(g.liters_per_hour),
       isActive: g.is_active,
       sortOrder: g.sort_order,
     })),
@@ -349,6 +352,10 @@ export async function pullReference(): Promise<void> {
   await replaceAll<Zone>(db.zones, list(zones as ListRow[]))
   await replaceAll<TaskType>(db.taskTypes, list(taskTypes as ListRow[]))
   await replaceAll<Schedule>(db.schedules, (schedules as ScheduleRow[]).map(scheduleFromRow))
+  await replaceAll<StockItem>(
+    db.stockItems,
+    (items as Array<ListRow & { unit: string; min_qty: number }>).map((r) => ({ ...list([r])[0]!, unit: r.unit, minQty: Number(r.min_qty) })),
+  )
   if (settings) {
     const s = settings as Record<string, number | string>
     const n = (k: string) => Number(s[k])
@@ -370,6 +377,8 @@ export async function pullReference(): Promise<void> {
         oilChangeWarnHours: n('oil_change_warn_hours'),
         oilChangeDueHours: n('oil_change_due_hours'),
         phaseVoltage: n('phase_voltage'),
+        expectedWarnPct: n('expected_warn_pct') || 15,
+        expectedDangerPct: n('expected_danger_pct') || 30,
       },
     ])
   }
@@ -410,6 +419,7 @@ async function round(): Promise<void> {
     if (isManagerRole(who.role)) {
       await (await import('../features/tasks/repo')).refreshTasks()
       await (await import('../features/attendance/repo')).refreshAttendance()
+      await (await import('../features/stock/repo')).refreshStock()
     }
     failures = 0
     setState({ phase: problem ? 'error' : 'idle', lastOkAt: new Date().toISOString(), problem })

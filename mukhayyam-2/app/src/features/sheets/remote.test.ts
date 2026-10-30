@@ -71,6 +71,7 @@ const generators = [1, 2, 3].map((id) => ({
   brand: 'Perkins',
   model: null,
   capacityKva: 500,
+  litersPerHour: null,
   isActive: true,
   sortOrder: id,
 }))
