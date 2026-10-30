@@ -1,9 +1,10 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Copy, KeyRound, MessageCircle, Pencil, Plus, Users } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useEmployee } from '../../auth/AuthProvider'
 import { isDemo } from '../../config'
 import { byRoleThenName, saveEmployee } from '../../data/admin'
+import { codeHolders, setAttendance as saveAttendance } from '../attendance/repo'
 import { db } from '../../data/db'
 import { formatPhone, isValidPhone, normalizePhone, toLatinDigits } from '../../lib/phone'
 import { isManagerRole, isSiteRole, roleLabel, type Employee, type Role } from '../../types'
@@ -32,11 +33,16 @@ const errorText: Record<string, string> = {
 const usesApp = (role: Role) => isManagerRole(role) || isSiteRole(role)
 
 const randomPin = () => String(crypto.getRandomValues(new Uint32Array(1))[0]! % 1_000_000).padStart(6, '0')
+const randomCode = () => String(crypto.getRandomValues(new Uint32Array(1))[0]! % 10_000).padStart(4, '0')
 
 /** Everyone on the team, their phone, and whether they can sign in. */
 export function TeamCard() {
   const people = useLiveQuery(async () => (await db.employees.toArray()).sort(byRoleThenName), [])
   const [editing, setEditing] = useState<Employee | 'new' | null>(null)
+  const [holders, setHolders] = useState<Set<string>>(new Set())
+  useEffect(() => {
+    if (!editing) void codeHolders().then(setHolders)
+  }, [editing])
 
   return (
     <section className="card">
@@ -77,7 +83,7 @@ export function TeamCard() {
           ))}
         </ul>
       )}
-      {editing && <EmployeeDialog person={editing === 'new' ? null : editing} onClose={() => setEditing(null)} />}
+      {editing && <EmployeeDialog person={editing === 'new' ? null : editing} hasCode={editing !== 'new' && holders.has(editing.id)} onClose={() => setEditing(null)} />}
     </section>
   )
 }
@@ -91,7 +97,7 @@ const activeOptions = [
   { value: 'off', label: 'موقوف' },
 ] as const
 
-function EmployeeDialog({ person, onClose }: { person: Employee | null; onClose(): void }) {
+function EmployeeDialog({ person, hasCode, onClose }: { person: Employee | null; hasCode: boolean; onClose(): void }) {
   const me = useEmployee()
   const toast = useToast()
   const [name, setName] = useState(person?.fullName ?? '')
@@ -102,9 +108,14 @@ function EmployeeDialog({ person, onClose }: { person: Employee | null; onClose(
   const [changePin, setChangePin] = useState(!person?.hasLogin)
   const [attendance, setAttendance] = useState<'yes' | 'no'>(person?.tracksAttendance === false ? 'no' : 'yes')
   const [active, setActive] = useState<'on' | 'off'>(person?.isActive === false ? 'off' : 'on')
+  const schedules = useLiveQuery(() => db.schedules.toArray(), [])
+  const [scheduleId, setScheduleId] = useState<number | null>(person?.scheduleId ?? null)
+  // Everyone who records attendance needs a 4-digit code for the first scan on their phone.
+  const [attCode, setAttCode] = useState(hasCode ? '' : randomCode())
+  const [changeCode, setChangeCode] = useState(!hasCode)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [handover, setHandover] = useState<{ name: string; phone: string; pin: string } | null>(null)
+  const [handover, setHandover] = useState<{ name: string; phone: string; pin: string | null; code: string | null } | null>(null)
 
   const self = person?.id === me.id
 
@@ -112,10 +123,12 @@ function EmployeeDialog({ person, onClose }: { person: Employee | null; onClose(
     const newPin = usesApp(role) && changePin && phone ? pin : null
     if (newPin !== null && !/^\d{6}$/.test(pin)) return setError(errorText.bad_pin!)
     if (phone && !isValidPhone(phone)) return setError(errorText.bad_phone!)
+    const newCode = attendance === 'yes' && changeCode ? attCode : null
+    if (newCode !== null && !/^\d{4}$/.test(newCode)) return setError('رمز الحضور 4 أرقام.')
     setBusy(true)
     setError(null)
     try {
-      await saveEmployee({
+      const id = await saveEmployee({
         id: person?.id,
         fullName: name,
         role,
@@ -124,8 +137,9 @@ function EmployeeDialog({ person, onClose }: { person: Employee | null; onClose(
         isActive: active === 'on',
         tracksAttendance: attendance === 'yes',
       })
-      if (newPin) {
-        setHandover({ name: name.trim(), phone, pin: newPin })
+      if (attendance === 'yes') await saveAttendance(id, scheduleId ?? schedules?.[0]?.id ?? null, newCode)
+      if (newPin || newCode) {
+        setHandover({ name: name.trim(), phone, pin: newPin, code: newCode })
         setBusy(false)
       } else {
         toast(person ? 'حُفظ التعديل' : 'أُضيف الموظف')
@@ -204,6 +218,40 @@ function EmployeeDialog({ person, onClose }: { person: Employee | null; onClose(
           <span className="label">يسجّل حضوره بالـ QR</span>
           <Segmented<'yes' | 'no'> label="يسجّل حضوره" value={attendance} options={yesNo} onChange={setAttendance} />
         </div>
+        {attendance === 'yes' && (
+          <>
+            <div className="field">
+              <span className="label">الدوام</span>
+              <Segmented<string>
+                label="الدوام"
+                value={String(scheduleId ?? schedules?.[0]?.id ?? '')}
+                options={(schedules ?? []).map((s) => ({ value: String(s.id), label: `${s.name} (${s.start}–${s.end})` }))}
+                onChange={(v) => setScheduleId(Number(v))}
+              />
+            </div>
+            <div className="field">
+              <span className="label">رمز الحضور</span>
+              {changeCode ? (
+                <div className="pin-row">
+                  <input
+                    className="input ltr num pin-plain"
+                    inputMode="numeric"
+                    maxLength={4}
+                    aria-label="رمز الحضور"
+                    value={attCode}
+                    onChange={(e) => setAttCode(toLatinDigits(e.target.value).replace(/\D/g, '').slice(0, 4))}
+                  />
+                  <Button variant="ghost" icon={<KeyRound size={16} />} onClick={() => setAttCode(randomCode())}>رمز جديد</Button>
+                </div>
+              ) : (
+                <Button variant="secondary" icon={<KeyRound size={16} />} onClick={() => { setChangeCode(true); setAttCode(randomCode()) }}>
+                  تغيير رمز الحضور
+                </Button>
+              )}
+              <span className="field-hint">4 أرقام يكتبها أول مرة يصوّر ورقة الحضور على جواله.</span>
+            </div>
+          </>
+        )}
         <div className="field">
           <span className="label">الحالة</span>
           <Segmented<'on' | 'off'> label="حالة الموظف" value={active} options={activeOptions} onChange={setActive} />
@@ -216,29 +264,35 @@ function EmployeeDialog({ person, onClose }: { person: Employee | null; onClose(
 }
 
 /** After a PIN is set: the details to hand to the person, by WhatsApp or copied. */
-function Handover({ name, phone, pin, onClose }: { name: string; phone: string; pin: string; onClose(): void }) {
+function Handover({ name, phone, pin, code, onClose }: { name: string; phone: string; pin: string | null; code: string | null; onClose(): void }) {
   const toast = useToast()
   const link = isDemo ? '' : window.location.origin
-  const message = `مرحباً ${name}،\nهذا حسابك في نظام مخيم 2:\nرقم الجوال: ${phone}\nالرمز السري: ${pin}${link ? `\nالرابط: ${link}` : ''}`
-  const wa = `https://wa.me/970${phone.slice(1)}?text=${encodeURIComponent(message)}`
+  const lines = [`مرحباً ${name}،`]
+  if (pin) lines.push('هذا حسابك في نظام مخيم 2:', `رقم الجوال: ${phone}`, `الرمز السري: ${pin}`, ...(link ? [`الرابط: ${link}`] : []))
+  if (code) lines.push(`رمز الحضور: ${code}`, 'أول مرة تصوّر ورقة الحضور في المكتب: اختر اسمك واكتب هذا الرمز. بعدها كل تصويرة تسجّل لحالها.')
+  const message = lines.join('\n')
+  const wa = phone ? `https://wa.me/970${phone.slice(1)}?text=${encodeURIComponent(message)}` : ''
 
   return (
     <Dialog
       open
       onClose={onClose}
-      title="حُفظ. أعطِ الموظف بيانات دخوله"
+      title="حُفظ. أعطِ الموظف بياناته"
       footer={<Button variant="primary" onClick={onClose}>تم</Button>}
     >
       <div className="handover">
-        <p className="muted">{name} يدخل بهذين فقط، ثم يعمل التطبيق على جواله حتى بدون إنترنت.</p>
+        <p className="muted">{pin ? `${name} يدخل للتطبيق برقمه ورمزه السري.` : ''}{code ? ' رمز الحضور لأول تصويرة على جواله فقط.' : ''}</p>
         <dl>
-          <div><dt>رقم الجوال</dt><dd className="num ltr">{formatPhone(phone)}</dd></div>
-          <div><dt>الرمز السري</dt><dd className="num ltr pin-big">{pin}</dd></div>
+          {pin && <div><dt>رقم الجوال</dt><dd className="num ltr">{formatPhone(phone)}</dd></div>}
+          {pin && <div><dt>الرمز السري</dt><dd className="num ltr pin-big">{pin}</dd></div>}
+          {code && <div><dt>رمز الحضور</dt><dd className="num ltr pin-big">{code}</dd></div>}
         </dl>
         <div className="handover-actions">
-          <a className="btn primary" href={wa} target="_blank" rel="noreferrer">
-            <MessageCircle size={17} /> إرسال على واتساب
-          </a>
+          {wa && (
+            <a className="btn primary" href={wa} target="_blank" rel="noreferrer">
+              <MessageCircle size={17} /> إرسال على واتساب
+            </a>
+          )}
           <Button
             variant="secondary"
             icon={<Copy size={16} />}

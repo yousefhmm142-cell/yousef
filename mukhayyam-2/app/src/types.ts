@@ -15,6 +15,8 @@ export interface Employee {
   tracksAttendance: boolean
   /** Has a phone + PIN login (real mode; demo accounts always do). */
   hasLogin?: boolean
+  /** Office hours for attendance (full day or بطالة). */
+  scheduleId?: number | null
 }
 
 export const roleLabel: Record<Role, string> = {

@@ -18,7 +18,8 @@ import { useLatestSentSheet } from '../features/distribution/repo'
 import { EntryPage } from '../features/generation/EntryPage'
 import { useLatestSentReport } from '../features/generation/repo'
 import { statusInfo, type SheetStatus } from '../features/sheets/workflow'
-import { dayName, type ISODate } from '../lib/dates'
+import { dayName, todayISO, type ISODate } from '../lib/dates'
+import { gazaDate } from '../features/attendance/rules'
 import { ModuleSoon } from './ModuleSoon'
 import { isOpen, isOverdue } from '../features/tasks/model'
 import { usePendingCount } from '../data/sync'
@@ -81,7 +82,7 @@ function ManagerHome() {
               <b>{m.title}</b>
               <span className="mod-summary">{m.summary}</span>
               <span className="mod-foot">
-                {key === 'generation' ? <GenerationStatus /> : key === 'distribution' ? <DistributionStatus /> : key === 'tasks' ? <TasksStatus /> : <Pill tone="brand" dot={false}>الخطوة {m.step}</Pill>}
+                {key === 'generation' ? <GenerationStatus /> : key === 'distribution' ? <DistributionStatus /> : key === 'tasks' ? <TasksStatus /> : key === 'attendance-board' ? <AttendanceStatus /> : <Pill tone="brand" dot={false}>الخطوة {m.step}</Pill>}
                 <ArrowLeft size={18} aria-hidden="true" />
               </span>
             </Link>
@@ -124,6 +125,19 @@ function TasksStatus() {
   const late = open.filter((t) => isOverdue(t, now)).length
   if (late) return <Pill tone="danger">{late} متأخرة من {open.length} مفتوحة</Pill>
   return open.length ? <Pill tone="brand">{open.length} مفتوحة</Pill> : <Pill tone="ok">لا مهام مفتوحة</Pill>
+}
+
+/** Who is in today, from the office QR scans. */
+function AttendanceStatus() {
+  const data = useLiveQuery(async () => {
+    const today = todayISO()
+    const people = (await db.employees.toArray()).filter((e) => e.isActive && e.tracksAttendance)
+    const inToday = new Set((await db.punches.toArray()).filter((p) => p.kind === 'in' && gazaDate(p.at) === today).map((p) => p.employeeId))
+    return { total: people.length, present: people.filter((e) => inToday.has(e.id)).length }
+  }, [])
+  if (!data) return <Pill dot={false}>…</Pill>
+  if (!data.total) return <Pill dot={false}>لا أحد يسجّل بعد</Pill>
+  return <Pill tone={data.present === data.total ? 'ok' : 'brand'}>حضر {data.present} من {data.total}</Pill>
 }
 
 function TeamCard() {

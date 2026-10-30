@@ -1,6 +1,7 @@
 import Dexie, { type EntityTable } from 'dexie'
 import type { DistributionSheet, Zone } from '../features/distribution/model'
 import type { AlertSettings, FuelType, Generator, SiteReport } from '../features/generation/model'
+import type { Leave, Punch, Schedule } from '../features/attendance/rules'
 import type { Task, TaskType } from '../features/tasks/model'
 import type { Employee } from '../types'
 
@@ -25,6 +26,30 @@ export interface OutboxRow {
   lastError?: string
 }
 
+export interface Holiday {
+  date: string
+  name: string
+}
+
+/** The printed QR sheet: its code is the last part of the address it opens. */
+export interface AttendancePoint {
+  id: number
+  name: string
+  code: string
+  isActive: boolean
+}
+
+/** A phone allowed to record attendance for one person. tokenHash is used in demo mode only. */
+export interface AttendanceDevice {
+  id: string
+  employeeId: string
+  label: string
+  createdAt: string
+  lastUsedAt: string | null
+  revokedAt: string | null
+  tokenHash?: string
+}
+
 /** Demo mode only: sample logins that never leave this device. */
 export interface DemoAccount {
   phone: string
@@ -45,6 +70,12 @@ class AppDatabase extends Dexie {
   distributionSheets!: EntityTable<DistributionSheet, 'id'>
   taskTypes!: EntityTable<TaskType, 'id'>
   tasks!: EntityTable<Task, 'id'>
+  schedules!: EntityTable<Schedule, 'id'>
+  punches!: EntityTable<Punch, 'id'>
+  leaves!: EntityTable<Leave, 'id'>
+  holidays!: EntityTable<Holiday, 'date'>
+  attendancePoints!: EntityTable<AttendancePoint, 'id'>
+  attendanceDevices!: EntityTable<AttendanceDevice, 'id'>
 
   constructor() {
     super('mukhayyam2')
@@ -67,6 +98,14 @@ class AppDatabase extends Dexie {
     this.version(4).stores({
       taskTypes: 'id',
       tasks: 'id, number, status, assigneeId, &linkToken',
+    })
+    this.version(5).stores({
+      schedules: 'id',
+      punches: 'id, employeeId, at',
+      leaves: 'id, employeeId',
+      holidays: 'date',
+      attendancePoints: 'id',
+      attendanceDevices: 'id, employeeId, tokenHash',
     })
   }
 }

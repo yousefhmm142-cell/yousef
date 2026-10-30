@@ -187,6 +187,44 @@ select test.fails($$select public.task_link_act((select link_token from public.t
                   'cancelled', 'a cancelled task cannot be finished from its link');
 select test.login('رامي أبو عجوة'); set role authenticated;
 
+-- ---------- Attendance by the printed QR (no app, no login) ----------
+reset role; select test.login('مسؤول النظام'); set role authenticated;
+select public.admin_set_attendance((select id from public.employees where full_name = 'موظف إداري'), (select id from public.work_schedules where name = 'بطالة'), '4821');
+select test.fails($$select public.admin_set_attendance((select id from public.employees where full_name = 'موظف إداري'), null, '12')$$, 'bad_code', 'the attendance code is 4 digits');
+select test.ok((select count(*) from public.attendance_code_holders()) = 1, 'the admin sees who has a code, never the code');
+reset role;
+create table test.point as select code from public.attendance_points limit 1;
+grant select on test.point to anon, authenticated;
+create table test.dev (token text);
+grant all on test.dev to anon, authenticated;
+create table test.emp as select id from public.employees where full_name = 'موظف إداري';
+grant select on test.emp to anon, authenticated;
+select set_config('request.jwt.claims', '', false); set role anon;
+select test.fails($$select * from public.attendance_codes$$, '%permission denied%', 'nobody can read attendance codes');
+select test.ok((select count(*) from public.attendance_people((select code from test.point))) >= 1, 'the sheet lists the people who record attendance');
+select test.fails($$select * from public.attendance_people('old-sheet')$$, 'bad_point', 'an old or fake sheet shows no names');
+select test.ok(public.attendance_register((select code from test.point), (select id from test.emp), '0000') is null, 'a wrong code registers nothing');
+insert into test.dev select public.attendance_register((select code from test.point), (select id from test.emp), '4821', 'Android');
+select test.ok((select length(token) = 48 from test.dev), 'the right code gives this phone its private key');
+select test.ok((public.attendance_punch((select code from test.point), (select token from test.dev)) -> 'punches' -> 0 ->> 'kind') = 'in', 'the first scan of the day is "in"');
+select test.ok((public.attendance_punch((select code from test.point), (select token from test.dev)) ->> 'repeat')::boolean, 'a second scan within two minutes records nothing new');
+reset role;
+update public.attendance_punches set at = at - interval '3 hours';
+select set_config('request.jwt.claims', '', false); set role anon;
+select test.ok(jsonb_array_length(public.attendance_punch((select code from test.point), (select token from test.dev)) -> 'punches') = 2, 'the next scan is "out"');
+select test.fails($$select public.attendance_punch((select code from test.point), 'stolen-or-made-up')$$, 'unknown_device', 'an unknown phone cannot record');
+select test.fails($$select public.attendance_punch('old-sheet', (select token from test.dev))$$, 'bad_point', 'a photo of an old sheet does not work');
+select test.fails($$select count(*) from public.attendance_punches$$, '%permission denied%', 'the sheet opens no other data');
+select public.attendance_register((select code from test.point), (select id from test.emp), '1111') from generate_series(1, 5);
+select test.fails($$select public.attendance_register((select code from test.point), (select id from test.emp), '4821')$$, 'locked', 'five wrong codes lock it for a while');
+reset role;
+select test.ok((select count(*) = 2 and bool_and(method = 'qr') from public.attendance_punches where employee_id = (select id from test.emp)), 'scans are stored as QR punches');
+select test.login('رامي أبو عجوة'); set role authenticated;
+select test.ok(test.affected($$update public.attendance_devices set revoked_at = now()$$) = 1, 'the manager can switch a phone off');
+reset role; select set_config('request.jwt.claims', '', false); set role anon;
+select test.fails($$select public.attendance_punch((select code from test.point), (select token from test.dev))$$, 'unknown_device', 'a switched-off phone cannot record');
+reset role; select test.login('رامي أبو عجوة'); set role authenticated;
+
 -- ---------- People and logins ----------
 select test.fails($$select public.admin_save_employee(null, 'زيد', 'technician', '0591111111', '123456', true, true)$$,
                   'not_allowed', 'only the admin adds people');

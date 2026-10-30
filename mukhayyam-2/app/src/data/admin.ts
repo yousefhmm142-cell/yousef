@@ -112,7 +112,8 @@ export interface EmployeeInput {
   tracksAttendance: boolean
 }
 
-export async function saveEmployee(input: EmployeeInput): Promise<void> {
+/** Returns the person's id (new or existing). */
+export async function saveEmployee(input: EmployeeInput): Promise<string> {
   const name = input.fullName.trim()
   const phone = input.phone?.trim() || null
   if (name.length < 2 || name.length > 80) fail('bad_name')
@@ -121,7 +122,7 @@ export async function saveEmployee(input: EmployeeInput): Promise<void> {
   if (input.pin !== null && phone === null) fail('bad_phone')
 
   if (isDemo) {
-    await db.transaction('rw', db.employees, db.demoAccounts, async () => {
+    return db.transaction('rw', db.employees, db.demoAccounts, async () => {
       const all = await db.employees.toArray()
       if (phone && all.some((e) => e.phone === phone && e.id !== input.id)) fail('phone_taken')
       const before = input.id ? all.find((e) => e.id === input.id) : undefined
@@ -134,6 +135,7 @@ export async function saveEmployee(input: EmployeeInput): Promise<void> {
       const pin = input.pin ?? account?.pin ?? null
       if (phone && pin) await db.demoAccounts.put({ phone, pin, employeeId: id })
       await db.employees.put({
+        ...before,
         id,
         fullName: name,
         role: input.role,
@@ -142,12 +144,12 @@ export async function saveEmployee(input: EmployeeInput): Promise<void> {
         tracksAttendance: input.tracksAttendance,
         hasLogin: !!(phone && pin),
       })
+      return id
     })
-    return
   }
 
   const sb = online()
-  const { error, status } = await sb.rpc('admin_save_employee', {
+  const { data, error, status } = await sb.rpc('admin_save_employee', {
     p_id: input.id ?? null,
     p_full_name: name,
     p_role: input.role,
@@ -158,6 +160,7 @@ export async function saveEmployee(input: EmployeeInput): Promise<void> {
   })
   if (error) failFrom(error, status)
   await refresh()
+  return data as string
 }
 
 // ---------- First run (real mode) ----------

@@ -1,0 +1,108 @@
+/* =========================================================
+   Attendance: today, the weekly sheet, the QR sheet, and the scan page
+   ========================================================= */
+.attendance { max-width: 1240px; margin: 0 auto; display: grid; gap: 16px; }
+.attendance .ph { margin-bottom: 0; }
+.attendance .ph .segmented { margin-inline-start: auto; }
+.kpi[data-tone='warn'] .kpi-value { color: var(--warn); }
+.kpi[data-tone='warn'] .kpi-ico { background: var(--warn-soft); color: var(--warn); }
+
+.att-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.att-row {
+  width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 16px; text-align: start;
+  font: inherit; color: inherit; cursor: pointer; border: 0;
+}
+.att-row:hover { box-shadow: var(--shadow-lg); }
+.att-name { flex: 1; min-width: 0; display: grid; }
+.att-name small { color: var(--muted); font-size: 12px; }
+.att-times { display: grid; justify-items: end; font-size: 13px; color: var(--ink-2); }
+.att-tags { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; min-width: 120px; }
+
+.week-bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; }
+.week-label { display: grid; text-align: center; min-width: 200px; }
+.week-label span { font-size: 12.5px; color: var(--muted); }
+.week-print { margin-inline-start: auto; }
+.week-card { padding: 0; overflow: hidden; }
+.week-scroll { overflow-x: auto; }
+table.week { width: 100%; border-collapse: collapse; min-width: 900px; }
+.week th, .week td { padding: 0; border-bottom: 1px solid var(--line-2); text-align: center; font-size: 13px; }
+.week thead th { padding: 10px 6px; color: var(--muted); font-weight: 700; background: var(--surface-2); }
+.week thead th small { display: block; font-weight: 400; font-size: 11.5px; }
+.week thead th[data-today] { color: var(--brand); }
+.week .week-person { text-align: start; padding: 10px 14px; min-width: 150px; background: var(--surface); position: sticky; inset-inline-start: 0; z-index: 1; }
+.week tbody .week-person b { display: block; font-size: 14px; }
+.week tbody .week-person small { color: var(--muted); font-weight: 400; font-size: 11.5px; }
+.week-cell {
+  width: 100%; min-height: 58px; padding: 6px 4px; display: grid; place-content: center; gap: 3px;
+  border: 0; background: none; font: inherit; color: inherit; cursor: pointer;
+}
+.week-cell:hover:not(:disabled) { background: var(--surface-2); }
+.week-cell:disabled { cursor: default; }
+.week td[data-status='absent'] { background: color-mix(in srgb, var(--danger-soft) 70%, transparent); }
+.week td[data-status='off'], .week td[data-status='holiday'] { background: repeating-linear-gradient(45deg, transparent 0 6px, var(--surface-2) 6px 12px); }
+.week td[data-status='leave'] { background: var(--info-soft); }
+.tag { font-style: normal; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: var(--sunken); color: var(--muted); justify-self: center; }
+.tag.warn { background: var(--warn-soft); color: var(--warn); }
+.tag.ok { background: var(--ok-soft); color: var(--ok); }
+.week-mark { font-size: 12.5px; font-weight: 700; color: var(--muted); }
+.week-mark.absent { color: var(--danger); }
+.week-mark.leave { color: var(--info); }
+.week td.total { padding: 8px; font-weight: 800; min-width: 64px; }
+.week td.total[data-bad] { color: var(--danger); }
+
+.att-day { display: grid; gap: 16px; }
+.att-punch-end { display: inline-flex; align-items: center; gap: 8px; }
+.att-manual { display: grid; gap: 8px; padding: 12px; border-radius: var(--r-in); background: var(--surface-2); }
+.att-manual-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.att-manual .time-input { max-width: 140px; }
+
+.att-sheet-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 16px; align-items: start; }
+.att-qr { display: grid; gap: 12px; padding-bottom: 16px; }
+.att-qr > :not(.card-h) { margin-inline: 18px; }
+.att-qr-img { width: min(260px, 70vw); justify-self: center; padding: 12px; background: #fff; border-radius: var(--r-in); }
+.att-qr-img svg, .qr-print-img svg { display: block; width: 100%; height: auto; }
+
+@media (max-width: 900px) {
+  .att-sheet-grid { grid-template-columns: 1fr; }
+  .attendance .ph .segmented { margin-inline-start: 0; width: 100%; overflow-x: auto; }
+  .att-row { flex-wrap: wrap; }
+  .att-times { justify-items: start; }
+  .att-tags { width: 100%; justify-content: flex-start; padding-inline-start: 50px; }
+  .att-times { padding-inline-start: 50px; order: 3; width: 100%; grid-auto-flow: column; justify-content: start; gap: 10px; }
+  .week-bar { flex-wrap: wrap; }
+  .week-print { width: 100%; justify-content: center; }
+}
+
+/* ---------- Printed QR sheet (A4 portrait) ---------- */
+@media print {
+  .qr-print { text-align: center; padding-top: 10mm; }
+  .qr-print > img, .qr-print > .logo { display: block; margin: 0 auto; }
+  .qr-print h1 { margin: 6mm 0 0; font-size: 30pt; }
+  .qr-print-sub { margin: 2mm 0 8mm; font-size: 13pt; }
+  .qr-print-img { width: 120mm; margin: 0 auto; }
+  .qr-print ol { text-align: start; width: 140mm; margin: 8mm auto 0; font-size: 13pt; line-height: 1.9; }
+}
+
+/* ---------- The scan page ---------- */
+.scan { max-width: 480px; margin: 0 auto; padding: 18px 16px 40px; display: grid; gap: 14px; min-height: 100dvh; align-content: start; }
+.scan-step { padding: 20px; display: grid; gap: 12px; text-align: center; }
+.scan-step h1 { margin: 0; font-size: 24px; }
+.scan-step p { margin: 0; }
+.scan-people { display: grid; gap: 8px; margin-top: 6px; }
+.scan-person {
+  display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-radius: var(--r-in);
+  border: 1px solid var(--line); background: var(--surface-2); font: inherit; font-size: 16px; font-weight: 700; color: var(--ink); cursor: pointer;
+}
+.scan-person:hover { border-color: var(--brand); }
+.scan-person svg { color: var(--brand); }
+.scan-done { padding: 28px 20px 18px; display: grid; justify-items: center; gap: 4px; text-align: center; }
+.scan-ico { width: 74px; height: 74px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: linear-gradient(150deg, #2f9e6b, #1d7a50); box-shadow: 0 16px 34px -16px #1d7a50; }
+.scan-done.out .scan-ico { background: linear-gradient(150deg, var(--brand-hi), var(--brand-lo)); box-shadow: 0 16px 34px -16px var(--brand); }
+.scan-hello { margin: 12px 0 0; color: var(--muted); font-size: 16px; }
+.scan-done h1 { margin: 0; font-size: 28px; }
+.scan-time { margin: 2px 0 6px; font-size: 40px; font-weight: 800; letter-spacing: -1px; }
+.scan-done p { margin: 0; }
+.scan-today { list-style: none; margin: 14px 0 0; padding: 12px 0 0; border-top: 1px dashed var(--line-2); display: grid; gap: 6px; width: 100%; }
+.scan-today li { display: flex; align-items: center; justify-content: center; gap: 6px; color: var(--ink-2); font-size: 14px; }
+.scan-today svg { color: var(--ok); }
+.scan-notme { margin-top: 14px; border: 0; background: none; color: var(--muted); font: inherit; font-size: 13px; text-decoration: underline; cursor: pointer; }

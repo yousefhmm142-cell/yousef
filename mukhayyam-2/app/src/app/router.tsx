@@ -10,12 +10,13 @@ import { SettingsPage } from '../features/settings/SettingsPage'
 import { Account } from '../pages/Account'
 import { Home } from '../pages/Home'
 import { LoginRoute } from '../pages/Login'
-import { ModuleSoon } from '../pages/ModuleSoon'
 import { SiteHistoryPage } from '../features/sheets/SiteHistoryPage'
 import { TaskLinkPage } from '../features/tasks/LinkPage'
 import { TasksPage } from '../features/tasks/TasksPage'
+import { AttendancePage } from '../features/attendance/AttendancePage'
+import { AttendanceScanPage } from '../features/attendance/ScanPage'
 import { NotFound, RouteError } from '../pages/states'
-import { isManagerRole, isSiteRole, SITE_ROLES, type Role } from '../types'
+import { isSiteRole, SITE_ROLES, type Role } from '../types'
 import { AppShell } from './AppShell'
 import { RequireAuth, RoleGate } from './guards'
 
@@ -35,16 +36,12 @@ function DistributionIndex() {
   return isSiteRole(employee.role) ? <DistributionHistoryPage /> : <SheetPage />
 }
 
-/** Managers see the team board; everyone else sees their own attendance. */
-function AttendanceRoute() {
-  const employee = useEmployee()
-  return <ModuleSoon module={isManagerRole(employee.role) ? 'attendance-board' : 'my-attendance'} />
-}
-
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginRoute />, errorElement: <RouteError /> },
   // The technician's page behind the link in the order: no sign-in.
   { path: '/t/:token', element: <TaskLinkPage />, errorElement: <RouteError /> },
+  // What the office QR sheet opens: no sign-in.
+  { path: '/a/:code', element: <AttendanceScanPage />, errorElement: <RouteError /> },
   {
     element: <RequireAuth />,
     errorElement: <RouteError />,
@@ -66,7 +63,7 @@ export const router = createBrowserRouter([
           { path: 'tasks', element: <RoleGate roles={managers}><TasksPage /></RoleGate> },
           {
             path: 'attendance',
-            element: <RoleGate roles={[...managers, 'technician', 'staff']}><AttendanceRoute /></RoleGate>,
+            element: <RoleGate roles={managers}><AttendancePage /></RoleGate>,
           },
           { path: 'settings', element: <RoleGate roles={['admin']}><SettingsPage /></RoleGate> },
           { path: 'account', element: <Account /> },

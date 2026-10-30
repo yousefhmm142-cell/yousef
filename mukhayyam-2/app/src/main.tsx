@@ -11,6 +11,7 @@ import './styles/forms.css'
 import './styles/generation.css'
 import './styles/distribution.css'
 import './styles/tasks.css'
+import './styles/attendance.css'
 import './styles/print.css'
 
 import { StrictMode } from 'react'

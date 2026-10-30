@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { isDemo } from '../../config'
+import { ensureDemoData } from '../../data/demo'
 import { db } from '../../data/db'
 import { getSupabase } from '../../data/supabase'
 import { serverNow } from '../../lib/clock'
@@ -231,6 +232,8 @@ async function demoLinkTask(token: string): Promise<LinkTask | null> {
 /** null: no such task. Opening it marks it seen. */
 export async function openTaskLink(token: string): Promise<LinkTask | null> {
   if (isDemo) {
+    // A phone opening the sheet or the link for the first time: the sample data may still be loading.
+    await ensureDemoData()
     const t = await db.tasks.where('linkToken').equals(token).first()
     if (t && (t.status === 'new' || t.status === 'sent')) await db.tasks.update(t.id, { status: 'seen', seenAt: serverNow().toISOString() })
     return demoLinkTask(token)
@@ -243,6 +246,8 @@ export async function openTaskLink(token: string): Promise<LinkTask | null> {
 
 export async function actOnTaskLink(token: string, action: 'start' | 'done', notes = ''): Promise<LinkTask | null> {
   if (isDemo) {
+    // A phone opening the sheet or the link for the first time: the sample data may still be loading.
+    await ensureDemoData()
     const t = await db.tasks.where('linkToken').equals(token).first()
     if (!t) throw new SheetStateError('not_found')
     if (t.status === 'cancelled') throw new SheetStateError('cancelled')
