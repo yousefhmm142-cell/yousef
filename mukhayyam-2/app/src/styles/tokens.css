@@ -1,0 +1,89 @@
+/* Approved identity (design/02-identity.html): Almarai, porcelain light, control-room dark, glass shapes. */
+:root {
+  --font: 'Almarai', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --r-xl: 28px;
+  --r-lg: 24px;
+  --r: 16px;
+  --r-in: 14px;
+  --blur: 22px;
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  --topbar-h: 72px;
+  --tabbar-h: 74px;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #F3F1EE;
+  --bg-art:
+    radial-gradient(55% 48% at 95% -6%, #efc4cd 0%, transparent 70%),
+    radial-gradient(45% 42% at 2% 2%, #dde1e8 0%, transparent 70%),
+    radial-gradient(50% 45% at 50% 110%, #efe1d9 0%, transparent 70%),
+    linear-gradient(180deg, #F6F4F1, #EFECE8);
+  --surface: #fff;
+  --surface-2: #FAF8F6;
+  --sunken: #F1EEEA;
+  --glass: #ffffff94;
+  --glass-strong: #ffffffd1;
+  --glass-line: #fff;
+  --glass-edge: #ffffffd9;
+  --line: #E7E2DC;
+  --line-2: #F0ECE7;
+  --ink: #1B1517;
+  --ink-2: #3B3236;
+  --muted: #6E6468;
+  --faint: #8F868A;
+  --brand: #8E1B2B;
+  --brand-hi: #B12638;
+  --brand-lo: #5F0F1B;
+  --brand-soft: #8e1b2b12;
+  --on-brand: #fff;
+  --ok: #1E7B55; --ok-soft: #1e7b5517;
+  --warn: #B25E0B; --warn-soft: #b25e0b17;
+  --danger: #D9412E; --danger-soft: #d9412e14;
+  --info: #2F5DA8; --info-soft: #2f5da812;
+  --shadow: 0 1px 1px #1b151705, 0 14px 34px -18px #1b151738;
+  --shadow-lg: 0 40px 80px -40px #1b151759, 0 2px 6px #1b15170a;
+  --chrome: linear-gradient(180deg, #fff 0%, #E8EAED 42%, #C5CBD2 58%, #F3F4F6 100%);
+  --track: #EEEAE5;
+  --nav-on: #fff;
+  --nav-on-ring: 0 1px 1px #1b151708, 0 6px 16px -8px #1b151740;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #07080A;
+  --bg-art:
+    radial-gradient(900px 500px at 100% -10%, #b0253638, transparent 60%),
+    radial-gradient(700px 420px at 0% 0%, #5b667a24, transparent 60%),
+    repeating-linear-gradient(0deg, #ffffff05 0 1px, transparent 1px 44px),
+    repeating-linear-gradient(90deg, #ffffff05 0 1px, transparent 1px 44px);
+  --surface: #0E1014;
+  --surface-2: #121419;
+  --sunken: #0A0B0E;
+  --glass: #13161bb8;
+  --glass-strong: #13161be6;
+  --glass-line: #ffffff0f;
+  --glass-edge: #ffffff14;
+  --line: #20242B;
+  --line-2: #181B21;
+  --ink: #F1F3F5;
+  --ink-2: #C8CDD4;
+  --muted: #8B929D;
+  --faint: #6D747F;
+  --brand: #D0364A;
+  --brand-hi: #E5485B;
+  --brand-lo: #8E1B2B;
+  --brand-soft: #d0364a1f;
+  --on-brand: #fff;
+  --ok: #35D48A; --ok-soft: #35d48a1a;
+  --warn: #F7B32B; --warn-soft: #f7b32b1a;
+  --danger: #FF6B57; --danger-soft: #ff6b571a;
+  --info: #6FB1FF; --info-soft: #6fb1ff1a;
+  --shadow: 0 0 0 1px #ffffff06, 0 20px 40px -24px #000;
+  --shadow-lg: 0 60px 120px -50px #000, 0 0 0 1px #ffffff0a;
+  --chrome: linear-gradient(180deg, #F1F2F4 0%, #C9CED5 46%, #8F97A1 60%, #DADDE1 100%);
+  --track: #1b1f25;
+  --nav-on: #ffffff0d;
+  --nav-on-ring: inset 0 0 0 1px #d0364a59, 0 0 22px -8px #d0364a99;
+}

@@ -21,7 +21,7 @@
 | الدوام | 8:00 ص – 5:00 م، وموظفو البطالة 8:00 ص – 2:00 م. |
 | الحضور | ورقة QR مطبوعة ثابتة معلّقة في المكتب. مشغّل موقع التوليد لا يسجّل حضوراً. |
 | أيام العمل | السبت إلى الخميس، والجمعة عطلة. |
-| الهوية البصرية | مزيج من الاتجاهات الثلاثة بدون الخط الكوفي، مع الشعار الجديد (`design/02-identity.html`). الخط: Almarai أو Vazirmatn، بانتظار الاختيار. |
+| الهوية البصرية | مزيج من الاتجاهات الثلاثة بدون الخط الكوفي، مع الشعار الجديد (`design/02-identity.html`). الخط: Almarai. |
 | الزجاج (Glassmorphism) | للرأس وبطاقات المؤشرات والنوافذ. الجداول ونماذج الإدخال بأسطح صلبة واضحة تُقرأ تحت الشمس. |
 
 ---
@@ -241,7 +241,6 @@
 erDiagram
   work_schedules ||--o{ employees : "دوام"
   employees ||--o{ attendance_punches : "يسجّل"
-  employees ||--o{ attendance_days : "ملخص"
   employees ||--o{ leaves : "إجازات"
   attendance_points ||--o{ attendance_punches : "الورقة"
   task_types ||--o{ tasks : "نوع"
@@ -256,24 +255,24 @@ erDiagram
   generator_day_logs ||--o{ generator_runs : "تشغيلات"
   site_reports ||--o{ maintenance_logs : "صيانات"
   generators ||--o{ maintenance_logs : "مولد"
-  distribution_sheets ||--o{ zone_runs : "تشغيلات"
-  zones ||--o{ zone_runs : "منطقة"
+  distribution_sheets ||--o{ zone_day_entries : "مناطق"
+  zones ||--o{ zone_day_entries : "منطقة"
+  zone_day_entries ||--o{ zone_runs : "تشغيلات"
 ```
 
 | المجموعة | الجداول |
 |---|---|
 | الأساس | `employees`، `work_schedules`، `app_settings`، `audit_log` |
 | التوليد | `generators`، `fuel_types`، `site_reports`، `site_report_fuel`، `generator_day_logs`، `generator_runs`، `maintenance_logs` |
-| التوزيع | `zones`، `distribution_sheets`، `zone_runs` |
+| التوزيع | `zones`، `distribution_sheets`، `zone_day_entries` (عدد ساعات كل منطقة)، `zone_runs` |
 | المهام | `task_types`، `tasks`، `task_events`، `outgoing_messages` |
-| الحضور | `attendance_points`، `attendance_punches`، `attendance_days`، `leaves`، `holidays` |
+| الحضور | `attendance_points`، `attendance_punches`، `leaves`، `holidays`. ملخص اليوم (حاضر، متأخر، ساعات، إضافي) يُحسب من التسجيلات عند العرض بدل حفظه في جدول، فلا يختلف أبداً عن الأصل |
 
 كل جدول يُدخَل من الجوال يحمل أيضاً: `client_id` (الرقم الفريد من الجهاز)، و`recorded_offline`، و`device_time`، و`server_time`.
 
 ---
 
-## 11. بانتظار قرارك
+## 11. التنفيذ
 
-1. الخط: Almarai أو Vazirmatn.
-
-**الخطوة الحالية:** الهوية البصرية، ملف `design/02-identity.html`.
+- الجداول وقواعد الصلاحيات: `supabase/migrations/`، والبيانات الأولية: `supabase/seed.sql`.
+- كل قاعدة في هذه الوثيقة لها فحص آلي في `supabase/tests/checks.sql` (41 فحصاً).

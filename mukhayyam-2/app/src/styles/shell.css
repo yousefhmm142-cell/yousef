@@ -1,0 +1,90 @@
+.shell { min-height: 100dvh; }
+
+.skip {
+  position: absolute; inset-inline-start: 12px; top: -60px; z-index: 100;
+  padding: 10px 16px; border-radius: 999px; background: var(--brand); color: var(--on-brand); font-weight: 700;
+}
+.skip:focus { top: 12px; }
+
+/* ---------- Top bar: floating glass pill ---------- */
+.topbar {
+  position: sticky; top: 12px; z-index: 40;
+  max-width: 1280px; margin: 12px auto 0;
+  display: flex; align-items: center; gap: 18px;
+  padding: 7px 10px 7px 18px; border-radius: 999px;
+}
+.app-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; flex: none; }
+.app-brand-text b { display: block; font-size: 17px; font-weight: 800; line-height: 1.15; }
+.app-brand-text small { display: block; font-size: 11.5px; color: var(--faint); }
+
+.topnav { display: flex; gap: 2px; margin-inline-start: 6px; min-width: 0; }
+.topnav-link {
+  display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px;
+  color: var(--muted); font-weight: 700; font-size: 14px; text-decoration: none; white-space: nowrap;
+  transition: color .15s, background .15s;
+}
+.topnav-link:hover { color: var(--ink); }
+.topnav-link.active { color: var(--ink); background: var(--nav-on); box-shadow: var(--nav-on-ring); font-weight: 800; }
+.topnav-link.active svg { color: var(--brand); }
+
+.topbar-end { margin-inline-start: auto; display: flex; align-items: center; gap: 10px; flex: none; }
+
+.sync { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); flex: none; }
+.sync.ok .sync-dot { background: var(--ok); box-shadow: 0 0 0 4px var(--ok-soft); }
+.sync.warn { color: var(--warn); font-weight: 700; }
+.sync.warn .sync-dot { background: var(--warn); box-shadow: 0 0 0 4px var(--warn-soft); animation: breathe 1.6s ease-in-out infinite; }
+.sync.brand .sync-dot { background: var(--brand); box-shadow: 0 0 0 4px var(--brand-soft); }
+@keyframes breathe { 50% { box-shadow: 0 0 0 7px transparent; } }
+
+.icon-btn {
+  width: 40px; height: 40px; border-radius: 50%; flex: none;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink-2);
+  display: grid; place-items: center; transition: background .15s;
+}
+:root[data-theme='dark'] .icon-btn { background: var(--glass); border-color: var(--glass-edge); }
+.icon-btn:hover { background: var(--sunken); }
+
+.me { display: flex; align-items: center; gap: 9px; text-decoration: none; border-radius: 999px; padding-inline-end: 4px; }
+.me-text b { display: block; font-size: 13.5px; line-height: 1.2; }
+.me-text small { display: block; font-size: 11.5px; color: var(--faint); }
+.avatar {
+  border-radius: 50%; display: grid; place-items: center; flex: none;
+  font-weight: 800; color: #fff; line-height: 1;
+  background: linear-gradient(140deg, var(--brand-hi), var(--brand-lo));
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px color-mix(in srgb, var(--brand) 40%, transparent);
+}
+
+.page { max-width: 1280px; margin: 0 auto; padding: 26px 24px 56px; }
+
+/* ---------- Bottom tab bar (phones) ---------- */
+.tabbar { display: none; }
+
+@media (max-width: 1080px) {
+  .topnav-link span { display: none; }
+  .topnav-link { padding: 9px 11px; }
+  .me-text { display: none; }
+}
+
+@media (max-width: 900px) {
+  .topbar { top: 8px; margin: 8px 10px 0; padding: 6px 8px 6px 14px; gap: 10px; }
+  .topnav, .app-brand-text small, .topbar .sync-detail { display: none; }
+  .topbar > * { min-width: 0; }
+  .page { padding: 18px 16px calc(var(--tabbar-h) + 34px + var(--safe-b)); }
+  .tabbar {
+    position: fixed; z-index: 40; inset-inline: 12px; bottom: calc(10px + var(--safe-b));
+    display: flex; height: 66px; padding: 6px; border-radius: 26px;
+  }
+  .tab {
+    flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    text-decoration: none; color: var(--muted); font-size: 11.5px; font-weight: 700; border-radius: 20px;
+  }
+  .tab-icon { width: 46px; height: 30px; border-radius: 999px; display: grid; place-items: center; transition: background .2s var(--ease); }
+  .tab-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .tab.active { color: var(--brand); }
+  .tab.active .tab-icon { background: var(--brand-soft); }
+}
+
+@media (max-width: 380px) {
+  .topbar .sync-label { display: none; }
+}

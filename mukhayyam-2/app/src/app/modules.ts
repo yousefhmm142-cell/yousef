@@ -1,0 +1,98 @@
+import {
+  ClipboardList,
+  LayoutGrid,
+  ListChecks,
+  ScanLine,
+  Settings,
+  Users,
+  Zap,
+  type LucideIcon,
+} from 'lucide-react'
+
+export type ModuleKey =
+  | 'generation'
+  | 'generation-entry'
+  | 'distribution'
+  | 'distribution-entry'
+  | 'tasks'
+  | 'my-tasks'
+  | 'attendance-board'
+  | 'my-attendance'
+  | 'settings'
+
+export interface ModuleInfo {
+  title: string
+  summary: string
+  icon: LucideIcon
+  /** The build step (see README) that delivers this screen. */
+  step: number
+  features: string[]
+}
+
+export const TOTAL_STEPS = 7
+
+export const modules: Record<ModuleKey, ModuleInfo> = {
+  generation: {
+    title: 'تقارير موقع التوليد',
+    summary: 'كل تقرير كما وصل من الموقع، بنفس ترتيب الورقة.',
+    icon: Zap,
+    step: 3,
+    features: ['التنقّل بين الأيام بالأسهم أو التقويم', 'تنبيهات الوقود والحرارة وضغط الزيت', 'اعتماد التقرير أو إعادته للتصحيح', 'طباعة بنفس شكل الورقة'],
+  },
+  'generation-entry': {
+    title: 'تقرير اليوم',
+    summary: 'المحروقات، والتشغيل، والصيانات، والملاحظات، خطوة بخطوة.',
+    icon: ClipboardList,
+    step: 3,
+    features: ['لوحة أرقام تفتح وحدها، وانتقال تلقائي للحقل التالي', 'المولدات وأنواع الوقود جاهزة دون إضافتها كل يوم', 'يُحفظ على جوالك حتى بدون إنترنت', 'زر «إرسال للمدير» بدل التوقيع'],
+  },
+  distribution: {
+    title: 'التوزيع والأحمال',
+    summary: 'المناطق الست والتشغيلات الست في جدول واحد.',
+    icon: LayoutGrid,
+    step: 4,
+    features: ['عدد الساعات لكل منطقة', 'أحمال الفازات الثلاث لكل تشغيلة', 'التنقّل بين الأيام والاعتماد', 'طباعة بنفس شكل الورقة'],
+  },
+  'distribution-entry': {
+    title: 'كشف اليوم',
+    summary: 'تشغيلات المناطق وأحمالها، منطقة بعد منطقة.',
+    icon: ClipboardList,
+    step: 4,
+    features: ['المناطق الست جاهزة بالترتيب', 'أحمال L1 و L2 و L3 بالأمبير أو الكيلوواط', 'يُحفظ على جوالك حتى بدون إنترنت', 'زر «إرسال للمدير» بدل التوقيع'],
+  },
+  tasks: {
+    title: 'المهام الميدانية',
+    summary: 'إسناد المهام للفنيين ومتابعتها لحظة بلحظة.',
+    icon: ListChecks,
+    step: 5,
+    features: ['إسناد مهمة لفني بضغطتين', 'إرسالها SMS أو واتساب برسالة جاهزة', 'عدّاد حي لكل مهمة قيد التنفيذ', 'تنبيه عند تأخر أي مهمة'],
+  },
+  'my-tasks': {
+    title: 'مهامي',
+    summary: 'المهام التي أرسلها لك المدير.',
+    icon: ListChecks,
+    step: 5,
+    features: ['تصلك المهمة برسالة ورابط مباشر', 'زر «بدء» يشغّل العدّاد', 'زر «إتمام» مع ملاحظاتك وصورة اختيارية', 'يعمل حتى بدون إنترنت'],
+  },
+  'attendance-board': {
+    title: 'الحضور والانصراف',
+    summary: 'حالة الفريق اليوم: حاضر، متأخر، غائب.',
+    icon: Users,
+    step: 6,
+    features: ['أوقات الحضور والانصراف بتوقيت الخادم', 'ساعات العمل الفعلية والإضافية', 'طباعة ورقة QR للمكتب', 'تصحيح يدوي مع ذكر السبب'],
+  },
+  'my-attendance': {
+    title: 'الحضور',
+    summary: 'سجّل حضورك وانصرافك بمسح ورقة المكتب.',
+    icon: ScanLine,
+    step: 6,
+    features: ['زر واحد كبير يتغيّر من حضور إلى انصراف', 'تأكيد فوري: «أهلاً قصي · حضور 7:58 ص»', 'سجل أيامك وساعاتك', 'يعمل حتى بدون إنترنت'],
+  },
+  settings: {
+    title: 'الإعدادات',
+    summary: 'الفريق، والمولدات، وحدود التنبيهات.',
+    icon: Settings,
+    step: 3,
+    features: ['إضافة الموظفين وأرقام جوالاتهم', 'المولدات وماركاتها وقدراتها', 'حدود التنبيهات والدوامات', 'سجل كل التغييرات'],
+  },
+}
