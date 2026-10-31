@@ -18,13 +18,29 @@ case "$url" in
     echo "What was given: ${#url} characters, contains '://': $(has '://'), contains '@': $(has '@'), contains 'supabase': $(has 'supabase')." >&2
     exit 1 ;;
 esac
-if printf '%s' "$url" | grep -q 'YOUR-PASSWORD\|\[.*\]@'; then
+if printf '%s' "$url" | grep -q 'YOUR-PASSWORD'; then
   echo "SUPABASE_DB_URL still has [YOUR-PASSWORD] in it: put the database password there, without the brackets." >&2
   exit 1
 fi
-SUPABASE_DB_URL="$url"
+# Read the parts ourselves, so a password with symbols (@ # / ...), brackets left around it or a
+# doubled @ still work: user and password before the LAST @, host, port and database after it.
+rest="${url#*://}"
+after="${rest##*@}"
+userinfo="$(printf '%s' "${rest%@*}" | sed -e 's/@*$//')"
+export PGUSER="${userinfo%%:*}"
+pass="${userinfo#*:}"
+pass="${pass#[}"; pass="${pass%]}"
+export PGPASSWORD="$pass"
+hostport="${after%%/*}"
+export PGHOST="${hostport%%:*}"
+port="${hostport#*:}"; [ "$port" = "$hostport" ] && port=5432
+export PGPORT="$port"
+db="${after#*/}"; [ "$db" = "$after" ] && db=postgres
+export PGDATABASE="${db%%\?*}"
+unset SUPABASE_DB_URL url rest userinfo pass
 export PGSSLMODE="${PGSSLMODE:-require}"
-q() { psql "$SUPABASE_DB_URL" -X -q -v ON_ERROR_STOP=1 "$@"; }
+echo "connecting to $PGHOST:$PGPORT/$PGDATABASE as $PGUSER"
+q() { psql -X -q -v ON_ERROR_STOP=1 "$@"; }
 
 ready="$(q -Atc "select to_regclass('public.employees') is not null")" || { echo "could not connect to the database (check the password in SUPABASE_DB_URL)" >&2; exit 1; }
 if [ "$ready" != "t" ]; then
