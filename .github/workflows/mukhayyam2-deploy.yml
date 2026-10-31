@@ -40,7 +40,8 @@ jobs:
       - run: npx tsc --noEmit
       - run: npx vitest run
       # The Supabase address and publishable key come from app/.env.hosting (public values).
-      - run: npx vite build --mode hosting --outDir dist-hosting
+      - id: build
+        run: npx vite build --mode hosting --outDir dist-hosting
       # The database first, so the new app never calls something the server does not have yet.
       - name: Update the database
         if: env.HAS_DB == 'true'
@@ -50,8 +51,9 @@ jobs:
         run: |
           command -v psql >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client)
           ./apply-updates.sh
+      # Published even if the database step failed, as long as the app built (that failure still shows red).
       - name: Publish to https://mukhayyam2.pages.dev
-        if: env.HAS_CF == 'true'
+        if: ${{ !cancelled() && steps.build.outcome == 'success' && env.HAS_CF == 'true' }}
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
