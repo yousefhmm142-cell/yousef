@@ -137,7 +137,7 @@ export function weekTotals(days: DayResult[]) {
 
 export const statusLabel: Record<DayStatus, string> = {
   present: 'حاضر',
-  late: 'متأخر',
+  late: 'حاضر',
   working: 'في الدوام',
   no_out: 'بلا انصراف',
   pending: 'لم يحضر بعد',

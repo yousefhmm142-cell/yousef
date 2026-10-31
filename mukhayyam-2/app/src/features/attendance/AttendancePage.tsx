@@ -5,12 +5,12 @@ import { useSearchParams } from 'react-router'
 import { useEmployee } from '../../auth/AuthProvider'
 import { useTeam } from '../../data/team'
 import { addDays, describeDay, isoNoon, todayISO, type ISODate } from '../../lib/dates'
-import { formatTime, formatWeekday } from '../../lib/format'
+import { formatWeekday } from '../../lib/format'
 import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import { useNow } from '../../lib/useNow'
 import type { Employee } from '../../types'
 import { Dialog } from '../../ui/Dialog'
-import { Segmented } from '../../ui/form'
+import { Segmented, TimeField } from '../../ui/form'
 import { Avatar, Button, Logo, Pill, type Tone } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
 import { useConfirmTap } from '../sheets/useDraft'
@@ -22,6 +22,7 @@ import {
   addManualPunch,
   deleteLeave,
   deletePunch,
+  updatePunchTime,
   refreshAttendance,
   renewPoint,
   revokeDevice,
@@ -59,7 +60,7 @@ const tabs = [
 
 const statusTone: Record<DayStatus, Tone> = {
   present: 'ok',
-  late: 'warn',
+  late: 'ok',
   working: 'ok',
   no_out: 'warn',
   pending: 'neutral',
@@ -156,7 +157,7 @@ function TodayBoard({ data, onOpen }: { data: Data; onOpen(e: Employee): void })
   const rows = data.people.map((e) => ({ e, d: data.day(e, data.today) })).filter((r): r is { e: Employee; d: DayResult } => !!r.d)
   const count = (pred: (d: DayResult) => boolean) => rows.filter((r) => pred(r.d)).length
   const present = count((d) => presentStatuses.includes(d.status))
-  const late = count((d) => d.lateMin > 0)
+  const working = count((d) => d.status === 'working')
   const missing = count((d) => d.status === 'absent' || d.status === 'pending')
   const left = count((d) => !!d.outAt && d.status !== 'working')
   const order: DayStatus[] = ['absent', 'pending', 'late', 'working', 'no_out', 'present', 'leave', 'holiday', 'off', 'future']
@@ -171,10 +172,10 @@ function TodayBoard({ data, onOpen }: { data: Data; onOpen(e: Employee): void })
           <div className="kpi-value num">{present}<small>من {rows.length}</small></div>
           <div className="kpi-sub">{weekday} · <span className="num">{date}</span></div>
         </div>
-        <div className="kpi glass" data-tone={late ? 'warn' : undefined}>
-          <div className="kpi-label"><span className="kpi-ico"><Clock3 size={16} /></span>متأخرون</div>
-          <div className="kpi-value num">{late}</div>
-          <div className="kpi-sub">بعد مهلة الدقائق العشر</div>
+        <div className="kpi glass">
+          <div className="kpi-label"><span className="kpi-ico"><Clock3 size={16} /></span>في الدوام الآن</div>
+          <div className="kpi-value num">{working}</div>
+          <div className="kpi-sub">حضروا ولم ينصرفوا بعد</div>
         </div>
         <div className="kpi glass" data-tone={missing ? 'danger' : undefined}>
           <div className="kpi-label"><span className="kpi-ico"><UserX size={16} /></span>لم يحضروا</div>
@@ -199,15 +200,9 @@ function TodayBoard({ data, onOpen }: { data: Data; onOpen(e: Employee): void })
                   <b>{e.fullName}</b>
                   <small>{[e.jobTitle, data.scheduleOf(e)?.name].filter(Boolean).join(' · ')}</small>
                 </span>
-                {d.inAt && (
-                  <span className="att-times num">
-                    <span><small>حضور</small> <b>{fmt(d.inAt)}</b></span>
-                    {d.outAt && <span><small>انصراف</small> <b>{fmt(d.outAt)}</b></span>}
-                  </span>
-                )}
+                {d.inAt && <span className="att-times"><InOut inAt={d.inAt} outAt={d.outAt} /></span>}
                 <span className="att-tags">
-                  <Pill tone={statusTone[d.status]}>{d.status === 'late' ? `متأخر ${durationText(d.lateMin)}` : statusLabel[d.status]}</Pill>
-                  {d.status === 'working' && d.lateMin > 0 && <Pill tone="warn">تأخر {durationText(d.lateMin)}</Pill>}
+                  <Pill tone={statusTone[d.status]}>{statusLabel[d.status]}</Pill>
                 </span>
               </button>
             </li>
@@ -218,10 +213,19 @@ function TodayBoard({ data, onOpen }: { data: Data; onOpen(e: Employee): void })
   )
 }
 
-/** "17:05" -> "5:05 م" */
-const fmt = (hhmm: string) => {
-  const [h, m] = hhmm.split(':').map(Number)
-  return `${((h! + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${h! < 12 ? 'ص' : 'م'}`
+/** Arrival in dark green, leaving in mulberry, only a dash between them. */
+function InOut({ inAt, outAt }: { inAt: string; outAt: string | null }) {
+  return (
+    <span className="inout num">
+      <b className="t-in" title="حضور">{inAt}</b>
+      {outAt && (
+        <>
+          <span className="t-dash" aria-hidden="true">-</span>
+          <b className="t-out" title="انصراف">{outAt}</b>
+        </>
+      )}
+    </span>
+  )
 }
 
 function WeekSheet({ data, onOpen }: { data: Data; onOpen(e: Employee, date: ISODate): void }) {
@@ -262,7 +266,6 @@ function WeekSheet({ data, onOpen }: { data: Data; onOpen(e: Employee, date: ISO
                 ))}
                 <th>حضور</th>
                 <th>غياب</th>
-                <th>تأخير</th>
                 <th>إضافي</th>
               </tr>
             </thead>
@@ -278,11 +281,8 @@ function WeekSheet({ data, onOpen }: { data: Data; onOpen(e: Employee, date: ISO
                       <button type="button" className="week-cell" onClick={() => onOpen(e, d.date)} disabled={d.status === 'future'}>
                         {d.inAt ? (
                           <>
-                            <span className="wk-times num">
-                              <b className="wk-t in" title="حضور">{d.inAt}</b>
-                              {d.outAt ? <b className="wk-t out" title="انصراف">{d.outAt}</b> : <small className="wk-t open">{d.status === 'working' ? 'في الدوام' : 'لم ينصرف'}</small>}
-                            </span>
-                            {d.lateMin > 0 && <i className="tag warn num">تأخر {d.lateMin} د</i>}
+                            <InOut inAt={d.inAt} outAt={d.outAt} />
+                            {!d.outAt && <small className="wk-open">{d.status === 'working' ? 'في الدوام' : 'لم ينصرف'}</small>}
                             {d.overtimeMin > 0 && <i className="tag ok num">+{durationText(d.overtimeMin)}</i>}
                             {d.punches.some((p) => p.method === 'manual') && <i className="tag">يدوي</i>}
                           </>
@@ -294,7 +294,6 @@ function WeekSheet({ data, onOpen }: { data: Data; onOpen(e: Employee, date: ISO
                   ))}
                   <td className="num total">{totals.present}</td>
                   <td className="num total" data-bad={totals.absent > 0 || undefined}>{totals.absent}</td>
-                  <td className="num total" data-bad={totals.lateMin > 0 || undefined}>{totals.lateMin ? durationText(totals.lateMin) : '—'}</td>
                   <td className="num total">{totals.overtimeMin ? durationText(totals.overtimeMin) : '—'}</td>
                 </tr>
               ))}
@@ -331,7 +330,6 @@ function WeekPrint({ days, rows, label, scheduleOf }: {
             {days.map((d) => <th key={d}>{formatWeekday(isoNoon(d))}<br /><span className="num">{describeDay(d).date.replace(/ \d{4}$/, '')}</span></th>)}
             <th>حضور</th>
             <th>غياب</th>
-            <th>تأخير</th>
             <th>إضافي</th>
           </tr>
         </thead>
@@ -341,14 +339,12 @@ function WeekPrint({ days, rows, label, scheduleOf }: {
               <td>{e.fullName}<br /><small>{[e.jobTitle, scheduleOf(e)?.name].filter(Boolean).join(' · ')}</small></td>
               {results.map((d) => (
                 <td key={d.date} className="num">
-                  {d.inAt ? <span className="pt-times"><b>{d.inAt}</b><b>{d.outAt ?? '—'}</b></span> : d.status === 'future' ? '' : d.status === 'leave' && d.leave ? leaveLabel[d.leave.type] : statusLabel[d.status]}
-                  {d.lateMin > 0 && <><br />تأخر {d.lateMin}د</>}
+                  {d.inAt ? <InOut inAt={d.inAt} outAt={d.outAt} /> : d.status === 'future' ? '' : d.status === 'leave' && d.leave ? leaveLabel[d.leave.type] : statusLabel[d.status]}
                   {d.overtimeMin > 0 && <><br />+{durationText(d.overtimeMin)}</>}
                 </td>
               ))}
               <td className="num">{totals.present}</td>
               <td className="num">{totals.absent}</td>
-              <td className="num">{totals.lateMin ? durationText(totals.lateMin) : '—'}</td>
               <td className="num">{totals.overtimeMin ? durationText(totals.overtimeMin) : '—'}</td>
             </tr>
           ))}
@@ -394,17 +390,22 @@ function DayDialog({ employee, date, data, onClose }: { employee: Employee; date
         <div className="task-detail-head">
           <span className="muted num">{long}</span>
           <Pill tone={statusTone[d.status]}>{statusLabel[d.status] || 'لم يأتِ بعد'}</Pill>
-          {d.lateMin > 0 && <Pill tone="warn">تأخر {durationText(d.lateMin)}</Pill>}
           {d.earlyMin > 0 && <Pill tone="warn">خرج قبل الموعد بـ {durationText(d.earlyMin)}</Pill>}
           {d.overtimeMin > 0 && <Pill tone="ok">إضافي {durationText(d.overtimeMin)}</Pill>}
         </div>
         {d.punches.length ? (
-          <ol className="task-steps">
+          <ol className="task-steps att-punches">
             {d.punches.map((p) => (
               <li key={p.id}>
                 <span>{p.kind === 'in' ? 'حضور' : 'انصراف'}{p.method === 'manual' && <small className="muted"> · يدوي: {p.reason}</small>}</span>
                 <span className="att-punch-end">
-                  <b className="num">{formatTime(new Date(p.at))}</b>
+                  <span className={`punch-time ${p.kind}`}>
+                    <TimeField
+                      label={`تعديل وقت ${p.kind === 'in' ? 'الحضور' : 'الانصراف'}`}
+                      value={gazaTime(p.at)}
+                      onChange={(v) => v && void run('edit', () => updatePunchTime(p, date, v, me.id), 'عُدّل الوقت')}
+                    />
+                  </span>
                   <button type="button" className="icon-btn sm" aria-label="حذف هذا التسجيل" disabled={!!busy}
                     onClick={() => (armed ? void run('del', () => deletePunch(p.id), 'حُذف التسجيل') : arm())}>
                     <Trash2 size={15} />
@@ -419,10 +420,11 @@ function DayDialog({ employee, date, data, onClose }: { employee: Employee; date
         {armed && <p className="field-hint">اضغط سلة الحذف مرة ثانية للتأكيد.</p>}
 
         <div className="att-manual">
-          <b>نسي يصوّر؟ سجّل عنه</b>
+          <b>سجّل حضور أو انصراف</b>
+          <span className="field-hint">لمن نسي يصوّر، أو لتسجيل وقت عنه. لتعديل وقت مسجّل اضغط على الوقت فوق.</span>
           <div className="att-manual-row">
             <Segmented<PunchKind> label="النوع" value={kind} options={[{ value: 'in', label: 'حضور' }, { value: 'out', label: 'انصراف' }]} onChange={setKind} />
-            <input type="time" className="time-input num" aria-label="الوقت" value={time} onChange={(e) => setTime(e.target.value)} />
+            <span className="punch-time"><TimeField label="وقت التسجيل" value={time} onChange={setTime} /></span>
           </div>
           <input className="input" placeholder="السبب (مطلوب)، مثلاً: الجوال كان طافي" aria-label="السبب" value={reason} onChange={(e) => setReason(e.target.value)} />
           <Button variant="secondary" busy={busy === 'manual'} disabled={!reason.trim() || !time}

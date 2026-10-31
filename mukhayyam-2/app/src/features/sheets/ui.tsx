@@ -283,10 +283,10 @@ export function NoSheet({ date, drafting, noun, source, listHref }: {
           : date === today
             ? 'يصل عادة في نهاية اليوم بعد آخر تشغيلة.'
             : late
-              ? `تأخر. تواصل مع ${source}.`
+              ? `لم يصل بعد موعده. تواصل مع ${source}.`
               : 'يصل عادة صباح اليوم التالي.'}
       </p>
-      {late && !drafting && <Pill tone="warn">متأخر</Pill>}
+      {late && !drafting && <Pill tone="warn">تجاوز موعده</Pill>}
       <Link to={listHref} className="btn">آخر ما وصل</Link>
     </div>
   )

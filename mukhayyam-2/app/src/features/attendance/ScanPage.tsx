@@ -166,7 +166,7 @@ function Done({ result, onNotMe }: { result: ScanResult; onNotMe(): void }) {
       {worked !== null && <p className="muted num">مدة دوامك اليوم: {durationText(worked)}</p>}
       <ul className="scan-today">
         {result.punches.map((p, i) => (
-          <li key={i}><CheckCircle2 size={15} />{p.kind === 'in' ? 'حضور' : 'انصراف'} <b className="num">{formatTime(new Date(p.at))}</b></li>
+          <li key={i}><CheckCircle2 size={15} />{p.kind === 'in' ? 'حضور' : 'انصراف'} <b className={`num ${p.kind === 'in' ? 't-in' : 't-out'}`}>{formatTime(new Date(p.at))}</b></li>
         ))}
       </ul>
       <button type="button" className="scan-notme" onClick={onNotMe}>لست {result.name}؟</button>

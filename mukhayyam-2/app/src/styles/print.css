@@ -29,5 +29,8 @@
 }
 
 /* Weekly attendance on paper: arrival over leaving, large and bold. */
-.print-sheet .pt-times { display: grid; line-height: 1.2; }
-.print-sheet .pt-times b { font-size: 12.5pt; font-weight: 800; }
+.print-sheet .inout { display: inline-flex; gap: 3pt; white-space: nowrap; }
+.print-sheet .inout b { font-size: 12pt; font-weight: 800; }
+.print-sheet .t-in { color: #0E6B3F; }
+.print-sheet .t-out { color: #7A1E55; }
+.print-sheet { -webkit-print-color-adjust: exact; print-color-adjust: exact; }

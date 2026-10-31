@@ -40,6 +40,6 @@ export async function ensureDemoTasks(technicianIds: string[], managerId: string
   await db.tasks.bulkPut([
     t(1, { typeId: 4, assigneeId: technicianIds[0]!, details: 'تبديل ساعة قرب مسجد الرازي', subscriberName: 'أبو محمد', subscriberPhone: '0599123456', zoneId: 3, status: 'done', createdAt: at(200), sentAt: at(199), seenAt: at(195), startedAt: at(190), completedAt: at(150), completionNotes: 'تم التبديل والفحص' }),
     t(2, { typeId: 1, assigneeId: technicianIds[1]!, details: 'شد كابل جديد لبيت آل عاشور', zoneId: 1, location: 'شارع المدرسة', expectedMinutes: 60, status: 'in_progress', createdAt: at(50), sentAt: at(48), seenAt: at(45), startedAt: at(40) }),
-    t(3, { typeId: 9, assigneeId: technicianIds[2]!, details: 'فصل اشتراك متأخر', subscriberName: 'محل البركة', zoneId: 4, priority: 'urgent', expectedMinutes: 15, status: 'sent', createdAt: at(35), sentAt: at(34) }),
+    t(3, { typeId: 9, assigneeId: technicianIds[2]!, details: 'فصل اشتراك غير مدفوع', subscriberName: 'محل البركة', zoneId: 4, priority: 'urgent', expectedMinutes: 15, status: 'sent', createdAt: at(35), sentAt: at(34) }),
   ])
 }

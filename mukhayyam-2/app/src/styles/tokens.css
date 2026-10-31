@@ -40,6 +40,8 @@
   --brand-soft: #8e1b2b12;
   --on-brand: #fff;
   --ok: #1E7B55; --ok-soft: #1e7b5517;
+  /* Attendance: arrival dark green, leaving mulberry. */
+  --t-in: #0E6B3F; --t-out: #7A1E55;
   --warn: #B25E0B; --warn-soft: #b25e0b17;
   --danger: #D9412E; --danger-soft: #d9412e14;
   --info: #2F5DA8; --info-soft: #2f5da812;
@@ -79,6 +81,7 @@
   --brand-soft: #d0364a1f;
   --on-brand: #fff;
   --ok: #35D48A; --ok-soft: #35d48a1a;
+  --t-in: #3FCB85; --t-out: #E07AB4;
   --warn: #F7B32B; --warn-soft: #f7b32b1a;
   --danger: #FF6B57; --danger-soft: #ff6b571a;
   --info: #6FB1FF; --info-soft: #6fb1ff1a;

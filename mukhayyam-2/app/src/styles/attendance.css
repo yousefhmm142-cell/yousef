@@ -107,11 +107,15 @@ table.week { width: 100%; border-collapse: collapse; min-width: 900px; }
 .scan-today svg { color: var(--ok); }
 .scan-notme { margin-top: 14px; border: 0; background: none; color: var(--muted); font: inherit; font-size: 13px; text-decoration: underline; cursor: pointer; }
 
-/* Clock times in the weekly sheet and today's list: big, bold, easy to read at a glance. */
-.wk-times { display: grid; gap: 1px; line-height: 1.15; }
-.wk-t { font-size: 16px; font-weight: 800; letter-spacing: -.2px; color: var(--ink); }
-.wk-t.in { color: var(--ok); }
-.wk-t.out { color: var(--ink); }
-.wk-t.open { font-size: 11.5px; font-weight: 700; color: var(--warn); }
-.att-times b { font-size: 16px; font-weight: 800; color: var(--ink); }
-.att-times small { font-size: 12px; color: var(--muted); }
+
+/* Clock times: arrival dark green, leaving mulberry, a dash between; big and bold everywhere. */
+.inout { display: inline-flex; align-items: baseline; gap: 6px; white-space: nowrap; line-height: 1.2; }
+.inout b { font-size: 16px; font-weight: 800; letter-spacing: -.2px; }
+.t-in { color: var(--t-in); }
+.t-out { color: var(--t-out); }
+.t-dash { color: var(--muted); font-weight: 700; }
+.wk-open { font-size: 11.5px; font-weight: 700; color: var(--warn); }
+.att-punches .punch-time.in .time-btn b { color: var(--t-in); }
+.att-punches .punch-time.out .time-btn b { color: var(--t-out); }
+.punch-time .time-btn { min-height: 46px; min-width: 104px; padding: 4px 10px; }
+.punch-time .time-btn b { font-size: 18px; }

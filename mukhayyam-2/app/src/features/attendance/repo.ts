@@ -8,7 +8,7 @@ import { serverNow } from '../../lib/clock'
 import { addDays, todayISO, type ISODate } from '../../lib/dates'
 import { SheetStateError } from '../sheets/workflow'
 import { leaveFromRow, punchFromRow, type LeaveRow, type PunchRow } from './remote'
-import { gazaDate, gazaToIso, type LeaveType, type Punch, type PunchKind } from './rules'
+import { gazaDate, gazaTime, gazaToIso, type LeaveType, type Punch, type PunchKind } from './rules'
 
 // Attendance lives on the server; the manager's devices keep the last 60 days for reading (also
 // offline). The QR page (no sign-in) talks to the server directly. Demo mode keeps everything here.
@@ -95,6 +95,26 @@ export async function addManualPunch(employeeId: string, date: ISODate, time: st
   const sb = online()
   const res = await sb.from('attendance_punches').insert({ employee_id: employeeId, kind, at, method: 'manual', reason: text, recorded_by: by })
   check(res.error, res.status)
+  await refreshAttendance()
+}
+
+/**
+ * Changes the time of a punch (scanned or manual). It is then marked manual, with the old time in
+ * the reason, so it is clear on every sheet that the manager corrected it.
+ */
+export async function updatePunchTime(punch: Punch, date: ISODate, time: string, by: string) {
+  const at = gazaToIso(date, time)
+  if (at === punch.at) return
+  const was = gazaTime(punch.at)
+  const reason = punch.method === 'manual' && punch.reason ? punch.reason.replace(/ · عُدّل من \d\d:\d\d$/, '') + ` · عُدّل من ${was}` : `عُدّل من ${was}`
+  if (isDemo) {
+    await db.punches.put({ ...punch, at, method: 'manual', reason, recordedBy: by })
+    return
+  }
+  const sb = online()
+  const res = await sb.from('attendance_punches').update({ at, method: 'manual', reason, recorded_by: by }).eq('id', punch.id).select('id')
+  check(res.error, res.status)
+  if (!res.data?.length) throw new SheetStateError('not_allowed')
   await refreshAttendance()
 }
 

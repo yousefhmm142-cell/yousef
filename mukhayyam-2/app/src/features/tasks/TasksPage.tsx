@@ -123,7 +123,7 @@ export function TasksPage() {
           <div className="kpi-sub">{working.length} عند الفنيين الآن</div>
         </div>
         <div className="kpi glass" data-tone={late.length ? 'danger' : undefined}>
-          <div className="kpi-label"><span className="kpi-ico"><AlarmClock size={16} /></span>متأخرة</div>
+          <div className="kpi-label"><span className="kpi-ico"><AlarmClock size={16} /></span>تجاوزت وقتها</div>
           <div className="kpi-value num">{late.length}</div>
           <div className="kpi-sub">تجاوزت المدة التي حددتها</div>
         </div>
@@ -182,7 +182,7 @@ export function TasksPage() {
                     </span>
                   </span>
                   <span className="task-side">
-                    <Pill tone={overdue ? 'danger' : taskStatusInfo[t.status].tone}>{overdue ? 'متأخرة' : taskStatusInfo[t.status].label}</Pill>
+                    <Pill tone={overdue ? 'danger' : taskStatusInfo[t.status].tone}>{overdue ? 'تجاوزت وقتها' : taskStatusInfo[t.status].label}</Pill>
                     <span className="task-clock num">
                       {t.status === 'new' ? 'لم تُرسل بعد' : t.status === 'done' ? `أُنجزت في ${durationText(mins)}` : t.status === 'cancelled' ? 'أُلغيت' : `${durationText(mins)} من ${durationText(t.expectedMinutes)}`}
                     </span>
@@ -337,7 +337,7 @@ function NewTaskDialog({ technicians, onClose, typeName, zoneName }: {
               <Chip key={m} pressed={expected === m} onClick={() => setExpected(m)}>{durationText(m)}</Chip>
             ))}
           </div>
-          <span className="field-hint">بعدها تظهر المهمة «متأخرة» عندك.</span>
+          <span className="field-hint">بعدها تظهر المهمة «تجاوزت وقتها» عندك.</span>
         </div>
         {error && <p className="field-error" role="alert">{error}</p>}
       </div>
@@ -402,7 +402,7 @@ function TaskDialog({ task, tech, typeName, zoneName, now, onClose }: {
       <div className="task-detail">
         <div className="task-detail-head">
           <Pill tone={isOverdue(task, now) ? 'danger' : taskStatusInfo[task.status].tone}>
-            {isOverdue(task, now) ? 'متأخرة' : taskStatusInfo[task.status].label}
+            {isOverdue(task, now) ? 'تجاوزت وقتها' : taskStatusInfo[task.status].label}
           </Pill>
           {task.priority !== 'normal' && <Pill tone={priorityInfo[task.priority].tone}>{priorityInfo[task.priority].label}</Pill>}
           <span className="muted num">

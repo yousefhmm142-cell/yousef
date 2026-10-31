@@ -128,7 +128,7 @@ function TasksStatus() {
   if (!tasks) return <Pill dot={false}>…</Pill>
   const open = tasks.filter(isOpen)
   const late = open.filter((t) => isOverdue(t, now)).length
-  if (late) return <Pill tone="danger">{late} متأخرة من {open.length} مفتوحة</Pill>
+  if (late) return <Pill tone="danger">{late} تجاوزت وقتها من {open.length} مفتوحة</Pill>
   return open.length ? <Pill tone="brand">{open.length} مفتوحة</Pill> : <Pill tone="ok">لا مهام مفتوحة</Pill>
 }
 

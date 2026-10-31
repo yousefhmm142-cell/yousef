@@ -164,14 +164,14 @@ export function buildReport(a: ReportInput): Section[] {
         }),
       )
       const t = weekTotals(results)
-      return [e.fullName, s.name, t.present, t.absent, t.leave, t.lateDays, t.lateMin, t.overtimeMin, r1(t.workedMin / 60)] as Cell[]
+      return [e.fullName, s.name, t.present, t.absent, t.leave, t.overtimeMin, r1(t.workedMin / 60)] as Cell[]
     })
     .filter((x): x is Cell[] => !!x)
   sections.push({
     key: 'attendance',
     title: 'الحضور والانصراف',
-    note: 'التأخير والإضافي بالدقائق.',
-    columns: ['الموظف', 'الدوام', 'أيام الحضور', 'الغياب', 'الإجازات', 'أيام التأخير', 'دقائق التأخير', 'دقائق الإضافي', 'ساعات العمل'],
+    note: 'الإضافي بالدقائق.',
+    columns: ['الموظف', 'الدوام', 'أيام الحضور', 'الغياب', 'الإجازات', 'دقائق الإضافي', 'ساعات العمل'],
     rows: attRows,
   })
 
