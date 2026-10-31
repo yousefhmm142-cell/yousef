@@ -6,10 +6,28 @@
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 : "${SUPABASE_DB_URL:?SUPABASE_DB_URL is not set}"
+# Pasted values often carry spaces, a newline or quotes around them: drop those.
+url="$(printf '%s' "$SUPABASE_DB_URL" | tr -d '\r\n' | sed -e 's/^[[:space:]"'"'"']*//' -e 's/[[:space:]"'"'"']*$//')"
+# Explain what is wrong without ever printing the value (it holds the password).
+case "$url" in
+  postgres://*|postgresql://*) ;;
+  *)
+    echo "SUPABASE_DB_URL must be the whole connection string starting with postgresql:// (Supabase > Connect > Session pooler > URI)." >&2
+    # Only safe facts about it: never any of its characters.
+    has() { printf '%s' "$url" | grep -q -- "$1" && echo yes || echo no; }
+    echo "What was given: ${#url} characters, contains '://': $(has '://'), contains '@': $(has '@'), contains 'supabase': $(has 'supabase')." >&2
+    exit 1 ;;
+esac
+if printf '%s' "$url" | grep -q 'YOUR-PASSWORD\|\[.*\]@'; then
+  echo "SUPABASE_DB_URL still has [YOUR-PASSWORD] in it: put the database password there, without the brackets." >&2
+  exit 1
+fi
+SUPABASE_DB_URL="$url"
 export PGSSLMODE="${PGSSLMODE:-require}"
 q() { psql "$SUPABASE_DB_URL" -X -q -v ON_ERROR_STOP=1 "$@"; }
 
-if [ "$(q -Atc "select to_regclass('public.employees') is not null")" != "t" ]; then
+ready="$(q -Atc "select to_regclass('public.employees') is not null")" || { echo "could not connect to the database (check the password in SUPABASE_DB_URL)" >&2; exit 1; }
+if [ "$ready" != "t" ]; then
   echo "setup.sql was never run on this database: run it once by hand first" >&2
   exit 1
 fi
