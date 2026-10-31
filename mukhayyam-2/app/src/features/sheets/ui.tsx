@@ -212,7 +212,14 @@ export function StatusBar({ sheet, source, canAct, onApprove, onReturn, returnPl
     <div className="statusbar glass">
       <Pill tone={info.tone}>{info.label}</Pill>
       <p>
-        وصل من {source} <span className="muted">· {stamp(sheet.submittedAt)}</span>
+        {sheet.status === 'draft' || (sheet.status === 'returned' && !sheet.submittedAt) ? (
+          <>
+            <span className="live-dot" aria-hidden="true" />
+            يُعبّأ الآن في {source} <span className="muted">· آخر تعديل {formatTime(new Date(sheet.updatedAt))} · يظهر كل تعديل هنا خلال ثوانٍ</span>
+          </>
+        ) : (
+          <>وصل من {source} <span className="muted">· {stamp(sheet.submittedAt)}</span></>
+        )}
         {sheet.recordedOffline && <span className="muted"> · <WifiOff size={13} className="inline-ico" /> أُرسل بدون اتصال</span>}
         {sheet.status === 'returned' && <span className="muted"> · أُعيد فتحه: {sheet.returnedReason}</span>}
       </p>

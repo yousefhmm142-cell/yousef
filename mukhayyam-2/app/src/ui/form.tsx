@@ -1,5 +1,7 @@
 import { useEffect, useId, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { cleanDecimalInput, formatAmount, parseDecimal } from '../lib/numbers'
+import { Dialog } from './Dialog'
+import { Button } from './primitives'
 
 interface NumberFieldProps {
   label: string
@@ -96,16 +98,116 @@ export function TextField({ label, value, onChange, placeholder, numeric }: Text
   )
 }
 
+const pad = (n: number) => String(n).padStart(2, '0')
+const HOURS = Array.from({ length: 24 }, (_, h) => h)
+const MINUTES = Array.from({ length: 12 }, (_, i) => i * 5)
+
+/** صباحاً / ظهراً / عصراً / مساءً / ليلاً for an hour of the day. */
+export function partOfDay(h: number): string {
+  if (h < 5) return 'ليلاً'
+  if (h < 12) return 'صباحاً'
+  if (h < 15) return 'ظهراً'
+  if (h < 18) return 'عصراً'
+  if (h < 22) return 'مساءً'
+  return 'ليلاً'
+}
+
+/** "1432", "14:32", "14.32", "9" -> "14:32" / "09:00"; null when it is not a time. */
+export function parseTyped(text: string): string | null {
+  const t = text.replace(/[٠-٩]/g, (d) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d))).replace(/[^\d:.]/g, '')
+  const m = /^(\d{1,2})(?:[:.]?(\d{2}))?$/.exec(t)
+  if (!m) return null
+  const h = Number(m[1])
+  const mi = Number(m[2] ?? 0)
+  return h < 24 && mi < 60 ? `${pad(h)}:${pad(mi)}` : null
+}
+
+/**
+ * A clock time, 24-hour, written large with the part of the day under it. Tapping it opens hour
+ * and minute buttons (one tap each), «الآن», and a box to type the exact minute.
+ */
 export function TimeField({ label, value, onChange }: { label: string; value: string; onChange(v: string): void }) {
+  const [open, setOpen] = useState(false)
+  const [h, m] = value ? value.split(':').map(Number) : [null, null]
   return (
-    <input
-      type="time"
-      data-nav
-      className="time-input num"
-      aria-label={label}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-    />
+    <>
+      <button type="button" data-nav className={`time-btn${value ? '' : ' empty'}`} aria-label={value ? `${label}: ${value}` : label} onClick={() => setOpen(true)}>
+        {value ? (
+          <>
+            <b className="num">{value}</b>
+            <small>{partOfDay(h!)}</small>
+          </>
+        ) : (
+          <span>اختر الوقت</span>
+        )}
+      </button>
+      {open && <TimePicker label={label} hour={h} minute={m} onClose={() => setOpen(false)} onPick={(v) => { onChange(v); setOpen(false) }} />}
+    </>
+  )
+}
+
+function TimePicker({ label, hour, minute, onPick, onClose }: {
+  label: string
+  hour: number | null
+  minute: number | null
+  onPick(v: string): void
+  onClose(): void
+}) {
+  const [h, setH] = useState<number | null>(hour)
+  const [mi, setMi] = useState<number | null>(minute)
+  const [typed, setTyped] = useState('')
+  const typedTime = parseTyped(typed)
+  const ready = typedTime ?? (h !== null ? `${pad(h)}:${pad(mi ?? 0)}` : null)
+  const now = () => {
+    const t = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: 'Asia/Gaza' }).format(new Date())
+    onPick(t)
+  }
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      title={label}
+      footer={
+        <>
+          <Button variant="ghost" onClick={now}>الآن</Button>
+          {hour !== null && <Button variant="ghost" onClick={() => onPick('')}>مسح</Button>}
+          <Button variant="primary" disabled={!ready} onClick={() => ready && onPick(ready)}>
+            {ready ? <>تم · <span className="num">{ready}</span></> : 'تم'}
+          </Button>
+        </>
+      }
+    >
+      <div className="tp">
+        <div className="tp-show num" aria-live="polite">
+          <b>{ready ?? '--:--'}</b>
+          {ready && <small>{partOfDay(Number(ready.slice(0, 2)))}</small>}
+        </div>
+        <span className="tp-label">الساعة</span>
+        <div className="tp-grid hours" role="group" aria-label="الساعة">
+          {HOURS.map((x) => (
+            <button key={x} type="button" className="num" aria-pressed={h === x && !typedTime} onClick={() => { setH(x); setTyped('') }}>{pad(x)}</button>
+          ))}
+        </div>
+        <span className="tp-label">الدقائق</span>
+        <div className="tp-grid minutes" role="group" aria-label="الدقائق">
+          {MINUTES.map((x) => (
+            <button key={x} type="button" className="num" aria-pressed={(mi ?? 0) === x && h !== null && !typedTime} onClick={() => { setMi(x); setTyped('') }}>{pad(x)}</button>
+          ))}
+        </div>
+        <label className="tp-type">
+          <span>أو اكتب الوقت بالضبط</span>
+          <input
+            className="nf-input num ltr"
+            inputMode="numeric"
+            placeholder="14:32"
+            aria-label="الوقت بالضبط"
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter' && ready) onPick(ready) }}
+          />
+        </label>
+      </div>
+    </Dialog>
   )
 }
 

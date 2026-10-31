@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ArrowLeft, ArrowRight, CircleAlert, Droplet, Send, WifiOff, Wrench, Zap } from 'lucide-react'
-import { useState } from 'react'
+import { ArrowLeft, ArrowRight, CircleAlert, Droplet, Plus, Send, WifiOff, Wrench, Zap } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
 import { useEmployee } from '../../auth/AuthProvider'
 import { serverNow } from '../../lib/clock'
@@ -17,6 +17,7 @@ import { FuelStep, MaintenanceStep, MissingList, NotesField, RunsStep } from './
 import { applyAutoFigures, isEditableStatus, missingItems, newReport, reconcileReport, reportTotals, type FuelType, type Generator, type SiteReport } from './model'
 import { lastReportBefore, saveDraft, submitReport, useFuelTypes, useGenerators, useReport, useUnsentBefore } from './repo'
 import { ReportView, useReportContext } from './ReportView'
+import { GeneratorDialog } from './GeneratorDialog'
 
 const STEPS = [
   { key: 'fuel', label: 'المحروقات', icon: Droplet },
@@ -45,13 +46,22 @@ export function EntryPage() {
   if (stored && !isEditableStatus(stored.status)) return <SentReport report={stored} />
   if (fuelTypes.length === 0 || generators.length === 0) {
     return (
-      <div className="empty">
-        <h3>لم تُعرَّف المولدات بعد</h3>
-        <p>يضيفها مسؤول النظام من الإعدادات مرة واحدة، ثم تظهر هنا كل يوم.</p>
-      </div>
+      <NoGeneratorsYet generators={generators} />
     )
   }
   return <EntryForm key={date} date={date} initial={stored} fuelTypes={fuelTypes} generators={generators} previous={previous} />
+}
+
+function NoGeneratorsYet({ generators }: { generators: Generator[] }) {
+  const [adding, setAdding] = useState(false)
+  return (
+    <div className="empty card">
+      <h3>لا مولدات بعد</h3>
+      <p>أضف مولدات الموقع مرة واحدة، ثم تظهر هنا كل يوم.</p>
+      <Button variant="primary" icon={<Plus size={17} />} onClick={() => setAdding(true)}>إضافة مولد</Button>
+      {adding && <GeneratorDialog generator={null} others={generators} onClose={() => setAdding(false)} />}
+    </div>
+  )
 }
 
 function EntryForm({ date, initial, fuelTypes, generators, previous }: {
@@ -83,6 +93,17 @@ function EntryForm({ date, initial, fuelTypes, generators, previous }: {
       change(r)
       applyAutoFigures(r, previous)
     })
+  // A generator (or fuel type) added while this report is open joins it at once.
+  useEffect(() => {
+    if (!isEditableStatus(latest.current.status)) return
+    if (reconcileReport(latest.current, fuelTypes, generators) === latest.current) return
+    update((r) => {
+      const next = reconcileReport(r, fuelTypes, generators)
+      r.fuel = next.fuel
+      r.generators = next.generators
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fuelTypes, generators])
   const [armed, arm, disarm] = useConfirmTap()
   const [sending, setSending] = useState(false)
   const unsent = useUnsentBefore(date)
@@ -162,6 +183,7 @@ function EntryForm({ date, initial, fuelTypes, generators, previous }: {
         )}
       </div>
 
+      <div className="foot-fade" aria-hidden="true" />
       <footer className="entry-foot glass">
         {stepIndex > 0 && (
           <Button icon={<ArrowRight size={18} />} onClick={() => goTo(stepIndex - 1)} aria-label="الخطوة السابقة">

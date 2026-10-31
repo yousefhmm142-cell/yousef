@@ -1,0 +1,52 @@
+# Publishes the Mukhayyam 2 app to Cloudflare Pages on every change, always on the same link:
+# https://mukhayyam2.pages.dev  (no file to upload by hand).
+#
+# One-time setup (repository Settings > Secrets and variables > Actions > New repository secret):
+#   CLOUDFLARE_API_TOKEN   a Cloudflare API token with the "Cloudflare Pages: Edit" permission
+#   CLOUDFLARE_ACCOUNT_ID  the account ID shown on the Cloudflare dashboard (Workers & Pages, right side)
+# Until both exist the app is still built and checked, only the publish step is skipped.
+name: Mukhayyam 2 · publish
+
+on:
+  push:
+    branches: [main, claude/youthful-bell-qnhys0]
+    paths: ['mukhayyam-2/app/**', '.github/workflows/mukhayyam2-deploy.yml']
+  workflow_dispatch:
+
+concurrency:
+  group: mukhayyam2-publish
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: mukhayyam-2/app
+    env:
+      HAS_CF: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mukhayyam-2/app/package-lock.json
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npx vitest run
+      # The Supabase address and publishable key come from app/.env.hosting (public values).
+      - run: npx vite build --mode hosting --outDir dist-hosting
+      - name: Publish to https://mukhayyam2.pages.dev
+        if: env.HAS_CF == 'true'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: mukhayyam-2/app
+          command: pages deploy dist-hosting --project-name=mukhayyam2 --branch=main --commit-dirty=true
+      - name: Not published yet
+        if: env.HAS_CF != 'true'
+        run: echo "::notice::Built and checked. Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID secrets to publish automatically."

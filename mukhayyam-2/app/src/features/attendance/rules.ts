@@ -142,8 +142,8 @@ export const statusLabel: Record<DayStatus, string> = {
   no_out: 'بلا انصراف',
   pending: 'لم يحضر بعد',
   absent: 'غائب',
-  off: 'عطلة',
-  holiday: 'عطلة رسمية',
+  off: 'لا دوام',
+  holiday: 'إجازة رسمية',
   leave: 'إجازة',
   future: '',
 }

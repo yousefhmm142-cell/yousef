@@ -9,6 +9,7 @@ import { useNow } from '../../lib/useNow'
 import { Segmented } from '../../ui/form'
 import { Button } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
+import { useViewDay } from '../../lib/viewDay'
 import { refreshAttendance } from '../attendance/repo'
 import { gazaTime, toMinutes, weekStart } from '../attendance/rules'
 import { stamp } from '../sheets/ui'
@@ -37,7 +38,9 @@ export function ReportsPage() {
   const today = todayISO()
   const now = useNow(60_000)
   const [period, setPeriod] = useState<Period>('week')
-  const [anchor, setAnchor] = useState(today)
+  // Opens on the day being looked at on the other pages, not always on today.
+  const viewDay = useViewDay()
+  const [anchor, setAnchor] = useState(viewDay)
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
@@ -87,7 +90,7 @@ export function ReportsPage() {
           <h1>التقارير</h1>
           <p className="muted">ملخص المحروقات والمولدات والتوزيع والمهام والحضور والمخزن لأي أسبوع أو شهر.</p>
         </div>
-        <Segmented<Period> label="الفترة" value={period} options={periods} onChange={(p) => { setPeriod(p); setAnchor(today) }} />
+        <Segmented<Period> label="الفترة" value={period} options={periods} onChange={setPeriod} />
       </header>
 
       <div className="week-bar card">

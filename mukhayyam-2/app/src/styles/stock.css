@@ -1,7 +1,7 @@
 /* =========================================================
    Warehouse and reports
    ========================================================= */
-.stock, .reports { max-width: 1180px; margin: 0 auto; display: grid; gap: 16px; }
+.stock, .reports { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .stock .ph, .reports .ph { margin-bottom: 0; }
 .ph-actions { margin-inline-start: auto; display: flex; gap: 8px; flex-wrap: wrap; }
 .kpis.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }

@@ -41,6 +41,7 @@ import {
   statusLabel,
   toMinutes,
   weekDays,
+  weekdayOf,
   weekTotals,
   type DayResult,
   type DayStatus,
@@ -198,10 +199,12 @@ function TodayBoard({ data, onOpen }: { data: Data; onOpen(e: Employee): void })
                   <b>{e.fullName}</b>
                   <small>{data.scheduleOf(e)?.name}</small>
                 </span>
-                <span className="att-times num">
-                  <span>{d.inAt ? `حضور ${fmt(d.inAt)}` : '—'}</span>
-                  <span>{d.outAt ? `انصراف ${fmt(d.outAt)}` : ''}</span>
-                </span>
+                {d.inAt && (
+                  <span className="att-times num">
+                    <span><small>حضور</small> <b>{fmt(d.inAt)}</b></span>
+                    {d.outAt && <span><small>انصراف</small> <b>{fmt(d.outAt)}</b></span>}
+                  </span>
+                )}
                 <span className="att-tags">
                   <Pill tone={statusTone[d.status]}>{d.status === 'late' ? `متأخر ${durationText(d.lateMin)}` : statusLabel[d.status]}</Pill>
                   {d.status === 'working' && d.lateMin > 0 && <Pill tone="warn">تأخر {durationText(d.lateMin)}</Pill>}
@@ -224,12 +227,11 @@ const fmt = (hhmm: string) => {
 function WeekSheet({ data, onOpen }: { data: Data; onOpen(e: Employee, date: ISODate): void }) {
   const [anchor, setAnchor] = useState(data.today)
   const all = weekDays(anchor)
-  const friday = all[6]!
-  const fridayUsed = data.people.some((e) => (data.byDay.get(`${e.id}|${friday}`) ?? []).length > 0)
-  const days = fridayUsed ? all : all.slice(0, 6)
+  // Friday is not shown at all; extra hours someone works on a Friday still count in the totals.
+  const days = all.filter((d) => weekdayOf(d) !== 5)
   const rows = data.people.map((e) => {
-    const results = days.map((d) => data.day(e, d)).filter((x): x is DayResult => !!x)
-    return { e, results, totals: weekTotals(results) }
+    const week = all.map((d) => data.day(e, d)).filter((x): x is DayResult => !!x)
+    return { e, results: week.filter((r) => weekdayOf(r.date) !== 5), totals: weekTotals(week) }
   })
   const label = `${describeDay(all[0]!).date} ← ${describeDay(all[5]!).date}`
   const thisWeek = all.includes(data.today)
@@ -276,10 +278,12 @@ function WeekSheet({ data, onOpen }: { data: Data; onOpen(e: Employee, date: ISO
                       <button type="button" className="week-cell" onClick={() => onOpen(e, d.date)} disabled={d.status === 'future'}>
                         {d.inAt ? (
                           <>
-                            <span className="num">{d.inAt} ← {d.outAt ?? '؟'}</span>
+                            <span className="wk-times num">
+                              <b className="wk-t in" title="حضور">{d.inAt}</b>
+                              {d.outAt ? <b className="wk-t out" title="انصراف">{d.outAt}</b> : <small className="wk-t open">{d.status === 'working' ? 'في الدوام' : 'لم ينصرف'}</small>}
+                            </span>
                             {d.lateMin > 0 && <i className="tag warn num">تأخر {d.lateMin} د</i>}
                             {d.overtimeMin > 0 && <i className="tag ok num">+{durationText(d.overtimeMin)}</i>}
-                            {d.status === 'no_out' && <i className="tag warn">بلا انصراف</i>}
                             {d.punches.some((p) => p.method === 'manual') && <i className="tag">يدوي</i>}
                           </>
                         ) : (
@@ -337,7 +341,7 @@ function WeekPrint({ days, rows, label, scheduleOf }: {
               <td>{e.fullName}<br /><small>{scheduleOf(e)?.name}</small></td>
               {results.map((d) => (
                 <td key={d.date} className="num">
-                  {d.inAt ? `${d.inAt} - ${d.outAt ?? '؟'}` : d.status === 'future' ? '' : d.status === 'leave' && d.leave ? leaveLabel[d.leave.type] : statusLabel[d.status]}
+                  {d.inAt ? <span className="pt-times"><b>{d.inAt}</b><b>{d.outAt ?? '—'}</b></span> : d.status === 'future' ? '' : d.status === 'leave' && d.leave ? leaveLabel[d.leave.type] : statusLabel[d.status]}
                   {d.lateMin > 0 && <><br />تأخر {d.lateMin}د</>}
                   {d.overtimeMin > 0 && <><br />+{durationText(d.overtimeMin)}</>}
                 </td>

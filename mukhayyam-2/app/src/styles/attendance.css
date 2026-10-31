@@ -1,7 +1,7 @@
 /* =========================================================
    Attendance: today, the weekly sheet, the QR sheet, and the scan page
    ========================================================= */
-.attendance { max-width: 1240px; margin: 0 auto; display: grid; gap: 16px; }
+.attendance { max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .attendance .ph { margin-bottom: 0; }
 .attendance .ph .segmented { margin-inline-start: auto; }
 .kpi[data-tone='warn'] .kpi-value { color: var(--warn); }
@@ -106,3 +106,12 @@ table.week { width: 100%; border-collapse: collapse; min-width: 900px; }
 .scan-today li { display: flex; align-items: center; justify-content: center; gap: 6px; color: var(--ink-2); font-size: 14px; }
 .scan-today svg { color: var(--ok); }
 .scan-notme { margin-top: 14px; border: 0; background: none; color: var(--muted); font: inherit; font-size: 13px; text-decoration: underline; cursor: pointer; }
+
+/* Clock times in the weekly sheet and today's list: big, bold, easy to read at a glance. */
+.wk-times { display: grid; gap: 1px; line-height: 1.15; }
+.wk-t { font-size: 16px; font-weight: 800; letter-spacing: -.2px; color: var(--ink); }
+.wk-t.in { color: var(--ok); }
+.wk-t.out { color: var(--ink); }
+.wk-t.open { font-size: 11.5px; font-weight: 700; color: var(--warn); }
+.att-times b { font-size: 16px; font-weight: 800; color: var(--ink); }
+.att-times small { font-size: 12px; color: var(--muted); }

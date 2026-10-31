@@ -1,6 +1,8 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../data/db'
-import { syncSoon } from '../../data/sync'
+import { pullReference, syncSoon } from '../../data/sync'
+import { getSupabase } from '../../data/supabase'
+import { isDemo } from '../../config'
 import { saveListItem } from '../../data/admin'
 import { addDays, type ISODate } from '../../lib/dates'
 import type { Employee } from '../../types'
@@ -91,14 +93,40 @@ export const approveReport = (id: string, by: Employee) => approveIn<SiteReport>
 export const returnReport = (id: string, reason: string) => returnIn<SiteReport>(db.siteReports, id, reason).then(() => syncSoon(true))
 
 // ---------- Settings: generators ----------
-export async function saveGenerator(input: Omit<Generator, 'id' | 'sortOrder'> & { id?: number }): Promise<void> {
+/**
+ * Adds or edits a generator; returns its id. The site employee may do this too, straight from the
+ * day's report (save_generator on the server checks who is asking).
+ */
+export async function saveGenerator(input: Omit<Generator, 'id' | 'sortOrder'> & { id?: number }): Promise<number> {
   const name = input.name.trim()
-  await saveListItem<Generator>(db.generators, 'generators', { ...input, name }, (g) => ({
-    name: g.name,
-    brand: g.brand,
-    model: g.model,
-    capacity_kva: g.capacityKva,
-    liters_per_hour: g.litersPerHour,
-    is_active: g.isActive,
-  }))
+  if (isDemo) {
+    await saveListItem<Generator>(db.generators, 'generators', { ...input, name }, () => ({}))
+    return input.id ?? (await db.generators.filter((g) => g.name === name).first())!.id
+  }
+  const sb = getSupabase()
+  if (!sb) throw new SheetStateError('offline')
+  if (!navigator.onLine) throw new SheetStateError('offline')
+  const all = await db.generators.toArray()
+  if (all.some((g) => g.name === name && g.id !== input.id)) throw new SheetStateError('duplicate_name')
+  const { data, error, status } = await sb.rpc('save_generator', {
+    p_id: input.id ?? null,
+    p_name: name,
+    p_brand: input.brand,
+    p_model: input.model,
+    p_capacity_kva: input.capacityKva,
+    p_liters_per_hour: input.litersPerHour,
+    p_is_active: input.isActive,
+  })
+  if (error) {
+    if (status === 0 || !error.code) throw new SheetStateError('offline')
+    if (error.code === '23505') throw new SheetStateError('duplicate_name')
+    if (error.code === '42501' || error.message === 'not_allowed') throw new SheetStateError('not_allowed')
+    throw new SheetStateError('unknown')
+  }
+  try {
+    await pullReference()
+  } catch {
+    // Saved on the server; this phone catches up on the next round.
+  }
+  return data as number
 }

@@ -78,6 +78,7 @@
   background: var(--glass-bar);
 }
 .entry-foot .btn:not(.block) { flex: none; }
+.foot-fade { display: none; }
 
 .sent { display: flex; align-items: center; gap: 16px; padding: 20px; border-radius: var(--r-xl); flex-wrap: wrap; }
 .sent h1 { margin: 0; font-size: 22px; font-weight: 800; }
@@ -249,7 +250,12 @@
   .maint-list li { grid-template-columns: 1fr 1fr; }
   .maint-list .wide { grid-column: 1 / -1; }
   .stepper { top: 78px; }
-  .entry-foot { bottom: calc(var(--tabbar-h) + 4px + var(--safe-b)); }
+  /* The action bar sits 8px above the tab bar, exactly as wide, and what scrolls under both fades out. */
+  .entry-foot { bottom: calc(84px + var(--safe-b)); margin-inline: -4px; }
+  .foot-fade {
+    display: block; position: fixed; z-index: 19; inset-inline: 0; bottom: 0; height: calc(172px + var(--safe-b));
+    background: linear-gradient(to top, var(--bg) 0, var(--bg) 80%, transparent); pointer-events: none;
+  }
   .entry-head h1 { font-size: 24px; }
   .kpi { min-height: 120px; padding: 14px; }
   .kpi-value { font-size: 25px; }
@@ -291,3 +297,17 @@
 .backup-auto { display: grid; gap: 6px; padding: 0 18px 14px; border-top: 1px solid var(--line-2); padding-top: 12px; }
 .backup-auto p { margin: 0; font-size: 13px; }
 .backup-auto .gen-list li { padding-inline: 0; }
+
+/* A sheet still being filled: a soft pulsing dot next to "being filled now". */
+.live-dot {
+  display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-inline-end: 7px;
+  background: var(--ok, #1f9d55); vertical-align: middle;
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--ok, #1f9d55) 55%, transparent);
+  animation: live-pulse 1.8s ease-out infinite;
+}
+@keyframes live-pulse { to { box-shadow: 0 0 0 8px transparent; } }
+@media (prefers-reduced-motion: reduce) { .live-dot { animation: none; } }
+
+/* The site adds and edits its own generators from the report. */
+.chip.add-chip { border-style: dashed; color: var(--brand); background: transparent; cursor: pointer; }
+.gen-head-actions { display: flex; align-items: center; gap: 6px; flex: none; }

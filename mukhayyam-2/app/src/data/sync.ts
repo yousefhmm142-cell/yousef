@@ -1,6 +1,6 @@
 import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useSyncExternalStore } from 'react'
+import { useEffect, useSyncExternalStore } from 'react'
 import type { EntityTable, Table } from 'dexie'
 import { isDemo } from '../config'
 import { SHEET_SELECT, sheetFromRow, sheetToRows, type SheetRow } from '../features/distribution/remote'
@@ -81,6 +81,8 @@ export const hasUnsent = (d: SheetMeta) => d.syncedAt !== d.updatedAt
 /** A sent sheet that reaches the server later than this is marked "sent without internet". */
 const LATE_SEND_MS = 2 * 60_000
 const PAGE = 500
+/** How often a sheet being filled is checked while someone watches it (when Realtime is off). */
+const LIVE_EVERY_MS = 8_000
 
 // ---------- Errors ----------
 export class SyncError extends Error {
@@ -390,6 +392,8 @@ let running: Promise<void> | null = null
 let again = false
 let timer: number | undefined
 let failures = 0
+let lastReferenceAt = 0
+const REFERENCE_EVERY_MS = 2 * 60_000
 
 async function round(): Promise<void> {
   if (!me) return
@@ -413,8 +417,12 @@ async function round(): Promise<void> {
         }
       }
     }
-    // 2. Bring back what changed elsewhere.
-    await pullReference()
+    // 2. Bring back what changed elsewhere. The lists (people, generators, zones...) rarely change and
+    //    every edit to them refreshes them at once, so they are re-read every couple of minutes only.
+    if (Date.now() - lastReferenceAt > REFERENCE_EVERY_MS) {
+      await pullReference()
+      lastReferenceAt = Date.now()
+    }
     for (const spec of KINDS) if (spec.readers.includes(who.role)) await pullSheets(spec)
     if (isManagerRole(who.role)) {
       await (await import('../features/tasks/repo')).refreshTasks()
@@ -474,7 +482,9 @@ export function syncSoon(urgent = false) {
 }
 
 const wake = () => {
-  if (document.visibilityState === 'visible') void syncNow()
+  if (document.visibilityState !== 'visible') return
+  lastReferenceAt = 0
+  void syncNow()
 }
 
 /** Starts keeping this device in step for the signed-in person. */
@@ -488,10 +498,67 @@ export function startSync(employee: Employee) {
 
 export function stopSync() {
   me = null
+  lastReferenceAt = 0
   window.clearTimeout(timer)
   window.removeEventListener('online', wake)
   document.removeEventListener('visibilitychange', wake)
   setState({ phase: 'idle', problem: null })
+}
+
+// ---------- Live view: a sheet being filled right now ----------
+let liveUsers = 0
+let liveTimer: number | undefined
+let liveBusy = false
+let liveChannel: { unsubscribe(): unknown } | null = null
+
+/** Brings back only the sheets (no lists), quickly; used while the manager watches today. */
+async function pullLive() {
+  if (!me || liveBusy || running || document.visibilityState !== 'visible' || !navigator.onLine) return
+  liveBusy = true
+  try {
+    for (const spec of KINDS) if (spec.readers.includes(me.role)) await pullSheets(spec)
+  } catch {
+    // The usual round tries again.
+  } finally {
+    liveBusy = false
+  }
+}
+
+function startLive() {
+  liveTimer = window.setInterval(() => void pullLive(), LIVE_EVERY_MS)
+  const sb = getSupabase()
+  if (!sb) return
+  // Instant when the project has Realtime on for these tables (update-6.sql); the timer covers the rest.
+  try {
+    const ch = sb.channel('m2-live-sheets')
+    for (const spec of KINDS) ch.on('postgres_changes', { event: '*', schema: 'public', table: spec.header }, () => void pullLive())
+    ch.subscribe()
+    liveChannel = ch
+  } catch {
+    liveChannel = null
+  }
+}
+
+function stopLive() {
+  window.clearInterval(liveTimer)
+  liveTimer = undefined
+  if (liveChannel) {
+    const sb = getSupabase()
+    void (sb ? sb.removeChannel(liveChannel as never) : liveChannel.unsubscribe())
+    liveChannel = null
+  }
+}
+
+/** While a screen showing a day still being filled is open, keeps it up to date within seconds. */
+export function useLiveSheets(active: boolean) {
+  useEffect(() => {
+    if (!active || isDemo) return
+    if (liveUsers++ === 0) startLive()
+    void pullLive()
+    return () => {
+      if (--liveUsers === 0) stopLive()
+    }
+  }, [active])
 }
 
 type Parked = Partial<Record<SheetKind, SheetDoc[]>>

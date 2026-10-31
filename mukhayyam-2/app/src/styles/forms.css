@@ -84,3 +84,32 @@
 .toast.ok svg { color: var(--ok); }
 :root[data-theme='light'] .toast.ok svg { color: #6ee7b7; }
 .toast.danger svg { color: #fca5a5; }
+
+/* ---------- Clock time (24-hour) and its picker ---------- */
+.time-btn {
+  flex: 1; min-width: 0; min-height: 58px; padding: 6px 10px; display: grid; place-content: center; gap: 0;
+  border-radius: var(--r-in); border: 1.5px solid var(--line); background: var(--surface-2); color: var(--ink);
+  font: inherit; cursor: pointer; line-height: 1.15; transition: border-color .15s var(--ease), background .15s var(--ease);
+}
+.time-btn b { font-size: 22px; font-weight: 800; letter-spacing: .5px; direction: ltr; }
+.time-btn small { font-size: 11.5px; font-weight: 700; color: var(--muted); }
+.time-btn.empty { border-style: dashed; color: var(--faint); font-size: 14px; font-weight: 700; }
+.time-btn:hover { border-color: color-mix(in srgb, var(--brand) 45%, var(--line)); }
+.time-btn:focus-visible { outline: none; border-color: var(--brand); box-shadow: 0 0 0 4px var(--brand-soft); background: var(--surface); }
+
+.tp { display: grid; gap: 10px; }
+.tp-show { display: grid; justify-items: center; padding: 6px 0 4px; line-height: 1.1; }
+.tp-show b { font-size: 44px; font-weight: 800; letter-spacing: 1px; direction: ltr; }
+.tp-show small { font-size: 13px; font-weight: 700; color: var(--muted); }
+.tp-label { font-size: 13px; font-weight: 700; color: var(--muted); }
+.tp-grid { display: grid; gap: 6px; direction: ltr; }
+.tp-grid.hours { grid-template-columns: repeat(6, 1fr); }
+.tp-grid.minutes { grid-template-columns: repeat(6, 1fr); }
+.tp-grid button {
+  height: 42px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--surface-2); color: var(--ink);
+  font: inherit; font-size: 16px; font-weight: 700; cursor: pointer;
+}
+.tp-grid button:hover { border-color: color-mix(in srgb, var(--brand) 40%, var(--line)); }
+.tp-grid button[aria-pressed='true'] { background: var(--brand); border-color: var(--brand); color: var(--on-brand, #fff); }
+.tp-type { display: grid; gap: 6px; font-size: 13px; font-weight: 700; color: var(--muted); }
+.tp-type .nf-input { height: 46px; text-align: center; font-size: 18px; font-weight: 700; padding: 0 12px; }

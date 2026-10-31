@@ -171,6 +171,7 @@ function SheetForm({ date, initial, zones, previous }: {
         )}
       </div>
 
+      <div className="foot-fade" aria-hidden="true" />
       <footer className="entry-foot glass">
         {stepIndex > 0 && (
           <Button icon={<ArrowRight size={18} />} onClick={() => goTo(stepIndex - 1)} aria-label="الخطوة السابقة">

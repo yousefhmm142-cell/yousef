@@ -29,6 +29,15 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,woff2,png,webp,svg}'],
+        // The Excel library is big and only the manager's reports page uses it: fetched on first use, then kept.
+        globIgnores: ['**/exceljs*.js', '**/mukhayyam2.apk'],
+        runtimeCaching: [
+          {
+            urlPattern: /\/assets\/exceljs.*\.js$/,
+            handler: 'CacheFirst',
+            options: { cacheName: 'm2-excel', expiration: { maxEntries: 2 } },
+          },
+        ],
         navigateFallback: '/index.html',
         // The Android app file and the app-link proof are real files, never the app page.
         navigateFallbackDenylist: [/\.apk$/, /^\/\.well-known\//],

@@ -14,10 +14,11 @@ import { useOnline } from '../lib/useOnline'
 import { formatPhone } from '../lib/phone'
 import { roleLabel } from '../types'
 import { Avatar, Pill } from '../ui/primitives'
-import { useLatestSentSheet } from '../features/distribution/repo'
+import { useLatestSentSheet, useSheet } from '../features/distribution/repo'
 import { EntryPage } from '../features/generation/EntryPage'
-import { useLatestSentReport } from '../features/generation/repo'
-import { statusInfo, type SheetStatus } from '../features/sheets/workflow'
+import { useLatestSentReport, useReport } from '../features/generation/repo'
+import { useToday } from '../lib/viewDay'
+import { isEditableStatus, statusInfo, type SheetStatus } from '../features/sheets/workflow'
 import { dayName, todayISO, type ISODate } from '../lib/dates'
 import { gazaDate } from '../features/attendance/rules'
 import { ModuleSoon } from './ModuleSoon'
@@ -108,11 +109,15 @@ function LatestStatus({ latest, noun }: { latest: { date: ISODate; status: Sheet
 
 function GenerationStatus() {
   const r = useLatestSentReport()
+  const today = useReport(useToday())
+  if (today && isEditableStatus(today.status)) return <Pill tone="ok">يُعبّأ الآن</Pill>
   return <LatestStatus noun="تقرير" latest={r && { date: r.reportDate, status: r.status }} />
 }
 
 function DistributionStatus() {
   const s = useLatestSentSheet()
+  const today = useSheet(useToday())
+  if (today && isEditableStatus(today.status)) return <Pill tone="ok">يُعبّأ الآن</Pill>
   return <LatestStatus noun="كشف" latest={s && { date: s.sheetDate, status: s.status }} />
 }
 

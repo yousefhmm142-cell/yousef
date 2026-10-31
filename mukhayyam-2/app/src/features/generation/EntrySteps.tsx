@@ -1,5 +1,6 @@
-import { ArrowLeft, CircleAlert, Moon, Plus, StickyNote, Trash2, X } from 'lucide-react'
-import { useState } from 'react'
+import { ArrowLeft, CircleAlert, Moon, Plus, Settings2, StickyNote, Trash2, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { GeneratorDialog } from './GeneratorDialog'
 import { formatAmount } from '../../lib/numbers'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../data/db'
@@ -115,8 +116,27 @@ export function RunsStep({ report, generators, update }: { report: SiteReport; g
     return (usage?.get(gb) ?? 0) - (usage?.get(ga) ?? 0) || ga - gb
   })
   const name = (id: number) => generators.find((g) => g.id === id)?.name ?? 'مولد'
+  // The site adds or fixes a generator itself, without going through the settings.
+  const [editing, setEditing] = useState<Generator | 'new' | null>(null)
+  const [justAdded, setJustAdded] = useState<number | null>(null)
+  useEffect(() => {
+    if (justAdded === null) return
+    const i = report.generators.findIndex((g) => g.generatorId === justAdded)
+    if (i < 0) return
+    setJustAdded(null)
+    // Added because it ran today: open its boxes straight away.
+    if (!report.generators[i]!.didRun) update((r) => (r.generators[i]!.didRun = true))
+  }, [justAdded, report.generators, update])
   return (
     <>
+      {editing && (
+        <GeneratorDialog
+          generator={editing === 'new' ? null : editing}
+          others={generators}
+          onClose={() => setEditing(null)}
+          onSaved={(id) => editing === 'new' && setJustAdded(id)}
+        />
+      )}
       <section className="fcard gen-pick">
         <h3 className="fcard-title">أي مولد اشتغل اليوم؟</h3>
         <div className="chips">
@@ -128,6 +148,9 @@ export function RunsStep({ report, generators, update }: { report: SiteReport; g
               </Chip>
             )
           })}
+          <button type="button" className="chip add-chip" onClick={() => setEditing('new')}>
+            <Plus size={15} /> مولد جديد
+          </button>
         </div>
         {!report.generators.some((g) => g.didRun) && <p className="field-hint">اضغط المولد اللي اشتغل لتظهر خاناته.</p>}
       </section>
@@ -146,9 +169,16 @@ export function RunsStep({ report, generators, update }: { report: SiteReport; g
                   {gen?.capacityKva ? <span className="num"> · {formatAmount(gen.capacityKva)} kVA</span> : null}
                 </small>
               </div>
-              <Chip pressed={false} onClick={() => set((l) => (l.didRun = false))}>
-                <Moon size={15} /> لم يعمل اليوم
-              </Chip>
+              <div className="gen-head-actions">
+                {gen && (
+                  <button type="button" className="icon-btn" aria-label={`إعدادات ${gen.name}`} title="إعدادات المولد" onClick={() => setEditing(gen)}>
+                    <Settings2 size={17} />
+                  </button>
+                )}
+                <Chip pressed={false} onClick={() => set((l) => (l.didRun = false))}>
+                  <Moon size={15} /> لم يعمل اليوم
+                </Chip>
+              </div>
             </header>
 
             {log.didRun && (

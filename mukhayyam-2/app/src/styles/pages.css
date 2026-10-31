@@ -67,7 +67,7 @@
 @keyframes shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
 
 /* ---------- Manager home ---------- */
-.home { display: grid; gap: 18px; }
+.home { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
 .home-head { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
 .home-head h1 { margin: 2px 0 0; font-size: 32px; font-weight: 800; line-height: 1.25; }
 .eyebrow { margin: 0; color: var(--muted); font-size: 14.5px; }

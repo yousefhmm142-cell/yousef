@@ -27,3 +27,7 @@
   .ps-foot b { display: block; }
   .ps-foot span { display: block; margin-top: 4px; font-size: 10pt; }
 }
+
+/* Weekly attendance on paper: arrival over leaving, large and bold. */
+.print-sheet .pt-times { display: grid; line-height: 1.2; }
+.print-sheet .pt-times b { font-size: 12.5pt; font-weight: 800; }
