@@ -8,15 +8,10 @@
     <link rel="icon" href="/favicon.png" type="image/png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <title>مخيم 2 · أبناء فارس أبو زايد</title>
-    <script>
-      // Paint the saved theme before the app loads, so there is no white flash at night.
-      (function () {
-        var t = null
-        try { t = localStorage.getItem('m2-theme') } catch (e) {}
-        if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-        document.documentElement.dataset.theme = t
-      })()
-    </script>
+    <!-- Opens the connection to the database while the app itself is still loading. -->
+    <link rel="preconnect" href="%VITE_SUPABASE_URL%" crossorigin />
+    <!-- Saved theme painted before the app loads (no white flash at night); a file, not inline, for the security policy. -->
+    <script src="/theme.js"></script>
   </head>
   <body>
     <div id="root"></div>

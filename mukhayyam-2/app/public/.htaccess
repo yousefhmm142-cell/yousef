@@ -30,7 +30,7 @@ DirectoryIndex index.html
 <IfModule mod_headers.c>
   # The app's front door and its offline worker: always ask for the newest version,
   # so an update reaches every phone the next time it opens the app.
-  <FilesMatch "^(index\.html|sw\.js|registerSW\.js|manifest\.webmanifest)$">
+  <FilesMatch "^(index\.html|sw\.js|registerSW\.js|manifest\.webmanifest|theme\.js)$">
     Header set Cache-Control "no-cache"
   </FilesMatch>
   # Files whose name carries a fingerprint never change: keep them for a year.
@@ -39,5 +39,8 @@ DirectoryIndex index.html
   </FilesMatch>
   Header always set X-Content-Type-Options "nosniff"
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
-  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set X-Frame-Options "DENY"
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self'; manifest-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests"
 </IfModule>
