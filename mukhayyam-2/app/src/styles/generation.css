@@ -290,8 +290,12 @@
 .backup-body p { margin: 0; flex: 1 1 260px; }
 
 /* ---------- Worked-out figures and the generator picker ---------- */
-.nf.calc .nf-box { background: var(--sunken); border: 1.5px dashed color-mix(in srgb, var(--muted) 35%, transparent); outline: 0; box-shadow: none; }
-.nf.calc .nf-input { display: flex; align-items: center; color: var(--ink-2); font-weight: 800; }
+.nf.calc .nf-box { background: none; border: 0; outline: 0; box-shadow: none; }
+/* Worked out by the app: one calm filled box (not an input), tinted so it reads as "done for you". */
+.nf.calc .nf-input {
+  display: flex; align-items: center; color: var(--ink); font-weight: 800; cursor: default;
+  background: color-mix(in srgb, var(--brand) 4%, var(--sunken)); border-color: transparent;
+}
 .nf-label { font-size: 13px; font-weight: 700; color: var(--muted); }
 .gen-pick .chips { margin-top: 4px; }
 .backup-auto { display: grid; gap: 6px; padding: 0 18px 14px; border-top: 1px solid var(--line-2); padding-top: 12px; }
@@ -311,3 +315,15 @@
 /* The site adds and edits its own generators from the report. */
 .chip.add-chip { border-style: dashed; color: var(--brand); background: transparent; cursor: pointer; }
 .gen-head-actions { display: flex; align-items: center; gap: 6px; flex: none; }
+
+/* Entry form rhythm: every label row is the same height, so boxes side by side line up. */
+.group-head { min-height: 40px; }
+.fgrid.gauges { align-items: start; }
+.run-total {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  padding: 12px 14px; border-radius: var(--r-in); background: color-mix(in srgb, var(--brand) 4%, var(--sunken));
+}
+.run-total span { display: inline-flex; align-items: center; gap: 7px; font-size: 13.5px; font-weight: 700; color: var(--ink-2); }
+.run-total span svg { color: var(--brand); }
+.run-total small { font-size: 11.5px; font-weight: 400; color: var(--muted); }
+.run-total b { font-size: 18px; font-weight: 800; }

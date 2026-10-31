@@ -79,3 +79,46 @@
 .site-history-switch { max-width: 860px; width: 100%; margin: 0 auto; }
 .site-history-switch .segmented { width: 100%; }
 .site-history-switch .segmented button { flex: 1; }
+
+/* ---------- Distribution sheet: every zone listed at the side (laptop) or in a grid (phone) ---------- */
+.entry.wide { max-width: 1080px; }
+.zone-layout { display: grid; gap: 14px; }
+.zone-main { display: grid; gap: 14px; min-width: 0; align-content: start; }
+.zone-nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.zone-item {
+  display: flex; align-items: center; gap: 9px; min-width: 0; padding: 9px 10px; border-radius: 16px;
+  border: 1.5px solid var(--line-2); background: var(--surface); color: var(--ink-2);
+  font: inherit; text-align: start; cursor: pointer; transition: border-color .15s var(--ease), background .15s var(--ease);
+}
+.zone-item:hover { border-color: color-mix(in srgb, var(--brand) 35%, var(--line)); }
+.zone-item:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--brand-soft); border-color: var(--brand); }
+.zone-text { display: grid; min-width: 0; line-height: 1.35; }
+.zone-text b { font-size: 14px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.zone-text small { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.zone-dot {
+  flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--sunken); color: var(--muted); font-size: 13px; font-weight: 800;
+}
+.zone-item[data-done] .zone-dot { background: var(--ok-soft); color: var(--ok); }
+.zone-item[aria-current] { border-color: var(--brand); background: var(--brand-soft); color: var(--brand); }
+.zone-item[aria-current] .zone-text b { color: var(--brand); }
+.zone-item[aria-current] .zone-dot { background: var(--brand); color: var(--on-brand, #fff); }
+.zone-item.send .zone-dot { color: var(--brand); }
+/* Phones: "send" takes its own full row under the zones. */
+.zone-item.send { grid-column: 1 / -1; }
+
+@media (min-width: 901px) {
+  .zone-layout { grid-template-columns: 260px minmax(0, 1fr); align-items: start; }
+  .zone-nav {
+    grid-template-columns: 1fr; gap: 6px; padding: 8px; border-radius: var(--r-lg);
+    position: sticky; top: calc(var(--topbar-h) + 32px);
+    background: var(--glass-strong); border: 1px solid var(--glass-edge);
+  }
+  .zone-item { padding: 11px 12px; border-color: transparent; background: transparent; }
+  .zone-item:hover { background: var(--surface-2); }
+  .zone-item[aria-current] { background: var(--brand-soft); border-color: transparent; }
+  .zone-item.send { margin-top: 6px; border-top: 1px solid var(--line-2); border-radius: 0 0 16px 16px; }
+}
+@media (max-width: 480px) {
+  .zone-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

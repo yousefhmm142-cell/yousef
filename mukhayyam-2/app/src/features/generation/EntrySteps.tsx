@@ -1,4 +1,4 @@
-import { ArrowLeft, CircleAlert, Moon, Plus, Settings2, StickyNote, Trash2, X } from 'lucide-react'
+import { ArrowLeft, CircleAlert, Clock, Moon, Plus, Settings2, StickyNote, Trash2, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { GeneratorDialog } from './GeneratorDialog'
 import { formatAmount } from '../../lib/numbers'
@@ -219,8 +219,9 @@ export function RunsStep({ report, generators, update }: { report: SiteReport; g
                   )}
                 </div>
 
-                <div className="fgrid">
-                  <CalcField label="ساعات التشغيل" unit="ساعة" value={log.runHours} hint="من أوقات التشغيلات" />
+                <div className="run-total" aria-live="polite">
+                  <span><Clock size={16} /> مجموع ساعات التشغيل <small>من أوقات التشغيلات</small></span>
+                  <b className="num">{log.runHours === null ? '—' : `${formatAmount(log.runHours)} ساعة`}</b>
                 </div>
 
                 <div className="group">
@@ -242,17 +243,24 @@ export function RunsStep({ report, generators, update }: { report: SiteReport; g
                   </div>
                 </div>
 
-                <div className="fgrid">
-                  <NumberField label="الحرارة" unit="°C" max={150} value={log.temperatureC} onChange={(v) => set((l) => (l.temperatureC = v))} />
-                  <div className="group tight">
+                <div className="fgrid gauges">
+                  <div className="group">
+                    <div className="group-head"><span>الحرارة</span></div>
+                    <NumberField bareLabel label="الحرارة" unit="°C" max={150} value={log.temperatureC} onChange={(v) => set((l) => (l.temperatureC = v))} />
+                  </div>
+                  <div className="group">
+                    <div className="group-head">
+                      <span>ضغط الزيت</span>
+                      <Segmented label="وحدة ضغط الزيت" value={log.oilPressureUnit} options={pressureUnits} onChange={(v) => set((l) => (l.oilPressureUnit = v))} />
+                    </div>
                     <NumberField
+                      bareLabel
                       label="ضغط الزيت"
                       unit={log.oilPressureUnit}
                       max={log.oilPressureUnit === 'bar' ? 15 : 220}
                       value={log.oilPressure}
                       onChange={(v) => set((l) => (l.oilPressure = v))}
                     />
-                    <Segmented label="وحدة ضغط الزيت" value={log.oilPressureUnit} options={pressureUnits} onChange={(v) => set((l) => (l.oilPressureUnit = v))} />
                   </div>
                 </div>
                 <NoteToggle value={log.notes} onChange={(v) => set((l) => (l.notes = v))} />

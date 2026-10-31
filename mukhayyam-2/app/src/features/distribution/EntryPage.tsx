@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ArrowLeft, ArrowRight, CircleAlert, Moon, Plus, Send, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, CircleAlert, Moon, Plus, Send, X } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
 import { useEmployee } from '../../auth/AuthProvider'
@@ -14,7 +14,7 @@ import { useToast } from '../../ui/Toast'
 import { MissingList } from '../generation/EntrySteps'
 import { OfflineSendNote } from '../generation/EntryPage'
 import { LOAD_UNIT_OPTIONS, PHASES } from '../sheets/loads'
-import { SaveBadge, SentHeader, Stepper, UnsentBanner } from '../sheets/ui'
+import { SaveBadge, SentHeader, UnsentBanner } from '../sheets/ui'
 import { useConfirmTap, useDraft } from '../sheets/useDraft'
 import { isEditableStatus } from '../sheets/workflow'
 import {
@@ -113,7 +113,7 @@ function SheetForm({ date, initial, zones, previous }: {
   const entry = sheet.zones[stepIndex]
 
   return (
-    <div className="entry">
+    <div className="entry wide">
       <header className="entry-head">
         <div>
           <h1>{date === todayISO() ? 'كشف اليوم' : `كشف ${dayName(date)}`}</h1>
@@ -130,45 +130,73 @@ function SheetForm({ date, initial, zones, previous }: {
       )}
       {date === todayISO() && <UnsentBanner sheets={unsent ?? []} hrefFor={(d) => `/sheet/${d}`} title="كشوف لم تُرسل بعد" />}
 
-      <Stepper
-        scroll
-        label="المناطق"
-        current={stepIndex}
-        onSelect={goTo}
-        items={steps.map((s, i) => ({ ...s, icon: i === sendIndex ? Send : undefined, done: i < sendIndex && missingInZone(sheet.zones[i]!).length === 0 }))}
-      />
+      <div className="zone-layout">
+        <nav className="zone-nav" aria-label="المناطق">
+          {sheet.zones.map((z, i) => {
+            const done = missingInZone(z).length === 0
+            const started = !z.supplied || z.supplyHours !== null || z.runs.some((r) => r.start || r.end)
+            return (
+              <button
+                key={z.id}
+                type="button"
+                className="zone-item"
+                aria-current={i === stepIndex ? 'step' : undefined}
+                data-done={done || undefined}
+                onClick={() => goTo(i)}
+              >
+                <span className="zone-dot">{done && i !== stepIndex ? <Check size={14} strokeWidth={3} /> : <span className="num">{i + 1}</span>}</span>
+                <span className="zone-text">
+                  <b>{zoneName(z.zoneId)}</b>
+                  <small className="num">
+                    {!z.supplied ? 'بدون تغذية' : z.supplyHours !== null ? `${formatAmount(z.supplyHours)} ساعة · ${z.runs.length} تشغيلات` : started ? 'قيد التعبئة' : 'لم تُعبّأ'}
+                  </small>
+                </span>
+              </button>
+            )
+          })}
+          <button type="button" className="zone-item send" aria-current={stepIndex === sendIndex ? 'step' : undefined} onClick={() => goTo(sendIndex)}>
+            <span className="zone-dot"><Send size={14} /></span>
+            <span className="zone-text">
+              <b>الإرسال</b>
+              <small>{missing.length ? `${missing.length} خانات فارغة` : 'جاهز'}</small>
+            </span>
+          </button>
+        </nav>
 
-      <div className="entry-body" onKeyDown={advanceOnEnter}>
-        {entry ? (
-          <ZoneStep key={entry.id} entry={entry} index={stepIndex} count={sheet.zones.length} name={zoneName(entry.zoneId)} update={update} />
-        ) : (
-          <>
-            <section className="fcard">
-              <h3 className="fcard-title">الملاحظات</h3>
-              <textarea
-                className="textarea"
-                rows={3}
-                placeholder="أي شيء يجب أن يعرفه المدير…"
-                aria-label="الملاحظات العامة"
-                value={sheet.notes}
-                onChange={(e) => update((s) => void (s.notes = e.target.value))}
-              />
-            </section>
-            <section className="card summary">
-              {sheet.zones.map((z, i) => (
-                <button key={z.id} type="button" className="summary-row as-button" onClick={() => goTo(i)}>
-                  <span>{zoneName(z.zoneId)}</span>
-                  <b className="num">
-                    {!z.supplied ? 'بدون تغذية' : `${formatAmount(z.supplyHours)} ساعة · ${z.runs.length} تشغيلات`}
-                  </b>
-                </button>
-              ))}
-              <div className="summary-row total"><span>المجموع</span><b className="num">{formatAmount(totals.totalHours)} ساعة · {totals.runs} تشغيلات</b></div>
-            </section>
-            <MissingList items={missing} onJump={goTo} />
-            {!online && <OfflineSendNote />}
-          </>
-        )}
+        <div className="zone-main">
+        <div className="entry-body" onKeyDown={advanceOnEnter}>
+          {entry ? (
+            <ZoneStep key={entry.id} entry={entry} index={stepIndex} count={sheet.zones.length} name={zoneName(entry.zoneId)} update={update} />
+          ) : (
+            <>
+              <section className="fcard">
+                <h3 className="fcard-title">الملاحظات</h3>
+                <textarea
+                  className="textarea"
+                  rows={3}
+                  placeholder="أي شيء يجب أن يعرفه المدير…"
+                  aria-label="الملاحظات العامة"
+                  value={sheet.notes}
+                  onChange={(e) => update((s) => void (s.notes = e.target.value))}
+                />
+              </section>
+              <section className="card summary">
+                {sheet.zones.map((z, i) => (
+                  <button key={z.id} type="button" className="summary-row as-button" onClick={() => goTo(i)}>
+                    <span>{zoneName(z.zoneId)}</span>
+                    <b className="num">
+                      {!z.supplied ? 'بدون تغذية' : `${formatAmount(z.supplyHours)} ساعة · ${z.runs.length} تشغيلات`}
+                    </b>
+                  </button>
+                ))}
+                <div className="summary-row total"><span>المجموع</span><b className="num">{formatAmount(totals.totalHours)} ساعة · {totals.runs} تشغيلات</b></div>
+              </section>
+              <MissingList items={missing} onJump={goTo} />
+              {!online && <OfflineSendNote />}
+            </>
+          )}
+        </div>
+        </div>
       </div>
 
       <div className="foot-fade" aria-hidden="true" />
