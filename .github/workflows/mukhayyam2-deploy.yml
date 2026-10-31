@@ -1,16 +1,17 @@
-# Publishes the Mukhayyam 2 app to Cloudflare Pages on every change, always on the same link:
-# https://mukhayyam2.pages.dev  (no file to upload by hand).
+# On every change: brings the Supabase database up to date (new files in supabase/updates/), then
+# publishes the app to Cloudflare Pages, always on the same link: https://mukhayyam2.pages.dev
 #
 # One-time setup (repository Settings > Secrets and variables > Actions > New repository secret):
 #   CLOUDFLARE_API_TOKEN   a Cloudflare API token with the "Cloudflare Pages: Edit" permission
 #   CLOUDFLARE_ACCOUNT_ID  the account ID shown on the Cloudflare dashboard (Workers & Pages, right side)
-# Until both exist the app is still built and checked, only the publish step is skipped.
+#   SUPABASE_DB_URL        Supabase > Connect > Session pooler connection string, with the password
+# A missing secret only skips its step; the app is still built and checked.
 name: Mukhayyam 2 · publish
 
 on:
   push:
     branches: [main, claude/youthful-bell-qnhys0]
-    paths: ['mukhayyam-2/app/**', '.github/workflows/mukhayyam2-deploy.yml']
+    paths: ['mukhayyam-2/app/**', 'mukhayyam-2/supabase/updates/**', 'mukhayyam-2/supabase/apply-updates.sh', '.github/workflows/mukhayyam2-deploy.yml']
   workflow_dispatch:
 
 concurrency:
@@ -27,6 +28,7 @@ jobs:
         working-directory: mukhayyam-2/app
     env:
       HAS_CF: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
+      HAS_DB: ${{ secrets.SUPABASE_DB_URL != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -39,6 +41,15 @@ jobs:
       - run: npx vitest run
       # The Supabase address and publishable key come from app/.env.hosting (public values).
       - run: npx vite build --mode hosting --outDir dist-hosting
+      # The database first, so the new app never calls something the server does not have yet.
+      - name: Update the database
+        if: env.HAS_DB == 'true'
+        working-directory: mukhayyam-2/supabase
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          command -v psql >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client)
+          ./apply-updates.sh
       - name: Publish to https://mukhayyam2.pages.dev
         if: env.HAS_CF == 'true'
         uses: cloudflare/wrangler-action@v3
@@ -50,3 +61,6 @@ jobs:
       - name: Not published yet
         if: env.HAS_CF != 'true'
         run: echo "::notice::Built and checked. Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID secrets to publish automatically."
+      - name: Database not updated
+        if: env.HAS_DB != 'true'
+        run: echo "::notice::Add the SUPABASE_DB_URL secret to update the database automatically."
