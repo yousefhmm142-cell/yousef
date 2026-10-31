@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { isDemo } from '../config'
 import { getSupabase } from '../data/supabase'
-import { prepareDevice, startSync, stopSync } from '../data/sync'
+import { flushBeforeSignOut, prepareDevice, startSync, stopSync } from '../data/sync'
 import type { Employee } from '../types'
 import { demoBackend, supabaseBackend } from './backends'
 
@@ -69,6 +69,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 
   const signOut = useCallback(async () => {
+    // Send what is still waiting first, so it reaches the manager even if someone else signs in next.
+    await flushBeforeSignOut().catch(() => undefined)
     stopSync()
     await backend.signOut()
     setState({ status: 'signed_out', byUser: true })

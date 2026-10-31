@@ -494,23 +494,57 @@ export function stopSync() {
   setState({ phase: 'idle', problem: null })
 }
 
+type Parked = Partial<Record<SheetKind, SheetDoc[]>>
+const parkedKey = (employeeId: string) => `parked:${employeeId}`
+
 /**
- * Before the first screen after signing in: if someone else used this device before, their sheets
- * are cleared (they are on the server); then the lists and sheets are loaded once, so the first
- * screen is already complete. Gives up waiting after a few seconds on a slow connection.
+ * Before the first screen after signing in. If someone else used this device before, their sheets
+ * are cleared from the screens, but anything of theirs not on the server yet is put aside for them
+ * (never deleted) and goes back in when they sign in here again. Then the lists and sheets are
+ * loaded once, so the first screen is already complete. Gives up waiting after a few seconds on a
+ * slow connection.
  */
 export async function prepareDevice(employee: Employee, waitMs = 10_000): Promise<void> {
   if (isDemo) return
   const previous = await getMeta<string>('device-user')
   if (previous !== employee.id) {
     await db.transaction('rw', [db.siteReports, db.distributionSheets, db.outbox, db.meta], async () => {
+      if (previous) {
+        const parked = (await getMeta<Parked>(parkedKey(previous))) ?? {}
+        let any = false
+        for (const spec of KINDS) {
+          const unsent = await spec.table.filter(hasUnsent).toArray()
+          if (!unsent.length) continue
+          any = true
+          // One copy per day: the newer one wins.
+          const byDay = new Map((parked[spec.kind] ?? []).map((d) => [spec.dateOf(d), d]))
+          for (const d of unsent) {
+            const old = byDay.get(spec.dateOf(d))
+            if (!old || old.updatedAt <= d.updatedAt) byDay.set(spec.dateOf(d), d)
+          }
+          parked[spec.kind] = [...byDay.values()]
+        }
+        if (any) await setMeta(parkedKey(previous), parked)
+      }
       await db.siteReports.clear()
       await db.distributionSheets.clear()
       await db.outbox.clear()
       for (const spec of KINDS) await deleteMeta(`pull:${spec.kind}`)
+      // This person's own unsent work from an earlier visit: back in, to be sent now.
+      const mine = await getMeta<Parked>(parkedKey(employee.id))
+      if (mine) {
+        for (const spec of KINDS) if (mine[spec.kind]?.length) await spec.table.bulkPut(mine[spec.kind]!)
+        await deleteMeta(parkedKey(employee.id))
+      }
       await setMeta('device-user', employee.id)
     })
   }
   me = employee
+  await Promise.race([syncNow(), new Promise((r) => setTimeout(r, waitMs))])
+}
+
+/** Before signing out: one last try to send what is waiting (a few seconds at most). */
+export async function flushBeforeSignOut(waitMs = 8_000): Promise<void> {
+  if (isDemo || !me || !navigator.onLine) return
   await Promise.race([syncNow(), new Promise((r) => setTimeout(r, waitMs))])
 }

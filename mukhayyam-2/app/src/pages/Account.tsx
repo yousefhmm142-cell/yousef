@@ -1,4 +1,4 @@
-import { ChevronLeft, Download, LogOut, Moon, Settings, Smartphone, Sun } from 'lucide-react'
+import { ChevronLeft, Download, LogOut, Moon, RefreshCw, Settings, Smartphone, Sun } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { useAuth, useEmployee } from '../auth/AuthProvider'
@@ -10,7 +10,8 @@ import { isManagerRole, roleLabel } from '../types'
 import { Avatar, Button, Pill } from '../ui/primitives'
 import { SyncStatus } from '../ui/status'
 import { APK_PATH, isInstalled } from '../ui/InstallApp'
-import { usePendingCount } from '../data/sync'
+import { syncNow, usePendingCount, useSyncState } from '../data/sync'
+import { formatTime } from '../lib/format'
 
 export function Account() {
   useDocumentTitle('حسابي')
@@ -20,6 +21,7 @@ export function Account() {
   const [confirming, setConfirming] = useState(false)
   const [busy, setBusy] = useState(false)
   const pending = usePendingCount()
+  const sync = useSyncState()
 
   // The sign-out button asks once; the question goes away by itself.
   useEffect(() => {
@@ -56,6 +58,13 @@ export function Account() {
           <span className="row-label">الاتصال</span>
           <span className="row-value"><SyncStatus /></span>
         </div>
+        {!isDemo && (
+          <button type="button" className="row" disabled={sync.phase === 'syncing'} onClick={() => void syncNow()}>
+            <span className="ico-round"><RefreshCw size={16} className={sync.phase === 'syncing' ? 'spin' : undefined} /></span>
+            <span className="row-label">{sync.phase === 'syncing' ? 'جارٍ الإرسال والتحديث…' : 'إرسال وتحديث الآن'}</span>
+            <span className="row-value">{sync.lastOkAt ? <>آخر تحديث <span className="num">{formatTime(new Date(sync.lastOkAt))}</span></> : '—'}</span>
+          </button>
+        )}
         <div className="row">
           <span className="row-label">البيانات</span>
           <span className="row-value">
@@ -99,7 +108,7 @@ export function Account() {
       </Button>
       {confirming && pending > 0 && (
         <p className="banner" role="alert">
-          على هذا الجهاز {pending === 1 ? 'كشف لم يصل' : `${pending} كشوف لم تصل`} للخادم بعد. إن دخل شخص آخر على الجهاز تُحذف. اتصل بالإنترنت أولاً إن أمكن.
+          على هذا الجهاز {pending === 1 ? 'كشف لم يصل' : `${pending} كشوف لم تصل`} للخادم بعد. ستُرسل الآن قبل الخروج إن كان هناك إنترنت، وإلا تبقى محفوظة لك على الجهاز وتُرسل عند دخولك مرة ثانية.
         </p>
       )}
     </div>

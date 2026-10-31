@@ -113,3 +113,5 @@
 .banner.danger { background: var(--danger-soft); color: var(--danger); }
 .banner p { margin: 0; }
 .banner span { display: block; font-weight: 400; color: var(--ink-2); }
+.spin { animation: spin 0.9s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
