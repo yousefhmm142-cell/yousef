@@ -12,7 +12,7 @@ import { useDocumentTitle } from '../lib/useDocumentTitle'
 import { useNow } from '../lib/useNow'
 import { useOnline } from '../lib/useOnline'
 import { formatPhone } from '../lib/phone'
-import { roleLabel } from '../types'
+import { titleOf } from '../types'
 import { Avatar, Pill } from '../ui/primitives'
 import { useLatestSentSheet, useSheet } from '../features/distribution/repo'
 import { EntryPage } from '../features/generation/EntryPage'
@@ -166,7 +166,7 @@ function TeamCard() {
               <Avatar name={e.fullName} size={36} />
               <span className="team-name">
                 <b>{e.fullName}</b>
-                <small>{roleLabel[e.role]}</small>
+                <small>{titleOf(e)}</small>
               </span>
               {e.phone && <span className="team-phone num ltr">{formatPhone(e.phone)}</span>}
             </li>

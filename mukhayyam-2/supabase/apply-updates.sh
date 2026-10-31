@@ -63,7 +63,11 @@ select n from (values
   ('updates-1-2-3.sql', to_regclass('public.attendance_codes') is not null),
   ('update-4.sql', to_regclass('public.stock_items') is not null),
   -- update-6.sql carries update 5 again, so update 5 never needs to run on its own.
-  ('update-5.sql', true)
+  ('update-5.sql', true),
+  ('update-6.sql', to_regprocedure('public.save_generator(smallint,text,text,text,numeric,numeric,boolean)') is not null),
+  -- update-7.sql also loads the team list: never run it twice (it would reset attendance codes).
+  ('update-7.sql', exists (select 1 from information_schema.columns
+                           where table_schema = 'public' and table_name = 'employees' and column_name = 'job_title'))
 ) as known(n, done)
 where done
 on conflict do nothing;

@@ -197,7 +197,7 @@ function TodayBoard({ data, onOpen }: { data: Data; onOpen(e: Employee): void })
                 <Avatar name={e.fullName} size={38} />
                 <span className="att-name">
                   <b>{e.fullName}</b>
-                  <small>{data.scheduleOf(e)?.name}</small>
+                  <small>{[e.jobTitle, data.scheduleOf(e)?.name].filter(Boolean).join(' · ')}</small>
                 </span>
                 {d.inAt && (
                   <span className="att-times num">
@@ -271,7 +271,7 @@ function WeekSheet({ data, onOpen }: { data: Data; onOpen(e: Employee, date: ISO
                 <tr key={e.id}>
                   <th className="week-person">
                     <b>{e.fullName}</b>
-                    <small>{data.scheduleOf(e)?.name}</small>
+                    <small>{[e.jobTitle, data.scheduleOf(e)?.name].filter(Boolean).join(' · ')}</small>
                   </th>
                   {results.map((d) => (
                     <td key={d.date} data-status={d.status}>
@@ -338,7 +338,7 @@ function WeekPrint({ days, rows, label, scheduleOf }: {
         <tbody>
           {rows.map(({ e, results, totals }) => (
             <tr key={e.id}>
-              <td>{e.fullName}<br /><small>{scheduleOf(e)?.name}</small></td>
+              <td>{e.fullName}<br /><small>{[e.jobTitle, scheduleOf(e)?.name].filter(Boolean).join(' · ')}</small></td>
               {results.map((d) => (
                 <td key={d.date} className="num">
                   {d.inAt ? <span className="pt-times"><b>{d.inAt}</b><b>{d.outAt ?? '—'}</b></span> : d.status === 'future' ? '' : d.status === 'leave' && d.leave ? leaveLabel[d.leave.type] : statusLabel[d.status]}

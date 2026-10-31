@@ -8,7 +8,7 @@ import { databaseState, type DatabaseState } from '../data/admin'
 import { DEMO_PIN, demoEmployees } from '../data/demo'
 import { useDocumentTitle } from '../lib/useDocumentTitle'
 import { formatPhone, isValidPhone, normalizePhone } from '../lib/phone'
-import { roleLabel } from '../types'
+import { titleOf } from '../types'
 import { Button, Logo } from '../ui/primitives'
 import { PinInput } from '../ui/PinInput'
 import { FirstSetup } from './FirstSetup'
@@ -220,7 +220,7 @@ function Login() {
                   }}
                 >
                   <b>{e.fullName}</b>
-                  <small>{roleLabel[e.role]}</small>
+                  <small>{titleOf(e)}</small>
                 </button>
               ))}
             </div>

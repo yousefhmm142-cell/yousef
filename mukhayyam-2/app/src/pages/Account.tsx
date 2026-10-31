@@ -6,7 +6,7 @@ import { config, isDemo } from '../config'
 import { formatPhone } from '../lib/phone'
 import { useTheme } from '../lib/theme'
 import { useDocumentTitle } from '../lib/useDocumentTitle'
-import { isManagerRole, roleLabel } from '../types'
+import { isManagerRole, titleOf } from '../types'
 import { Avatar, Button, Pill } from '../ui/primitives'
 import { SyncStatus } from '../ui/status'
 import { APK_PATH, isInstalled } from '../ui/InstallApp'
@@ -37,7 +37,7 @@ export function Account() {
         <div>
           <h1>{employee.fullName}</h1>
           <p>
-            {roleLabel[employee.role]}
+            {titleOf(employee)}
             {employee.phone && (
               <>
                 {' · '}

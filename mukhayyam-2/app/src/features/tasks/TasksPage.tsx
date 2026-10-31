@@ -56,8 +56,9 @@ function useTechnicians(): Employee[] {
 }
 
 /** Sends an order: opens WhatsApp (new tab) or the SMS app with the text ready, then marks it sent. */
-async function sendOrder(task: Task, channel: Channel, phone: string, text: string) {
-  const url = channel === 'whatsapp' ? whatsappUrl(phone, text) : smsUrl(phone, text)
+async function sendOrder(task: Task, channel: Channel, tech: Employee & { phone: string }, text: string) {
+  const phone = tech.phone
+  const url = channel === 'whatsapp' ? whatsappUrl(phone, text, tech.waCode ?? 972) : smsUrl(phone, text)
   // Opened before any waiting, so the browser does not block it as a pop-up.
   const win = channel === 'whatsapp' ? window.open('', '_blank') : null
   try {
@@ -255,7 +256,7 @@ function NewTaskDialog({ technicians, onClose, typeName, zoneName }: {
         me.id,
       )
       const text = taskMessage(task, { type: typeName(task.typeId), zone: zoneName(task.zoneId) }, taskLink(task.linkToken))
-      await sendOrder(task, channel, tech.phone, text)
+      await sendOrder(task, channel, { ...tech, phone: tech.phone! }, text)
       toast(`أُرسلت المهمة ${task.number} إلى ${tech.fullName}`)
       onClose()
     } catch (e) {
@@ -365,7 +366,7 @@ function TaskDialog({ task, tech, typeName, zoneName, now, onClose }: {
     if (!tech?.phone) return toast('لا يوجد رقم جوال لهذا الفني', 'danger')
     setBusy(channel)
     try {
-      await sendOrder(task, channel, tech.phone, text)
+      await sendOrder(task, channel, { ...tech, phone: tech.phone! }, text)
     } catch (e) {
       toast(errText(e), 'danger')
     } finally {

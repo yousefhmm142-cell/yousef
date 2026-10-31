@@ -7,7 +7,12 @@ import { byRoleThenName, saveEmployee } from '../../data/admin'
 import { codeHolders, setAttendance as saveAttendance } from '../attendance/repo'
 import { db } from '../../data/db'
 import { formatPhone, isValidPhone, normalizePhone, toLatinDigits } from '../../lib/phone'
-import { isManagerRole, isSiteRole, roleLabel, type Employee, type Role } from '../../types'
+import { isManagerRole, isSiteRole, roleLabel, titleOf, type Employee, type Role } from '../../types'
+
+const waCodes = [
+  { value: '972', label: '+972' },
+  { value: '970', label: '+970' },
+] as const
 import { Dialog } from '../../ui/Dialog'
 import { Segmented, TextField } from '../../ui/form'
 import { Avatar, Button, Pill } from '../../ui/primitives'
@@ -63,7 +68,8 @@ export function TeamCard() {
               <span className="gen-main">
                 <b>{e.fullName}</b>
                 <small>
-                  {roleLabel[e.role]}
+                  {titleOf(e)}
+                  {e.jobTitle && e.role !== 'technician' && e.role !== 'staff' && <> · {roleLabel[e.role]}</>}
                   {e.phone && <> · <span className="num ltr">{formatPhone(e.phone)}</span></>}
                 </small>
               </span>
@@ -103,6 +109,8 @@ function EmployeeDialog({ person, hasCode, onClose }: { person: Employee | null;
   const [name, setName] = useState(person?.fullName ?? '')
   const [role, setRole] = useState<Role>(person?.role ?? 'technician')
   const [phone, setPhone] = useState(person?.phone ?? '')
+  const [jobTitle, setJobTitle] = useState(person?.jobTitle ?? '')
+  const [waCode, setWaCode] = useState<'972' | '970'>(person?.waCode === 970 ? '970' : '972')
   // New people get a PIN ready to hand over; existing logins keep theirs unless changed.
   const [pin, setPin] = useState(person?.hasLogin ? '' : randomPin())
   const [changePin, setChangePin] = useState(!person?.hasLogin)
@@ -115,7 +123,7 @@ function EmployeeDialog({ person, hasCode, onClose }: { person: Employee | null;
   const [changeCode, setChangeCode] = useState(!hasCode)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [handover, setHandover] = useState<{ name: string; phone: string; pin: string | null; code: string | null } | null>(null)
+  const [handover, setHandover] = useState<{ name: string; phone: string; pin: string | null; code: string | null; waCode: 970 | 972 } | null>(null)
 
   const self = person?.id === me.id
 
@@ -136,10 +144,12 @@ function EmployeeDialog({ person, hasCode, onClose }: { person: Employee | null;
         pin: newPin,
         isActive: active === 'on',
         tracksAttendance: attendance === 'yes',
+        jobTitle: jobTitle.trim() || null,
+        waCode: Number(waCode) as 970 | 972,
       })
       if (attendance === 'yes') await saveAttendance(id, scheduleId ?? schedules?.[0]?.id ?? null, newCode)
       if (newPin || newCode) {
-        setHandover({ name: name.trim(), phone, pin: newPin, code: newCode })
+        setHandover({ name: name.trim(), phone, pin: newPin, code: newCode, waCode: Number(waCode) as 970 | 972 })
         setBusy(false)
       } else {
         toast(person ? 'حُفظ التعديل' : 'أُضيف الموظف')
@@ -176,7 +186,9 @@ function EmployeeDialog({ person, hasCode, onClose }: { person: Employee | null;
             ))}
           </select>
           {self && <span className="field-hint">لا يمكنك تغيير دورك بنفسك.</span>}
+          {(role === 'admin' || role === 'manager') && !self && <span className="field-hint">مسؤول النظام والمدير: كل الصلاحيات.</span>}
         </label>
+        <TextField label="المسمى الوظيفي (اختياري)" value={jobTitle} onChange={setJobTitle} placeholder="مثل: نائب المدير، محاسبة، فني" />
         <label className="field">
           <span className="label">رقم الجوال</span>
           <input
@@ -189,6 +201,13 @@ function EmployeeDialog({ person, hasCode, onClose }: { person: Employee | null;
           />
           <span className="field-hint">{usesApp(role) ? 'يدخل به للتطبيق.' : role === 'technician' ? 'تصله عليه أوامر المهام على واتساب أو SMS.' : 'للتواصل.'}</span>
         </label>
+        {phone && (
+          <div className="field">
+            <span className="label">مقدمة الواتساب</span>
+            <Segmented<'972' | '970'> label="مقدمة الواتساب" value={waCode} options={waCodes} onChange={setWaCode} />
+            <span className="field-hint">حسب ما سجّل الموظف واتسابه. إذا ما فتح الرابط محادثته، جرّب الثانية.</span>
+          </div>
+        )}
         {phone && usesApp(role) && (
           <div className="field">
             <span className="label">الرمز السري</span>
@@ -264,14 +283,14 @@ function EmployeeDialog({ person, hasCode, onClose }: { person: Employee | null;
 }
 
 /** After a PIN is set: the details to hand to the person, by WhatsApp or copied. */
-function Handover({ name, phone, pin, code, onClose }: { name: string; phone: string; pin: string | null; code: string | null; onClose(): void }) {
+function Handover({ name, phone, pin, code, waCode, onClose }: { name: string; phone: string; pin: string | null; code: string | null; waCode: 970 | 972; onClose(): void }) {
   const toast = useToast()
   const link = isDemo ? '' : window.location.origin
   const lines = [`مرحباً ${name}،`]
   if (pin) lines.push('هذا حسابك في نظام مخيم 2:', `رقم الجوال: ${phone}`, `الرمز السري: ${pin}`, ...(link ? [`الرابط: ${link}`, `تطبيق الأندرويد: ${link}/mukhayyam2.apk`] : []))
   if (code) lines.push(`رمز الحضور: ${code}`, 'أول مرة تصوّر ورقة الحضور في المكتب: اختر اسمك واكتب هذا الرمز. بعدها كل تصويرة تسجّل لحالها.')
   const message = lines.join('\n')
-  const wa = phone ? `https://wa.me/970${phone.slice(1)}?text=${encodeURIComponent(message)}` : ''
+  const wa = phone ? `https://wa.me/${waCode}${phone.slice(1)}?text=${encodeURIComponent(message)}` : ''
 
   return (
     <Dialog

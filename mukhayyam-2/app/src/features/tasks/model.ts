@@ -91,5 +91,9 @@ export function durationText(minutes: number): string {
   return m ? `${h} س ${m} د` : `${h} س`
 }
 
-/** Phone numbers of Palestine for WhatsApp and SMS links: 0599123456 -> 970599123456. */
-export const international = (phone: string) => `970${phone.replace(/^0/, '')}`
+/**
+ * Phone numbers of Palestine in international form: 0599123456 -> 970599123456 (or 972...).
+ * Calls and SMS use the official 970; WhatsApp uses whatever code the person registered with.
+ */
+export const international = (phone: string, code: WaCode = 970) => `${code}${phone.replace(/^0/, '')}`
+export type WaCode = 970 | 972

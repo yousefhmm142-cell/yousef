@@ -307,6 +307,9 @@ interface EmployeeRow {
   tracks_attendance: boolean
   auth_user_id: string | null
   schedule_id: number | null
+  /** Only once update 7 is on the database. */
+  job_title?: string | null
+  wa_code?: 970 | 972
 }
 interface ListRow { id: number; name: string; is_active: boolean; sort_order: number }
 interface GeneratorRow extends ListRow { brand: string; model: string | null; capacity_kva: number | null; liters_per_hour: number | null }
@@ -314,7 +317,8 @@ interface GeneratorRow extends ListRow { brand: string; model: string | null; ca
 export async function pullReference(): Promise<void> {
   const sb = client()
   const [people, generators, fuel, zones, settings, taskTypes, schedules, items] = await Promise.all([
-    run(sb.from('employees').select('id, full_name, phone, role, is_active, tracks_attendance, auth_user_id, schedule_id')),
+    // '*' so this keeps working on a database that does not have the newer columns yet.
+    run(sb.from('employees').select('*')),
     run(sb.from('generators').select('id, name, brand, model, capacity_kva, liters_per_hour, is_active, sort_order')),
     run(sb.from('fuel_types').select('id, name, is_active, sort_order')),
     run(sb.from('zones').select('id, name, is_active, sort_order')),
@@ -334,6 +338,8 @@ export async function pullReference(): Promise<void> {
       tracksAttendance: r.tracks_attendance,
       hasLogin: r.auth_user_id !== null,
       scheduleId: r.schedule_id,
+      jobTitle: r.job_title ?? null,
+      waCode: r.wa_code ?? 972,
     })),
   )
   await replaceAll<Generator>(

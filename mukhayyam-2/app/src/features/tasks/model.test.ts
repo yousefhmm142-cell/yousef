@@ -20,8 +20,9 @@ describe('task order message', () => {
     const text = taskMessage({ ...base, details: '', subscriberName: '', subscriberPhone: null, location: '', priority: 'normal' }, { type: 'تفتيش' }, 'L')
     expect(text).toBe('مهمة رقم 12 · تفتيش\nالمدة المتوقعة: 30 د\n\nلما تخلص اضغط هنا:\nL')
   })
-  it('builds WhatsApp and SMS links with the Palestinian code', () => {
-    expect(whatsappUrl('0599123456', 'أ ب')).toBe('https://wa.me/970599123456?text=%D8%A3%20%D8%A8')
+  it('builds WhatsApp links with the code the person registered with, SMS with the official one', () => {
+    expect(whatsappUrl('0599123456', 'أ ب')).toBe('https://wa.me/972599123456?text=%D8%A3%20%D8%A8')
+    expect(whatsappUrl('0599123456', 'x', 970)).toBe('https://wa.me/970599123456?text=x')
     expect(smsUrl('0569123456', 'x')).toBe('sms:+970569123456?&body=x')
   })
 })

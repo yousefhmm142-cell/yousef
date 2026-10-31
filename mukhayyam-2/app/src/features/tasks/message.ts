@@ -1,4 +1,4 @@
-import { durationText, international, type Task } from './model'
+import { durationText, international, type Task, type WaCode } from './model'
 
 /** The private page behind the order, opened by the technician from the message. */
 export const taskLink = (token: string, origin = window.location.origin) => `${origin}/t/${token}`
@@ -18,7 +18,8 @@ export function taskMessage(t: Task, names: { type: string; zone?: string | null
   return lines.join('\n')
 }
 
-export const whatsappUrl = (phone: string, text: string) => `https://wa.me/${international(phone)}?text=${encodeURIComponent(text)}`
+/** WhatsApp only opens the chat with the country code the person registered with (972 for most here). */
+export const whatsappUrl = (phone: string, text: string, code: WaCode = 972) => `https://wa.me/${international(phone, code)}?text=${encodeURIComponent(text)}`
 
 /** Works on Android and iPhone alike. */
 export const smsUrl = (phone: string, text: string) => `sms:+${international(phone)}?&body=${encodeURIComponent(text)}`

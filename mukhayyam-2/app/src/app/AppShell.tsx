@@ -1,7 +1,7 @@
 import { Ellipsis, UserRound } from 'lucide-react'
 import { Link, NavLink, Outlet } from 'react-router'
 import { useEmployee } from '../auth/AuthProvider'
-import { roleLabel } from '../types'
+import { titleOf } from '../types'
 import { Avatar, Logo } from '../ui/primitives'
 import { SyncStatus, ThemeToggle } from '../ui/status'
 import { navFor, type NavItem } from './nav'
@@ -46,7 +46,7 @@ export function AppShell() {
             <Avatar name={employee.fullName} />
             <span className="me-text">
               <b>{employee.fullName}</b>
-              <small>{roleLabel[employee.role]}</small>
+              <small>{titleOf(employee)}</small>
             </span>
           </NavLink>
         </div>

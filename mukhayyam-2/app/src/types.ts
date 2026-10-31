@@ -17,7 +17,14 @@ export interface Employee {
   hasLogin?: boolean
   /** Office hours for attendance (full day or بطالة). */
   scheduleId?: number | null
+  /** What they do (نائب المدير، محاسبة، فني...); shown instead of the system role when set. */
+  jobTitle?: string | null
+  /** Country code their WhatsApp is registered with. */
+  waCode?: 970 | 972
 }
+
+/** The job title when there is one, else the system role. */
+export const titleOf = (e: Pick<Employee, 'jobTitle' | 'role'>) => e.jobTitle || roleLabel[e.role]
 
 export const roleLabel: Record<Role, string> = {
   admin: 'مسؤول النظام',
