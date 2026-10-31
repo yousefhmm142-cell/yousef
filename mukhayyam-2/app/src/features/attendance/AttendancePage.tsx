@@ -266,7 +266,6 @@ function WeekSheet({ data, onOpen }: { data: Data; onOpen(e: Employee, date: ISO
                 ))}
                 <th>حضور</th>
                 <th>غياب</th>
-                <th>إضافي</th>
               </tr>
             </thead>
             <tbody>
@@ -283,7 +282,6 @@ function WeekSheet({ data, onOpen }: { data: Data; onOpen(e: Employee, date: ISO
                           <>
                             <InOut inAt={d.inAt} outAt={d.outAt} />
                             {!d.outAt && <small className="wk-open">{d.status === 'working' ? 'في الدوام' : 'لم ينصرف'}</small>}
-                            {d.overtimeMin > 0 && <i className="tag ok num">+{durationText(d.overtimeMin)}</i>}
                             {d.punches.some((p) => p.method === 'manual') && <i className="tag">يدوي</i>}
                           </>
                         ) : (
@@ -294,7 +292,6 @@ function WeekSheet({ data, onOpen }: { data: Data; onOpen(e: Employee, date: ISO
                   ))}
                   <td className="num total">{totals.present}</td>
                   <td className="num total" data-bad={totals.absent > 0 || undefined}>{totals.absent}</td>
-                  <td className="num total">{totals.overtimeMin ? durationText(totals.overtimeMin) : '—'}</td>
                 </tr>
               ))}
             </tbody>
@@ -323,29 +320,32 @@ function WeekPrint({ days, rows, label, scheduleOf }: {
         </div>
         <div className="ps-date">طُبع: <span className="num">{stamp(new Date().toISOString())}</span></div>
       </header>
-      <table>
+      <table className="att-print">
+        <colgroup>
+          <col style={{ width: '19%' }} />
+          {days.map((d) => <col key={d} style={{ width: `${71 / days.length}%` }} />)}
+          <col style={{ width: '5%' }} />
+          <col style={{ width: '5%' }} />
+        </colgroup>
         <thead>
           <tr>
-            <th style={{ width: '15%' }}>الموظف</th>
+            <th>الموظف</th>
             {days.map((d) => <th key={d}>{formatWeekday(isoNoon(d))}<br /><span className="num">{describeDay(d).date.replace(/ \d{4}$/, '')}</span></th>)}
             <th>حضور</th>
             <th>غياب</th>
-            <th>إضافي</th>
           </tr>
         </thead>
         <tbody>
           {rows.map(({ e, results, totals }) => (
             <tr key={e.id}>
-              <td>{e.fullName}<br /><small>{[e.jobTitle, scheduleOf(e)?.name].filter(Boolean).join(' · ')}</small></td>
+              <td className="ap-name">{e.fullName}<br /><small>{[e.jobTitle, scheduleOf(e)?.name].filter(Boolean).join(' · ')}</small></td>
               {results.map((d) => (
                 <td key={d.date} className="num">
                   {d.inAt ? <InOut inAt={d.inAt} outAt={d.outAt} /> : d.status === 'future' ? '' : d.status === 'leave' && d.leave ? leaveLabel[d.leave.type] : statusLabel[d.status]}
-                  {d.overtimeMin > 0 && <><br />+{durationText(d.overtimeMin)}</>}
                 </td>
               ))}
               <td className="num">{totals.present}</td>
               <td className="num">{totals.absent}</td>
-              <td className="num">{totals.overtimeMin ? durationText(totals.overtimeMin) : '—'}</td>
             </tr>
           ))}
         </tbody>

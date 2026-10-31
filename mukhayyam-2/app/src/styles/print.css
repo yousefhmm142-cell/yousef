@@ -29,8 +29,15 @@
 }
 
 /* Weekly attendance on paper: arrival over leaving, large and bold. */
-.print-sheet .inout { display: inline-flex; gap: 3pt; white-space: nowrap; }
-.print-sheet .inout b { font-size: 12pt; font-weight: 800; }
+.print-sheet .inout { display: inline-flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 0 3pt; white-space: normal; }
+.print-sheet .inout b { font-size: 10pt; font-weight: 800; white-space: nowrap; }
+/* Weekly attendance on paper: fixed column widths, everything centred inside its own box. */
+.print-sheet table.att-print th, .print-sheet table.att-print td { vertical-align: middle; padding: 5px 3px; line-height: 1.35; overflow: hidden; }
+.print-sheet table.att-print th { font-size: 9.5pt; }
+.print-sheet table.att-print td { height: 34px; font-size: 10pt; }
+.print-sheet table.att-print td.ap-name { text-align: start; padding-inline: 6px; font-weight: 700; }
+.print-sheet table.att-print td.ap-name small { display: block; font-weight: 400; font-size: 8pt; color: #444; }
+.print-sheet table.att-print td.num { font-size: 11pt; font-weight: 700; }
 .print-sheet .t-in { color: #0E6B3F; }
 .print-sheet .t-out { color: #7A1E55; }
 .print-sheet { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
