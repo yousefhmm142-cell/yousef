@@ -113,3 +113,10 @@
 .tp-grid button[aria-pressed='true'] { background: var(--brand); border-color: var(--brand); color: var(--on-brand, #fff); }
 .tp-type { display: grid; gap: 6px; font-size: 13px; font-weight: 700; color: var(--muted); }
 .tp-type .nf-input { height: 46px; text-align: center; font-size: 18px; font-weight: 700; padding: 0 12px; }
+.tp-half { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tp-half button {
+  height: 46px; border-radius: 14px; border: 1.5px solid var(--line); background: var(--surface-2); color: var(--ink-2);
+  font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+}
+.tp-half button b { font-size: 18px; font-weight: 800; }
+.tp-half button[aria-checked='true'] { background: var(--brand); border-color: var(--brand); color: var(--on-brand, #fff); }

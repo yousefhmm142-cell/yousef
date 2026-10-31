@@ -5,7 +5,7 @@ import { useSearchParams } from 'react-router'
 import { useEmployee } from '../../auth/AuthProvider'
 import { useTeam } from '../../data/team'
 import { addDays, describeDay, isoNoon, todayISO, type ISODate } from '../../lib/dates'
-import { formatWeekday } from '../../lib/format'
+import { clock12, formatWeekday } from '../../lib/format'
 import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import { useNow } from '../../lib/useNow'
 import type { Employee } from '../../types'
@@ -180,7 +180,7 @@ function TodayBoard({ data, onOpen }: { data: Data; onOpen(e: Employee): void })
         <div className="kpi glass" data-tone={missing ? 'danger' : undefined}>
           <div className="kpi-label"><span className="kpi-ico"><UserX size={16} /></span>لم يحضروا</div>
           <div className="kpi-value num">{missing}</div>
-          <div className="kpi-sub">يصير «غائب» بعد الساعة 10:00</div>
+          <div className="kpi-sub">يصير «غائب» بعد الساعة 10:00 ص</div>
         </div>
         <div className="kpi glass">
           <div className="kpi-label"><span className="kpi-ico"><Users size={16} /></span>انصرفوا</div>
@@ -217,11 +217,11 @@ function TodayBoard({ data, onOpen }: { data: Data; onOpen(e: Employee): void })
 function InOut({ inAt, outAt }: { inAt: string; outAt: string | null }) {
   return (
     <span className="inout num">
-      <b className="t-in" title="حضور">{inAt}</b>
+      <b className="t-in" title="حضور">{clock12(inAt)}</b>
       {outAt && (
         <>
           <span className="t-dash" aria-hidden="true">-</span>
-          <b className="t-out" title="انصراف">{outAt}</b>
+          <b className="t-out" title="انصراف">{clock12(outAt)}</b>
         </>
       )}
     </span>

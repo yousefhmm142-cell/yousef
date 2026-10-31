@@ -430,6 +430,10 @@ async function round(): Promise<void> {
       lastReferenceAt = Date.now()
     }
     for (const spec of KINDS) if (spec.readers.includes(who.role)) await pullSheets(spec)
+    if (await listsMissing()) {
+      await pullReference()
+      lastReferenceAt = Date.now()
+    }
     if (isManagerRole(who.role)) {
       await (await import('../features/tasks/repo')).refreshTasks()
       await (await import('../features/attendance/repo')).refreshAttendance()
@@ -511,6 +515,15 @@ export function stopSync() {
   setState({ phase: 'idle', problem: null })
 }
 
+
+/** A sheet may name a generator or zone added on another device since the lists were read. */
+async function listsMissing(): Promise<boolean> {
+  const [gens, zones, reports, sheets] = await Promise.all([db.generators.toArray(), db.zones.toArray(), db.siteReports.toArray(), db.distributionSheets.toArray()])
+  const g = new Set(gens.map((x) => x.id))
+  const z = new Set(zones.map((x) => x.id))
+  return reports.some((r) => r.generators.some((l) => !g.has(l.generatorId))) || sheets.some((s) => s.zones.some((e) => !z.has(e.zoneId)))
+}
+
 // ---------- Live view: a sheet being filled right now ----------
 let liveUsers = 0
 let liveTimer: number | undefined
@@ -523,6 +536,7 @@ async function pullLive() {
   liveBusy = true
   try {
     for (const spec of KINDS) if (spec.readers.includes(me.role)) await pullSheets(spec)
+    if (await listsMissing()) await pullReference()
   } catch {
     // The usual round tries again.
   } finally {

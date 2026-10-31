@@ -6,6 +6,7 @@ import { AlertsCard, Signatures } from '../sheets/ui'
 import { computeZoneAlerts } from './alerts'
 import { RUN_NAMES, runSegments, sheetTotals, type DistributionSheet, type ZoneRun } from './model'
 import { useZones } from './repo'
+import { clock12 } from '../../lib/format'
 
 const DAY_MIN = 24 * 60
 const TICKS = [0, 3, 6, 9, 12, 15, 18, 21]
@@ -107,7 +108,7 @@ function Timeline({ sheet, zoneNames }: { sheet: DistributionSheet; zoneNames: M
                       key={`${r.id}-${k}`}
                       className="tl-seg"
                       style={{ insetInlineStart: `${(a / DAY_MIN) * 100}%`, width: `${((b - a) / DAY_MIN) * 100}%` }}
-                      title={`التشغيلة ${RUN_NAMES[i]}: ${r.start} ← ${r.end}`}
+                      title={`التشغيلة ${RUN_NAMES[i]}: ${clock12(r.start)} ← ${clock12(r.end)}`}
                     />
                   )),
                 )}
@@ -124,7 +125,7 @@ function RunCell({ run, imbalanceWarn }: { run: ZoneRun | undefined; imbalanceWa
   const gap = phaseImbalancePct(run.loads)
   return (
     <div className="zr">
-      <span className="run num">{run.start || '—'}<ArrowLeft size={13} aria-label="إلى" />{run.end || '—'}</span>
+      <span className="run num">{clock12(run.start) || '—'}<ArrowLeft size={13} aria-label="إلى" />{clock12(run.end) || '—'}</span>
       <span className={`zr-loads num ${gap !== null && gap >= imbalanceWarn ? 'warn' : ''}`}>
         {run.loads.map((l) => formatAmount(l)).join(' · ')} <small>{run.loadUnit}</small>
       </span>

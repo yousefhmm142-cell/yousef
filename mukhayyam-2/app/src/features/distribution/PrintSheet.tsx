@@ -2,6 +2,7 @@ import { describeDay } from '../../lib/dates'
 import { formatAmount } from '../../lib/numbers'
 import { stamp } from '../sheets/ui'
 import { RUN_NAMES, type DistributionSheet, type ZoneEntry } from './model'
+import { clock12 } from '../../lib/format'
 
 const loadsText = (z: ZoneEntry, i: number) => {
   const r = z.runs[i]
@@ -9,7 +10,7 @@ const loadsText = (z: ZoneEntry, i: number) => {
 }
 const timeText = (z: ZoneEntry, i: number) => {
   const r = z.runs[i]
-  return r && (r.start || r.end) ? `${r.start} / ${r.end}` : ''
+  return r && (r.start || r.end) ? `${clock12(r.start)} / ${clock12(r.end)}` : ''
 }
 
 /** The sheet laid out like the paper form (landscape, runs 1–3 then 4–6), shown only when printing. */

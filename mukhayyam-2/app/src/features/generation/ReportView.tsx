@@ -14,6 +14,7 @@ import {
   type SiteReport,
 } from './model'
 import { useAlertSettings, useEmployeeNames, useFuelTypes, useGenerators, useHistoryBefore } from './repo'
+import { clock12 } from '../../lib/format'
 
 const SQRT3 = Math.sqrt(3)
 
@@ -195,7 +196,7 @@ function GeneratorsTable({ report, generators, settings }: { report: SiteReport;
                       <td>
                         <div className="runs">
                           {log.runs.filter((r) => r.start || r.end).map((r) => (
-                            <span key={r.id} className="run num">{r.start || '—'}<ArrowLeft size={13} aria-label="إلى" />{r.end || '—'}</span>
+                            <span key={r.id} className="run num">{clock12(r.start) || '—'}<ArrowLeft size={13} aria-label="إلى" />{clock12(r.end) || '—'}</span>
                           ))}
                         </div>
                       </td>

@@ -13,6 +13,14 @@ const number = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 })
 export const formatWeekday = (d: Date) => weekday.format(d)
 export const formatLongDate = (d: Date) => longDate.format(d)
 export const formatTime = (d: Date) => time.format(d)
+
+/** A stored clock time "14:30" shown the 12-hour way: "2:30 م" ("" when empty). */
+export function clock12(hhmm: string | null | undefined): string {
+  if (!hhmm) return ''
+  const [h, m] = hhmm.split(':').map(Number)
+  if (h === undefined || m === undefined || Number.isNaN(h) || Number.isNaN(m)) return hhmm
+  return `${((h + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${h < 12 ? 'ص' : 'م'}`
+}
 export const formatNumber = (n: number) => number.format(n)
 
 export function greeting(d: Date): string {

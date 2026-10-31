@@ -8,6 +8,7 @@ import { codeHolders, setAttendance as saveAttendance } from '../attendance/repo
 import { db } from '../../data/db'
 import { formatPhone, isValidPhone, normalizePhone, toLatinDigits } from '../../lib/phone'
 import { isManagerRole, isSiteRole, roleLabel, titleOf, type Employee, type Role } from '../../types'
+import { clock12 } from '../../lib/format'
 
 const waCodes = [
   { value: '972', label: '+972' },
@@ -244,7 +245,7 @@ function EmployeeDialog({ person, hasCode, onClose }: { person: Employee | null;
               <Segmented<string>
                 label="الدوام"
                 value={String(scheduleId ?? schedules?.[0]?.id ?? '')}
-                options={(schedules ?? []).map((s) => ({ value: String(s.id), label: `${s.name} (${s.start}–${s.end})` }))}
+                options={(schedules ?? []).map((s) => ({ value: String(s.id), label: `${s.name} (${clock12(s.start)} – ${clock12(s.end)})` }))}
                 onChange={(v) => setScheduleId(Number(v))}
               />
             </div>

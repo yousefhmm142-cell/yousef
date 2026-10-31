@@ -2,6 +2,7 @@ import { describeDay } from '../../lib/dates'
 import { formatAmount } from '../../lib/numbers'
 import { maintenanceLabel, type FuelType, type Generator, type SiteReport } from './model'
 import { stamp } from '../sheets/ui'
+import { clock12 } from '../../lib/format'
 
 const runHeaders = ['التشغيلة الأولى', 'التشغيلة الثانية', 'التشغيلة الثالثة']
 
@@ -63,7 +64,7 @@ export function PrintSheet({ report, generators, fuelTypes, names }: {
               <td>{gen(l.generatorId)?.name}</td>
               {runHeaders.map((h, i) => {
                 const run = l.didRun ? l.runs[i] : undefined
-                return <td key={h} className="num">{run && (run.start || run.end) ? `${run.start} / ${run.end}` : l.didRun ? '/' : i === 0 ? 'لم يعمل' : ''}</td>
+                return <td key={h} className="num">{run && (run.start || run.end) ? `${clock12(run.start)} / ${clock12(run.end)}` : l.didRun ? '/' : i === 0 ? 'لم يعمل' : ''}</td>
               })}
               <td>{l.didRun ? formatAmount(l.runHours) : ''}</td>
               <td className="num">{l.didRun ? loads(l) : ''}</td>
