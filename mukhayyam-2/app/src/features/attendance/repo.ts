@@ -85,8 +85,8 @@ export async function refreshAttendance(): Promise<void> {
 // ---------- Manager's corrections ----------
 /** A punch the person forgot to scan, with the reason; marked "manual" everywhere. */
 export async function addManualPunch(employeeId: string, date: ISODate, time: string, kind: PunchKind, reason: string, by: string) {
-  const text = reason.trim()
-  if (!text) throw new SheetStateError('reason_needed')
+  // The reason is optional for the manager; the record still says it was entered by hand.
+  const text = reason.trim() || 'سجّله المدير'
   const at = gazaToIso(date, time)
   if (isDemo) {
     await db.punches.put({ id: crypto.randomUUID(), employeeId, kind, at, method: 'manual', reason: text, recordedBy: by })

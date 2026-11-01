@@ -426,8 +426,8 @@ function DayDialog({ employee, date, data, onClose }: { employee: Employee; date
             <Segmented<PunchKind> label="النوع" value={kind} options={[{ value: 'in', label: 'حضور' }, { value: 'out', label: 'انصراف' }]} onChange={setKind} />
             <span className="punch-time"><TimeField label="وقت التسجيل" value={time} onChange={setTime} /></span>
           </div>
-          <input className="input" placeholder="السبب (مطلوب)، مثلاً: الجوال كان طافي" aria-label="السبب" value={reason} onChange={(e) => setReason(e.target.value)} />
-          <Button variant="secondary" busy={busy === 'manual'} disabled={!reason.trim() || !time}
+          <input className="input" placeholder="السبب (اختياري)، مثلاً: الجوال كان طافي" aria-label="السبب" value={reason} onChange={(e) => setReason(e.target.value)} />
+          <Button variant="secondary" busy={busy === 'manual'} disabled={!time}
             onClick={() => void run('manual', () => addManualPunch(employee.id, date, time, kind, reason, me.id), 'سُجّل يدوياً')}>
             تسجيل {kind === 'in' ? 'الحضور' : 'الانصراف'}
           </Button>
