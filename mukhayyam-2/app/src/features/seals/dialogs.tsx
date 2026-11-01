@@ -179,6 +179,19 @@ export function IssueDialog({ data, onClose, onDone, preset }: { data: SealData;
           <span>{mixed ? 'الأرقام من أكثر من رول، اصرف كل رول لحاله' : rollInfo ? `من الرول ${rollInfo.fromNo} - ${rollInfo.toNo}` : 'عدد الأختام'}</span>
           <b className="num">{rows.length}</b>
         </div>
+        {!ok && !error && (
+          <p className="issue-why" role="status">
+            {tech === null
+              ? 'اختر اسم الفني من الأعلى أولاً.'
+              : !rows.length && !parsed.bad.length
+                ? 'اكتب أرقام الأختام.'
+                : parsed.bad.length
+                  ? 'في رقم غير صحيح (لونه أحمر): صحّحه أو احذفه.'
+                  : mixed
+                    ? 'الأرقام من أكثر من رول: اصرف كل رول لحاله.'
+                    : 'في أختام ما هي في المخزن (لونها أحمر): احذفها من الكتابة.'}
+          </p>
+        )}
         {error && <p className="field-error" role="alert">{error}</p>}
       </div>
     </Dialog>

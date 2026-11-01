@@ -188,3 +188,5 @@ table.seal-table tbody tr:hover { background: color-mix(in srgb, var(--brand) 5%
 
 .seals-loading { display: grid; justify-items: center; gap: 10px; padding: 48px 20px; text-align: center; }
 .seals-loading .spinner { width: 28px; height: 28px; }
+
+.issue-why { margin: 0; padding: 10px 12px; border-radius: var(--r-lg); background: var(--sunken); color: var(--ink); font-weight: 700; font-size: 14px; border: 1px dashed var(--line); }
