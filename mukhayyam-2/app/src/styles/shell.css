@@ -22,9 +22,11 @@
 .topnav-link {
   display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px;
   color: var(--muted); font-weight: 700; font-size: 14px; text-decoration: none; white-space: nowrap;
-  transition: color .15s, background .15s;
+  transition: color .15s, background .15s, box-shadow .15s;
 }
-.topnav-link:hover { color: var(--ink); }
+.topnav-link:hover:not(.active) { color: var(--t-out); background: color-mix(in srgb, var(--t-out) 10%, transparent); }
+.topnav-link:hover:not(.active) svg { color: var(--t-out); }
+.topnav-link:focus-visible { outline: none; color: var(--t-out); background: color-mix(in srgb, var(--t-out) 10%, transparent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--t-out) 35%, transparent); }
 .topnav-link.active { color: var(--ink); background: var(--nav-on); box-shadow: var(--nav-on-ring); font-weight: 800; }
 .topnav-link.active svg { color: var(--brand); }
 

@@ -4,7 +4,7 @@
 @media print {
   @page { size: A4 portrait; margin: 12mm; }
   html, body { background: #fff !important; color: #000 !important; }
-  .topbar, .tabbar, .toasts, .skip, .report-page > :not(.print-sheet) { display: none !important; }
+  .topbar, .tabbar, .toasts, .skip, .report-page > :not(.print-sheet), .tasks > :not(.print-sheet) { display: none !important; }
   .page { padding: 0 !important; max-width: none !important; }
   .print-sheet {
     display: block; color: #000; font-size: 11pt; line-height: 1.5;
@@ -41,3 +41,14 @@
 .print-sheet .t-in { color: #0E6B3F; }
 .print-sheet .t-out { color: #7A1E55; }
 .print-sheet { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+/* The day's field tasks on paper. */
+.print-sheet .tp-summary { display: flex; flex-wrap: wrap; gap: 4pt 18pt; margin: 0 0 8px; font-size: 10pt; }
+.print-sheet table.task-print th, .print-sheet table.task-print td { vertical-align: middle; padding: 4px 4px; font-size: 9pt; line-height: 1.35; overflow: hidden; }
+.print-sheet table.task-print td { height: 30px; }
+.print-sheet table.task-print td.tp-left { text-align: start; }
+.print-sheet table.task-print td small { display: block; color: #444; font-size: 8pt; }
+.print-sheet table.task-print tr { break-inside: avoid; }
+.print-sheet table.task-print thead { display: table-header-group; }
+.print-sheet .tp-matrix { margin-top: 14px; break-inside: avoid; }
+.print-sheet .tp-matrix h2 { margin: 0 0 6px; font-size: 11pt; }

@@ -1,8 +1,9 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { AlarmClock, CheckCheck, Copy, Hammer, ListChecks, MessageCircle, MessageSquareText, Plus, TimerReset, Trash2, XCircle } from 'lucide-react'
+import { AlarmClock, CheckCheck, Copy, Hammer, ListChecks, MessageCircle, MessageSquareText, Plus, Printer, TimerReset, Trash2, XCircle } from 'lucide-react'
 import { formatAmount, parseDecimal } from '../../lib/numbers'
 import { addMove, deleteMove } from '../stock/repo'
 import { taskMatrix } from '../reports/build'
+import { TaskPrintSheet } from './TaskPrintSheet'
 import { ReportTable } from '../reports/ReportsPage'
 import { useEffect, useMemo, useState } from 'react'
 import { useEmployee } from '../../auth/AuthProvider'
@@ -103,6 +104,11 @@ export function TasksPage() {
   const zoneName = (id: number | null) => (id ? zones?.find((z) => z.id === id)?.name ?? null : null)
   const person = (id: string) => technicians.find((e) => e.id === id)
   const openTask = all.find((t) => t.id === openId) ?? null
+  const people = useLiveQuery(() => db.employees.toArray(), [])
+  // The day's sheet: everything made today, finished today, or still open.
+  const dayTasks = all.filter(
+    (t) => t.status !== 'cancelled' && (toISODate(new Date(t.createdAt)) === today || (t.completedAt && toISODate(new Date(t.completedAt)) === today) || isOpen(t)),
+  )
 
   return (
     <div className="tasks">
@@ -111,9 +117,14 @@ export function TasksPage() {
           <h1>المهام الميدانية</h1>
           <p className="muted">اكتب الأوردر، يصل للفني على واتساب أو SMS، وتعرف متى أنهاه.</p>
         </div>
-        <Button variant="primary" size="lg" icon={<Plus size={18} />} onClick={() => setCreating(true)} className="ph-action">
-          مهمة جديدة
-        </Button>
+        <div className="ph-actions">
+          <Button variant="secondary" size="lg" icon={<Printer size={18} />} onClick={() => window.print()}>
+            طباعة كشف اليوم
+          </Button>
+          <Button variant="primary" size="lg" icon={<Plus size={18} />} onClick={() => setCreating(true)} className="ph-action">
+            مهمة جديدة
+          </Button>
+        </div>
       </header>
 
       <div className="kpis">
@@ -192,6 +203,10 @@ export function TasksPage() {
             )
           })}
         </ul>
+      )}
+
+      {types && (
+        <TaskPrintSheet day={today} tasks={dayTasks} employees={people ?? []} types={types} zoneName={zoneName} />
       )}
 
       <DailySheet tasks={all.filter((t) => t.status !== 'cancelled' && toISODate(new Date(t.createdAt)) === today)} />
