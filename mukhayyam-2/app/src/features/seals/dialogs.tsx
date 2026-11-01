@@ -5,9 +5,9 @@ import { Dialog } from '../../ui/Dialog'
 import { Chip, TextField } from '../../ui/form'
 import { Button } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
-import { importRoll, importTechnician, issueBatch, recordSeal, addRoll, sealErrorText, useTechnicians, refreshSeals } from './repo'
+import { addRoll, importRoll, importTechnician, issueBatch, recordSeal, refreshSeals, returnToStock, sealErrorText, updateBatch, updateRoll, useTechnicians } from './repo'
 import { planImport, parseIssueWorkbook, parseUsageWorkbook, type ImportPlan, type Suspicious } from './import'
-import { composeDetails, latinDigits, ordinalWord, parseSealNumbers, sealStatusInfo, splitDetails, WORK_CHOICES, type Seal, type SealData } from './model'
+import { composeDetails, latinDigits, ordinalWord, parseSealNumbers, sealStatusInfo, splitDetails, WORK_CHOICES, type Seal, type SealBatch, type SealData, type SealRoll } from './model'
 import { dayLabel, SealPill } from './parts'
 
 // ---------- A new roll ----------
@@ -253,6 +253,29 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
   }
 
   const ready = !!found && !bad && (status !== 'used' || board.trim() !== '' || work.trim() !== '')
+  // Undo the record, or take the seal back to the stock: asks once more before doing it.
+  const [confirm, setConfirm] = useState<'undo' | 'stock' | null>(null)
+  useEffect(() => {
+    if (!confirm) return
+    const id = window.setTimeout(() => setConfirm(null), 4000)
+    return () => window.clearTimeout(id)
+  }, [confirm])
+  const recorded = !!seal && seal.status !== 'in_stock' && seal.status !== 'issued'
+  async function undo(kind: 'undo' | 'stock') {
+    if (!seal) return
+    if (confirm !== kind) return setConfirm(kind)
+    setBusy(true)
+    try {
+      if (kind === 'undo') await recordSeal(seal.sealNo, 'issued', null, '')
+      else await returnToStock([seal.sealNo])
+      toast(kind === 'undo' ? `أُلغي تسجيل الختم ${seal.sealNo}` : `رجع الختم ${seal.sealNo} للمخزن`)
+      onClose()
+    } catch (e) {
+      setError(sealErrorText(e))
+      setBusy(false)
+      setConfirm(null)
+    }
+  }
 
   return (
     <Dialog
@@ -261,7 +284,9 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
       title={seal ? `الختم ${seal.sealNo}` : 'تسجيل استخدام ختم'}
       footer={
         <>
-          <Button variant="ghost" onClick={onClose}>إلغاء</Button>
+          {seal && recorded && <Button variant="ghost" disabled={busy} onClick={() => void undo('undo')}>{confirm === 'undo' ? 'اضغط للتأكيد' : 'إلغاء التسجيل'}</Button>}
+          {seal && seal.status !== 'in_stock' && <Button variant="ghost" disabled={busy} onClick={() => void undo('stock')}>{confirm === 'stock' ? 'اضغط للتأكيد' : 'إرجاع للمخزن'}</Button>}
+          <Button variant="ghost" onClick={onClose}>إغلاق</Button>
           {!seal && <Button variant="secondary" disabled={!ready} busy={busy} onClick={() => void save(true)}>حفظ والتالي</Button>}
           <Button variant="primary" icon={<Check size={17} />} disabled={!ready} busy={busy} onClick={() => void save(false)}>حفظ</Button>
         </>
@@ -442,6 +467,106 @@ export function ImportDialog({ onClose }: { onClose(): void }) {
           </>
         )}
         {log.length > 0 && <div className="import-log">{log.map((l, i) => <span key={i}>{l}</span>)}</div>}
+        {error && <p className="field-error" role="alert">{error}</p>}
+      </div>
+    </Dialog>
+  )
+}
+
+// ---------- Changing a batch: who has it, and which day ----------
+export function EditBatchDialog({ batch, data, onClose }: { batch: SealBatch; data: SealData; onClose(): void }) {
+  const toast = useToast()
+  const technicians = useTechnicians()
+  const [tech, setTech] = useState(batch.technicianId)
+  const [date, setDate] = useState(batch.issuedOn)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  // A person no longer active still shows, so the batch keeps its name.
+  const list = technicians.some((t) => t.id === batch.technicianId) ? technicians : [{ id: batch.technicianId, fullName: data.names.get(batch.technicianId) ?? '—' }, ...technicians]
+
+  async function save() {
+    setBusy(true)
+    setError(null)
+    try {
+      await updateBatch(batch.id, tech, date)
+      toast('عُدّلت الدفعة')
+      onClose()
+    } catch (e) {
+      setError(sealErrorText(e))
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      title={`تعديل الدفعة ${ordinalWord(batch.batchNo)}`}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>إلغاء</Button>
+          <Button variant="primary" busy={busy} onClick={() => void save()}>حفظ</Button>
+        </>
+      }
+    >
+      <div className="issue-form">
+        <div className="field">
+          <span className="label">الفني</span>
+          <div className="chips">
+            {list.map((t) => <Chip key={t.id} pressed={tech === t.id} onClick={() => setTech(t.id)}>{t.fullName}</Chip>)}
+          </div>
+        </div>
+        <label className="field">
+          <span className="label">تاريخ الصرف</span>
+          <input type="date" className="input" max={todayISO()} value={date} onChange={(e) => setDate(e.target.value)} />
+        </label>
+        <p className="field-hint">يتغيّر الفني والتاريخ لكل أختام الدفعة. لتغيير ختم بعينه افتحه من «سجل الأختام».</p>
+        {error && <p className="field-error" role="alert">{error}</p>}
+      </div>
+    </Dialog>
+  )
+}
+
+// ---------- Changing a roll: its receiving day and note ----------
+export function EditRollDialog({ roll, onClose }: { roll: SealRoll; onClose(): void }) {
+  const toast = useToast()
+  const [date, setDate] = useState(roll.receivedOn)
+  const [note, setNote] = useState(roll.note)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function save() {
+    setBusy(true)
+    setError(null)
+    try {
+      await updateRoll(roll.id, date, note)
+      toast('عُدّل الرول')
+      onClose()
+    } catch (e) {
+      setError(sealErrorText(e))
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      title={`تعديل الرول ${roll.fromNo} - ${roll.toNo}`}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>إلغاء</Button>
+          <Button variant="primary" busy={busy} onClick={() => void save()}>حفظ</Button>
+        </>
+      }
+    >
+      <div className="issue-form">
+        <label className="field">
+          <span className="label">تاريخ الاستلام</span>
+          <input type="date" className="input" max={todayISO()} value={date} onChange={(e) => setDate(e.target.value)} />
+        </label>
+        <TextField label="ملاحظة" value={note} onChange={setNote} />
+        <p className="field-hint">أرقام الرول نفسها لا تتغيّر. إن سجّلتها غلط، احذف الرول (وهو فاضي) وسجّله من جديد.</p>
         {error && <p className="field-error" role="alert">{error}</p>}
       </div>
     </Dialog>

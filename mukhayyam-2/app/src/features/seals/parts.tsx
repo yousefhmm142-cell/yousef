@@ -1,7 +1,8 @@
 import { NavLink } from 'react-router'
 import { clock12 } from '../../lib/format'
 import { Pill } from '../../ui/primitives'
-import { sealStatusInfo, type Seal, type SealGroup, type SealStatus } from './model'
+import { Avatar } from '../../ui/primitives'
+import { sealStatusInfo, type Seal, type SealData, type SealGroup, type SealStatus } from './model'
 
 /** The two seals pages, one switch. */
 export function SealsTabs({ canIssue = true }: { canIssue?: boolean }) {
@@ -53,3 +54,39 @@ export function StatusPill({ status }: { status: SealStatus }) {
 export const groupTitle = (g: SealGroup, ordinal: (n: number) => string) => (g.batch ? `الدفعة ${ordinal(g.batch.batchNo)}` : 'في المخزن')
 
 export { clock12 }
+
+/**
+ * The technicians as a vertical list at the side (laptops): tap one to see only theirs. Each shows
+ * what is still with them, so the busy ones stand out.
+ */
+export function TechNav({ data, value, onChange }: { data: SealData; value: string | null; onChange(id: string | null): void }) {
+  const rows = (() => {
+    const by = new Map<string, { open: number; total: number }>()
+    for (const s of data.seals) {
+      if (!s.technicianId) continue
+      const r = by.get(s.technicianId) ?? by.set(s.technicianId, { open: 0, total: 0 }).get(s.technicianId)!
+      r.total++
+      if (s.status === 'issued') r.open++
+    }
+    return [...by.entries()].map(([id, r]) => ({ id, name: data.names.get(id) ?? '—', ...r })).sort((a, b) => a.name.localeCompare(b.name, 'ar'))
+  })()
+  const all = rows.reduce((n, r) => n + r.open, 0)
+  return (
+    <nav className="tech-nav" aria-label="الفنيون">
+      <button type="button" className="tech-item" aria-current={value === null ? 'true' : undefined} onClick={() => onChange(null)}>
+        <span className="tech-dot all">الكل</span>
+        <span className="tech-text"><b>كل الفنيين</b><small className="num">{all} عندهم لم تُستخدم</small></span>
+      </button>
+      {rows.map((r) => (
+        <button key={r.id} type="button" className="tech-item" aria-current={value === r.id ? 'true' : undefined} onClick={() => onChange(value === r.id ? null : r.id)}>
+          <Avatar name={r.name} size={34} />
+          <span className="tech-text">
+            <b>{r.name}</b>
+            <small className="num">{r.open ? `${r.open} عنده الآن` : 'لا شيء عنده'} · {r.total} ختم</small>
+          </span>
+          {r.open > 0 && <span className="tech-badge num">{r.open}</span>}
+        </button>
+      ))}
+    </nav>
+  )
+}

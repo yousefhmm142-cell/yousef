@@ -1,4 +1,4 @@
-import { FileSpreadsheet, Plus, Printer, Stamp, Trash2, Undo2, Upload } from 'lucide-react'
+import { FileSpreadsheet, Pencil, Plus, Printer, Stamp, Trash2, Upload } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useEmployee } from '../../auth/AuthProvider'
 import { isDemo } from '../../config'
@@ -8,11 +8,11 @@ import { Button } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
 import { isManagerRole } from '../../types'
 import { useConfirmTap } from '../sheets/useDraft'
-import { ImportDialog, IssueDialog, NewRollDialog } from './dialogs'
+import { EditBatchDialog, EditRollDialog, ImportDialog, IssueDialog, NewRollDialog } from './dialogs'
 import { downloadIssueLog } from './excel'
-import { ordinalWord, rollStats, totals, type SealBatch, type SealData } from './model'
-import { dayLabel, SealPill, SealsTabs, StackBar } from './parts'
-import { deleteRoll, refreshSeals, sealErrorText, unissue, useSealData, useSealsLive } from './repo'
+import { ordinalWord, rollStats, totals, type SealBatch, type SealData, type SealRoll } from './model'
+import { dayLabel, SealPill, SealsTabs, StackBar, TechNav } from './parts'
+import { deleteBatch, deleteRoll, refreshSeals, sealErrorText, useSealData, useSealsLive } from './repo'
 import { SealSlips } from './SealSlips'
 
 /** Page 1: the rolls and their balance, and handing batches of seals to technicians. */
@@ -26,13 +26,16 @@ export function SealIssuePage() {
   const [fresh, setFresh] = useState<string | null>(null)
   const [slips, setSlips] = useState<SealBatch[] | null>(null)
   const [exporting, setExporting] = useState(false)
+  const [tech, setTech] = useState<string | null>(null)
+  const [editBatch, setEditBatch] = useState<SealBatch | null>(null)
+  const [editRoll, setEditRoll] = useState<SealRoll | null>(null)
 
   const sum = useMemo(() => totals(data?.seals ?? []), [data?.seals])
   const days = useMemo(() => {
     const map = new Map<string, SealBatch[]>()
-    for (const b of [...(data?.batches ?? [])].sort((a, c) => c.issuedOn.localeCompare(a.issuedOn) || c.batchNo - a.batchNo)) (map.get(b.issuedOn) ?? map.set(b.issuedOn, []).get(b.issuedOn)!).push(b)
+    for (const b of [...(data?.batches ?? [])].filter((x) => !tech || x.technicianId === tech).sort((a, c) => c.issuedOn.localeCompare(a.issuedOn) || c.batchNo - a.batchNo)) (map.get(b.issuedOn) ?? map.set(b.issuedOn, []).get(b.issuedOn)!).push(b)
     return [...map.entries()].slice(0, 14)
-  }, [data?.batches])
+  }, [data?.batches, tech])
 
   if (isDemo) return <div className="empty card"><h3>الأختام تعمل على قاعدة البيانات الحقيقية</h3><p>هذه الصفحة غير متاحة في وضع التجربة.</p></div>
   if (!data) return <div className="loading-block" aria-busy="true" />
@@ -108,30 +111,40 @@ export function SealIssuePage() {
                   <div className="n-used"><b className="num">{st.used}</b><span>مستخدم</span></div>
                   <div className="n-bad"><b className="num">{st.damaged + st.lost}</b><span>تالف</span></div>
                 </div>
-                <RollActions rollId={r.id} canDelete={st.inStock === st.total} disabled={st.inStock === 0} onIssue={() => setDialog('issue')} />
+                <RollActions rollId={r.id} canDelete={st.inStock === st.total} disabled={st.inStock === 0} onIssue={() => setDialog('issue')} onEdit={() => setEditRoll(r)} />
               </article>
             )
           })}
         </section>
       )}
 
-      {days.length > 0 && (
-        <section className="batch-day" aria-label="آخر الصرف">
-          <div className="ph-actions" style={{ marginInlineStart: 0, justifyContent: 'space-between', width: '100%' }}>
-            <h2 style={{ margin: 0, fontSize: 18 }}>آخر ما صُرف</h2>
-            {todays.length > 0 && <Button variant="ghost" icon={<Printer size={16} />} onClick={() => print(todays)}>طباعة أوراق صرف اليوم</Button>}
-          </div>
-          {days.map(([day, list]) => (
-            <div key={day} className="batch-day">
-              <h3>{day === todayISO() ? 'اليوم' : dayLabel(day)}</h3>
-              {list.map((b) => (
-                <BatchCard key={b.id} data={data} batch={b} fresh={fresh === b.id} onPrint={() => print([b])} onUndone={() => toast('أُرجعت الأختام للمخزن')} />
-              ))}
+      {data.batches.length > 0 && (
+        <div className="seals-layout">
+          <TechNav data={data} value={tech} onChange={setTech} />
+          <section className="seals-main" aria-label="آخر الصرف">
+            <div className="ph-actions" style={{ marginInlineStart: 0, justifyContent: 'space-between', width: '100%' }}>
+              <h2 style={{ margin: 0, fontSize: 18 }}>{tech ? `دفعات ${data.names.get(tech) ?? ''}` : 'آخر ما صُرف'}</h2>
+              <select className="select tech-select" aria-label="الفني" value={tech ?? ''} onChange={(e) => setTech(e.target.value || null)}>
+                <option value="">كل الفنيين</option>
+                {[...new Set(data.batches.map((b) => b.technicianId))].map((id) => <option key={id} value={id}>{data.names.get(id) ?? '—'}</option>)}
+              </select>
+              {todays.length > 0 && <Button variant="ghost" icon={<Printer size={16} />} onClick={() => print(todays)}>طباعة أوراق صرف اليوم</Button>}
             </div>
-          ))}
-        </section>
+            {days.length === 0 && <p className="card-empty">لا دفعات لهذا الفني.</p>}
+            {days.map(([day, list]) => (
+              <div key={day} className="batch-day">
+                <h3>{day === todayISO() ? 'اليوم' : dayLabel(day)}</h3>
+                {list.map((b) => (
+                  <BatchCard key={b.id} data={data} batch={b} fresh={fresh === b.id} onPrint={() => print([b])} onEdit={() => setEditBatch(b)} onDeleted={() => toast('حُذفت الدفعة، ورجعت أختامها للمخزن')} />
+                ))}
+              </div>
+            ))}
+          </section>
+        </div>
       )}
 
+      {editBatch && <EditBatchDialog batch={editBatch} data={data} onClose={() => setEditBatch(null)} />}
+      {editRoll && <EditRollDialog roll={editRoll} onClose={() => setEditRoll(null)} />}
       {dialog === 'roll' && <NewRollDialog onClose={() => setDialog(null)} />}
       {dialog === 'issue' && <IssueDialog data={data} onClose={() => setDialog(null)} onDone={setFresh} />}
       {dialog === 'import' && <ImportDialog onClose={() => setDialog(null)} />}
@@ -140,12 +153,13 @@ export function SealIssuePage() {
   )
 }
 
-function RollActions({ rollId, canDelete, disabled, onIssue }: { rollId: string; canDelete: boolean; disabled: boolean; onIssue(): void }) {
+function RollActions({ rollId, canDelete, disabled, onIssue, onEdit }: { rollId: string; canDelete: boolean; disabled: boolean; onIssue(): void; onEdit(): void }) {
   const toast = useToast()
   const [armed, arm, reset] = useConfirmTap()
   return (
     <div className="roll-actions">
       <Button variant="primary" disabled={disabled} onClick={onIssue}>صرف دفعة</Button>
+      <Button variant="ghost" icon={<Pencil size={15} />} onClick={onEdit}>تعديل</Button>
       {canDelete && (
         <Button
           variant="ghost"
@@ -169,12 +183,11 @@ function RollActions({ rollId, canDelete, disabled, onIssue }: { rollId: string;
   )
 }
 
-function BatchCard({ data, batch, fresh, onPrint, onUndone }: { data: SealData; batch: SealBatch; fresh: boolean; onPrint(): void; onUndone(): void }) {
+function BatchCard({ data, batch, fresh, onPrint, onEdit, onDeleted }: { data: SealData; batch: SealBatch; fresh: boolean; onPrint(): void; onEdit(): void; onDeleted(): void }) {
   const toast = useToast()
   const [armed, arm, reset] = useConfirmTap()
   const seals = data.seals.filter((s) => s.batchId === batch.id).sort((a, b) => (a.batchPos ?? 0) - (b.batchPos ?? 0))
   const roll = data.rolls.find((r) => r.id === batch.rollId)
-  const untouched = seals.length > 0 && seals.every((s) => s.status === 'issued')
   const used = seals.filter((s) => s.status === 'used').length
   return (
     <article className="batch-card card" data-fresh={fresh || undefined}>
@@ -184,25 +197,23 @@ function BatchCard({ data, batch, fresh, onPrint, onUndone }: { data: SealData; 
         <span className="muted num">{roll ? `${roll.fromNo}–${roll.toNo}` : ''} · {used}/{seals.length} مستخدم</span>
         <span className="grow" />
         <Button variant="ghost" icon={<Printer size={15} />} onClick={onPrint}>ورقة الصرف</Button>
-        {untouched && (
-          <Button
-            variant="ghost"
-           
-            icon={<Undo2 size={15} />}
-            onClick={async () => {
-              if (!armed) return arm()
-              reset()
-              try {
-                await unissue(seals.map((s) => s.sealNo))
-                onUndone()
-              } catch (e) {
-                toast(sealErrorText(e), 'danger')
-              }
-            }}
-          >
-            {armed ? 'اضغط للتأكيد' : 'تراجع'}
-          </Button>
-        )}
+        <Button variant="ghost" icon={<Pencil size={15} />} onClick={onEdit}>تعديل</Button>
+        <Button
+          variant="ghost"
+          icon={<Trash2 size={15} />}
+          onClick={async () => {
+            if (!armed) return arm()
+            reset()
+            try {
+              await deleteBatch(batch.id)
+              onDeleted()
+            } catch (e) {
+              toast(sealErrorText(e), 'danger')
+            }
+          }}
+        >
+          {armed ? (used ? `يمسح تسجيل ${used} ختم، اضغط للتأكيد` : 'اضغط للتأكيد') : 'حذف'}
+        </Button>
       </div>
       <div className="batch-strip">
         {seals.map((s) => <SealPill key={s.sealNo} seal={s} />)}

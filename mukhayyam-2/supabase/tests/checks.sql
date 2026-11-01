@@ -321,6 +321,28 @@ reset role; select test.login('مجد عاشور'); set role authenticated;
 select test.ok((select count(*) from public.seals) = 0, 'a technician sees no seals');
 select test.fails($$select public.seal_record(181365, 'lost', null, null)$$, 'not_allowed', 'a technician cannot change seals');
 
+
+-- ---------- Seals: editing and taking back ----------
+reset role; select test.login('رامي أبو عجوة'); set role authenticated;
+select public.seal_add_roll(170001, null, public.seal_today(), null);
+select public.seal_issue((select id from public.employees where full_name = 'قصي الشافعي'), public.seal_today(), array[170001, 170002, 170003], null);
+select public.seal_record(170001, 'used', null, 'طبلون 9 تفتيش');
+select public.seal_update_batch((select batch_id from public.seals where seal_no = 170001), (select id from public.employees where full_name = 'مجد عاشور'), public.seal_today() - 2);
+select test.ok((select count(*) from public.seals where seal_no in (170001, 170002, 170003) and technician_id = (select id from public.employees where full_name = 'مجد عاشور') and issued_on = public.seal_today() - 2) = 3,
+               'changing a batch changes all its seals');
+select test.fails($$select public.seal_update_batch((select batch_id from public.seals where seal_no = 170001), (select id from public.employees where full_name = 'رامي أبو عجوة'), public.seal_today())$$, 'bad_technician', 'a batch can only be moved to a technician');
+select test.ok(public.seal_return_to_stock(array[170001]) = 1, 'a used seal can be taken back to the stock');
+select test.ok((select status || ':' || coalesce(details, '-') from public.seals where seal_no = 170001) = 'in_stock:-', 'and its record is cleared');
+select test.ok(public.seal_delete_batch((select batch_id from public.seals where seal_no = 170002)) = 2, 'deleting a batch returns the rest of its seals');
+select test.ok((select count(*) from public.seal_batches b join public.seal_rolls r on r.id = b.roll_id where r.from_no = 170001) = 0, 'and the batch is gone');
+select public.seal_update_roll((select id from public.seal_rolls where from_no = 170001), public.seal_today() - 1, 'ملاحظة جديدة');
+select test.ok((select note from public.seal_rolls where from_no = 170001) = 'ملاحظة جديدة', 'a roll note can be changed');
+select test.ok(public.seal_delete_batch(gen_random_uuid()) = 0, 'deleting a batch that is not there does nothing');
+reset role; select test.login('موظف إداري'); set role authenticated;
+select test.ok(public.has_seals(), 'the permission given earlier still holds');
+reset role; select test.login('مجد عاشور'); set role authenticated;
+select test.fails($$select public.seal_delete_batch(gen_random_uuid())$$, 'not_allowed', 'a technician cannot delete batches');
+
 -- Importing an old roll (manager).
 reset role; select test.login('مسؤول النظام'); set role authenticated;
 select test.ok((public.seal_import_roll(jsonb_build_object('from', 162701, 'to', 162800, 'received_on', '2026-09-29',

@@ -168,6 +168,17 @@ export const recordSeal = (sealNo: number, status: 'used' | 'damaged' | 'lost' |
 
 export const deleteRoll = (rollId: string) => call<void>('seal_delete_roll', { p_roll: rollId })
 
+export const updateBatch = (batchId: string, technicianId: string, issuedOn: string) =>
+  call<void>('seal_update_batch', { p_batch: batchId, p_technician: technicianId, p_issued_on: issuedOn })
+
+export const deleteBatch = (batchId: string) => call<number>('seal_delete_batch', { p_batch: batchId })
+
+/** Takes seals back to the stock; a used one loses its record. */
+export const returnToStock = (seals: number[]) => call<number>('seal_return_to_stock', { p_seals: seals })
+
+export const updateRoll = (rollId: string, receivedOn: string, note: string) =>
+  call<void>('seal_update_roll', { p_roll: rollId, p_received: receivedOn, p_note: note || null })
+
 export const importTechnician = async (name: string) => {
   const sb = client()
   const res = await sb.rpc('seal_import_technician', { p_name: name })
@@ -185,7 +196,7 @@ export const importRoll = async (payload: unknown) => {
 const messages: Record<string, string> = {
   offline: 'يحتاج إنترنت. اتصل وحاول مرة أخرى.',
   not_allowed: 'ما عندك صلاحية لهذا الإجراء.',
-  not_installed: 'قاعدة البيانات تحتاج التحديث 10 (الأختام) أولاً.',
+  not_installed: 'قاعدة البيانات تحتاج آخر تحديث. شغّل ملف update-catchup.sql في Supabase.',
   bad_range: 'الأرقام غير صحيحة: «من» أصغر من أو تساوي «إلى»، وبحد أقصى 1000 ختم.',
   bad_date: 'التاريخ غير صحيح.',
   roll_overlap: 'هذه الأرقام داخلة في رول مسجّل من قبل.',
@@ -194,7 +205,8 @@ const messages: Record<string, string> = {
   bad_technician: 'الأختام تُصرف للفنيين فقط.',
   mixed_rolls: 'الدفعة الواحدة من رول واحد. اصرف كل رول لحاله.',
   already_used: 'لا يمكن إرجاع ختم استُخدم.',
-  roll_in_use: 'لا يمكن حذف رول خرجت منه أختام.',
+  roll_in_use: 'لا يمكن حذف رول خرجت منه أختام. احذف دفعاته أولاً.',
+  missing: 'لم أجده، حدّث الصفحة.',
   bad_status: 'الحالة غير صحيحة.',
 }
 export function sealErrorText(e: unknown): string {

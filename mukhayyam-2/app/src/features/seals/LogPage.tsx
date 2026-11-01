@@ -9,7 +9,7 @@ import { useToast } from '../../ui/Toast'
 import { UseDialog } from './dialogs'
 import { downloadUsageLog } from './excel'
 import { hasQuery, noFilters, ordinalWord, searchSeals, totals, type GroupSort, type Seal, type SealData, type SearchFilters } from './model'
-import { dayLabel, SealPill, SealsTabs, StatusPill } from './parts'
+import { dayLabel, SealPill, SealsTabs, StatusPill, TechNav } from './parts'
 import { refreshSeals, useSealData, useSealsLive } from './repo'
 
 const GROUP_LIMIT = 30
@@ -161,93 +161,98 @@ export function SealLogPage() {
         </div>
       )}
 
-      <div className="filters">
-        <select className="select" aria-label="الفني" value={filters.technicianId ?? ''} onChange={(e) => set({ technicianId: e.target.value || null })}>
-          <option value="">كل الفنيين</option>
-          {techs.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-        </select>
-        <select className="select" aria-label="الرول" value={filters.rollId ?? ''} onChange={(e) => set({ rollId: e.target.value || null })}>
-          <option value="">كل الرولات</option>
-          {data.rolls.map((r) => <option key={r.id} value={r.id}>{r.fromNo} - {r.toNo}</option>)}
-        </select>
-        <Segmented<SearchFilters['period']> label="الفترة" value={filters.period} options={periods} onChange={(p) => set({ period: p })} />
-        <span className="grow" />
-        <select className="select" aria-label="الفرز" value={sort} onChange={(e) => setSort(e.target.value as GroupSort)}>
-          {sorts.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-        </select>
-        <Segmented<View> label="طريقة العرض" value={view} options={views} onChange={setView} />
-      </div>
-      <div className="chips" role="group" aria-label="حالة الختم">
-        {statuses.map((s) => <Chip key={s.label} pressed={filters.status === s.value} onClick={() => set({ status: s.value })}>{s.label}</Chip>)}
-      </div>
+      <div className="seals-layout">
+        <TechNav data={data} value={filters.technicianId} onChange={(id) => set({ technicianId: id })} />
+        <div className="seals-main">
+          <div className="filters">
+            <select className="select tech-select" aria-label="الفني" value={filters.technicianId ?? ''} onChange={(e) => set({ technicianId: e.target.value || null })}>
+              <option value="">كل الفنيين</option>
+              {techs.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+            <select className="select" aria-label="الرول" value={filters.rollId ?? ''} onChange={(e) => set({ rollId: e.target.value || null })}>
+              <option value="">كل الرولات</option>
+              {data.rolls.map((r) => <option key={r.id} value={r.id}>{r.fromNo} - {r.toNo}</option>)}
+            </select>
+            <Segmented<SearchFilters['period']> label="الفترة" value={filters.period} options={periods} onChange={(p) => set({ period: p })} />
+            <span className="grow" />
+            <select className="select" aria-label="الفرز" value={sort} onChange={(e) => setSort(e.target.value as GroupSort)}>
+              {sorts.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+            </select>
+            <Segmented<View> label="طريقة العرض" value={view} options={views} onChange={setView} />
+          </div>
+          <div className="chips" role="group" aria-label="حالة الختم">
+            {statuses.map((s) => <Chip key={s.label} pressed={filters.status === s.value} onClick={() => set({ status: s.value })}>{s.label}</Chip>)}
+          </div>
 
-      <div className="result-line">
-        <span>
-          {active ? (
-            <><b className="num">{result.matches}</b> ختم في <b className="num">{result.groups.length}</b> {view === 'groups' ? 'مجموعة' : 'مجموعات'}</>
-          ) : (
-            <>آخر الدفعات المصروفة · <span className="num">{sum.issued}</span> ختم عند الفنيين لم يُسجَّل استخدامها</>
-          )}
-        </span>
-        {active && <Button variant="ghost" onClick={() => { setQuery(''); setFilters(noFilters) }}>مسح الكل</Button>}
-      </div>
-
-      {result.groups.length === 0 ? (
-        <section className="empty card">
-          <span className="halo"><Search size={28} /></span>
-          <h3>{active ? 'ما لقيت شيء' : 'ما في أختام مصروفة بعد'}</h3>
-          <p>{active ? 'جرّب رقماً أقصر (أول رقمين)، أو امسح الفلاتر.' : 'ابدأ من صفحة «صرف الأختام»، أو استورد ملفاتك القديمة.'}</p>
-        </section>
-      ) : view === 'groups' ? (
-        <div className="group-list">
-          {result.groups.slice(0, limit).map((g) => (
-            <article key={g.key} className="group-card card">
-              <div className="batch-head">
-                <b>{g.batch ? `الدفعة ${ordinalWord(g.batch.batchNo)}` : 'في المخزن / تالف قبل الصرف'}</b>
-                {g.technicianId && <span className="tech">{data.names.get(g.technicianId) ?? '—'}</span>}
-                <span className="muted num">{g.roll.fromNo}–{g.roll.toNo}</span>
-                <span className="grow" />
-                <span className="muted">{g.batch ? `صُرفت ${dayLabel(g.batch.issuedOn)}` : `رول استُلم ${dayLabel(g.roll.receivedOn)}`}</span>
-              </div>
-              <div className="group-rows">
-                {g.seals.filter((s) => s.status !== 'in_stock').map((s) => (
-                  <SealRow key={s.sealNo} seal={s} hit={active && g.matched.has(s.sealNo)} dim={active && !g.matched.has(s.sealNo)} onOpen={() => setDialog({ seal: s })} />
-                ))}
-              </div>
-              {g.seals.some((s) => s.status === 'in_stock') && (
-                <div className="stock-strip">
-                  <span className="muted">{g.seals.filter((s) => s.status === 'in_stock').length} ختم في المخزن</span>
-                  <div className="batch-strip">
-                    {g.seals.filter((s) => s.status === 'in_stock').slice(0, 120).map((s) => <SealPill key={s.sealNo} seal={s} hit={active && g.matched.has(s.sealNo)} />)}
-                  </div>
-                </div>
+          <div className="result-line">
+            <span>
+              {active ? (
+                <><b className="num">{result.matches}</b> ختم في <b className="num">{result.groups.length}</b> {view === 'groups' ? 'مجموعة' : 'مجموعات'}</>
+              ) : (
+                <>آخر الدفعات المصروفة · <span className="num">{sum.issued}</span> ختم عند الفنيين لم يُسجَّل استخدامها</>
               )}
-            </article>
-          ))}
-          {result.groups.length > limit && <Button variant="secondary" onClick={() => setLimit(limit + GROUP_LIMIT)}>عرض المزيد ({result.groups.length - limit})</Button>}
-        </div>
-      ) : (
-        <section className="card" style={{ padding: 10, overflowX: 'auto' }}>
-          <table className="seal-table">
-            <thead>
-              <tr>{sortHead('no', 'الختم')}{sortHead('tech', 'الفني')}{sortHead('status', 'الحالة')}{sortHead('date', 'التاريخ')}{sortHead('board', 'الطبلون')}<th>التفاصيل</th></tr>
-            </thead>
-            <tbody>
-              {rows.slice(0, limit).map((s) => (
-                <tr key={s.sealNo} onClick={() => setDialog({ seal: s })}>
-                  <td><SealPill seal={s} /></td>
-                  <td>{data.names.get(s.technicianId ?? '') ?? '—'}</td>
-                  <td><StatusPill status={s.status} /></td>
-                  <td className="num">{dayLabel(s.usedOn ?? s.issuedOn)}</td>
-                  <td className="num">{s.boardNo || '—'}</td>
-                  <td>{s.details || ''}</td>
-                </tr>
+            </span>
+            {active && <Button variant="ghost" onClick={() => { setQuery(''); setFilters(noFilters) }}>مسح الكل</Button>}
+          </div>
+
+          {result.groups.length === 0 ? (
+            <section className="empty card">
+              <span className="halo"><Search size={28} /></span>
+              <h3>{active ? 'ما لقيت شيء' : 'ما في أختام مصروفة بعد'}</h3>
+              <p>{active ? 'جرّب رقماً أقصر (أول رقمين)، أو امسح الفلاتر.' : 'ابدأ من صفحة «صرف الأختام»، أو استورد ملفاتك القديمة.'}</p>
+            </section>
+          ) : view === 'groups' ? (
+            <div className="group-list">
+              {result.groups.slice(0, limit).map((g) => (
+                <article key={g.key} className="group-card card">
+                  <div className="batch-head">
+                    <b>{g.batch ? `الدفعة ${ordinalWord(g.batch.batchNo)}` : 'في المخزن / تالف قبل الصرف'}</b>
+                    {g.technicianId && <span className="tech">{data.names.get(g.technicianId) ?? '—'}</span>}
+                    <span className="muted num">{g.roll.fromNo}–{g.roll.toNo}</span>
+                    <span className="grow" />
+                    <span className="muted">{g.batch ? `صُرفت ${dayLabel(g.batch.issuedOn)}` : `رول استُلم ${dayLabel(g.roll.receivedOn)}`}</span>
+                  </div>
+                  <div className="group-rows">
+                    {g.seals.filter((s) => s.status !== 'in_stock').map((s) => (
+                      <SealRow key={s.sealNo} seal={s} hit={active && g.matched.has(s.sealNo)} dim={active && !g.matched.has(s.sealNo)} onOpen={() => setDialog({ seal: s })} />
+                    ))}
+                  </div>
+                  {g.seals.some((s) => s.status === 'in_stock') && (
+                    <div className="stock-strip">
+                      <span className="muted">{g.seals.filter((s) => s.status === 'in_stock').length} ختم في المخزن</span>
+                      <div className="batch-strip">
+                        {g.seals.filter((s) => s.status === 'in_stock').slice(0, 120).map((s) => <SealPill key={s.sealNo} seal={s} hit={active && g.matched.has(s.sealNo)} />)}
+                      </div>
+                    </div>
+                  )}
+                </article>
               ))}
-            </tbody>
-          </table>
-          {rows.length > limit && <Button variant="secondary" onClick={() => setLimit(limit + TABLE_LIMIT)}>عرض المزيد ({rows.length - limit})</Button>}
-        </section>
-      )}
+              {result.groups.length > limit && <Button variant="secondary" onClick={() => setLimit(limit + GROUP_LIMIT)}>عرض المزيد ({result.groups.length - limit})</Button>}
+            </div>
+          ) : (
+            <section className="card" style={{ padding: 10, overflowX: 'auto' }}>
+              <table className="seal-table">
+                <thead>
+                  <tr>{sortHead('no', 'الختم')}{sortHead('tech', 'الفني')}{sortHead('status', 'الحالة')}{sortHead('date', 'التاريخ')}{sortHead('board', 'الطبلون')}<th>التفاصيل</th></tr>
+                </thead>
+                <tbody>
+                  {rows.slice(0, limit).map((s) => (
+                    <tr key={s.sealNo} onClick={() => setDialog({ seal: s })}>
+                      <td><SealPill seal={s} /></td>
+                      <td>{data.names.get(s.technicianId ?? '') ?? '—'}</td>
+                      <td><StatusPill status={s.status} /></td>
+                      <td className="num">{dayLabel(s.usedOn ?? s.issuedOn)}</td>
+                      <td className="num">{s.boardNo || '—'}</td>
+                      <td>{s.details || ''}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {rows.length > limit && <Button variant="secondary" onClick={() => setLimit(limit + TABLE_LIMIT)}>عرض المزيد ({rows.length - limit})</Button>}
+            </section>
+          )}
+        </div>
+      </div>
 
       {dialog && <UseDialog key={dialog.seal?.sealNo ?? 'new'} data={data as SealData} seal={dialog.seal} onClose={() => setDialog(null)} />}
     </div>

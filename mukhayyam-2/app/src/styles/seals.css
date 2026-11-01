@@ -156,3 +156,32 @@ table.seal-table tbody tr:hover { background: color-mix(in srgb, var(--brand) 5%
 .stock-strip { display: grid; gap: 8px; padding: 10px 0 4px; border-top: 1px solid var(--line-2); font-size: 13px; font-weight: 700; }
 .stock-strip .seal-pill { font-size: 13px; padding: 3px 9px 3px 8px; }
 .search-bar input[type="search"]::-webkit-search-cancel-button, .search-bar input[type="search"]::-webkit-search-decoration { display: none; -webkit-appearance: none; appearance: none; }
+
+/* ----- Technicians, vertical at the side on laptops ----- */
+.seals-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+.seals-main { display: grid; gap: 14px; min-width: 0; }
+.tech-nav { display: none; }
+.tech-select { display: block; }
+@media (min-width: 901px) {
+  .seals-layout { grid-template-columns: 260px minmax(0, 1fr); }
+  .tech-select { display: none; }
+  .tech-nav {
+    display: grid; gap: 4px; padding: 8px; border-radius: var(--r-lg); position: sticky; top: calc(var(--topbar-h) + 28px);
+    max-height: calc(100dvh - var(--topbar-h) - 56px); overflow: auto;
+    background: var(--glass-strong); border: 1px solid var(--glass-edge);
+  }
+}
+.tech-item {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border-radius: 16px; border: 1.5px solid transparent; background: transparent;
+  font: inherit; text-align: start; color: var(--ink-2); cursor: pointer; transition: background .15s var(--ease), border-color .15s var(--ease);
+}
+.tech-item:hover { background: color-mix(in srgb, var(--brand) 8%, transparent); }
+.tech-item:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--brand-soft); }
+.tech-item[aria-current='true'] { background: var(--brand-soft); border-color: color-mix(in srgb, var(--brand) 40%, transparent); color: var(--brand); }
+.tech-text { display: grid; min-width: 0; flex: 1; line-height: 1.35; }
+.tech-text b { font-size: 14.5px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tech-text small { font-size: 12px; color: var(--muted); }
+.tech-item[aria-current='true'] .tech-text small { color: inherit; opacity: .8; }
+.tech-dot { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--sunken); font-size: 11px; font-weight: 800; color: var(--muted); flex: none; }
+.tech-badge { min-width: 26px; height: 26px; padding: 0 7px; border-radius: 999px; display: grid; place-items: center; background: var(--warn-soft); color: var(--warn); font-size: 13px; font-weight: 800; }
+.batch-head .icon-btn { width: 36px; height: 36px; }
