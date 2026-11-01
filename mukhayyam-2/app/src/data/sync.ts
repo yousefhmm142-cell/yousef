@@ -319,6 +319,7 @@ interface EmployeeRow {
   job_title?: string | null
   wa_code?: 970 | 972
   can_seals?: boolean
+  seals_sheet?: string | null
 }
 interface ListRow { id: number; name: string; is_active: boolean; sort_order: number }
 interface GeneratorRow extends ListRow { brand: string; model: string | null; capacity_kva: number | null; liters_per_hour: number | null }
@@ -350,6 +351,7 @@ export async function pullReference(): Promise<void> {
       jobTitle: r.job_title ?? null,
       waCode: r.wa_code ?? 972,
       canSeals: r.can_seals ?? false,
+      sealsSheet: r.seals_sheet ?? null,
     })),
   )
   await replaceAll<Generator>(

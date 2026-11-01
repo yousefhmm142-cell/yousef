@@ -345,19 +345,23 @@ select test.fails($$select public.seal_delete_batch(gen_random_uuid())$$, 'not_a
 
 -- Importing an old roll (manager).
 reset role; select test.login('مسؤول النظام'); set role authenticated;
-select test.ok((public.seal_import_roll(jsonb_build_object('from', 162701, 'to', 162800, 'received_on', '2026-09-29',
+select test.ok((public.seal_import_roll(jsonb_build_object('from', 162701, 'to', 162800, 'received_on', '2026-09-29', 'header_text', 'تاريخ الاستلام 29/9/2026 الاختام (162701-162800)', 'sheet_label', 'ورقة13', 'sheet_pos', 0, 'sheet_col', 4,
         'batches', jsonb_build_array(jsonb_build_object('date', '2026-09-30', 'tech', (select id from public.employees where full_name = 'مجد عاشور'), 'seals', jsonb_build_array(162778, 162707, 162737, 163000))),
-        'damaged', jsonb_build_array(162799),
-        'usage', jsonb_build_array(jsonb_build_object('no', 162778, 'status', 'used', 'used_on', '2026-10-01', 'details', 'طبلون 5 تفتيش'),
-                                    jsonb_build_object('no', 162799, 'status', 'damaged', 'used_on', '', 'details', 'تالف'),
-                                    jsonb_build_object('no', 162750, 'status', 'used', 'used_on', '2026-10-01', 'details', 'x'))))) ->> 'issued' = '3',
+        'damaged', jsonb_build_array(162799))) ->> 'issued') = '3',
                'an old roll is imported with its batch');
+select test.ok((select original_seals = array[162778, 162707, 162737, 163000] from public.seal_batches where original_seals is not null), 'the batch keeps its line as written');
+select test.ok((select header_text || '/' || sheet_label from public.seal_rolls where from_no = 162701) = 'تاريخ الاستلام 29/9/2026 الاختام (162701-162800)/ورقة13', 'the roll keeps its heading and sheet');
+select test.ok(public.seal_import_usage(jsonb_build_array(jsonb_build_object('no', 162778, 'status', 'used', 'used_on', '2026-10-01', 'details', 'طبلون 5 تفتيش'),
+                                    jsonb_build_object('no', 162799, 'status', 'damaged', 'used_on', '', 'details', 'تالف'),
+                                    jsonb_build_object('no', 162750, 'status', 'used', 'used_on', '2026-10-01', 'details', 'x'))) = 2, 'usage lines are applied once the batches are in (one is for a seal not issued)');
+select public.seal_return_to_stock(array[162707]);
+select test.ok((select original_seals is null from public.seal_batches where id = (select batch_id from public.seals where seal_no = 162778)), 'a batch someone changes stops following its written line');
 select test.ok((select status || ':' || board_no from public.seals where seal_no = 162778) = 'used:5', 'imported usage keeps the tableau number');
 select test.ok((select status from public.seals where seal_no = 162799) = 'damaged', 'imported damaged seals are marked');
 select test.ok((public.seal_import_roll(jsonb_build_object('from', 162701, 'to', 162800, 'received_on', '2026-09-29')) ->> 'skipped')::boolean, 'importing the same roll again changes nothing');
 select test.ok(public.seal_import_technician('قصي  الشافعي') = (select id from public.employees where full_name = 'قصي الشافعي'), 'the same technician is found under another spacing');
 select test.ok(public.seal_import_technician('مجد') = (select id from public.employees where full_name = 'مجد عاشور'), 'a first name finds the one technician');
-select test.ok(public.seal_import_technician('مهند دويدار') is not null, 'a name is matched or added');
+select test.ok(public.seal_import_technician('مهند دويدار', 'مهند') is not null, 'a name is matched or added');
 insert into public.employees (id, full_name, role, is_active) values ('00000000-0000-0000-0000-0000000000a1', 'سامر خالد الحلبي', 'technician', true);
 select test.ok(public.seal_import_technician('سامر الحلبي') = '00000000-0000-0000-0000-0000000000a1', 'first and last word find the full name');
 select test.ok(public.seal_import_technician('سامرالحلبي') = '00000000-0000-0000-0000-0000000000a1', 'words run together find it too');

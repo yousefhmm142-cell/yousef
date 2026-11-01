@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { composeDetails, noFilters, ordinalWord, parseSealNumbers, rollStats, searchSeals, splitDetails, tokenize, type Seal, type SealBatch, type SealData, type SealRoll } from './model'
 
-const roll: SealRoll = { id: 'r1', fromNo: 181301, toNo: 181400, receivedOn: '2026-07-30', note: '' }
-const roll2: SealRoll = { id: 'r2', fromNo: 183001, toNo: 183100, receivedOn: '2026-08-03', note: '' }
-const b1: SealBatch = { id: 'b1', rollId: 'r1', batchNo: 1, technicianId: 'q', issuedOn: '2026-07-30', note: '' }
-const b2: SealBatch = { id: 'b2', rollId: 'r1', batchNo: 2, technicianId: 'a', issuedOn: '2026-08-01', note: '' }
-const b3: SealBatch = { id: 'b3', rollId: 'r2', batchNo: 1, technicianId: 'a', issuedOn: '2026-08-03', note: '' }
+const roll: SealRoll = { id: 'r1', fromNo: 181301, toNo: 181400, receivedOn: '2026-07-30', note: '', headerText: null, sheetLabel: null, sheetPos: null, sheetCol: null }
+const roll2: SealRoll = { id: 'r2', fromNo: 183001, toNo: 183100, receivedOn: '2026-08-03', note: '', headerText: null, sheetLabel: null, sheetPos: null, sheetCol: null }
+const b1: SealBatch = { id: 'b1', rollId: 'r1', batchNo: 1, technicianId: 'q', issuedOn: '2026-07-30', note: '', originalSeals: null, blockFrom: null, blockOrd: null, label: null, usageOrd: null }
+const b2: SealBatch = { id: 'b2', rollId: 'r1', batchNo: 2, technicianId: 'a', issuedOn: '2026-08-01', note: '', originalSeals: null, blockFrom: null, blockOrd: null, label: null, usageOrd: null }
+const b3: SealBatch = { id: 'b3', rollId: 'r2', batchNo: 1, technicianId: 'a', issuedOn: '2026-08-03', note: '', originalSeals: null, blockFrom: null, blockOrd: null, label: null, usageOrd: null }
 const seal = (no: number, over: Partial<Seal> = {}): Seal => ({ sealNo: no, rollId: no < 183000 ? 'r1' : 'r2', status: 'in_stock', batchId: null, batchPos: null, technicianId: null, issuedOn: null, usedOn: null, details: '', boardNo: '', ...over })
 const data: SealData = {
   rolls: [roll, roll2],

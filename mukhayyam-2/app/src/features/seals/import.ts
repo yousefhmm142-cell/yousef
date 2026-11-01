@@ -9,11 +9,22 @@ export interface ParsedBatch {
   date: string
   tech: string
   seals: number[]
+  /** The word written for it, the roll whose heading it sat under, and its row among that block's lines. */
+  label: string
+  blockFrom: number
+  ord: number
+  /** Where its first seal sits on the technician's sheet of the usage file. */
+  usageOrd?: number | null
 }
 export interface ParsedRoll {
   from: number
   to: number
   receivedOn: string
+  /** The heading as written in the file, and where the roll sits (the sheet and its place on it). */
+  headerText: string
+  sheetLabel: string
+  sheetPos: number
+  sheetCol: number
   batches: ParsedBatch[]
   damaged: number[]
 }
@@ -28,6 +39,8 @@ export interface UsageParse {
   rows: ParsedUsage[]
   /** Seals written twice: the later (or the one with a state) is kept. */
   repeated: number
+  /** The seal numbers of each sheet in the order written (blank state too). */
+  order: Record<string, number[]>
 }
 
 type Cell = ExcelJSType.CellValue
@@ -35,7 +48,7 @@ type Cell = ExcelJSType.CellValue
 /** Plain text of a cell: strings, numbers, formulas' results, rich text. */
 export function cellText(v: Cell): string {
   if (v === null || v === undefined) return ''
-  if (v instanceof Date) return v.toISOString().slice(0, 10)
+  if (v instanceof Date) return Number.isNaN(v.getTime()) ? '' : v.toISOString().slice(0, 10)
   if (typeof v === 'object') {
     if ('richText' in v) return v.richText.map((t) => t.text).join('')
     if ('result' in v) return cellText(v.result as Cell)
@@ -47,7 +60,7 @@ export function cellText(v: Cell): string {
 
 /** A date cell, or text like 30/7/2026 (day first), as 2026-07-30. */
 export function cellDate(v: Cell): string {
-  if (v instanceof Date) return v.toISOString().slice(0, 10)
+  if (v instanceof Date) return Number.isNaN(v.getTime()) ? '' : v.toISOString().slice(0, 10)
   const m = /(\d{1,2})\s*[/.-]\s*(\d{1,2})\s*[/.-]\s*(\d{2,4})/.exec(cellText(v))
   if (!m) return ''
   const y = m[3]!.length === 2 ? 2000 + Number(m[3]) : Number(m[3])
@@ -92,6 +105,9 @@ export async function parseIssueWorkbook(ExcelJS: typeof ExcelJSType, data: Arra
   await wb.xlsx.load(data)
   interface Block {
     header: string
+    sheet: string
+    pos: number
+    col: number
     batches: ParsedBatch[]
     damaged: number[]
   }
@@ -99,6 +115,8 @@ export async function parseIssueWorkbook(ExcelJS: typeof ExcelJSType, data: Arra
 
   for (const ws of wb.worksheets) {
     let cur: (Block & { cols: { date: number; tech: number; seals: number } }) | null = null
+    const iLabel = (b: { cols: { tech: number } }) => b.cols.tech - 1
+    let pos = 0
     ws.eachRow({ includeEmpty: false }, (row) => {
       const raw = row.values as Cell[]
       const cells = raw.map((v) => cellText(v).trim())
@@ -106,7 +124,7 @@ export async function parseIssueWorkbook(ExcelJS: typeof ExcelJSType, data: Arra
       const iBatch = cells.indexOf('الدفعه')
       if (iDate > 0 && iBatch > 0) {
         const iTech = cells.indexOf('المستلم')
-        cur = { header: cells.slice(iTech + 1).join(' '), cols: { date: iDate, tech: iTech, seals: iTech + 1 }, batches: [], damaged: [] }
+        cur = { header: cells.slice(iTech + 1).join(' '), sheet: ws.name.trim(), pos: pos++, col: iDate, cols: { date: iDate, tech: iTech, seals: iTech + 1 }, batches: [], damaged: [] }
         blocks.push(cur)
         return
       }
@@ -115,34 +133,54 @@ export async function parseIssueWorkbook(ExcelJS: typeof ExcelJSType, data: Arra
       const seals = parseSealNumbers(cells[cur.cols.seals] ?? '').numbers
       if (!seals.length) return
       if (fold(tech).includes('تالف')) cur.damaged.push(...seals)
-      else if (tech) cur.batches.push({ date: cellDate(raw[cur.cols.date]!), tech, seals })
+      else if (tech) cur.batches.push({ date: cellDate(raw[cur.cols.date]!), tech, seals, label: cells[iLabel(cur)] ?? '', blockFrom: 0, ord: cur.batches.length })
     })
   }
 
-  // Each batch goes to the roll most of its numbers belong to, wherever on the sheet it was written.
+  // The same person written with and without a space («بشارالشافعي» / «بشار الشافعي») is one technician.
+  const squash = (s: string) => fold(s).replace(/\s+/g, '')
+  const spelled = new Map<string, string>()
+  for (const blk of blocks)
+    for (const b of blk.batches) {
+      const k = squash(b.tech)
+      const cur = spelled.get(k)
+      if (!cur || b.tech.length > cur.length) spelled.set(k, b.tech)
+    }
+  for (const blk of blocks) for (const b of blk.batches) b.tech = spelled.get(squash(b.tech))!
+
+  // Each block belongs to the roll most of its numbers belong to; its heading is that roll's heading.
+  // A line whose numbers mostly belong to another roll is kept under the block it was written in.
   const rolls = new Map<number, ParsedRoll>()
-  const suspicious: Suspicious[] = []
-  const rollFor = (from: number, received: string): ParsedRoll => {
+  const rollFor = (from: number, blk: Block | null): ParsedRoll => {
     let r = rolls.get(from)
-    if (!r) rolls.set(from, (r = { from, to: from + 99, receivedOn: received, batches: [], damaged: [] }))
-    else if (!r.receivedOn) r.receivedOn = received
+    if (!r) rolls.set(from, (r = { from, to: from + 99, receivedOn: blk ? receivedOf(blk.header) : '', headerText: blk?.header ?? '', sheetLabel: blk?.sheet ?? '', sheetPos: blk?.pos ?? 0, sheetCol: blk?.col ?? 1, batches: [], damaged: [] }))
     return r
   }
+  const own = new Map<Block, number>()
   for (const blk of blocks) {
-    const received = receivedOf(blk.header)
-    for (const b of blk.batches) {
-      const dom = dominantBlock(b.seals)
-      const r = rollFor(dom.from, received)
-      const inside = b.seals.filter((n) => n >= dom.from && n <= dom.to)
-      for (const n of b.seals) if (n < dom.from || n > dom.to) suspicious.push({ no: n, tech: b.tech, date: b.date, roll: dom.from })
-      r.batches.push({ ...b, seals: inside })
-    }
-    for (const n of blk.damaged) rollFor(blockOf(n).from, received).damaged.push(n)
+    const all = [...blk.batches.flatMap((b) => b.seals), ...blk.damaged]
+    if (!all.length) continue
+    const from = dominantBlock(all).from
+    own.set(blk, from)
+    rollFor(from, blk)
   }
+  for (const blk of blocks) {
+    for (const b of blk.batches) {
+      const roll = rollFor(dominantBlock(b.seals).from, null)
+      roll.batches.push({ ...b, seals: [...b.seals], blockFrom: own.get(blk) ?? roll.from })
+    }
+    for (const n of blk.damaged) rollFor(blockOf(n).from, null).damaged.push(n)
+  }
+  // A number written under another roll's batch is fine when its own roll is in the file (the seal
+  // simply belongs to a batch of another roll); only numbers matching no roll are slips of the pen.
+  const suspicious: Suspicious[] = []
+  for (const r of rolls.values())
+    for (const b of r.batches)
+      for (const n of b.seals) if (!rolls.has(blockOf(n).from)) suspicious.push({ no: n, tech: b.tech, date: b.date, roll: r.from })
   for (const r of rolls.values()) {
     const first = r.batches.map((b) => b.date).filter(Boolean).sort()[0] ?? ''
     // The date she wrote when receiving the roll, else the first day anything was taken from it.
-    if (!r.receivedOn || r.receivedOn > first) r.receivedOn = r.receivedOn && first ? (r.receivedOn < first ? r.receivedOn : first) : r.receivedOn || first
+    r.receivedOn = r.receivedOn && first ? (r.receivedOn < first ? r.receivedOn : first) : r.receivedOn || first
   }
   return { rolls: [...rolls.values()].sort((a, b) => a.receivedOn.localeCompare(b.receivedOn) || a.from - b.from), suspicious }
 }
@@ -160,6 +198,7 @@ export async function parseUsageWorkbook(ExcelJS: typeof ExcelJSType, data: Arra
   await wb.xlsx.load(data)
   const bySeal = new Map<number, ParsedUsage>()
   let repeated = 0
+  const order: Record<string, number[]> = {}
   for (const ws of wb.worksheets) {
     let cols: { date: number; no: number; state: number; details: number } | null = null
     ws.eachRow({ includeEmpty: false }, (row) => {
@@ -172,6 +211,7 @@ export async function parseUsageWorkbook(ExcelJS: typeof ExcelJSType, data: Arra
       }
       const seal = parseSealNumbers(cells[cols.no] ?? '').numbers[0]
       if (!seal) return
+      ;(order[ws.name.trim()] ??= []).push(seal)
       const details = cols.details > 0 ? (cells[cols.details] ?? '') : ''
       const status = statusOf(cols.state > 0 ? cells[cols.state] ?? '' : '') ?? (details ? 'used' : null)
       if (!status) return
@@ -180,30 +220,99 @@ export async function parseUsageWorkbook(ExcelJS: typeof ExcelJSType, data: Arra
       bySeal.set(seal, row2)
     })
   }
-  return { rows: [...bySeal.values()], repeated }
+  return { rows: [...bySeal.values()], repeated, order }
 }
 
 // ---------- Putting the two together ----------
 export interface ImportPlan {
-  rolls: Array<{ payload: ParsedRoll; usage: ParsedUsage[] }>
+  /** In an order where a roll comes after any roll one of its batches reaches into. */
+  rolls: ParsedRoll[]
+  usage: ParsedUsage[]
+  /** Technician names in the issue file, and the sheet names in the usage file. */
   technicians: string[]
+  usageSheets: string[]
   /** Usage lines whose seal is in none of the rolls. */
   stray: ParsedUsage[]
+  /** Typing slips put right by looking at the usage file (a missing digit). */
+  fixed: Array<{ typed: number; now: number; tech: string }>
+  /** Numbers that match no roll and could not be put right. */
+  unresolved: Suspicious[]
   totals: { rolls: number; batches: number; seals: number; usage: number }
 }
 
-export function planImport(rolls: ParsedRoll[], usage: ParsedUsage[]): ImportPlan {
-  const placed = new Set<number>()
-  const plan: ImportPlan['rolls'] = rolls.map((r) => {
-    const mine = usage.filter((u) => u.no >= r.from && u.no <= r.to)
-    mine.forEach((u) => placed.add(u.no))
-    return { payload: r, usage: mine }
-  })
-  const technicians = [...new Set(rolls.flatMap((r) => r.batches.map((b) => b.tech)))].sort((a, b) => a.localeCompare(b, 'ar'))
+/** Two numbers written one digit apart (a digit missing, added or changed). */
+const withinOne = (a: string, b: string) => {
+  if (a === b) return true
+  if (Math.abs(a.length - b.length) > 1) return false
+  let i = 0
+  while (i < a.length && i < b.length && a[i] === b[i]) i++
+  if (a.length === b.length) return a.slice(i + 1) === b.slice(i + 1)
+  return a.length > b.length ? a.slice(i + 1) === b.slice(i) : a.slice(i) === b.slice(i + 1)
+}
+
+/** The roll order for importing: a roll is imported after the rolls its batches borrow numbers from. */
+function dependencyOrder(rolls: ParsedRoll[]): ParsedRoll[] {
+  const byFrom = new Map(rolls.map((r) => [r.from, r]))
+  const needs = (r: ParsedRoll) => new Set(r.batches.flatMap((b) => b.seals.map((n) => blockOf(n).from)).filter((f) => f !== r.from && byFrom.has(f)))
+  const done = new Set<number>()
+  const out: ParsedRoll[] = []
+  let left = [...rolls]
+  while (left.length) {
+    const ready = left.filter((r) => [...needs(r)].every((f) => done.has(f)))
+    const next = ready.length ? ready : [left[0]!]
+    for (const r of next) {
+      done.add(r.from)
+      out.push(r)
+    }
+    left = left.filter((r) => !next.includes(r))
+  }
+  return out
+}
+
+/** The usage sheet that belongs to a technician: the same name, else one containing the other, else the same first name. */
+export function sheetOf(tech: string, sheets: string[]): string | null {
+  const key = (s: string) => fold(s).replace(/\s+/g, '')
+  const t = key(tech)
+  const hit = sheets.find((s) => key(s) === t) ?? sheets.find((s) => t.startsWith(key(s)) || key(s).startsWith(t))
+  if (hit) return hit
+  const first = fold(tech).split(/\s+/)[0]
+  const same = sheets.filter((s) => fold(s).split(/\s+/)[0] === first)
+  return same.length === 1 ? same[0]! : null
+}
+
+export function planImport(parsed: ParsedRoll[], usage: ParsedUsage[], suspicious: Suspicious[] = [], order: Record<string, number[]> = {}): ImportPlan {
+  const rolls = parsed.map((r) => ({ ...r, batches: r.batches.map((b) => ({ ...b, seals: [...b.seals] })) }))
+  const listed = new Set(rolls.flatMap((r) => r.batches.flatMap((b) => b.seals)))
+  const fixed: ImportPlan['fixed'] = []
+  const unresolved: Suspicious[] = []
+  for (const s of suspicious) {
+    const roll = rolls.find((r) => r.from === s.roll)
+    const batch = roll?.batches.find((b) => b.tech === s.tech && b.date === s.date && b.seals.includes(s.no))
+    // The number she meant is one the usage file knows in that roll and no batch lists.
+    const guess = usage.map((u) => u.no).find((n) => roll && n >= roll.from && n <= roll.to && !listed.has(n) && withinOne(String(s.no), String(n)))
+    if (batch && guess) {
+      batch.seals[batch.seals.indexOf(s.no)] = guess
+      listed.add(guess)
+      fixed.push({ typed: s.no, now: guess, tech: s.tech })
+    } else unresolved.push(s)
+  }
+  const sheetNames = Object.keys(order)
+  for (const r of rolls)
+    for (const b of r.batches) {
+      const sheet = sheetOf(b.tech, sheetNames)
+      const at = sheet ? order[sheet]!.indexOf(b.seals[0]!) : -1
+      b.usageOrd = at >= 0 ? at : null
+    }
+  const ordered = dependencyOrder(rolls)
+  const inRolls = (n: number) => rolls.some((r) => n >= r.from && n <= r.to)
   return {
-    rolls: plan,
-    technicians,
-    stray: usage.filter((u) => !placed.has(u.no)),
+    rolls: ordered,
+    usage,
+    technicians: [...new Set(rolls.flatMap((r) => r.batches.map((b) => b.tech)))].sort((a, b) => a.localeCompare(b, 'ar')),
+    usageSheets: [...new Set(usage.map((u) => u.sheet))],
+    stray: usage.filter((u) => !inRolls(u.no)),
+    fixed,
+    unresolved,
     totals: {
       rolls: rolls.length,
       batches: rolls.reduce((n, r) => n + r.batches.length, 0),
@@ -212,3 +321,20 @@ export function planImport(rolls: ParsedRoll[], usage: ParsedUsage[]): ImportPla
     },
   }
 }
+
+/** What the server function takes for one roll: technicians by their ids. */
+export function rollPayload(r: ParsedRoll, techId: (name: string) => string) {
+  return {
+    from: r.from,
+    to: r.to,
+    received_on: r.receivedOn,
+    header_text: r.headerText,
+    sheet_label: r.sheetLabel,
+    sheet_pos: r.sheetPos,
+    sheet_col: r.sheetCol,
+    batches: r.batches.map((b) => ({ date: b.date || r.receivedOn, tech: techId(b.tech), seals: b.seals, label: b.label, block_from: b.blockFrom === r.from ? null : b.blockFrom, ord: b.ord, usage_ord: b.usageOrd ?? null })),
+    damaged: r.damaged,
+  }
+}
+
+export const usagePayload = (rows: ParsedUsage[]) => rows.map((u) => ({ no: u.no, status: u.status, used_on: u.usedOn, details: u.details }))

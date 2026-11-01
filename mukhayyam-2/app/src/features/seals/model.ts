@@ -11,6 +11,13 @@ export interface SealRoll {
   toNo: number
   receivedOn: string
   note: string
+  /** The heading as it was written in the Excel file (the export repeats it). */
+  headerText: string | null
+  /** The sheet of the Excel file the roll sits on («ورقة3»); rolls with the same one share it. */
+  sheetLabel: string | null
+  sheetPos: number | null
+  /** The column (1 = A) the block starts at on its sheet; blank means A. */
+  sheetCol: number | null
 }
 
 export interface SealBatch {
@@ -20,6 +27,14 @@ export interface SealBatch {
   technicianId: string
   issuedOn: string
   note: string
+  /** The numbers of the batch as first written, until someone changes the batch. */
+  originalSeals: number[] | null
+  /** Imported lines: the roll whose heading it sat under (when not its own), its place there, and the word written. */
+  blockFrom: number | null
+  blockOrd: number | null
+  label: string | null
+  /** Imported lines: the place of its first seal on the technician's usage sheet. */
+  usageOrd: number | null
 }
 
 export interface Seal {
@@ -136,6 +151,8 @@ export interface SealData {
   batches: SealBatch[]
   seals: Seal[]
   names: Map<string, string>
+  /** The technicians' sheet names in the usage file (a technician with none uses their name). */
+  sheets?: Map<string, string>
 }
 
 export interface SearchFilters {

@@ -23,6 +23,8 @@ export interface Employee {
   waCode?: 970 | 972
   /** May use the two seals pages (the manager and the admin always may). */
   canSeals?: boolean
+  /** The name of this technician's sheet in the seals usage file. */
+  sealsSheet?: string | null
 }
 
 /** The seals pages: managers, and anyone the admin gave the permission. */

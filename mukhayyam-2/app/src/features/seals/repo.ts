@@ -30,8 +30,8 @@ interface SealRow {
   board_no: string | null
   updated_at: string
 }
-interface RollRow { id: string; from_no: number; to_no: number; received_on: string; note: string | null }
-interface BatchRow { id: string; roll_id: string; batch_no: number; technician_id: string; issued_on: string; note: string | null }
+interface RollRow { id: string; from_no: number; to_no: number; received_on: string; note: string | null; header_text?: string | null; sheet_label?: string | null; sheet_pos?: number | null; sheet_col?: number | null }
+interface BatchRow { id: string; roll_id: string; batch_no: number; technician_id: string; issued_on: string; note: string | null; original_seals?: number[] | null; block_from?: number | null; block_ord?: number | null; label?: string | null; usage_ord?: number | null }
 
 const sealFromRow = (r: SealRow): Seal => ({
   sealNo: r.seal_no,
@@ -65,8 +65,8 @@ export function refreshSeals(): Promise<void> {
   loading = (async () => {
     // Rolls and batches are few: read them whole, so a deleted one disappears here too.
     const [rolls, batches] = await Promise.all([
-      sb.from('seal_rolls').select('id, from_no, to_no, received_on, note').order('from_no'),
-      sb.from('seal_batches').select('id, roll_id, batch_no, technician_id, issued_on, note'),
+      sb.from('seal_rolls').select('*').order('from_no'),
+      sb.from('seal_batches').select('*'),
     ])
     if (rolls.error || batches.error) return
     const rollRows = (rolls.data ?? []) as RollRow[]
@@ -88,9 +88,9 @@ export function refreshSeals(): Promise<void> {
 
     await db.transaction('rw', db.sealRolls, db.sealBatches, db.seals, db.meta, async () => {
       await db.sealRolls.clear()
-      await db.sealRolls.bulkPut(rollRows.map((r): SealRoll => ({ id: r.id, fromNo: r.from_no, toNo: r.to_no, receivedOn: r.received_on, note: r.note ?? '' })))
+      await db.sealRolls.bulkPut(rollRows.map((r): SealRoll => ({ id: r.id, fromNo: r.from_no, toNo: r.to_no, receivedOn: r.received_on, note: r.note ?? '', headerText: r.header_text ?? null, sheetLabel: r.sheet_label ?? null, sheetPos: r.sheet_pos ?? null, sheetCol: r.sheet_col ?? null })))
       await db.sealBatches.clear()
-      await db.sealBatches.bulkPut(batchRows.map((b): SealBatch => ({ id: b.id, rollId: b.roll_id, batchNo: b.batch_no, technicianId: b.technician_id, issuedOn: b.issued_on, note: b.note ?? '' })))
+      await db.sealBatches.bulkPut(batchRows.map((b): SealBatch => ({ id: b.id, rollId: b.roll_id, batchNo: b.batch_no, technicianId: b.technician_id, issuedOn: b.issued_on, note: b.note ?? '', originalSeals: b.original_seals ?? null, blockFrom: b.block_from ?? null, blockOrd: b.block_ord ?? null, label: b.label ?? null, usageOrd: b.usage_ord ?? null })))
       if (changed.length) await db.seals.bulkPut(changed.map(sealFromRow))
       // Seals of a roll that no longer exists, and seals whose batch was removed.
       const rollIds = new Set(rollRows.map((r) => r.id))
@@ -130,7 +130,8 @@ export function useSealData(): SealData | undefined {
     const [rolls, batches, seals] = await Promise.all([db.sealRolls.toArray(), db.sealBatches.toArray(), db.seals.toArray()])
     return { rolls: rolls.sort((a, b) => b.receivedOn.localeCompare(a.receivedOn) || b.fromNo - a.fromNo), batches, seals }
   }, [])
-  return data ? { ...data, names } : undefined
+  const sheets = useLiveQuery(async () => new Map((await db.employees.toArray()).flatMap((e) => (e.sealsSheet ? [[e.id, e.sealsSheet] as [string, string]] : []))), [])
+  return data ? { ...data, names, sheets: sheets ?? new Map() } : undefined
 }
 
 /** People seals can be handed to: active technicians. */
@@ -179,11 +180,18 @@ export const returnToStock = (seals: number[]) => call<number>('seal_return_to_s
 export const updateRoll = (rollId: string, receivedOn: string, note: string) =>
   call<void>('seal_update_roll', { p_roll: rollId, p_received: receivedOn, p_note: note || null })
 
-export const importTechnician = async (name: string) => {
+export const importTechnician = async (name: string, sheet: string | null = null) => {
   const sb = client()
-  const res = await sb.rpc('seal_import_technician', { p_name: name })
+  const res = await sb.rpc('seal_import_technician', { p_name: name, p_sheet: sheet })
   if (res.error) fail(res.error, res.status)
   return res.data as string
+}
+
+export const importUsage = async (rows: unknown[]) => {
+  const sb = client()
+  const res = await sb.rpc('seal_import_usage', { p: rows })
+  if (res.error) fail(res.error, res.status)
+  return res.data as number
 }
 
 export const importRoll = async (payload: unknown) => {

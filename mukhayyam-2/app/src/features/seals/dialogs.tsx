@@ -5,8 +5,8 @@ import { Dialog } from '../../ui/Dialog'
 import { Chip, TextField } from '../../ui/form'
 import { Button } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
-import { addRoll, importRoll, importTechnician, issueBatch, recordSeal, refreshSeals, returnToStock, sealErrorText, updateBatch, updateRoll, useTechnicians } from './repo'
-import { planImport, parseIssueWorkbook, parseUsageWorkbook, type ImportPlan, type Suspicious } from './import'
+import { addRoll, importRoll, importTechnician, importUsage, issueBatch, recordSeal, refreshSeals, returnToStock, sealErrorText, updateBatch, updateRoll, useTechnicians } from './repo'
+import { parseIssueWorkbook, parseUsageWorkbook, planImport, rollPayload, usagePayload, type ImportPlan } from './import'
 import { composeDetails, latinDigits, ordinalWord, parseSealNumbers, sealStatusInfo, splitDetails, WORK_CHOICES, type Seal, type SealBatch, type SealData, type SealRoll } from './model'
 import { dayLabel, SealPill } from './parts'
 
@@ -360,7 +360,6 @@ export function ImportDialog({ onClose }: { onClose(): void }) {
   const [issueFile, setIssueFile] = useState<File | null>(null)
   const [usageFile, setUsageFile] = useState<File | null>(null)
   const [plan, setPlan] = useState<ImportPlan | null>(null)
-  const [suspicious, setSuspicious] = useState<Suspicious[]>([])
   const [busy, setBusy] = useState(false)
   const [log, setLog] = useState<string[]>([])
   const [done, setDone] = useState(false)
@@ -373,9 +372,8 @@ export function ImportDialog({ onClose }: { onClose(): void }) {
     try {
       const { default: ExcelJS } = await import('exceljs')
       const issue = await parseIssueWorkbook(ExcelJS, await issueFile.arrayBuffer())
-      const usage = usageFile ? await parseUsageWorkbook(ExcelJS, await usageFile.arrayBuffer()) : { rows: [], repeated: 0 }
-      setPlan(planImport(issue.rolls, usage.rows))
-      setSuspicious(issue.suspicious)
+      const usage = usageFile ? await parseUsageWorkbook(ExcelJS, await usageFile.arrayBuffer()) : { rows: [], repeated: 0, order: {} as Record<string, number[]> }
+      setPlan(planImport(issue.rolls, usage.rows, issue.suspicious, usage.order))
     } catch {
       setError('تعذّرت قراءة الملف. تأكد أنه ملف Excel (xlsx) سليم.')
     }
@@ -394,20 +392,19 @@ export function ImportDialog({ onClose }: { onClose(): void }) {
     try {
       const ids = new Map<string, string>()
       for (const name of plan.technicians) ids.set(name, await importTechnician(name))
+      // The usage file's sheet names (often a first name): matched to the same people, and kept for the export.
+      for (const sheet of plan.usageSheets) await importTechnician(sheet, sheet)
       push(`الفنيون: ${plan.technicians.length} (من لم يكن بالنظام أُضيف موقوفاً ليبقى اسمه في السجل)`)
       let i = 0
-      for (const { payload, usage } of plan.rolls) {
+      for (const roll of plan.rolls) {
         i++
-        const res = await importRoll({
-          from: payload.from,
-          to: payload.to,
-          received_on: payload.receivedOn || todayISO(),
-          batches: payload.batches.map((b) => ({ date: b.date || payload.receivedOn, tech: ids.get(b.tech), seals: b.seals })),
-          damaged: payload.damaged,
-          usage: usage.map((u) => ({ no: u.no, status: u.status, used_on: u.usedOn, details: u.details })),
-        })
-        push(res.skipped ? `الرول ${payload.from}: موجود من قبل، تخطّيته (${i}/${plan.rolls.length})` : `الرول ${payload.from}: ${res.batches} دفعات، ${res.used} مستخدم (${i}/${plan.rolls.length})`)
+        const res = await importRoll(rollPayload(roll, (n) => ids.get(n)!))
+        push(res.skipped ? `الرول ${roll.from}: موجود من قبل، تخطّيته (${i}/${plan.rolls.length})` : `الرول ${roll.from}: ${res.batches} دفعات (${i}/${plan.rolls.length})`)
       }
+      // What became of each seal, once every roll and batch is in.
+      let used = 0
+      for (let k = 0; k < plan.usage.length; k += 400) used += await importUsage(usagePayload(plan.usage.slice(k, k + 400)))
+      push(`سُجّل استخدام ${used} ختم`)
       await refreshSeals()
       setDone(true)
       toast('تم استيراد الملفات')
@@ -461,9 +458,8 @@ export function ImportDialog({ onClose }: { onClose(): void }) {
             </div>
             <p className="field-hint">الفنيون: {plan.technicians.join('، ')}. من ليس بالنظام يُضاف «موقوفاً».</p>
             {plan.stray.length > 0 && <p className="field-hint">{plan.stray.length} سطر استخدام رقمه ليس من أي رول، سيُتجاهل.</p>}
-            {suspicious.length > 0 && (
-              <p className="field-hint">تحتاج مراجعة بعد الاستيراد (أرقام شاذة في الملف): {suspicious.map((s) => `${s.no} (${s.tech})`).join('، ')}</p>
-            )}
+            {plan.fixed.length > 0 && <p className="field-hint">صُحّح تلقائياً (رقم ناقص خانة): {plan.fixed.map((f) => `${f.typed} ← ${f.now}`).join('، ')}</p>}
+            {plan.unresolved.length > 0 && <p className="field-hint">تحتاج مراجعة بعد الاستيراد: {plan.unresolved.map((s) => `${s.no} (${s.tech})`).join('، ')}</p>}
           </>
         )}
         {log.length > 0 && <div className="import-log">{log.map((l, i) => <span key={i}>{l}</span>)}</div>}

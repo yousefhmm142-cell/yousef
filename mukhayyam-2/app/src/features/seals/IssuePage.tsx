@@ -192,7 +192,7 @@ function BatchCard({ data, batch, fresh, onPrint, onEdit, onDeleted }: { data: S
   return (
     <article className="batch-card card" data-fresh={fresh || undefined}>
       <div className="batch-head">
-        <b>الدفعة {ordinalWord(batch.batchNo)}</b>
+        <b>الدفعة {batch.label?.trim() || ordinalWord(batch.batchNo)}</b>
         <span className="tech">{data.names.get(batch.technicianId) ?? '—'}</span>
         <span className="muted num">{roll ? `${roll.fromNo}–${roll.toNo}` : ''} · {used}/{seals.length} مستخدم</span>
         <span className="grow" />
@@ -217,6 +217,7 @@ function BatchCard({ data, batch, fresh, onPrint, onEdit, onDeleted }: { data: S
       </div>
       <div className="batch-strip">
         {seals.map((s) => <SealPill key={s.sealNo} seal={s} />)}
+        {!seals.length && <span className="muted">كل أختام هذه الدفعة انصرفت لدفعة أخرى</span>}
       </div>
     </article>
   )
