@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ArrowLeft, ArrowRight, CircleAlert, Droplet, Plus, Send, WifiOff, Wrench, Zap } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, CircleAlert, Pencil, Droplet, Plus, Send, WifiOff, Wrench, Zap } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { useEmployee } from '../../auth/AuthProvider'
 import { serverNow } from '../../lib/clock'
 import { dayName, describeDay, isISODate, todayISO, type ISODate } from '../../lib/dates'
@@ -13,6 +13,8 @@ import { Button } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
 import { SaveBadge, SentHeader, Stepper, UnsentBanner } from '../sheets/ui'
 import { useConfirmTap, useDraft } from '../sheets/useDraft'
+import { statusInfo } from '../sheets/workflow'
+import { isManagerRole } from '../../types'
 import { FuelStep, MaintenanceStep, MissingList, NotesField, RunsStep } from './EntrySteps'
 import { applyAutoFigures, isEditableStatus, missingItems, newReport, reconcileReport, reportTotals, type FuelType, type Generator, type SiteReport } from './model'
 import { lastReportBefore, saveDraft, submitReport, useFuelTypes, useGenerators, useReport, useUnsentBefore } from './repo'
@@ -31,6 +33,7 @@ export function EntryPage() {
   const params = useParams()
   const today = todayISO()
   const date: ISODate = isISODate(params.date) ? params.date : today
+  const employee = useEmployee()
   const stored = useReport(date)
   const fuelTypes = useFuelTypes()
   const generators = useGenerators()
@@ -43,7 +46,8 @@ export function EntryPage() {
   if (stored === undefined || !fuelTypes || !generators || previous === undefined) {
     return <div className="loading-block" aria-busy="true" />
   }
-  if (stored && !isEditableStatus(stored.status)) return <SentReport report={stored} />
+  // A sent report is closed for the site, but the manager can still correct it.
+  if (stored && !isEditableStatus(stored.status) && !isManagerRole(employee.role)) return <SentReport report={stored} />
   if (fuelTypes.length === 0 || generators.length === 0) {
     return (
       <NoGeneratorsYet generators={generators} />
@@ -74,8 +78,10 @@ function EntryForm({ date, initial, fuelTypes, generators, previous }: {
   const employee = useEmployee()
   const online = useOnline()
   const toast = useToast()
+  const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const stepIndex = Math.max(0, STEPS.findIndex((s) => s.key === params.get('step')))
+  const editingSent = !!initial && !isEditableStatus(initial.status)
   const { doc: report, update: rawUpdate, flush, saveState, latest } = useDraft<SiteReport>(
     () =>
       applyAutoFigures(
@@ -84,7 +90,7 @@ function EntryForm({ date, initial, fuelTypes, generators, previous }: {
           : newReport(date, fuelTypes, generators, employee.id, previous, serverNow().toISOString()),
         previous,
       ),
-    saveDraft,
+    (doc) => saveDraft(doc, editingSent),
     !!initial,
   )
   // Every change also refreshes the worked-out figures (totals, remaining, running hours).
@@ -122,6 +128,12 @@ function EntryForm({ date, initial, fuelTypes, generators, previous }: {
     ...missingIn({ maintenance: report.maintenance }).map((text) => ({ text, step: 2 })),
   ]
 
+  async function finishEdit() {
+    await flush()
+    toast('حُفظت التعديلات')
+    navigate(`/generation/${date}`)
+  }
+
   async function send() {
     if (!armed) return arm()
     setSending(true)
@@ -142,6 +154,12 @@ function EntryForm({ date, initial, fuelTypes, generators, previous }: {
 
   return (
     <div className="entry">
+      {editingSent && (
+        <div className="banner" role="status">
+          <Pencil size={18} />
+          <p>تعدّل تقريراً أُرسل من الموقع<span>كل تغيير يُحفظ ويظهر في التقرير مباشرة. حالته ({statusInfo[report.status].label}) لا تتغير.</span></p>
+        </div>
+      )}
       <header className="entry-head">
         <div>
           <h1>{date === todayISO() ? 'تقرير اليوم' : `تقرير ${dayName(date)}`}</h1>
@@ -194,6 +212,10 @@ function EntryForm({ date, initial, fuelTypes, generators, previous }: {
           <Button variant="primary" size="lg" block onClick={() => goTo(stepIndex + 1)}>
             التالي: {STEPS[stepIndex + 1]!.label}
             <ArrowLeft size={18} />
+          </Button>
+        ) : editingSent ? (
+          <Button variant="primary" size="lg" block icon={<Check size={18} />} onClick={() => void finishEdit()}>
+            حفظ التعديلات والعودة للتقرير
           </Button>
         ) : (
           <Button variant="primary" size="lg" block busy={sending} icon={<Send size={18} />} onClick={() => void send()}>

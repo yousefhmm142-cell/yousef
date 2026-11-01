@@ -47,7 +47,7 @@ export async function lastSheetBefore(date: ISODate): Promise<DistributionSheet 
   return (await db.distributionSheets.where('sheetDate').below(date).last()) ?? null
 }
 
-export const saveSheetDraft = (sheet: DistributionSheet) => saveDraftIn<DistributionSheet>(db.distributionSheets, sheet).then(() => syncSoon())
+export const saveSheetDraft = (sheet: DistributionSheet, managerEdit = false) => saveDraftIn<DistributionSheet>(db.distributionSheets, sheet, managerEdit).then(() => syncSoon())
 export const submitSheet = (sheet: DistributionSheet, by: Employee, offline: boolean) =>
   submitIn<DistributionSheet>(db.distributionSheets, sheet, by, offline).then((sent) => (syncSoon(true), sent))
 export const approveSheet = (id: string, by: Employee) => approveIn<DistributionSheet>(db.distributionSheets, id, by).then(() => syncSoon(true))

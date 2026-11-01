@@ -34,7 +34,7 @@ function ReportForDay({ date }: { date: ISODate }) {
   useLiveSheets(date >= addDays(today, -1) && (report === null || (report !== undefined && isEditableStatus(report.status))))
   const ctx = useReportContext(report)
   // The manager fills the day's report too: open (or continue) it for the day being viewed.
-  const canFill = report !== undefined && date <= today && (report === null || isEditableStatus(report.status))
+  const canFill = report !== undefined && date <= today
   useDocumentTitle(`تقرير التوليد · ${describeDay(date).weekday}`)
 
   return (
@@ -46,8 +46,8 @@ function ReportForDay({ date }: { date: ISODate }) {
         </div>
         <div className="ph-actions">
           {canFill && (
-            <Link to={`/entry/${date}`} className="btn primary fill-btn">
-              <PencilLine size={17} /> {report ? 'متابعة تعبئة التقرير' : 'تعبئة التقرير'}
+            <Link to={`/entry/${date}`} className={`btn fill-btn${report && !isEditableStatus(report.status) ? '' : ' primary'}`}>
+              <PencilLine size={17} /> {!report ? 'تعبئة التقرير' : isEditableStatus(report.status) ? 'متابعة تعبئة التقرير' : 'تعديل التقرير'}
             </Link>
           )}
           <DateNav date={date} onChange={(d) => navigate(`/generation/${d}`)} />

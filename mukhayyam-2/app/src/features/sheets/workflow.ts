@@ -65,11 +65,18 @@ interface SheetTable<T extends SheetMeta> {
   put(doc: T): PromiseLike<unknown>
 }
 
-/** Saves typing on a draft; refuses once the sheet was sent, so a late autosave cannot undo a send. */
-export async function saveDraftIn<T extends SheetMeta>(table: SheetTable<T>, doc: T): Promise<void> {
+/**
+ * Saves typing on a draft; refuses once the sheet was sent, so a late autosave cannot undo a send.
+ * A manager correcting a sent sheet passes `managerEdit`: the figures change, the status does not.
+ */
+export async function saveDraftIn<T extends SheetMeta>(table: SheetTable<T>, doc: T, managerEdit = false): Promise<void> {
   await table.db.transaction('rw', table.name, async () => {
     const current = await table.get(doc.id)
-    if (current && !isEditableStatus(current.status)) throw new SheetStateError('already_sent')
+    if (current && !isEditableStatus(current.status)) {
+      if (!managerEdit) throw new SheetStateError('already_sent')
+      // Only while it is still in the state the manager opened it in (a reopen or approval in between wins).
+      if (current.status !== doc.status) throw new SheetStateError('changed')
+    }
     await table.put({ ...doc, updatedAt: nowIso() })
   })
 }

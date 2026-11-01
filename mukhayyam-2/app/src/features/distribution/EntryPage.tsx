@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ArrowLeft, ArrowRight, Check, CircleAlert, Moon, Plus, Send, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, CircleAlert, Pencil, Moon, Plus, Send, X } from 'lucide-react'
 import { useState } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { useEmployee } from '../../auth/AuthProvider'
 import { serverNow } from '../../lib/clock'
 import { dayName, describeDay, isISODate, todayISO, type ISODate } from '../../lib/dates'
@@ -16,7 +16,8 @@ import { OfflineSendNote } from '../generation/EntryPage'
 import { LOAD_UNIT_OPTIONS, PHASES } from '../sheets/loads'
 import { SaveBadge, SentHeader, UnsentBanner } from '../sheets/ui'
 import { useConfirmTap, useDraft } from '../sheets/useDraft'
-import { isEditableStatus } from '../sheets/workflow'
+import { isEditableStatus, statusInfo } from '../sheets/workflow'
+import { isManagerRole } from '../../types'
 import {
   crossesMidnight,
   emptyZoneRun,
@@ -40,6 +41,7 @@ export function DistributionEntryPage() {
   const params = useParams()
   const today = todayISO()
   const date: ISODate = isISODate(params.date) ? params.date : today
+  const employee = useEmployee()
   const stored = useSheet(date)
   const zones = useZones()
   const previous = useLiveQuery(() => lastSheetBefore(date), [date])
@@ -49,7 +51,8 @@ export function DistributionEntryPage() {
     return <div className="empty"><h3>لا يمكن تعبئة يوم لم يأتِ بعد</h3><Link to="/sheet" className="btn">كشف اليوم</Link></div>
   }
   if (stored === undefined || !zones || previous === undefined) return <div className="loading-block" aria-busy="true" />
-  if (stored && !isEditableStatus(stored.status)) return <SentSheet sheet={stored} />
+  // A sent sheet is closed for the site, but the manager can still correct it.
+  if (stored && !isEditableStatus(stored.status) && !isManagerRole(employee.role)) return <SentSheet sheet={stored} />
   if (!zones.some((z) => z.isActive)) {
     return (
       <div className="empty">
@@ -71,12 +74,14 @@ function SheetForm({ date, initial, zones, previous }: {
   const online = useOnline()
   const toast = useToast()
   const [params, setParams] = useSearchParams()
+  const editingSent = !!initial && !isEditableStatus(initial.status)
+  const navigate = useNavigate()
   const { doc: sheet, update, flush, saveState, latest } = useDraft<DistributionSheet>(
     () =>
       initial
         ? initial.status === 'draft' ? reconcileSheet(initial, zones) : initial
         : newSheet(date, zones, employee.id, previous, serverNow().toISOString()),
-    saveSheetDraft,
+    (doc) => saveSheetDraft(doc, editingSent),
     !!initial,
   )
   const [armed, arm, disarm] = useConfirmTap()
@@ -92,6 +97,12 @@ function SheetForm({ date, initial, zones, previous }: {
   const goTo = (i: number) => {
     setParams(i === 0 ? {} : { step: steps[i]!.key })
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  async function finishEdit() {
+    await flush()
+    toast('حُفظت التعديلات')
+    navigate(`/distribution/${date}`)
   }
 
   async function send() {
@@ -114,6 +125,12 @@ function SheetForm({ date, initial, zones, previous }: {
 
   return (
     <div className="entry wide">
+      {editingSent && (
+        <div className="banner" role="status">
+          <Pencil size={18} />
+          <p>تعدّل كشفاً أُرسل من الموقع<span>كل تغيير يُحفظ ويظهر في الكشف مباشرة. حالته ({statusInfo[sheet.status].label}) لا تتغير.</span></p>
+        </div>
+      )}
       <header className="entry-head">
         <div>
           <h1>{date === todayISO() ? 'كشف اليوم' : `كشف ${dayName(date)}`}</h1>
@@ -210,6 +227,10 @@ function SheetForm({ date, initial, zones, previous }: {
           <Button variant="primary" size="lg" block onClick={() => goTo(stepIndex + 1)}>
             التالي: {steps[stepIndex + 1]!.label}
             <ArrowLeft size={18} />
+          </Button>
+        ) : editingSent ? (
+          <Button variant="primary" size="lg" block icon={<Check size={18} />} onClick={() => void finishEdit()}>
+            حفظ التعديلات والعودة للكشف
           </Button>
         ) : (
           <Button variant="primary" size="lg" block busy={sending} icon={<Send size={18} />} onClick={() => void send()}>

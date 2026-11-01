@@ -86,7 +86,7 @@ export async function lastReportBefore(date: ISODate): Promise<SiteReport | null
 }
 
 // ---------- Writing ----------
-export const saveDraft = (report: SiteReport) => saveDraftIn<SiteReport>(db.siteReports, report).then(() => syncSoon())
+export const saveDraft = (report: SiteReport, managerEdit = false) => saveDraftIn<SiteReport>(db.siteReports, report, managerEdit).then(() => syncSoon())
 export const submitReport = (report: SiteReport, by: Employee, offline: boolean) =>
   submitIn<SiteReport>(db.siteReports, report, by, offline).then((sent) => (syncSoon(true), sent))
 export const approveReport = (id: string, by: Employee) => approveIn<SiteReport>(db.siteReports, id, by).then(() => syncSoon(true))

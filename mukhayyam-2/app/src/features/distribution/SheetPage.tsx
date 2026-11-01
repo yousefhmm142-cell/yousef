@@ -34,7 +34,7 @@ function SheetForDay({ date }: { date: ISODate }) {
   useLiveSheets(date >= addDays(today, -1) && (sheet === null || (sheet !== undefined && isEditableStatus(sheet.status))))
   const ctx = useSheetContext(sheet)
   // The manager fills the day's sheet too: open (or continue) it for the day being viewed.
-  const canFill = sheet !== undefined && date <= today && (sheet === null || isEditableStatus(sheet.status))
+  const canFill = sheet !== undefined && date <= today
   useDocumentTitle(`كشف التوزيع · ${describeDay(date).weekday}`)
 
   return (
@@ -46,8 +46,8 @@ function SheetForDay({ date }: { date: ISODate }) {
         </div>
         <div className="ph-actions">
           {canFill && (
-            <Link to={`/sheet/${date}`} className="btn primary fill-btn">
-              <PencilLine size={17} /> {sheet ? 'متابعة تعبئة الكشف' : 'تعبئة الكشف'}
+            <Link to={`/sheet/${date}`} className={`btn fill-btn${sheet && !isEditableStatus(sheet.status) ? '' : ' primary'}`}>
+              <PencilLine size={17} /> {!sheet ? 'تعبئة الكشف' : isEditableStatus(sheet.status) ? 'متابعة تعبئة الكشف' : 'تعديل الكشف'}
             </Link>
           )}
           <DateNav date={date} onChange={(d) => navigate(`/distribution/${d}`)} />

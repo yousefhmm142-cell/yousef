@@ -228,8 +228,11 @@ async function pushSheet(spec: KindSpec, doc: SheetDoc, me: Employee): Promise<v
     isManagerRole(me.role) &&
     ((remoteStatus === 'submitted' && (current.status === 'approved' || current.status === 'returned')) || (remoteStatus === 'approved' && current.status === 'returned'))
 
+  // A manager correcting a sheet the site already sent: the figures go up, the status stays.
+  const managerEdit = isManagerRole(me.role) && !!remoteStatus && !isEditableStatus(remoteStatus) && current.status === remoteStatus
+
   if (filler && !managerAct) {
-    if (remoteStatus && !isEditableStatus(remoteStatus)) {
+    if (remoteStatus && !isEditableStatus(remoteStatus) && !managerEdit) {
       // Already sent or approved on the server: the server's copy is the true one.
       return takeServerCopy(spec, current.id, current.id)
     }
@@ -239,7 +242,7 @@ async function pushSheet(spec: KindSpec, doc: SheetDoc, me: Employee): Promise<v
     for (const child of children) await pushChildren(sb, current.id, child)
     // Also moves updated_at on, so other devices notice the new lines.
     await run(sb.from(spec.header).update(fields).eq('id', id))
-    if (current.status === 'submitted') {
+    if (current.status === 'submitted' && !managerEdit) {
       const late = current.submittedAt ? Date.now() - Date.parse(current.submittedAt) > LATE_SEND_MS : false
       await run(
         sb
