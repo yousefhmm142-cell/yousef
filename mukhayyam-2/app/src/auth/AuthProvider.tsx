@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { isDemo } from '../config'
 import { getSupabase } from '../data/supabase'
+import { startPresence, stopPresence } from '../data/presence'
 import { flushBeforeSignOut, prepareDevice, startSync, stopSync } from '../data/sync'
 import type { Employee } from '../types'
 import { demoBackend, supabaseBackend } from './backends'
@@ -50,7 +51,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!signedIn) return
     startSync(signedIn)
-    return stopSync
+    startPresence(signedIn)
+    return () => {
+      stopSync()
+      stopPresence()
+    }
   }, [signedIn])
 
   const signIn = useCallback(

@@ -182,3 +182,43 @@ button.row:hover, a.row:hover { background: var(--surface-2); }
 .install-app > span:nth-child(2) { flex: 1; display: grid; }
 .install-app small { color: var(--muted); font-size: 12px; }
 .install-ico { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--brand-soft); color: var(--brand); flex: none; }
+
+/* ---------- Manager home: attention, who is online, latest movements ---------- */
+.attention-list { display: grid; gap: 10px; margin-bottom: 14px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.attention { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: var(--r-lg); text-decoration: none; color: var(--ink); margin-bottom: 14px; }
+.attention-list .attention { margin-bottom: 0; }
+.attention svg:first-child { flex: none; color: var(--warn); }
+.attention[data-tone='danger'] svg:first-child { color: var(--danger); }
+.attention.ok svg:first-child { color: var(--ok); }
+.attention.ok { font-size: 14px; flex-wrap: wrap; }
+.attention-text { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.attention-text b { font-weight: 800; }
+.attention-text small { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.attention[data-tone='warn'] { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--warn) 45%, transparent); }
+.attention[data-tone='danger'] { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--danger) 45%, transparent); }
+.live-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 4px var(--ok-soft); flex: none; }
+.feed-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.feed-list li { display: flex; align-items: flex-start; gap: 10px; padding: 10px 2px; border-bottom: 1px solid var(--line-2); font-size: 14px; line-height: 1.55; }
+.feed-list li:last-child { border-bottom: 0; }
+.feed-ico { width: 26px; height: 26px; border-radius: 50%; background: var(--sunken); display: grid; place-items: center; flex: none; color: var(--muted); }
+.feed-list li[data-tone='ok'] .feed-ico { background: var(--ok-soft); color: var(--ok); }
+.feed-list li[data-tone='warn'] .feed-ico { background: var(--warn-soft); color: var(--warn); }
+.feed-list li[data-tone='danger'] .feed-ico { background: var(--danger-soft, #f8d9dc); color: var(--danger); }
+.feed-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.feed-list time { color: var(--faint); font-size: 12.5px; white-space: nowrap; flex: none; padding-top: 2px; }
+.feed-more { margin-top: 8px; }
+
+.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 16px; }
+.kpi { display: grid; gap: 2px; padding: 18px 20px; border-radius: var(--r-lg); text-decoration: none; color: var(--ink); position: relative; overflow: hidden; }
+.kpi::before { content: ''; position: absolute; inset-inline-start: 0; top: 18px; bottom: 18px; width: 4px; border-radius: 4px; background: var(--brand); }
+.kpi[data-tone='ok']::before { background: var(--ok); }
+.kpi[data-tone='warn']::before { background: var(--warn); }
+.kpi[data-tone='danger']::before { background: var(--danger); }
+.kpi-n { font-size: 38px; font-weight: 800; line-height: 1.1; letter-spacing: -.5px; }
+.kpi-l { font-weight: 800; font-size: 15px; }
+.kpi small { color: var(--muted); font-size: 13px; }
+a.kpi { transition: transform .15s var(--ease), box-shadow .15s; }
+a.kpi:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.team-list { }
+@media (min-width: 901px) { .home .team .team-list { display: grid; grid-template-columns: 1fr 1fr; column-gap: 18px; } }
+@media (max-width: 900px) { .kpis { grid-template-columns: repeat(2, 1fr); gap: 10px; } .kpi { padding: 14px 16px; } .kpi-n { font-size: 30px; } }

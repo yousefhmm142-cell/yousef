@@ -183,6 +183,19 @@ export async function saveEmployee(input: EmployeeInput): Promise<string> {
   return id
 }
 
+/** The name of what a person does (نائب المدير، محاسبة...); empty for none. */
+export async function setJobTitle(id: string, title: string): Promise<void> {
+  const text = title.trim().slice(0, 60)
+  if (isDemo) {
+    await db.employees.update(id, { jobTitle: text || null })
+    return
+  }
+  const sb = online()
+  const res = await sb.rpc('admin_set_profile', { p_id: id, p_job_title: text, p_wa_code: null })
+  if (res.error) failFrom(res.error, res.status)
+  await refresh()
+}
+
 /** Gives or takes away the seals pages for one person (manager and admin only; the server checks). */
 export async function setSealsAccess(id: string, value: boolean): Promise<void> {
   if (isDemo) {
@@ -191,6 +204,18 @@ export async function setSealsAccess(id: string, value: boolean): Promise<void> 
   }
   const sb = online()
   const res = await sb.rpc('admin_set_seals_access', { p_id: id, p_value: value })
+  if (res.error) failFrom(res.error, res.status)
+  await refresh()
+}
+
+/** The pages the manager opens for a person to look at (the server checks the caller is a manager). */
+export async function setPages(id: string, pages: string[]): Promise<void> {
+  if (isDemo) {
+    await db.employees.update(id, { pages })
+    return
+  }
+  const sb = online()
+  const res = await sb.rpc('admin_set_pages', { p_id: id, p_pages: pages })
   if (res.error) failFrom(res.error, res.status)
   await refresh()
 }

@@ -65,6 +65,7 @@ interface EmployeeRow {
   tracks_attendance: boolean
   /** Only once update 10 is on the database. */
   can_seals?: boolean
+  pages?: string[] | null
 }
 
 const toEmployee = (row: EmployeeRow): Employee => ({
@@ -75,6 +76,7 @@ const toEmployee = (row: EmployeeRow): Employee => ({
   isActive: row.is_active,
   tracksAttendance: row.tracks_attendance,
   canSeals: row.can_seals ?? false,
+  pages: row.pages ?? [],
 })
 
 async function loadProfile(sb: SupabaseClient, userId: string): Promise<Employee | null> {

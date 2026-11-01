@@ -13,7 +13,7 @@ import { scheduleFromRow, type ScheduleRow } from '../features/attendance/remote
 import type { Schedule } from '../features/attendance/rules'
 import type { StockItem } from '../features/stock/model'
 import { isEditableStatus, type SheetMeta, type SheetStatus } from '../features/sheets/workflow'
-import { isManagerRole, SITE_ROLES, usesSeals, type Employee, type Role } from '../types'
+import { hasPage, isManagerRole, SITE_ROLES, usesSeals, type PageKey, type Employee, type Role } from '../types'
 import { db, deleteMeta, getMeta, setMeta } from './db'
 import { getSupabase } from './supabase'
 
@@ -40,6 +40,8 @@ interface KindSpec {
   /** Who fills this sheet on site; everyone else who reads it is a manager or the admin. */
   fillers: Role[]
   readers: Role[]
+  /** The page a manager can open for others to look at this kind. */
+  page: PageKey
   table: Table<SheetDoc, string>
   select: string
   dateOf(doc: SheetDoc): string
@@ -55,6 +57,7 @@ const KINDS: KindSpec[] = [
     dateIndex: 'reportDate',
     fillers: ['admin', 'manager', ...SITE_ROLES],
     readers: ['admin', 'manager', ...SITE_ROLES],
+    page: 'generation',
     table: db.siteReports as unknown as Table<SheetDoc, string>,
     select: REPORT_SELECT,
     dateOf: (d) => (d as SiteReport).reportDate,
@@ -68,6 +71,7 @@ const KINDS: KindSpec[] = [
     dateIndex: 'sheetDate',
     fillers: ['admin', 'manager', ...SITE_ROLES],
     readers: ['admin', 'manager', ...SITE_ROLES],
+    page: 'distribution',
     table: db.distributionSheets as unknown as Table<SheetDoc, string>,
     select: SHEET_SELECT,
     dateOf: (d) => (d as DistributionSheet).sheetDate,
@@ -319,6 +323,7 @@ interface EmployeeRow {
   job_title?: string | null
   wa_code?: 970 | 972
   can_seals?: boolean
+  pages?: string[] | null
   seals_sheet?: string | null
 }
 interface ListRow { id: number; name: string; is_active: boolean; sort_order: number }
@@ -351,6 +356,7 @@ export async function pullReference(): Promise<void> {
       jobTitle: r.job_title ?? null,
       waCode: r.wa_code ?? 972,
       canSeals: r.can_seals ?? false,
+      pages: r.pages ?? [],
       sealsSheet: r.seals_sheet ?? null,
     })),
   )
@@ -404,6 +410,9 @@ export async function pullReference(): Promise<void> {
   }
 }
 
+/** The site and the managers by role; anyone else when the manager opened this page for them. */
+const canRead = (spec: KindSpec, who: Employee) => spec.readers.includes(who.role) || hasPage(who, spec.page)
+
 // ---------- One full round ----------
 let me: Employee | null = null
 let running: Promise<void> | null = null
@@ -421,7 +430,7 @@ async function round(): Promise<void> {
   try {
     // 1. Send what changed here, oldest day first.
     for (const spec of KINDS) {
-      if (!spec.readers.includes(who.role)) continue
+      if (!canRead(spec, who)) continue
       const unsent = (await spec.table.filter(hasUnsent).toArray()).sort((a, b) => spec.dateOf(a).localeCompare(spec.dateOf(b)))
       for (const doc of unsent) {
         try {
@@ -441,15 +450,15 @@ async function round(): Promise<void> {
       await pullReference()
       lastReferenceAt = Date.now()
     }
-    for (const spec of KINDS) if (spec.readers.includes(who.role)) await pullSheets(spec)
+    for (const spec of KINDS) if (canRead(spec, who)) await pullSheets(spec)
     if (await listsMissing()) {
       await pullReference()
       lastReferenceAt = Date.now()
     }
-    if (isManagerRole(who.role)) {
-      await (await import('../features/tasks/repo')).refreshTasks()
-      await (await import('../features/attendance/repo')).refreshAttendance()
-      await (await import('../features/stock/repo')).refreshStock()
+    if (isManagerRole(who.role) || who.role !== 'technician') {
+      if (hasPage(who, 'tasks')) await (await import('../features/tasks/repo')).refreshTasks()
+      if (hasPage(who, 'attendance')) await (await import('../features/attendance/repo')).refreshAttendance()
+      if (hasPage(who, 'stock')) await (await import('../features/stock/repo')).refreshStock()
     }
     failures = 0
     setState({ phase: problem ? 'error' : 'idle', lastOkAt: new Date().toISOString(), problem })
@@ -549,7 +558,7 @@ async function pullLive() {
   if (!me || liveBusy || running || document.visibilityState !== 'visible' || !navigator.onLine) return
   liveBusy = true
   try {
-    for (const spec of KINDS) if (spec.readers.includes(me.role)) await pullSheets(spec)
+    for (const spec of KINDS) if (canRead(spec, me)) await pullSheets(spec)
     if (await listsMissing()) await pullReference()
   } catch {
     // The usual round tries again.

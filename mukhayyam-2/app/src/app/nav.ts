@@ -1,5 +1,5 @@
 import { Boxes, FileBarChart, History, House, LayoutGrid, ListChecks, ScanLine, ScrollText, Settings, Stamp, Users, Zap, type LucideIcon } from 'lucide-react'
-import type { Employee } from '../types'
+import { GRANTABLE_PAGES, type Employee } from '../types'
 
 export interface NavItem {
   to: string
@@ -20,7 +20,18 @@ const managerItems: NavItem[] = [
 ]
 
 /** Field roles open straight on their one job; managers get the full set. */
-export function navFor({ role, canSeals }: Pick<Employee, 'role' | 'canSeals'>): NavItem[] {
+const grantedIcon = { generation: Zap, distribution: LayoutGrid, tasks: ListChecks, attendance: Users, stock: Boxes } as const
+
+/** The menu of the role, plus the pages the manager opened for this person to look at. */
+export function navFor(e: Pick<Employee, 'role' | 'canSeals' | 'pages'>): NavItem[] {
+  const base = baseNav(e)
+  if (e.role === 'admin' || e.role === 'manager' || !e.pages?.length) return base
+  const have = new Set(base.map((i) => i.to))
+  const extra = GRANTABLE_PAGES.filter((p) => e.pages!.includes(p.key) && !have.has(p.to)).map((p): NavItem => ({ to: p.to, label: p.label, icon: grantedIcon[p.key] }))
+  return [...base, ...extra]
+}
+
+function baseNav({ role, canSeals }: Pick<Employee, 'role' | 'canSeals'>): NavItem[] {
   // Someone given the seals permission (the accountant) opens straight on the two seals pages.
   if (canSeals && (role === 'staff' || role === 'technician')) {
     return [

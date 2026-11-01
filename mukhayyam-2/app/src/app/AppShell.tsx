@@ -8,6 +8,8 @@ import { navFor, type NavItem } from './nav'
 
 const MAX_TABS = 5
 const accountTab: NavItem = { to: '/account', label: 'حسابي', icon: UserRound }
+/** Reports and settings are symbols only; their name shows while the page is open. */
+const compactLinks = new Set(['/reports', '/settings'])
 const moreTab: NavItem = { to: '/more', label: 'المزيد', icon: Ellipsis }
 
 export function AppShell() {
@@ -29,9 +31,9 @@ export function AppShell() {
         </Link>
 
         {items.length > 1 && (
-          <nav className={items.length > 6 ? 'topnav dense' : 'topnav'} aria-label="الأقسام">
+          <nav className="topnav" aria-label="الأقسام">
             {items.map(({ to, label, icon: Icon }) => (
-              <NavLink key={to} to={to} end={to === "/"} className="topnav-link" title={label}>
+              <NavLink key={to} to={to} end={to === "/"} className={compactLinks.has(to) ? 'topnav-link compact' : 'topnav-link'} title={compactLinks.has(to) ? label : undefined}>
                 <Icon size={17} aria-hidden="true" />
                 <span>{label}</span>
               </NavLink>

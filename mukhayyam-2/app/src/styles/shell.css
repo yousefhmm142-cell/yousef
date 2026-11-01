@@ -24,10 +24,10 @@
   color: var(--muted); font-weight: 700; font-size: 14px; text-decoration: none; white-space: nowrap;
   transition: color .15s, background .15s, box-shadow .15s;
 }
-.topnav-link:hover:not(.active) { color: var(--brand); background: color-mix(in srgb, var(--brand) 24%, transparent); }
+.topnav-link:hover:not(.active) { color: var(--brand); background: color-mix(in srgb, var(--brand) 34%, transparent); }
 .topnav-link:hover:not(.active) svg { color: var(--brand); }
-.topnav-link:focus-visible { outline: none; color: var(--brand); background: color-mix(in srgb, var(--brand) 24%, transparent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand) 40%, transparent); }
-.topnav-link.active { color: var(--ink); background: var(--nav-on); box-shadow: var(--nav-on-ring); font-weight: 800; }
+.topnav-link:focus-visible { outline: none; color: var(--brand); background: color-mix(in srgb, var(--brand) 34%, transparent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand) 40%, transparent); }
+.topnav-link.active { color: var(--brand); background: color-mix(in srgb, var(--brand) 34%, transparent); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--brand) 38%, transparent); font-weight: 800; }
 .topnav-link.active svg { color: var(--brand); }
 
 .topbar-end { margin-inline-start: auto; display: flex; align-items: center; gap: 10px; flex: none; }
@@ -69,9 +69,9 @@
   .topbar-end { gap: 8px; }
 }
 
-/* The bar is never wider than 1280px: with many pages only the open page keeps its name. */
-.topnav.dense .topnav-link:not([aria-current='page']) span { display: none; }
-.topnav.dense .topnav-link { padding: 9px 12px; }
+/* The bar is never wider than 1280px: reports and settings show only their symbol until opened. */
+.topnav-link.compact:not(.active) span { display: none; }
+.topnav-link.compact:not(.active) { padding: 9px 12px; }
 
 @media (max-width: 1200px) {
   .topnav-link span { display: none; }

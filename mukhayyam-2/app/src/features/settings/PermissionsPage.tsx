@@ -1,21 +1,13 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { KeyRound, ShieldCheck, Stamp } from 'lucide-react'
+import { Eye, ShieldCheck, Stamp, Tag } from 'lucide-react'
 import { useState } from 'react'
 import { SheetStateError } from '../sheets/workflow'
-import { byRoleThenName, setSealsAccess } from '../../data/admin'
+import { byRoleThenName, setJobTitle, setPages, setSealsAccess } from '../../data/admin'
 import { db } from '../../data/db'
 import { formatPhone } from '../../lib/phone'
-import { isManagerRole, roleLabel, titleOf, type Employee, type Role } from '../../types'
+import { GRANTABLE_PAGES, isManagerRole, roleLabel, type Employee } from '../../types'
 import { Avatar, Pill } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
-
-/** What each role opens, as the app enforces it (the database checks the same rules again). */
-const roleAccess: Array<{ roles: Role[]; label: string; pages: string }> = [
-  { roles: ['admin', 'manager'], label: 'مسؤول النظام والمدير', pages: 'كل الصفحات: التوليد، التوزيع، المهام، الحضور، المخزن، الأختام، التقارير، الصلاحيات، الإعدادات.' },
-  { roles: ['generation_operator', 'distribution_supervisor'], label: 'موظف موقع التوليد', pages: 'تقرير التوليد وكشف التوزيع لليوم، وما أرسله سابقاً. لا يرى غيرها.' },
-  { roles: ['technician'], label: 'فني', pages: 'مهامه وحضوره فقط.' },
-  { roles: ['staff'], label: 'موظف', pages: 'الحضور فقط.' },
-]
 
 const errorText: Record<string, string> = {
   offline: 'يحتاج إنترنت. اتصل وحاول مرة أخرى.',
@@ -23,86 +15,118 @@ const errorText: Record<string, string> = {
   missing: 'لم يعد هذا الموظف موجوداً. حدّث الصفحة.',
 }
 
-/** Page for the manager and the admin only: who can open what, and the extra permissions per person. */
+/**
+ * Inside the settings, for the manager and the admin: for every person, what they are called
+ * (the title) and which pages are open to them. Managers decide; nothing needs a developer.
+ */
 export function PermissionsPage() {
   const toast = useToast()
   const people = useLiveQuery(async () => (await db.employees.toArray()).filter((e) => e.isActive).sort(byRoleThenName), [])
   const [busy, setBusy] = useState<string | null>(null)
 
-  async function toggleSeals(e: Employee) {
-    setBusy(e.id)
+  async function run(key: string, job: () => Promise<void>, ok: string) {
+    setBusy(key)
     try {
-      await setSealsAccess(e.id, !e.canSeals)
-      toast(!e.canSeals ? `${e.fullName}: فُتحت لها صفحتا الأختام` : `${e.fullName}: أُغلقت صفحتا الأختام`)
+      await job()
+      toast(ok)
     } catch (err) {
       toast(errorText[err instanceof SheetStateError ? err.message : ''] ?? 'تعذّر الحفظ. حاول مرة أخرى.', 'danger')
     }
     setBusy(null)
   }
 
-  // Managers have everything; the switch is for the people whose pages are limited.
-  const limited = (people ?? []).filter((e) => !isManagerRole(e.role))
-
   return (
     <div className="permissions">
       <section className="card">
         <div className="card-h">
           <span className="ico-round brand"><ShieldCheck size={16} /></span>
-          <h2>ما يفتحه كل دور</h2>
+          <h2>المسمّيات والصفحات المفتوحة لكل شخص</h2>
         </div>
-        <ul className="perm-roles">
-          {roleAccess.map((r) => (
-            <li key={r.label}>
-              <b>{r.label}</b>
-              <span>{r.pages}</span>
-            </li>
-          ))}
+        <ul className="perm-help">
+          <li><Tag size={15} aria-hidden="true" /> <b>المسمّى:</b> اكتب ما يُنادى به الشخص (نائب المدير، محاسبة، مشرف...) واضغط حفظ.</li>
+          <li><Eye size={15} aria-hidden="true" /> <b>الصفحات:</b> اضغط على الصفحة لتفتحها له للاطلاع فقط، واضغط مرة ثانية لتغلقها. التعديل يبقى حسب دوره.</li>
+          <li><Stamp size={15} aria-hidden="true" /> <b>الأختام:</b> تفتح له صفحتي «صرف الأختام» و«سجل الأختام» كاملتين.</li>
         </ul>
-        <p className="field-hint perm-note">لتغيير دور شخص: الإعدادات ← الفريق وحسابات الدخول ← تعديل.</p>
       </section>
 
-      <section className="card">
-        <div className="card-h">
-          <span className="ico-round brand"><Stamp size={16} /></span>
-          <h2>صلاحية الأختام</h2>
-        </div>
-        <p className="field-hint perm-note">تفتح للشخص صفحتي «صرف الأختام» و«سجل الأختام» فقط. يحتاج رقم جوال ورمزاً سرياً ليدخل.</p>
-        {!people ? (
-          <div className="loading-block" aria-busy="true" />
-        ) : limited.length === 0 ? (
-          <p className="card-empty">لا موظفين بعد. أضفهم من الإعدادات.</p>
-        ) : (
-          <ul className="gen-list perm-people">
-            {limited.map((e) => (
-              <li key={e.id}>
-                <Avatar name={e.fullName} size={36} />
-                <span className="gen-main">
-                  <b>{e.fullName}</b>
-                  <small>
-                    {titleOf(e)}
-                    {e.jobTitle && <> · {roleLabel[e.role]}</>}
-                    {e.phone && <> · <span className="num ltr">{formatPhone(e.phone)}</span></>}
-                  </small>
-                </span>
-                {e.canSeals && !e.hasLogin && <Pill tone="warn"><KeyRound size={12} /> بدون رمز دخول</Pill>}
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={!!e.canSeals}
-                  aria-label={`صلاحية الأختام لـ ${e.fullName}`}
-                  className="perm-switch"
-                  data-on={e.canSeals || undefined}
-                  disabled={busy === e.id}
-                  onClick={() => void toggleSeals(e)}
-                >
-                  <i aria-hidden="true" />
-                  <span>{e.canSeals ? 'مفتوحة' : 'مغلقة'}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      {!people ? (
+        <div className="loading-block" aria-busy="true" />
+      ) : (
+        <ul className="perm-cards">
+          {people.map((e) => (
+            <PersonCard key={e.id} e={e} busy={busy} run={run} />
+          ))}
+        </ul>
+      )}
     </div>
+  )
+}
+
+function PersonCard({ e, busy, run }: { e: Employee; busy: string | null; run(key: string, job: () => Promise<void>, ok: string): Promise<void> }) {
+  const [title, setTitle] = useState(e.jobTitle ?? '')
+  const manager = isManagerRole(e.role)
+  const pages = e.pages ?? []
+  const dirty = title.trim() !== (e.jobTitle ?? '')
+
+  return (
+    <li className="perm-card card">
+      <div className="perm-who">
+        <Avatar name={e.fullName} size={40} />
+        <span className="gen-main">
+          <b>{e.fullName}</b>
+          <small>
+            {roleLabel[e.role]}
+            {e.phone && <> · <span className="num ltr">{formatPhone(e.phone)}</span></>}
+          </small>
+        </span>
+        {manager && <Pill tone="ok">كل الصفحات</Pill>}
+      </div>
+
+      <form
+        className="perm-title"
+        onSubmit={(ev) => {
+          ev.preventDefault()
+          void run(`t${e.id}`, () => setJobTitle(e.id, title), 'حُفظ المسمّى')
+        }}
+      >
+        <label>
+          <span className="label">المسمّى</span>
+          <input className="input" value={title} maxLength={60} placeholder={roleLabel[e.role]} onChange={(ev) => setTitle(ev.target.value)} />
+        </label>
+        <button type="submit" className="btn secondary" disabled={!dirty || busy === `t${e.id}`}>حفظ</button>
+      </form>
+
+      {!manager && (
+        <div className="perm-pages" role="group" aria-label={`الصفحات المفتوحة لـ ${e.fullName}`}>
+          {GRANTABLE_PAGES.map((p) => {
+            const on = pages.includes(p.key)
+            return (
+              <button
+                key={p.key}
+                type="button"
+                className="perm-chip"
+                aria-pressed={on}
+                disabled={busy === `${e.id}${p.key}`}
+                onClick={() =>
+                  void run(`${e.id}${p.key}`, () => setPages(e.id, on ? pages.filter((k) => k !== p.key) : [...pages, p.key]), on ? `أُغلقت ${p.label} عن ${e.fullName}` : `فُتحت ${p.label} لـ ${e.fullName} للاطلاع`)
+                }
+              >
+                {p.label}
+              </button>
+            )
+          })}
+          <button
+            type="button"
+            className="perm-chip seals"
+            aria-pressed={!!e.canSeals}
+            disabled={busy === `${e.id}seals`}
+            onClick={() => void run(`${e.id}seals`, () => setSealsAccess(e.id, !e.canSeals), e.canSeals ? `أُغلقت الأختام عن ${e.fullName}` : `فُتحت الأختام لـ ${e.fullName}`)}
+          >
+            <Stamp size={14} aria-hidden="true" /> الأختام
+          </button>
+          {e.canSeals && !e.hasLogin && <Pill tone="warn">بدون رمز دخول</Pill>}
+        </div>
+      )}
+    </li>
   )
 }

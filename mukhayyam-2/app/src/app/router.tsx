@@ -15,7 +15,7 @@ import { SiteHistoryPage } from '../features/sheets/SiteHistoryPage'
 import { NotFound, RouteError } from '../pages/states'
 import { isSiteRole, SITE_ROLES, type Role } from '../types'
 import { AppShell } from './AppShell'
-import { RequireAuth, RoleGate, SealsGate } from './guards'
+import { RequireAuth, RoleGate, SealsGate, PageGate } from './guards'
 
 // Screens most phones never open load only when first opened, so the app starts faster.
 const page = <T,>(load: () => Promise<T>, name: keyof T) =>
@@ -64,22 +64,22 @@ export const router = createBrowserRouter([
         element: <AppShell />,
         children: [
           { index: true, element: <Home /> },
-          { path: 'generation', element: <RoleGate roles={[...managers, ...site]}><GenerationIndex /></RoleGate> },
-          { path: 'generation/:date', element: <RoleGate roles={[...managers, ...site]}><ReportPage /></RoleGate> },
+          { path: 'generation', element: <PageGate page="generation" roles={site}><GenerationIndex /></PageGate> },
+          { path: 'generation/:date', element: <PageGate page="generation" roles={site}><ReportPage /></PageGate> },
           { path: 'entry/:date', element: <RoleGate roles={[...managers, ...site]}><EntryPage /></RoleGate> },
-          { path: 'distribution', element: <RoleGate roles={[...managers, ...site]}><DistributionIndex /></RoleGate> },
-          { path: 'distribution/:date', element: <RoleGate roles={[...managers, ...site]}><SheetPage /></RoleGate> },
+          { path: 'distribution', element: <PageGate page="distribution" roles={site}><DistributionIndex /></PageGate> },
+          { path: 'distribution/:date', element: <PageGate page="distribution" roles={site}><SheetPage /></PageGate> },
           { path: 'sheet', element: <RoleGate roles={[...managers, ...site]}><DistributionEntryPage /></RoleGate> },
           { path: 'sheet/:date', element: <RoleGate roles={[...managers, ...site]}><DistributionEntryPage /></RoleGate> },
           // Older links.
           { path: 'distribution/entry/:date', element: <RoleGate roles={[...managers, ...site]}><DistributionEntryPage /></RoleGate> },
           { path: 'history', element: <RoleGate roles={site}><SiteHistoryPage /></RoleGate> },
-          { path: 'tasks', element: <RoleGate roles={managers}><Lazy><TasksPage /></Lazy></RoleGate> },
+          { path: 'tasks', element: <PageGate page="tasks"><Lazy><TasksPage /></Lazy></PageGate> },
           {
             path: 'attendance',
-            element: <RoleGate roles={managers}><Lazy><AttendancePage /></Lazy></RoleGate>,
+            element: <PageGate page="attendance"><Lazy><AttendancePage /></Lazy></PageGate>,
           },
-          { path: 'stock', element: <RoleGate roles={managers}><Lazy><StockPage /></Lazy></RoleGate> },
+          { path: 'stock', element: <PageGate page="stock"><Lazy><StockPage /></Lazy></PageGate> },
           { path: 'seals', element: <SealsGate><Lazy><SealIssuePage /></Lazy></SealsGate> },
           { path: 'seals/log', element: <SealsGate><Lazy><SealLogPage /></Lazy></SealsGate> },
           { path: 'reports', element: <RoleGate roles={managers}><Lazy><ReportsPage /></Lazy></RoleGate> },

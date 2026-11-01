@@ -387,4 +387,18 @@ select test.fails($$select public.setup_first_admin('دخيل', '0592222222', '1
                   'nobody can claim the first admin once it exists');
 reset role;
 
+-- ---------- Pages the manager opens for a person (reading only) ----------
+reset role; select test.login('مسؤول النظام'); set role authenticated;
+select test.ok(public.has_page('stock'), 'the admin has every page');
+select public.admin_set_pages((select id from public.employees where full_name = 'موظف إداري'), array['stock', 'attendance', 'bogus']);
+select test.ok((select pages = array['attendance', 'stock'] from public.employees where full_name = 'موظف إداري'), 'only known pages are kept');
+reset role; select test.login('موظف إداري'); set role authenticated;
+select test.ok(public.has_page('stock') and not public.has_page('tasks'), 'the person has exactly the pages given');
+select test.ok((select count(*) from public.attendance_punches) >= 0, 'a granted page can be read');
+select test.fails($$select public.admin_set_pages(public.current_employee_id(), array['tasks'])$$, '%not_allowed%', 'a person cannot give themselves pages');
+select test.fails($$insert into public.stock_moves (item_id, kind, qty) values (1, 'in', 1)$$, '%row-level security%', 'a granted page is read-only');
+reset role; select test.login('مشغّل الموقع'); set role authenticated;
+select test.ok((select count(*) from public.tasks) = 0 and not public.has_page('tasks'), 'someone without the page sees no tasks');
+reset role;
+
 \echo 'ALL CHECKS PASSED'

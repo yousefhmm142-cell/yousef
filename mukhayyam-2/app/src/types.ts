@@ -23,6 +23,8 @@ export interface Employee {
   waCode?: 970 | 972
   /** May use the two seals pages (the manager and the admin always may). */
   canSeals?: boolean
+  /** Pages the manager opened for this person to look at (generation, distribution, tasks, attendance, stock). */
+  pages?: string[]
   /** The name of this technician's sheet in the seals usage file. */
   sealsSheet?: string | null
 }
@@ -50,3 +52,16 @@ export const isManagerRole = (role: Role) => role === 'admin' || role === 'manag
  */
 export const SITE_ROLES: Role[] = ['generation_operator', 'distribution_supervisor']
 export const isSiteRole = (role: Role) => SITE_ROLES.includes(role)
+
+/** The pages a manager can open for someone to look at, in the order shown. */
+export const GRANTABLE_PAGES = [
+  { key: 'generation', label: 'التوليد', to: '/generation' },
+  { key: 'distribution', label: 'التوزيع', to: '/distribution' },
+  { key: 'tasks', label: 'المهام', to: '/tasks' },
+  { key: 'attendance', label: 'الحضور', to: '/attendance' },
+  { key: 'stock', label: 'المخزن', to: '/stock' },
+] as const
+export type PageKey = (typeof GRANTABLE_PAGES)[number]['key']
+
+/** Managers see every page; anyone else only the pages given to them. */
+export const hasPage = (e: Pick<Employee, 'role' | 'pages'>, key: PageKey) => e.role === 'admin' || e.role === 'manager' || !!e.pages?.includes(key)

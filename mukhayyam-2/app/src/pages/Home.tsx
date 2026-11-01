@@ -21,6 +21,7 @@ import { useToday } from '../lib/viewDay'
 import { isEditableStatus, statusInfo, type SheetStatus } from '../features/sheets/workflow'
 import { dayName, todayISO, type ISODate } from '../lib/dates'
 import { gazaDate } from '../features/attendance/rules'
+import { ActivityCard, AttentionCard, KpiStrip, PresenceCard } from '../features/dashboard/DashboardCards'
 import { ModuleSoon } from './ModuleSoon'
 import { isOpen, isOverdue } from '../features/tasks/model'
 import { usePendingCount } from '../data/sync'
@@ -73,6 +74,10 @@ function ManagerHome() {
         </div>
       </header>
 
+      <KpiStrip />
+
+      <AttentionCard />
+
       <section className="mod-grid" aria-label="الوحدات">
         {managerModules.map(({ key, to }) => {
           const m = modules[key]
@@ -92,6 +97,11 @@ function ManagerHome() {
           )
         })}
       </section>
+
+      <div className="home-row">
+        <ActivityCard />
+        <PresenceCard />
+      </div>
 
       <div className="home-row">
         <TeamCard />

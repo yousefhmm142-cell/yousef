@@ -36,7 +36,7 @@ const errorText: Record<string, string> = {
 }
 
 /** Only the manager, the admin and the site sign in; technicians get orders by message, staff use the office QR. */
-const usesApp = (role: Role, canSeals = false) => isManagerRole(role) || isSiteRole(role) || canSeals
+const usesApp = (role: Role, canSeals = false, pages = false) => isManagerRole(role) || isSiteRole(role) || canSeals || pages
 
 const randomPin = () => String(crypto.getRandomValues(new Uint32Array(1))[0]! % 1_000_000).padStart(6, '0')
 const randomCode = () => String(crypto.getRandomValues(new Uint32Array(1))[0]! % 10_000).padStart(4, '0')
@@ -76,7 +76,7 @@ export function TeamCard() {
               </span>
               {!e.isActive ? (
                 <Pill>موقوف</Pill>
-              ) : usesApp(e.role, e.canSeals) ? (
+              ) : usesApp(e.role, e.canSeals, !!e.pages?.length) ? (
                 e.hasLogin ? <Pill tone="ok">يدخل بجواله</Pill> : <Pill tone="warn">بدون دخول</Pill>
               ) : e.phone ? (
                 <Pill dot={false}>{e.role === 'technician' ? 'تصله المهام برسالة' : 'بدون تطبيق'}</Pill>
@@ -130,7 +130,7 @@ function EmployeeDialog({ person, hasCode, onClose }: { person: Employee | null;
   const self = person?.id === me.id
 
   async function save() {
-    const newPin = usesApp(role, canSeals === 'yes') && changePin && phone ? pin : null
+    const newPin = usesApp(role, canSeals === 'yes', !!person?.pages?.length) && changePin && phone ? pin : null
     if (newPin !== null && !/^\d{6}$/.test(pin)) return setError(errorText.bad_pin!)
     if (phone && !isValidPhone(phone)) return setError(errorText.bad_phone!)
     const newCode = attendance === 'yes' && changeCode ? attCode : null
@@ -202,7 +202,7 @@ function EmployeeDialog({ person, hasCode, onClose }: { person: Employee | null;
             value={formatPhone(phone)}
             onChange={(e) => setPhone(normalizePhone(e.target.value))}
           />
-          <span className="field-hint">{usesApp(role, canSeals === 'yes') ? 'يدخل به للتطبيق.' : role === 'technician' ? 'تصله عليه أوامر المهام على واتساب أو SMS.' : 'للتواصل.'}</span>
+          <span className="field-hint">{usesApp(role, canSeals === 'yes', !!person?.pages?.length) ? 'يدخل به للتطبيق.' : role === 'technician' ? 'تصله عليه أوامر المهام على واتساب أو SMS.' : 'للتواصل.'}</span>
         </label>
         {phone && (
           <div className="field">
@@ -211,7 +211,7 @@ function EmployeeDialog({ person, hasCode, onClose }: { person: Employee | null;
             <span className="field-hint">حسب ما سجّل الموظف واتسابه. إذا ما فتح الرابط محادثته، جرّب الثانية.</span>
           </div>
         )}
-        {phone && usesApp(role, canSeals === 'yes') && (
+        {phone && usesApp(role, canSeals === 'yes', !!person?.pages?.length) && (
           <div className="field">
             <span className="label">الرمز السري</span>
             {changePin ? (
