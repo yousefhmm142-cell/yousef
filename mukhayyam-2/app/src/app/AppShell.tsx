@@ -3,7 +3,7 @@ import { Link, NavLink, Outlet } from 'react-router'
 import { useEmployee } from '../auth/AuthProvider'
 import { titleOf } from '../types'
 import { Avatar, Logo } from '../ui/primitives'
-import { SyncStatus, ThemeToggle } from '../ui/status'
+import { StatusBadge, ThemeToggle } from '../ui/status'
 import { navFor, type NavItem } from './nav'
 
 const MAX_TABS = 5
@@ -46,14 +46,17 @@ export function AppShell() {
         )}
 
         <div className="topbar-end">
-          <SyncStatus />
           {hasSettings && (
             <NavLink to="/settings" className="settings-btn" aria-label="الإعدادات" title="الإعدادات">
-              <Settings size={24} aria-hidden="true" />
+              <Settings size={22} aria-hidden="true" />
+              <span>الإعدادات</span>
             </NavLink>
           )}
           <NavLink to="/account" className="me" aria-label={`حسابي: ${employee.fullName}`}>
-            <Avatar name={employee.fullName} />
+            <span className="me-avatar">
+              <Avatar name={employee.fullName} />
+              <StatusBadge />
+            </span>
             <span className="me-text">
               <b>{employee.fullName}</b>
               <small>{titleOf(employee)}</small>

@@ -4,8 +4,8 @@ import { usePendingCount, useSyncState } from '../data/sync'
 import { useTheme } from '../lib/theme'
 import { useOnline } from '../lib/useOnline'
 
-/** Connection, unsent changes and demo mode, in one quiet line. Phones show only the short part. */
-export function SyncStatus() {
+/** The connection in words: what to say, the extra detail, and the colour. */
+export function useConnection() {
   const online = useOnline()
   const pending = usePendingCount()
   const sync = useSyncState()
@@ -25,8 +25,13 @@ export function SyncStatus() {
   } else {
     label = isDemo ? 'وضع التجربة' : 'متصل'
   }
+  const tone: 'ok' | 'warn' | 'brand' = !online || stuck ? 'warn' : isDemo ? 'brand' : 'ok'
+  return { label, detail, tone }
+}
 
-  const tone = !online || stuck ? 'warn' : isDemo ? 'brand' : 'ok'
+/** Connection, unsent changes and demo mode, in one quiet line (the account page). */
+export function SyncStatus() {
+  const { label, detail, tone } = useConnection()
   return (
     <span className={`sync ${tone}`} role="status" aria-live="polite">
       <span className="sync-dot" aria-hidden="true" />
@@ -34,6 +39,12 @@ export function SyncStatus() {
       {detail && <span className="sync-detail"> · {detail}</span>}
     </span>
   )
+}
+
+/** Just a dot on the photo, like «online» on a messenger: green connected, orange not sending. */
+export function StatusBadge() {
+  const { label, detail, tone } = useConnection()
+  return <span className={`status-badge ${tone}`} role="status" aria-label={detail ? `${label}: ${detail}` : label} title={detail ? `${label} · ${detail}` : label} />
 }
 
 export function ThemeToggle() {

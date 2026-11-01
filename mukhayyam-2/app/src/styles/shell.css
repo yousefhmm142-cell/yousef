@@ -116,9 +116,15 @@
 }
 
 /* The big settings gear: a round button like the others, the system colour on hover and while open. */
-.settings-btn { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; flex: none; color: var(--ink-2); border: 1px solid var(--line); background: var(--surface); transition: background .15s, color .15s, transform .15s; }
+.settings-btn { height: 46px; padding: 0 16px 0 18px; border-radius: 999px; display: inline-flex; align-items: center; gap: 8px; font-weight: 800; font-size: 14px; text-decoration: none; white-space: nowrap; flex: none; color: var(--ink-2); border: 1px solid var(--line); background: var(--surface); transition: background .15s, color .15s, transform .15s; }
 :root[data-theme='dark'] .settings-btn { background: var(--glass); border-color: var(--glass-edge); }
 .settings-btn:hover { color: var(--brand); background: color-mix(in srgb, var(--brand) 34%, transparent); transform: rotate(40deg); }
 .settings-btn.active { color: var(--brand); background: color-mix(in srgb, var(--brand) 34%, transparent); border-color: color-mix(in srgb, var(--brand) 38%, transparent); }
 .danger-btn:hover { color: var(--danger); }
 .trash { padding: 6px 18px 16px; display: grid; gap: 10px; }
+
+.me-avatar { position: relative; display: inline-flex; flex: none; }
+.status-badge { position: absolute; inset-inline-end: -1px; bottom: -1px; width: 13px; height: 13px; border-radius: 50%; background: var(--faint); border: 2.5px solid var(--bg); box-sizing: content-box; }
+.status-badge.ok { background: var(--ok); }
+.status-badge.warn { background: var(--warn); animation: breathe 1.6s ease-in-out infinite; }
+.status-badge.brand { background: var(--brand); }
