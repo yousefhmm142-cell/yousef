@@ -111,7 +111,7 @@ function EmployeeDialog({ person, hasCode, onClose }: { person: Employee | null;
   const [role, setRole] = useState<Role>(person?.role ?? 'technician')
   const [phone, setPhone] = useState(person?.phone ?? '')
   const [jobTitle, setJobTitle] = useState(person?.jobTitle ?? '')
-  const [canSeals, setCanSeals] = useState<'yes' | 'no'>(person?.canSeals ? 'yes' : 'no')
+  const canSeals: 'yes' | 'no' = person?.canSeals ? 'yes' : 'no'
   const [waCode, setWaCode] = useState<'972' | '970'>(person?.waCode === 970 ? '970' : '972')
   // New people get a PIN ready to hand over; existing logins keep theirs unless changed.
   const [pin, setPin] = useState(person?.hasLogin ? '' : randomPin())
@@ -147,7 +147,6 @@ function EmployeeDialog({ person, hasCode, onClose }: { person: Employee | null;
         isActive: active === 'on',
         tracksAttendance: attendance === 'yes',
         jobTitle: jobTitle.trim() || null,
-        canSeals: canSeals === 'yes',
         waCode: Number(waCode) as 970 | 972,
       })
       if (attendance === 'yes') await saveAttendance(id, scheduleId ?? schedules?.[0]?.id ?? null, newCode)
@@ -192,17 +191,7 @@ function EmployeeDialog({ person, hasCode, onClose }: { person: Employee | null;
           {(role === 'admin' || role === 'manager') && !self && <span className="field-hint">مسؤول النظام والمدير: كل الصلاحيات.</span>}
         </label>
         <TextField label="المسمى الوظيفي (اختياري)" value={jobTitle} onChange={setJobTitle} placeholder="مثل: نائب المدير، محاسبة، فني" />
-        {role === 'staff' && (
-          <div className="field">
-            <span className="label">صلاحية الأختام</span>
-            <Segmented<'yes' | 'no'> label="صلاحية الأختام" value={canSeals} options={yesNo} onChange={setCanSeals} />
-            <span className="field-hint">
-              {canSeals === 'yes'
-                ? 'تفتح لها صفحتا «صرف الأختام» و«سجل الأختام» فقط. تحتاج رقم جوال ورمزاً سرياً للدخول.'
-                : 'المدير ومسؤول النظام لديهم هذه الصلاحية دائماً.'}
-            </span>
-          </div>
-        )}
+        {(role === 'staff' || role === 'technician') && <span className="field-hint">صلاحية الأختام وغيرها من صفحة «الصلاحيات».</span>}
         <label className="field">
           <span className="label">رقم الجوال</span>
           <input

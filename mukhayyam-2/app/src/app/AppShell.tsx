@@ -31,7 +31,7 @@ export function AppShell() {
         {items.length > 1 && (
           <nav className="topnav" aria-label="الأقسام">
             {items.map(({ to, label, icon: Icon }) => (
-              <NavLink key={to} to={to} end={to === '/'} className="topnav-link">
+              <NavLink key={to} to={to} end={to === "/"} className="topnav-link" title={label}>
                 <Icon size={17} aria-hidden="true" />
                 <span>{label}</span>
               </NavLink>

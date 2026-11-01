@@ -183,6 +183,18 @@ export async function saveEmployee(input: EmployeeInput): Promise<string> {
   return id
 }
 
+/** Gives or takes away the seals pages for one person (manager and admin only; the server checks). */
+export async function setSealsAccess(id: string, value: boolean): Promise<void> {
+  if (isDemo) {
+    await db.employees.update(id, { canSeals: value })
+    return
+  }
+  const sb = online()
+  const res = await sb.rpc('admin_set_seals_access', { p_id: id, p_value: value })
+  if (res.error) failFrom(res.error, res.status)
+  await refresh()
+}
+
 // ---------- First run (real mode) ----------
 /**
  * What the login screen should show on a real database:

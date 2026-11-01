@@ -69,6 +69,12 @@
   .topbar-end { gap: 8px; }
 }
 
+/* With ten pages the names do not all fit: only the open page keeps its name. */
+@media (max-width: 1360px) {
+  .topnav-link:not([aria-current='page']) span { display: none; }
+  .topnav-link { padding: 9px 11px; }
+}
+
 @media (max-width: 1200px) {
   .topnav-link span { display: none; }
   .topnav-link { padding: 9px 11px; }
