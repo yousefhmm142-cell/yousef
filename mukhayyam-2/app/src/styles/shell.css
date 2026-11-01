@@ -63,20 +63,28 @@
 /* ---------- Bottom tab bar (phones) ---------- */
 .tabbar { display: none; }
 
+/* Reports and settings are symbols only; their name shows while the page is open. */
+.topnav-link.compact:not(.active) span { display: none; }
+.topnav-link.compact:not(.active) { padding: 9px 12px; }
+
 @media (max-width: 1400px) {
   .topnav { gap: 0; }
   .topnav-link { padding: 8px 10px; gap: 6px; font-size: 13.5px; }
   .topbar-end { gap: 8px; }
 }
 
-/* The bar is never wider than 1280px: reports and settings show only their symbol until opened. */
-.topnav-link.compact:not(.active) span { display: none; }
-.topnav-link.compact:not(.active) { padding: 9px 12px; }
-
+/* Narrower screens keep every name; the person's name and the connection words give way first. */
 @media (max-width: 1200px) {
+  .topbar { gap: 10px; padding-inline-start: 12px; }
+  .topnav-link { padding: 8px 8px; gap: 5px; font-size: 13px; }
+  .me-text, .sync-detail { display: none; }
+  .app-brand-text small { display: none; }
+}
+
+/* Only when the names truly do not fit do the pages become symbols. */
+@media (max-width: 1080px) {
   .topnav-link span { display: none; }
   .topnav-link { padding: 9px 11px; }
-  .me-text { display: none; }
 }
 
 @media (max-width: 900px) {

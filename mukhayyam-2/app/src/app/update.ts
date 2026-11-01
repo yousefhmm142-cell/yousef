@@ -17,7 +17,7 @@ function showCurtain() {
   el.id = 'm2-updating'
   el.setAttribute('role', 'status')
   el.setAttribute('aria-live', 'polite')
-  el.innerHTML = '<span class="m2-upd-spin" aria-hidden="true"></span><b>جاري تحديث الموقع…</b><small>ثوانٍ وتفتح النسخة الجديدة</small>'
+  el.innerHTML = '<img src="/logo.webp" alt="" class="m2-upd-logo" /><span class="m2-upd-spin" aria-hidden="true"></span><b>جاري تحديث الموقع…</b><small>ثوانٍ وتفتح النسخة الجديدة</small>'
   document.body.appendChild(el)
 }
 
