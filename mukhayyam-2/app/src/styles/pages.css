@@ -208,17 +208,17 @@ button.row:hover, a.row:hover { background: var(--surface-2); }
 .feed-list time { color: var(--faint); font-size: 12.5px; white-space: nowrap; flex: none; padding-top: 2px; }
 .feed-more { margin-top: 8px; }
 
-.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 16px; }
-.kpi { display: grid; gap: 2px; padding: 18px 20px; border-radius: var(--r-lg); text-decoration: none; color: var(--ink); position: relative; overflow: hidden; }
-.kpi::before { content: ''; position: absolute; inset-inline-start: 0; top: 18px; bottom: 18px; width: 4px; border-radius: 4px; background: var(--brand); }
-.kpi[data-tone='ok']::before { background: var(--ok); }
-.kpi[data-tone='warn']::before { background: var(--warn); }
-.kpi[data-tone='danger']::before { background: var(--danger); }
-.kpi-n { font-size: 38px; font-weight: 800; line-height: 1.1; letter-spacing: -.5px; }
-.kpi-l { font-weight: 800; font-size: 15px; }
-.kpi small { color: var(--muted); font-size: 13px; }
-a.kpi { transition: transform .15s var(--ease), box-shadow .15s; }
-a.kpi:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.dash-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 16px; }
+/* The coloured edge follows the card's rounded corner instead of floating beside it. */
+.dash-kpi { display: grid; gap: 2px; padding: 18px 20px; border-radius: var(--r-lg); text-decoration: none; color: var(--ink); border-inline-start: 6px solid var(--brand); }
+.dash-kpi[data-tone='ok'] { border-inline-start-color: var(--ok); }
+.dash-kpi[data-tone='warn'] { border-inline-start-color: var(--warn); }
+.dash-kpi[data-tone='danger'] { border-inline-start-color: var(--danger); }
+.dash-kpi-n { font-size: 38px; font-weight: 800; line-height: 1.1; letter-spacing: -.5px; }
+.dash-kpi-l { font-weight: 800; font-size: 15px; }
+.dash-kpi small { color: var(--muted); font-size: 13px; }
+a.dash-kpi { transition: transform .15s var(--ease), box-shadow .15s; }
+a.dash-kpi:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
 .team-list { }
 @media (min-width: 901px) { .home .team .team-list { display: grid; grid-template-columns: 1fr 1fr; column-gap: 18px; } }
-@media (max-width: 900px) { .kpis { grid-template-columns: repeat(2, 1fr); gap: 10px; } .kpi { padding: 14px 16px; } .kpi-n { font-size: 30px; } }
+@media (max-width: 900px) { .dash-kpis { grid-template-columns: repeat(2, 1fr); gap: 10px; } .dash-kpi { padding: 14px 16px; } .dash-kpi-n { font-size: 30px; } }

@@ -162,19 +162,19 @@ export function KpiStrip() {
     { key: 'appr', to: '/generation', n: data.approvals, label: 'بانتظار اعتمادك', note: data.approvals ? 'تقارير وكشوف مغلقة' : 'لا شيء ينتظر', tone: data.approvals ? 'warn' : 'ok' },
   ]
   return (
-    <section className="kpis" aria-label="أرقام اليوم">
+    <section className="dash-kpis" aria-label="أرقام اليوم">
       {tiles.map((t) => {
         const inner = (
           <>
-            <b className="num kpi-n">{t.n}</b>
-            <span className="kpi-l">{t.label}</span>
+            <b className="num dash-kpi-n">{t.n}</b>
+            <span className="dash-kpi-l">{t.label}</span>
             <small>{t.note}</small>
           </>
         )
         return t.to ? (
-          <Link key={t.key} to={t.to} className="kpi glass" data-tone={t.tone}>{inner}</Link>
+          <Link key={t.key} to={t.to} className="dash-kpi glass" data-tone={t.tone}>{inner}</Link>
         ) : (
-          <div key={t.key} className="kpi glass" data-tone={t.tone}>{inner}</div>
+          <div key={t.key} className="dash-kpi glass" data-tone={t.tone}>{inner}</div>
         )
       })}
     </section>

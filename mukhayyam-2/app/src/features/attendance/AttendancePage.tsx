@@ -158,7 +158,9 @@ function TodayBoard({ data, onOpen }: { data: Data; onOpen(e: Employee): void })
   const count = (pred: (d: DayResult) => boolean) => rows.filter((r) => pred(r.d)).length
   const present = count((d) => presentStatuses.includes(d.status))
   const working = count((d) => d.status === 'working')
-  const missing = count((d) => d.status === 'absent' || d.status === 'pending')
+  // Someone on leave or with a permission did not come in either.
+  const onLeave = count((d) => d.status === 'leave')
+  const missing = count((d) => d.status === 'absent' || d.status === 'pending' || d.status === 'leave')
   const left = count((d) => !!d.outAt && d.status !== 'working')
   const order: DayStatus[] = ['absent', 'pending', 'late', 'working', 'no_out', 'present', 'leave', 'holiday', 'off', 'future']
   rows.sort((a, b) => order.indexOf(a.d.status) - order.indexOf(b.d.status) || a.e.fullName.localeCompare(b.e.fullName, 'ar'))
@@ -180,7 +182,7 @@ function TodayBoard({ data, onOpen }: { data: Data; onOpen(e: Employee): void })
         <div className="kpi glass" data-tone={missing ? 'danger' : undefined}>
           <div className="kpi-label"><span className="kpi-ico"><UserX size={16} /></span>لم يحضروا</div>
           <div className="kpi-value num">{missing}</div>
-          <div className="kpi-sub">يصير «غائب» بعد الساعة 10:00 ص</div>
+          <div className="kpi-sub">{onLeave ? `منهم ${onLeave} بإذن أو إجازة · ` : ''}يصير «غائب» بعد الساعة 10:00 ص</div>
         </div>
         <div className="kpi glass">
           <div className="kpi-label"><span className="kpi-ico"><Users size={16} /></span>انصرفوا</div>
