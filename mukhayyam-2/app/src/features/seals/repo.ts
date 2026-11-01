@@ -71,8 +71,14 @@ const stamp = (rows: unknown[]) => {
  * Brings the seals up to date. The very first time everything is read in parallel (the rolls tell
  * how many seals there are); after that only what changed since the last look.
  */
-export function refreshSeals(): Promise<void> {
-  if (isDemo) return Promise.resolve()
+export async function refreshSeals(afterWrite = false): Promise<void> {
+  if (isDemo) return
+  // A read already under way may have started before our own write: wait for it, then read again.
+  if (loading && afterWrite) await loading.catch(() => undefined)
+  return readSeals()
+}
+
+function readSeals(): Promise<void> {
   const sb = getSupabase()
   if (!sb || !navigator.onLine) return Promise.resolve()
   if (loading) return loading
@@ -195,7 +201,7 @@ async function call<T>(fn: string, args: Record<string, unknown>): Promise<T> {
   const sb = client()
   const res = await sb.rpc(fn, args)
   if (res.error) fail(res.error, res.status)
-  await refreshSeals()
+  await refreshSeals(true)
   return res.data as T
 }
 

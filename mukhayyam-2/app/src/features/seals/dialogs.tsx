@@ -96,6 +96,11 @@ export function IssueDialog({ data, onClose, onDone, preset }: { data: SealData;
   useEffect(() => {
     area.current?.focus()
   }, [])
+  // A number the screen does not know may belong to a roll added a moment ago (or by someone else): look again.
+  const unknown = rows.some((r) => !r.s)
+  useEffect(() => {
+    if (unknown) void refreshSeals(true)
+  }, [unknown, rows.length])
   void preset
 
   async function submit(again: boolean) {
