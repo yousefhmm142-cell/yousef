@@ -13,6 +13,7 @@ import './styles/distribution.css'
 import './styles/tasks.css'
 import './styles/attendance.css'
 import './styles/stock.css'
+import './styles/seals.css'
 import './styles/print.css'
 
 import { StrictMode } from 'react'

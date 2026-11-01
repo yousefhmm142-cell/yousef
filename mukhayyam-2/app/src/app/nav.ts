@@ -1,5 +1,5 @@
-import { Boxes, FileBarChart, History, House, LayoutGrid, ListChecks, ScanLine, Settings, Users, Zap, type LucideIcon } from 'lucide-react'
-import type { Role } from '../types'
+import { Boxes, FileBarChart, History, House, LayoutGrid, ListChecks, ScanLine, ScrollText, Settings, Stamp, Users, Zap, type LucideIcon } from 'lucide-react'
+import type { Employee } from '../types'
 
 export interface NavItem {
   to: string
@@ -15,11 +15,19 @@ const managerItems: NavItem[] = [
   { to: '/tasks', label: 'المهام', icon: ListChecks },
   { to: '/attendance', label: 'الحضور', icon: Users },
   { to: '/stock', label: 'المخزن', icon: Boxes },
+  { to: '/seals', label: 'الأختام', icon: Stamp },
   { to: '/reports', label: 'التقارير', icon: FileBarChart },
 ]
 
 /** Field roles open straight on their one job; managers get the full set. */
-export function navFor(role: Role): NavItem[] {
+export function navFor({ role, canSeals }: Pick<Employee, 'role' | 'canSeals'>): NavItem[] {
+  // Someone given the seals permission (the accountant) opens straight on the two seals pages.
+  if (canSeals && (role === 'staff' || role === 'technician')) {
+    return [
+      { to: '/seals', label: 'صرف الأختام', icon: Stamp },
+      { to: '/seals/log', label: 'سجل الأختام', icon: ScrollText },
+    ]
+  }
   switch (role) {
     case 'admin':
     case 'manager':

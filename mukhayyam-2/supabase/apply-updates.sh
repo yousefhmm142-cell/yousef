@@ -67,7 +67,9 @@ select n from (values
   ('update-6.sql', to_regprocedure('public.save_generator(smallint,text,text,text,numeric,numeric,boolean)') is not null),
   -- update-7.sql also loads the team list: never run it twice (it would reset attendance codes).
   ('update-7.sql', exists (select 1 from information_schema.columns
-                           where table_schema = 'public' and table_name = 'employees' and column_name = 'job_title'))
+                           where table_schema = 'public' and table_name = 'employees' and column_name = 'job_title')),
+  -- updates 8 and 9 can be run again safely, so they need no check; update 10 creates tables, so it must not.
+  ('update-10.sql', to_regclass('public.seals') is not null)
 ) as known(n, done)
 where done
 on conflict do nothing;

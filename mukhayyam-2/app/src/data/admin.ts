@@ -114,6 +114,8 @@ export interface EmployeeInput {
   jobTitle?: string | null
   /** Country code their WhatsApp is registered with. */
   waCode?: 970 | 972
+  /** May use the seals pages. */
+  canSeals?: boolean
 }
 
 /** Returns the person's id (new or existing). */
@@ -149,6 +151,7 @@ export async function saveEmployee(input: EmployeeInput): Promise<string> {
         hasLogin: !!(phone && pin),
         jobTitle: input.jobTitle?.trim() || null,
         waCode: input.waCode ?? before?.waCode ?? 972,
+        canSeals: input.canSeals ?? before?.canSeals ?? false,
       })
       return id
     })
@@ -169,6 +172,11 @@ export async function saveEmployee(input: EmployeeInput): Promise<string> {
   if (input.jobTitle !== undefined || input.waCode !== undefined) {
     const res = await sb.rpc('admin_set_profile', { p_id: id, p_job_title: input.jobTitle ?? null, p_wa_code: input.waCode ?? null })
     // A database without update 7 has no job titles yet: the rest is saved, so carry on.
+    if (res.error && res.error.code !== 'PGRST202' && res.status !== 404) failFrom(res.error, res.status)
+  }
+  if (input.canSeals !== undefined) {
+    const res = await sb.rpc('admin_set_seals_access', { p_id: id, p_value: input.canSeals })
+    // A database without update 10 has no seals yet: the rest is saved, so carry on.
     if (res.error && res.error.code !== 'PGRST202' && res.status !== 404) failFrom(res.error, res.status)
   }
   await refresh()

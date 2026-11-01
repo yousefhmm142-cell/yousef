@@ -12,7 +12,7 @@ const moreTab: NavItem = { to: '/more', label: 'المزيد', icon: Ellipsis }
 
 export function AppShell() {
   const employee = useEmployee()
-  const items = navFor(employee.role)
+  const items = navFor(employee)
   // Phones: up to five tabs; the rest sit behind «المزيد».
   const tabs = items.length < MAX_TABS ? [...items, accountTab] : [...items.slice(0, MAX_TABS - 1), moreTab]
 

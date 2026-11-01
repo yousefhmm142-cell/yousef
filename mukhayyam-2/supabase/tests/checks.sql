@@ -269,8 +269,84 @@ select test.fails($$select public.admin_save_employee(public.current_employee_id
 select test.fails($$select public.save_login_account(null, '0591111113', '123456')$$,
                   '%permission denied%', 'accounts are only made through the admin screen');
 
+
+-- ---------- Seals ----------
+reset role; select test.login('رامي أبو عجوة'); set role authenticated;
+select test.ok(public.has_seals(), 'the manager has the seals permission by default');
+select test.ok(public.seal_add_roll(181301, 181400, public.seal_today(), null) is not null, 'a roll of 100 seals is registered');
+select test.ok((select count(*) from public.seals where status = 'in_stock') = 100, 'all its numbers start in stock');
+select test.fails($$select public.seal_add_roll(181350, 181450, public.seal_today(), null)$$, 'roll_overlap', 'two rolls cannot share numbers');
+select test.ok(public.seal_add_roll(183001, null, public.seal_today(), 'ملاحظة') is not null, 'a roll with no end is 100 long');
+select test.ok((select to_no from public.seal_rolls where from_no = 183001) = 183100, '183001 ends at 183100');
+select test.ok(public.seal_board_no('طبلون 361 إعادة شبك (حمزة)') = '361' and public.seal_board_no('طبلون الحملاوي 27 (تفتيش)') = 'الحملاوي 27'
+               and public.seal_board_no('بدون') is null, 'the tableau number is read from the details');
+
+select public.seal_issue((select id from public.employees where full_name = 'قصي الشافعي'), public.seal_today(), array[181365, 181388, 181355], 'x');
+select test.ok((select count(*) from public.seals where status = 'issued' and technician_id = (select id from public.employees where full_name = 'قصي الشافعي')) = 3,
+               'three seals are handed to a technician');
+select test.ok((select batch_no from public.seal_batches) = 1, 'the first batch of the roll is number one');
+select test.ok((select string_agg(seal_no::text, '-' order by batch_pos) from public.seals where batch_id is not null) = '181365-181388-181355', 'the order they were taken is kept');
+select test.fails($$select public.seal_issue((select id from public.employees where full_name = 'قصي الشافعي'), public.seal_today(), array[181365], null)$$, 'not_available:181365', 'a seal already issued cannot be issued again');
+select test.fails($$select public.seal_issue((select id from public.employees where full_name = 'قصي الشافعي'), public.seal_today(), array[999999], null)$$, 'unknown_seal:999999', 'an unknown number is refused');
+select test.fails($$select public.seal_issue((select id from public.employees where full_name = 'قصي الشافعي'), public.seal_today(), array[181301, 183002], null)$$, 'mixed_rolls', 'one batch comes from one roll');
+select test.fails($$select public.seal_issue((select id from public.employees where full_name = 'قصي الشافعي'), public.seal_today(), array[181301, 181301], null)$$, 'duplicate_seal', 'a number twice in a batch is refused');
+select test.fails($$select public.seal_issue((select id from public.employees where full_name = 'رامي أبو عجوة'), public.seal_today(), array[181301], null)$$, 'bad_technician', 'seals go to technicians only');
+select public.seal_issue((select id from public.employees where full_name = 'مجد عاشور'), public.seal_today() - 1, array[181301, 181302], null);
+select test.ok((select batch_no from public.seal_batches where technician_id = (select id from public.employees where full_name = 'مجد عاشور')) = 2, 'the second batch of the roll is number two');
+
+select public.seal_record(181365, 'used', null, 'طبلون 361 إعادة شبك (حمزة الداية)');
+select test.ok((select status || ':' || board_no from public.seals where seal_no = 181365) = 'used:361', 'a used seal keeps its tableau number');
+select test.fails($$select public.seal_record(181310, 'used', null, 'x')$$, 'not_issued:181310', 'a seal still in stock cannot be marked used');
+select public.seal_record(181310, 'damaged', null, 'تالف');
+select test.ok((select status from public.seals where seal_no = 181310) = 'damaged', 'a damaged seal can be marked straight from stock');
+select test.fails($$select public.seal_unissue(array[181365])$$, 'already_used', 'a used seal cannot be taken back');
+select test.ok(public.seal_unissue(array[181301, 181302]) = 2, 'seals handed out by mistake go back to stock');
+select test.ok((select count(*) from public.seal_batches) = 1, 'a batch left empty disappears');
+select test.fails($$select public.seal_delete_roll((select id from public.seal_rolls where from_no = 181301))$$, 'roll_in_use', 'a roll in use cannot be deleted');
+select public.seal_delete_roll((select id from public.seal_rolls where from_no = 183001));
+select test.ok((select count(*) from public.seal_rolls) = 1, 'an untouched roll can be deleted');
+
+-- A staff member sees seals only when given the permission.
+reset role; select test.login('موظف إداري'); set role authenticated;
+select test.fails($$select public.seal_add_roll(190001, null, public.seal_today(), null)$$, 'not_allowed', 'staff without the permission cannot touch seals');
+select test.ok((select count(*) from public.seals) = 0, 'and see no seal');
+reset role; select test.login('رامي أبو عجوة'); set role authenticated;
+select public.admin_set_seals_access((select id from public.employees where full_name = 'موظف إداري'), true);
+reset role; select test.login('موظف إداري'); set role authenticated;
+select test.ok((select count(*) from public.seals) = 100, 'with the permission the seals are visible');
+select test.ok(public.seal_add_roll(190001, null, public.seal_today(), null) is not null, 'and a roll can be registered');
+select test.fails($$select public.seal_import_roll('{"from":195001,"to":195100,"received_on":"2026-10-01"}'::jsonb)$$, 'not_allowed', 'only managers import old files');
+select test.fails($$update public.seals set status = 'used' where seal_no = 190001$$, '%permission denied%', 'seals are never written straight into the table');
+reset role; select test.login('مجد عاشور'); set role authenticated;
+select test.ok((select count(*) from public.seals) = 0, 'a technician sees no seals');
+select test.fails($$select public.seal_record(181365, 'lost', null, null)$$, 'not_allowed', 'a technician cannot change seals');
+
+-- Importing an old roll (manager).
+reset role; select test.login('مسؤول النظام'); set role authenticated;
+select test.ok((public.seal_import_roll(jsonb_build_object('from', 162701, 'to', 162800, 'received_on', '2026-09-29',
+        'batches', jsonb_build_array(jsonb_build_object('date', '2026-09-30', 'tech', (select id from public.employees where full_name = 'مجد عاشور'), 'seals', jsonb_build_array(162778, 162707, 162737, 163000))),
+        'damaged', jsonb_build_array(162799),
+        'usage', jsonb_build_array(jsonb_build_object('no', 162778, 'status', 'used', 'used_on', '2026-10-01', 'details', 'طبلون 5 تفتيش'),
+                                    jsonb_build_object('no', 162799, 'status', 'damaged', 'used_on', '', 'details', 'تالف'),
+                                    jsonb_build_object('no', 162750, 'status', 'used', 'used_on', '2026-10-01', 'details', 'x'))))) ->> 'issued' = '3',
+               'an old roll is imported with its batch');
+select test.ok((select status || ':' || board_no from public.seals where seal_no = 162778) = 'used:5', 'imported usage keeps the tableau number');
+select test.ok((select status from public.seals where seal_no = 162799) = 'damaged', 'imported damaged seals are marked');
+select test.ok((public.seal_import_roll(jsonb_build_object('from', 162701, 'to', 162800, 'received_on', '2026-09-29')) ->> 'skipped')::boolean, 'importing the same roll again changes nothing');
+select test.ok(public.seal_import_technician('قصي  الشافعي') = (select id from public.employees where full_name = 'قصي الشافعي'), 'the same technician is found under another spacing');
+select test.ok(public.seal_import_technician('مجد') = (select id from public.employees where full_name = 'مجد عاشور'), 'a first name finds the one technician');
+select test.ok(public.seal_import_technician('مهند دويدار') is not null, 'a name is matched or added');
+insert into public.employees (id, full_name, role, is_active) values ('00000000-0000-0000-0000-0000000000a1', 'سامر خالد الحلبي', 'technician', true);
+select test.ok(public.seal_import_technician('سامر الحلبي') = '00000000-0000-0000-0000-0000000000a1', 'first and last word find the full name');
+select test.ok(public.seal_import_technician('سامرالحلبي') = '00000000-0000-0000-0000-0000000000a1', 'words run together find it too');
+select test.ok(public.seal_import_technician('سامر') = '00000000-0000-0000-0000-0000000000a1', 'a first name finds the only one');
+select public.seal_import_technician('أيمن اللخاوي');
+select test.ok((select not is_active and role = 'technician' from public.employees where full_name = 'أيمن اللخاوي'), 'an unknown technician is added switched off');
+
 -- ---------- Not signed in ----------
 reset role; select set_config('request.jwt.claims', '', false); set role anon;
+select test.fails($$select count(*) from public.seals$$, '%permission denied%', 'seals are closed to a visitor');
+select test.fails($$select public.seal_issue(null, null, null, null)$$, '%permission denied%', 'and so are the seal functions');
 select test.fails($$select count(*) from public.employees$$, '%permission denied%', 'nothing is readable without signing in');
 select test.fails($$select public.setup_first_admin('دخيل', '0592222222', '123456')$$, 'already_set_up',
                   'nobody can claim the first admin once it exists');

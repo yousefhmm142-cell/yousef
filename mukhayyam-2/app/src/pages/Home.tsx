@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { ArrowLeft, Clock, CloudUpload, Database, Wifi, WifiOff } from 'lucide-react'
-import { Link } from 'react-router'
+import { Link, Navigate } from 'react-router'
 import { useEmployee } from '../auth/AuthProvider'
 import { modules, type ModuleKey } from '../app/modules'
 import { config, isDemo } from '../config'
@@ -28,6 +28,8 @@ import { usePendingCount } from '../data/sync'
 /** Each person opens the app straight on their own job. */
 export function Home() {
   const employee = useEmployee()
+  // The accountant's job is the seals: open straight on them.
+  if (employee.canSeals && (employee.role === 'staff' || employee.role === 'technician')) return <Navigate to="/seals" replace />
   switch (employee.role) {
     case 'admin':
     case 'manager':

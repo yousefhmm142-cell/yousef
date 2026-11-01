@@ -4,6 +4,7 @@ import type { AlertSettings, FuelType, Generator, SiteReport } from '../features
 import type { Leave, Punch, Schedule } from '../features/attendance/rules'
 import type { Task, TaskType } from '../features/tasks/model'
 import type { StockItem, StockMove } from '../features/stock/model'
+import type { Seal, SealBatch, SealRoll } from '../features/seals/model'
 import type { Employee } from '../types'
 
 /** Small key-value rows: the signed-in session, cached profile, last sync time. */
@@ -79,6 +80,9 @@ class AppDatabase extends Dexie {
   attendanceDevices!: EntityTable<AttendanceDevice, 'id'>
   stockItems!: EntityTable<StockItem, 'id'>
   stockMoves!: EntityTable<StockMove, 'id'>
+  sealRolls!: EntityTable<SealRoll, 'id'>
+  sealBatches!: EntityTable<SealBatch, 'id'>
+  seals!: EntityTable<Seal, 'sealNo'>
 
   constructor() {
     super('mukhayyam2')
@@ -113,6 +117,11 @@ class AppDatabase extends Dexie {
     this.version(6).stores({
       stockItems: 'id',
       stockMoves: 'id, itemId, taskId, at',
+    })
+    this.version(7).stores({
+      sealRolls: 'id, fromNo',
+      sealBatches: 'id, rollId, technicianId',
+      seals: 'sealNo, rollId, batchId, technicianId, status, boardNo',
     })
   }
 }

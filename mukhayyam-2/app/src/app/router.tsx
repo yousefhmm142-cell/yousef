@@ -15,7 +15,7 @@ import { SiteHistoryPage } from '../features/sheets/SiteHistoryPage'
 import { NotFound, RouteError } from '../pages/states'
 import { isSiteRole, SITE_ROLES, type Role } from '../types'
 import { AppShell } from './AppShell'
-import { RequireAuth, RoleGate } from './guards'
+import { RequireAuth, RoleGate, SealsGate } from './guards'
 
 // Screens most phones never open load only when first opened, so the app starts faster.
 const page = <T,>(load: () => Promise<T>, name: keyof T) =>
@@ -26,6 +26,8 @@ const TasksPage = page(() => import('../features/tasks/TasksPage'), 'TasksPage')
 const AttendancePage = page(() => import('../features/attendance/AttendancePage'), 'AttendancePage')
 const StockPage = page(() => import('../features/stock/StockPage'), 'StockPage')
 const ReportsPage = page(() => import('../features/reports/ReportsPage'), 'ReportsPage')
+const SealIssuePage = page(() => import('../features/seals/IssuePage'), 'SealIssuePage')
+const SealLogPage = page(() => import('../features/seals/LogPage'), 'SealLogPage')
 const AttendanceScanPage = page(() => import('../features/attendance/ScanPage'), 'AttendanceScanPage')
 
 const managers: Role[] = ['admin', 'manager']
@@ -78,6 +80,8 @@ export const router = createBrowserRouter([
             element: <RoleGate roles={managers}><Lazy><AttendancePage /></Lazy></RoleGate>,
           },
           { path: 'stock', element: <RoleGate roles={managers}><Lazy><StockPage /></Lazy></RoleGate> },
+          { path: 'seals', element: <SealsGate><Lazy><SealIssuePage /></Lazy></SealsGate> },
+          { path: 'seals/log', element: <SealsGate><Lazy><SealLogPage /></Lazy></SealsGate> },
           { path: 'reports', element: <RoleGate roles={managers}><Lazy><ReportsPage /></Lazy></RoleGate> },
           { path: 'settings', element: <RoleGate roles={managers}><Lazy><SettingsPage /></Lazy></RoleGate> },
           { path: 'account', element: <Account /> },

@@ -4,7 +4,7 @@
 @media print {
   @page { size: A4 portrait; margin: 12mm; }
   html, body { background: #fff !important; color: #000 !important; }
-  .topbar, .tabbar, .toasts, .skip, .report-page > :not(.print-sheet), .tasks > :not(.print-sheet) { display: none !important; }
+  .topbar, .tabbar, .toasts, .skip, .report-page > :not(.print-sheet), .tasks > :not(.print-sheet), .seals > :not(.print-sheet) { display: none !important; }
   .page { padding: 0 !important; max-width: none !important; }
   .print-sheet {
     display: block; color: #000; font-size: 11pt; line-height: 1.5;
@@ -54,3 +54,13 @@
 .print-sheet table.task-form tfoot td { background: #f2f2f2; font-weight: 700; height: 32px; }
 .print-sheet .tf-sign { margin-top: 18px; width: 40%; }
 .print-sheet .tf-sign b { display: block; margin-bottom: 26px; }
+
+/* The seal slips: eight to an A4 page, two across, like the paper she filled by hand. */
+.print-sheet .slip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10mm 8mm; }
+.print-sheet table.slip { table-layout: fixed; break-inside: avoid; }
+.print-sheet table.slip th, .print-sheet table.slip td { border: 1.4px solid #000; padding: 1.5px 4px; font-size: 11pt; text-align: center; }
+.print-sheet table.slip th.slip-name { text-align: start; font-size: 11.5pt; background: #fff; }
+.print-sheet table.slip th.slip-name small { font-weight: 400; font-size: 8.5pt; }
+.print-sheet table.slip td { height: 8.2mm; }
+.print-sheet table.slip td.seal-no { font-size: 13pt; font-weight: 800; letter-spacing: .5pt; }
+.print-sheet table.slip th.n, .print-sheet table.slip td.n { width: 15%; }

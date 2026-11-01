@@ -8,7 +8,7 @@ import { useDocumentTitle } from '../lib/useDocumentTitle'
 export function More() {
   useDocumentTitle('المزيد')
   const employee = useEmployee()
-  const rest = navFor(employee.role).slice(4)
+  const rest = navFor(employee).slice(4)
   return (
     <div className="account">
       <section className="rows glass">

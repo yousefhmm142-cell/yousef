@@ -63,6 +63,8 @@ interface EmployeeRow {
   role: Role
   is_active: boolean
   tracks_attendance: boolean
+  /** Only once update 10 is on the database. */
+  can_seals?: boolean
 }
 
 const toEmployee = (row: EmployeeRow): Employee => ({
@@ -72,12 +74,14 @@ const toEmployee = (row: EmployeeRow): Employee => ({
   role: row.role,
   isActive: row.is_active,
   tracksAttendance: row.tracks_attendance,
+  canSeals: row.can_seals ?? false,
 })
 
 async function loadProfile(sb: SupabaseClient, userId: string): Promise<Employee | null> {
   const { data, error } = await sb
     .from('employees')
-    .select('id, full_name, phone, role, is_active, tracks_attendance')
+    // '*' so sign-in keeps working on a database that does not have the newer columns yet.
+    .select('*')
     .eq('auth_user_id', userId)
     .maybeSingle<EmployeeRow>()
   if (error) throw error

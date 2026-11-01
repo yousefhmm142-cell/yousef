@@ -63,7 +63,13 @@
 /* ---------- Bottom tab bar (phones) ---------- */
 .tabbar { display: none; }
 
-@media (max-width: 1080px) {
+@media (max-width: 1400px) {
+  .topnav { gap: 0; }
+  .topnav-link { padding: 8px 10px; gap: 6px; font-size: 13.5px; }
+  .topbar-end { gap: 8px; }
+}
+
+@media (max-width: 1200px) {
   .topnav-link span { display: none; }
   .topnav-link { padding: 9px 11px; }
   .me-text { display: none; }

@@ -21,7 +21,12 @@ export interface Employee {
   jobTitle?: string | null
   /** Country code their WhatsApp is registered with. */
   waCode?: 970 | 972
+  /** May use the two seals pages (the manager and the admin always may). */
+  canSeals?: boolean
 }
+
+/** The seals pages: managers, and anyone the admin gave the permission. */
+export const usesSeals = (e: Pick<Employee, 'role' | 'canSeals'>) => e.role === 'admin' || e.role === 'manager' || !!e.canSeals
 
 /** The job title when there is one, else the system role. */
 export const titleOf = (e: Pick<Employee, 'jobTitle' | 'role'>) => e.jobTitle || roleLabel[e.role]
