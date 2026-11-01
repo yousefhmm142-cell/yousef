@@ -85,14 +85,21 @@ function readSeals(): Promise<void> {
   loading = (async () => {
     let cursor = await getMeta<string>(CURSOR)
     // Rolls and batches are few: read them whole, so a deleted one disappears here too.
-    const [rolls, batches] = await Promise.all([sb.from('seal_rolls').select('*').order('from_no'), sb.from('seal_batches').select('*')])
-    if (rolls.error || batches.error) return
+    const [rolls, batches, counted] = await Promise.all([
+      sb.from('seal_rolls').select('*').order('from_no'),
+      sb.from('seal_batches').select('*'),
+      sb.from('seals').select('seal_no', { count: 'exact', head: true }),
+    ])
+    if (rolls.error || batches.error || counted.error) return
     const rollRows = (rolls.data ?? []) as RollRow[]
     const batchRows = (batches.data ?? []) as BatchRow[]
 
     const changed: SealRow[] = []
+    // Every seal of every roll should be here; if the count is off for any reason, read everything again.
+    const total = counted.count ?? rollRows.reduce((n, r) => n + (r.to_no - r.from_no + 1), 0)
+    const heal = !!cursor && (await db.seals.count()) !== total
+    if (heal) cursor = undefined
     if (!cursor) {
-      const total = rollRows.reduce((n, r) => n + (r.to_no - r.from_no + 1), 0)
       const pages = await Promise.all(
         Array.from({ length: Math.ceil(total / PAGE) }, (_, i) => sb.from('seals').select(SEAL_COLS).order('seal_no').range(i * PAGE, i * PAGE + PAGE - 1)),
       )
@@ -132,6 +139,7 @@ function readSeals(): Promise<void> {
         await db.sealBatches.bulkPut(batchesNow)
         await setMeta('seals:batches', batchStamp)
       }
+      if (heal) await db.seals.clear()
       if (changed.length) await db.seals.bulkPut(changed.map(sealFromRow))
       if (rollsChanged || batchesChanged) {
         // Seals of a roll that no longer exists, and seals whose batch was removed.
