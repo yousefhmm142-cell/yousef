@@ -1,5 +1,5 @@
 import { lazy, Suspense, type ComponentType, type ReactNode } from 'react'
-import { createBrowserRouter } from 'react-router'
+import { createBrowserRouter, Navigate } from 'react-router'
 import { useEmployee } from '../auth/AuthProvider'
 import { DistributionEntryPage } from '../features/distribution/EntryPage'
 import { DistributionHistoryPage } from '../features/distribution/HistoryPage'
@@ -21,7 +21,6 @@ import { RequireAuth, RoleGate, SealsGate } from './guards'
 const page = <T,>(load: () => Promise<T>, name: keyof T) =>
   lazy(() => load().then((m) => ({ default: m[name] as unknown as ComponentType })))
 const SettingsPage = page(() => import('../features/settings/SettingsPage'), 'SettingsPage')
-const PermissionsPage = page(() => import('../features/settings/PermissionsPage'), 'PermissionsPage')
 const TaskLinkPage = page(() => import('../features/tasks/LinkPage'), 'TaskLinkPage')
 const TasksPage = page(() => import('../features/tasks/TasksPage'), 'TasksPage')
 const AttendancePage = page(() => import('../features/attendance/AttendancePage'), 'AttendancePage')
@@ -85,7 +84,7 @@ export const router = createBrowserRouter([
           { path: 'seals/log', element: <SealsGate><Lazy><SealLogPage /></Lazy></SealsGate> },
           { path: 'reports', element: <RoleGate roles={managers}><Lazy><ReportsPage /></Lazy></RoleGate> },
           { path: 'settings', element: <RoleGate roles={managers}><Lazy><SettingsPage /></Lazy></RoleGate> },
-          { path: 'permissions', element: <RoleGate roles={managers}><Lazy><PermissionsPage /></Lazy></RoleGate> },
+          { path: 'permissions', element: <Navigate to="/settings?tab=permissions" replace /> },
           { path: 'account', element: <Account /> },
           { path: 'more', element: <More /> },
           { path: '*', element: <NotFound /> },

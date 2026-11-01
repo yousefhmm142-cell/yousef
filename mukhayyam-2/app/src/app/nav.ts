@@ -1,4 +1,4 @@
-import { Boxes, FileBarChart, History, House, LayoutGrid, ListChecks, ScanLine, ScrollText, Settings, ShieldCheck, Stamp, Users, Zap, type LucideIcon } from 'lucide-react'
+import { Boxes, FileBarChart, History, House, LayoutGrid, ListChecks, ScanLine, ScrollText, Settings, Stamp, Users, Zap, type LucideIcon } from 'lucide-react'
 import type { Employee } from '../types'
 
 export interface NavItem {
@@ -32,7 +32,7 @@ export function navFor({ role, canSeals }: Pick<Employee, 'role' | 'canSeals'>):
     case 'admin':
     case 'manager':
       // The manager runs the whole system, settings included.
-      return [...managerItems, { to: '/permissions', label: 'الصلاحيات', icon: ShieldCheck }, { to: '/settings', label: 'الإعدادات', icon: Settings }]
+      return [...managerItems, { to: '/settings', label: 'الإعدادات', icon: Settings }]
     case 'generation_operator':
     case 'distribution_supervisor':
       // The site: today's two forms and what was sent before, nothing else.

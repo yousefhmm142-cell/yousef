@@ -141,11 +141,11 @@
 @keyframes m2spin { to { transform: rotate(360deg); } }
 
 /* ---------- Permissions page ---------- */
-.perm-roles { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.perm-roles { list-style: none; margin: 0; padding: 12px 14px 0; display: grid; gap: 10px; }
 .perm-roles li { display: grid; gap: 4px; padding: 12px 14px; border-radius: var(--r-in); background: var(--sunken); }
 .perm-roles b { font-weight: 800; }
 .perm-roles span { color: var(--ink-2, var(--ink)); font-size: 14px; line-height: 1.6; }
-.perm-note { margin: 10px 0 0; }
+.perm-note { margin: 10px 0 0; padding-inline: 18px; }
 .perm-switch {
   display: inline-flex; align-items: center; gap: 10px; min-width: 112px; justify-content: space-between;
   padding: 6px 8px 6px 14px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--surface-2);

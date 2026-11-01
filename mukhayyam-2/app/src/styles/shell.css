@@ -18,7 +18,7 @@
 .app-brand-text b { display: block; font-size: 17px; font-weight: 800; line-height: 1.15; }
 .app-brand-text small { display: block; font-size: 11.5px; color: var(--faint); }
 
-.topnav { display: flex; gap: 2px; margin-inline-start: 6px; min-width: 0; }
+.topnav { display: flex; gap: 2px; margin-inline-start: 6px; min-width: 0; overflow: hidden; }
 .topnav-link {
   display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px;
   color: var(--muted); font-weight: 700; font-size: 14px; text-decoration: none; white-space: nowrap;
@@ -69,11 +69,9 @@
   .topbar-end { gap: 8px; }
 }
 
-/* With ten pages the names do not all fit: only the open page keeps its name. */
-@media (max-width: 1360px) {
-  .topnav-link:not([aria-current='page']) span { display: none; }
-  .topnav-link { padding: 9px 11px; }
-}
+/* The bar is never wider than 1280px: with many pages only the open page keeps its name. */
+.topnav.dense .topnav-link:not([aria-current='page']) span { display: none; }
+.topnav.dense .topnav-link { padding: 9px 12px; }
 
 @media (max-width: 1200px) {
   .topnav-link span { display: none; }

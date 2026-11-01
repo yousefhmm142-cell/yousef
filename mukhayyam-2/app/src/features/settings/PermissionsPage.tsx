@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { SheetStateError } from '../sheets/workflow'
 import { byRoleThenName, setSealsAccess } from '../../data/admin'
 import { db } from '../../data/db'
-import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import { formatPhone } from '../../lib/phone'
 import { isManagerRole, roleLabel, titleOf, type Employee, type Role } from '../../types'
 import { Avatar, Pill } from '../../ui/primitives'
@@ -26,7 +25,6 @@ const errorText: Record<string, string> = {
 
 /** Page for the manager and the admin only: who can open what, and the extra permissions per person. */
 export function PermissionsPage() {
-  useDocumentTitle('الصلاحيات')
   const toast = useToast()
   const people = useLiveQuery(async () => (await db.employees.toArray()).filter((e) => e.isActive).sort(byRoleThenName), [])
   const [busy, setBusy] = useState<string | null>(null)
@@ -46,14 +44,7 @@ export function PermissionsPage() {
   const limited = (people ?? []).filter((e) => !isManagerRole(e.role))
 
   return (
-    <div className="settings permissions">
-      <header className="ph">
-        <div>
-          <h1>الصلاحيات</h1>
-          <p className="muted">من يفتح أي صفحة. هذه الصفحة والإعدادات يراها المدير ومسؤول النظام فقط.</p>
-        </div>
-      </header>
-
+    <div className="permissions">
       <section className="card">
         <div className="card-h">
           <span className="ico-round brand"><ShieldCheck size={16} /></span>

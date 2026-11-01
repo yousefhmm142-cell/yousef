@@ -1,5 +1,6 @@
 import { Clock, LayoutGrid, Pencil, Plus, Zap } from 'lucide-react'
 import { useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import { formatAmount } from '../../lib/numbers'
 import { Dialog } from '../../ui/Dialog'
@@ -14,6 +15,7 @@ import { ReportStateError, useGenerators } from '../generation/repo'
 import { BackupCard } from './BackupCard'
 import { FuelTypesCard, StockItemsCard } from './StockAndFuelCards'
 import { TeamCard } from './TeamCard'
+import { PermissionsPage } from './PermissionsPage'
 
 const soon = ['حدود التنبيهات والدوامات', 'سجل كل التغييرات']
 
@@ -21,16 +23,26 @@ export function SettingsPage() {
   useDocumentTitle('الإعدادات')
   const generators = useGenerators()
   const [editing, setEditing] = useState<Generator | 'new' | null>(null)
+  const [params, setParams] = useSearchParams()
+  const tab = params.get('tab') === 'permissions' ? 'permissions' : 'general'
 
   return (
     <div className="settings">
       <header className="ph">
         <div>
           <h1>الإعدادات</h1>
-          <p className="muted">ما تضيفه هنا يظهر عند الجميع: الموظفون يدخلون بأرقامهم، والمولدات والمناطق تظهر في كشوف كل يوم.</p>
+          <p className="muted">ما تضيفه هنا يظهر عند الجميع. الإعدادات والصلاحيات يراها المدير ومسؤول النظام فقط.</p>
         </div>
       </header>
 
+      <Segmented<'general' | 'permissions'>
+        label="أقسام الإعدادات"
+        value={tab}
+        options={[{ value: 'general', label: 'الإعدادات' }, { value: 'permissions', label: 'الصلاحيات' }]}
+        onChange={(v) => setParams(v === 'general' ? {} : { tab: v }, { replace: true })}
+      />
+
+      {tab === 'permissions' ? <PermissionsPage /> : <>
       <TeamCard />
 
       <section className="card">
@@ -83,6 +95,8 @@ export function SettingsPage() {
           {soon.map((s) => <li key={s}>{s}</li>)}
         </ul>
       </section>
+
+      </>}
 
       {editing && (
         <GeneratorDialog
