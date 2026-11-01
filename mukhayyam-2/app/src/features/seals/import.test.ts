@@ -42,7 +42,7 @@ describe.skipIf(!issueFile || !usageFile)('her real Excel files', () => {
     expect(usage.rows.length).toBeGreaterThan(2000)
     const row = usage.rows.find((u) => u.no === 181365)!
     expect(row).toMatchObject({ status: 'used', usedOn: '2026-08-02', details: 'طبلون 361 إعادة شبك (حمزة الداية )' })
-    const plan = planImport(rolls, usage.rows, suspicious, usage.order)
+    const plan = planImport(rolls, usage.rows, suspicious, usage.order, usage.fills)
     expect(plan.totals.seals).toBeGreaterThan(1900)
     expect(plan.stray.length).toBeLessThan(usage.rows.length * 0.05)
   })
@@ -51,7 +51,7 @@ describe.skipIf(!issueFile || !usageFile)('her real Excel files', () => {
   it('exports back her own two files, line for line', async () => {
     const { rolls, suspicious } = await parseIssueWorkbook(ExcelJS, buf(issueFile!))
     const usage = await parseUsageWorkbook(ExcelJS, buf(usageFile!))
-    const plan = planImport(rolls, usage.rows, suspicious, usage.order)
+    const plan = planImport(rolls, usage.rows, suspicious, usage.order, usage.fills)
     const ids = new Map<string, string>()
     const techId = (n: string) => ids.get(n) ?? (ids.set(n, `t:${n}`), `t:${n}`)
     const sheets = new Map<string, string>()
@@ -63,7 +63,7 @@ describe.skipIf(!issueFile || !usageFile)('her real Excel files', () => {
     const bySeal = new Map<number, Seal>()
     plan.rolls.forEach((r, i) => {
       const p = rollPayload(r, techId)
-      data.rolls.push({ id: `r${i}`, fromNo: p.from, toNo: p.to, receivedOn: p.received_on, note: '', headerText: p.header_text, sheetLabel: p.sheet_label, sheetPos: p.sheet_pos, sheetCol: p.sheet_col })
+      data.rolls.push({ id: `r${i}`, fromNo: p.from, toNo: p.to, receivedOn: p.received_on, note: '', headerText: p.header_text, sheetLabel: p.sheet_label, sheetPos: p.sheet_pos, sheetCol: p.sheet_col, sheetWidth: p.sheet_width, sheetTab: p.sheet_tab })
       for (let n = p.from; n <= p.to; n++) {
         const s: Seal = { sealNo: n, rollId: `r${i}`, status: 'in_stock', batchId: null, batchPos: null, technicianId: null, issuedOn: null, usedOn: null, details: '', boardNo: '' }
         bySeal.set(n, s)
@@ -71,7 +71,7 @@ describe.skipIf(!issueFile || !usageFile)('her real Excel files', () => {
       }
       p.batches.forEach((b, k) => {
         const bid = `r${i}b${k}`
-        data.batches.push({ id: bid, rollId: `r${i}`, batchNo: k + 1, technicianId: b.tech, issuedOn: b.date, note: '', originalSeals: b.seals, blockFrom: b.block_from, blockOrd: b.ord, label: b.label || null, usageOrd: b.usage_ord })
+        data.batches.push({ id: bid, rollId: `r${i}`, batchNo: k + 1, technicianId: b.tech, issuedOn: b.date, note: '', originalSeals: b.seals, blockFrom: b.block_from, blockOrd: b.ord, label: b.label || null, usageOrd: b.usage_ord, usageFill: b.fill })
         b.seals.forEach((no, pos) => {
           const s = bySeal.get(no)
           if (s && (s.status === 'in_stock' || s.status === 'issued')) Object.assign(s, { status: 'issued', batchId: bid, batchPos: pos + 1, technicianId: b.tech, issuedOn: b.date, usedOn: null, details: '' })
@@ -90,6 +90,27 @@ describe.skipIf(!issueFile || !usageFile)('her real Excel files', () => {
       ws.eachRow({ includeEmpty: false }, (row) => { const v = (row.values as unknown[]).slice(1).map((x) => cellText(x as never).trim().replace(/(\d)\+(?=\d)/g, '$1-')); const k = v.findIndex(Boolean); rows.push(v.slice(Math.max(0, k)).join(' | ').replace(/(\s*\|\s*)+$/, '')) })
       return rows
     }
+    const fillKey = (c: ExcelJS.Cell) => {
+      const f = c.fill as { fgColor?: { argb?: string; theme?: number } } | undefined
+      const g = f?.fgColor
+      if (!g) return '-'
+      if (g.argb) return g.argb.toUpperCase()
+      return g.theme === 4 ? 'FFDEEBF7' : g.theme === 5 ? 'FFFBE5D6' : g.theme === 3 ? 'FFADB9CA' : `t${g.theme}`
+    }
+    const look = (c: ExcelJS.Cell) => `${fillKey(c)}/${c.font?.size ?? ''}/${c.font?.bold ? 'b' : ''}/${c.numFmt ?? ""}`
+    const looks = (ws: ExcelJS.Worksheet) => {
+      const rows: string[] = []
+      ws.eachRow({ includeEmpty: false }, (row) => {
+        const v = (row.values as unknown[]).slice(1).map((x) => cellText(x as never).trim())
+        const k = v.findIndex(Boolean)
+        if (k < 0) return
+        const out: string[] = []
+        for (let col = k + 1; col <= k + 4; col++) out.push(look(row.getCell(col)))
+        rows.push(out.join(" "))
+      })
+      return rows
+    }
+    const styleBad: string[] = []
     const compare = async (orig: ArrayBuffer, made: ExcelJS.Workbook) => {
       const o = new ExcelJS.Workbook()
       await o.xlsx.load(orig)
@@ -107,12 +128,19 @@ describe.skipIf(!issueFile || !usageFile)('her real Excel files', () => {
           for (const [l, c] of cnt) if (c) bad.push(`   ${c > 0 ? 'MISSING' : 'EXTRA'} ×${Math.abs(c)}: ${l}`)
         }
         a.forEach((line, i) => line !== b[i] && bad.push(`${w.name} #${i + 1}: «${line}» vs «${b[i]}»`))
+        // How it looks: colour of each cell, size, bold, border, date format, row height.
+        const la = looks(w), lb = looks(m)
+        la.forEach((x, i) => { if (x !== lb[i]) styleBad.push(`${w.name} #${i + 1}: ${x} vs ${lb[i]}`) })
+        const tab = (w.properties.tabColor as { argb?: string } | undefined)?.argb
+        const tab2 = (m.properties.tabColor as { argb?: string } | undefined)?.argb
+        if (tab !== tab2) styleBad.push(`${w.name}: tab ${tab} vs ${tab2}`)
       }
       return bad
     }
     const badIssue = await compare(buf(issueFile!), buildIssueWorkbook(ExcelJS, data))
     const badUsage = await compare(buf(usageFile!), buildUsageWorkbook(ExcelJS, data))
-    writeFileSync('/tmp/m2-work/roundtrip.txt', ['ISSUE', ...badIssue, 'USAGE', ...badUsage].join('\n'))
+    writeFileSync('/tmp/m2-work/roundtrip.txt', ['ISSUE', ...badIssue, 'USAGE', ...badUsage, 'STYLE', ...styleBad].join('\n'))
+    expect(styleBad.length).toBeLessThanOrEqual(12)
     // Same sheets, same lines, same order. Only her own slips differ (a misspelt «مستخدم», a broken
     // date, a stray character in a fifth cell, a name written with and without a space, one missing digit).
     for (const l of [...badIssue, ...badUsage]) expect(l).not.toMatch(/rows vs|MISSING|EXTRA/)

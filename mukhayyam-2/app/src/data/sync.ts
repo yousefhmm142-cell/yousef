@@ -13,7 +13,7 @@ import { scheduleFromRow, type ScheduleRow } from '../features/attendance/remote
 import type { Schedule } from '../features/attendance/rules'
 import type { StockItem } from '../features/stock/model'
 import { isEditableStatus, type SheetMeta, type SheetStatus } from '../features/sheets/workflow'
-import { isManagerRole, SITE_ROLES, type Employee, type Role } from '../types'
+import { isManagerRole, SITE_ROLES, usesSeals, type Employee, type Role } from '../types'
 import { db, deleteMeta, getMeta, setMeta } from './db'
 import { getSupabase } from './supabase'
 
@@ -513,6 +513,8 @@ const wake = () => {
 export function startSync(employee: Employee) {
   if (isDemo) return
   me = employee
+  // The accountants open the seals first: read them right away, in parallel with everything else.
+  if (usesSeals(employee)) void import('../features/seals/repo').then((m) => m.refreshSeals())
   window.addEventListener('online', wake)
   document.addEventListener('visibilitychange', wake)
   void syncNow()

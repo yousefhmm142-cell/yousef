@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { composeDetails, noFilters, ordinalWord, parseSealNumbers, rollStats, searchSeals, splitDetails, tokenize, type Seal, type SealBatch, type SealData, type SealRoll } from './model'
+import { composeDetails, noFilters, ordinalWord, parseSealNumbers, rollStats, searchSeals, splitDetails, tokenize, autoSeparate, type Seal, type SealBatch, type SealData, type SealRoll } from './model'
 
-const roll: SealRoll = { id: 'r1', fromNo: 181301, toNo: 181400, receivedOn: '2026-07-30', note: '', headerText: null, sheetLabel: null, sheetPos: null, sheetCol: null }
-const roll2: SealRoll = { id: 'r2', fromNo: 183001, toNo: 183100, receivedOn: '2026-08-03', note: '', headerText: null, sheetLabel: null, sheetPos: null, sheetCol: null }
-const b1: SealBatch = { id: 'b1', rollId: 'r1', batchNo: 1, technicianId: 'q', issuedOn: '2026-07-30', note: '', originalSeals: null, blockFrom: null, blockOrd: null, label: null, usageOrd: null }
-const b2: SealBatch = { id: 'b2', rollId: 'r1', batchNo: 2, technicianId: 'a', issuedOn: '2026-08-01', note: '', originalSeals: null, blockFrom: null, blockOrd: null, label: null, usageOrd: null }
-const b3: SealBatch = { id: 'b3', rollId: 'r2', batchNo: 1, technicianId: 'a', issuedOn: '2026-08-03', note: '', originalSeals: null, blockFrom: null, blockOrd: null, label: null, usageOrd: null }
+const roll: SealRoll = { id: 'r1', fromNo: 181301, toNo: 181400, receivedOn: '2026-07-30', note: '', headerText: null, sheetLabel: null, sheetPos: null, sheetCol: null, sheetWidth: null, sheetTab: null }
+const roll2: SealRoll = { id: 'r2', fromNo: 183001, toNo: 183100, receivedOn: '2026-08-03', note: '', headerText: null, sheetLabel: null, sheetPos: null, sheetCol: null, sheetWidth: null, sheetTab: null }
+const b1: SealBatch = { id: 'b1', rollId: 'r1', batchNo: 1, technicianId: 'q', issuedOn: '2026-07-30', note: '', originalSeals: null, blockFrom: null, blockOrd: null, label: null, usageOrd: null, usageFill: null }
+const b2: SealBatch = { id: 'b2', rollId: 'r1', batchNo: 2, technicianId: 'a', issuedOn: '2026-08-01', note: '', originalSeals: null, blockFrom: null, blockOrd: null, label: null, usageOrd: null, usageFill: null }
+const b3: SealBatch = { id: 'b3', rollId: 'r2', batchNo: 1, technicianId: 'a', issuedOn: '2026-08-03', note: '', originalSeals: null, blockFrom: null, blockOrd: null, label: null, usageOrd: null, usageFill: null }
 const seal = (no: number, over: Partial<Seal> = {}): Seal => ({ sealNo: no, rollId: no < 183000 ? 'r1' : 'r2', status: 'in_stock', batchId: null, batchPos: null, technicianId: null, issuedOn: null, usedOn: null, details: '', boardNo: '', ...over })
 const data: SealData = {
   rolls: [roll, roll2],
@@ -48,6 +48,9 @@ describe('words and details', () => {
     const line = composeDetails({ board: '361', work: 'إعادة شبك', subscriber: 'حمزة الداية' })
     expect(line).toBe('طبلون 361 إعادة شبك (حمزة الداية)')
     expect(splitDetails(line, '361')).toEqual({ board: '361', work: 'إعادة شبك', subscriber: 'حمزة الداية' })
+    expect(splitDetails('طبلون أبو هويشل 10 فصل (خالد )', 'أبو هويشل 10')).toEqual({ board: 'أبو هويشل 10', work: 'فصل', subscriber: 'خالد' })
+    expect(splitDetails('طبلون شمال المقبرة (19) فصل خدمة يحيى الخطيب', 'شمال المقبرة 19')).toEqual({ board: 'شمال المقبرة 19', work: 'فصل خدمة يحيى الخطيب', subscriber: '' })
+    expect(splitDetails('طبلون 8 a  الأبراج   ( تغيير الطبلون الكبير )', '8 a الأبراج').board).toBe('8 a الأبراج')
   })
 })
 
@@ -102,5 +105,20 @@ describe('search', () => {
 describe('roll balance', () => {
   it('counts the seals of a roll by state', () => {
     expect(rollStats(roll, data.seals, data.batches)).toMatchObject({ used: 3, issued: 1, inStock: 2, batches: 2 })
+  })
+})
+
+describe('autoSeparate', () => {
+  it('adds the dash after the sixth digit typed at the end', () => {
+    expect(autoSeparate('18136', '181365')).toBe('181365-')
+    expect(autoSeparate('181365-18138', '181365-181388')).toBe('181365-181388-')
+    expect(autoSeparate('WK20602', 'WK206022')).toBe('WK206022-')
+  })
+  it('leaves other edits alone', () => {
+    expect(autoSeparate('181365-', '181365')).toBe('181365')
+    expect(autoSeparate('1813', '18136')).toBe('18136')
+    expect(autoSeparate('', '181365 181388')).toBe('181365 181388')
+    expect(autoSeparate('18136', '181365', false)).toBe('181365')
+    expect(autoSeparate('1813655', '18136555')).toBe('18136555')
   })
 })

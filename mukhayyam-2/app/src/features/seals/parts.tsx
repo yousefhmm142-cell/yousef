@@ -15,6 +15,18 @@ export function SealsTabs({ canIssue = true }: { canIssue?: boolean }) {
   )
 }
 
+/** Shown while the seals are being read from the server for the first time on this device. */
+export function SealsLoading() {
+  return (
+    <div className="seals-loading card" role="status" aria-live="polite">
+      <span className="spinner" aria-hidden="true" />
+      <b>جاري تحميل الأختام…</b>
+      <span className="muted">أول مرة على هذا الجهاز فقط، وبعدها تفتح الصفحة فوراً.</span>
+      {!navigator.onLine && <span className="muted">لا يوجد اتصال بالإنترنت الآن.</span>}
+    </div>
+  )
+}
+
 /** A seal number coloured by what happened to it. */
 export function SealPill({ seal, hit, dim, onClick }: { seal: Seal; hit?: boolean; dim?: boolean; onClick?(): void }) {
   const info = sealStatusInfo[seal.status]

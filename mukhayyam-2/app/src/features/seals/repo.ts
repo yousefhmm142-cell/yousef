@@ -30,8 +30,8 @@ interface SealRow {
   board_no: string | null
   updated_at: string
 }
-interface RollRow { id: string; from_no: number; to_no: number; received_on: string; note: string | null; header_text?: string | null; sheet_label?: string | null; sheet_pos?: number | null; sheet_col?: number | null }
-interface BatchRow { id: string; roll_id: string; batch_no: number; technician_id: string; issued_on: string; note: string | null; original_seals?: number[] | null; block_from?: number | null; block_ord?: number | null; label?: string | null; usage_ord?: number | null }
+interface RollRow { id: string; from_no: number; to_no: number; received_on: string; note: string | null; header_text?: string | null; sheet_label?: string | null; sheet_pos?: number | null; sheet_col?: number | null; sheet_width?: number | null; sheet_tab?: string | null }
+interface BatchRow { id: string; roll_id: string; batch_no: number; technician_id: string; issued_on: string; note: string | null; original_seals?: number[] | null; block_from?: number | null; block_ord?: number | null; label?: string | null; usage_ord?: number | null; usage_fill?: string | null }
 
 const sealFromRow = (r: SealRow): Seal => ({
   sealNo: r.seal_no,
@@ -53,59 +53,102 @@ function client() {
   return sb
 }
 
+const SEAL_COLS = 'seal_no,roll_id,status,batch_id,batch_pos,technician_id,issued_on,used_on,details,board_no,updated_at'
 const CURSOR = 'pull:seals'
+const READY = 'seals:ready'
+const PAGE = 1000
 let loading: Promise<void> | null = null
 
-/** Brings the seals up to date: everything on the first look, then only what changed since. */
+/** A short fingerprint of what was last written, so an unchanged list is not rewritten (and the page not redrawn). */
+const stamp = (rows: unknown[]) => {
+  const t = JSON.stringify(rows)
+  let h = 5381
+  for (let i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0
+  return `${rows.length}:${h}`
+}
+
+/**
+ * Brings the seals up to date. The very first time everything is read in parallel (the rolls tell
+ * how many seals there are); after that only what changed since the last look.
+ */
 export function refreshSeals(): Promise<void> {
   if (isDemo) return Promise.resolve()
   const sb = getSupabase()
   if (!sb || !navigator.onLine) return Promise.resolve()
   if (loading) return loading
   loading = (async () => {
+    let cursor = await getMeta<string>(CURSOR)
     // Rolls and batches are few: read them whole, so a deleted one disappears here too.
-    const [rolls, batches] = await Promise.all([
-      sb.from('seal_rolls').select('*').order('from_no'),
-      sb.from('seal_batches').select('*'),
-    ])
+    const [rolls, batches] = await Promise.all([sb.from('seal_rolls').select('*').order('from_no'), sb.from('seal_batches').select('*')])
     if (rolls.error || batches.error) return
     const rollRows = (rolls.data ?? []) as RollRow[]
     const batchRows = (batches.data ?? []) as BatchRow[]
 
-    let cursor = await getMeta<string>(CURSOR)
     const changed: SealRow[] = []
-    for (;;) {
-      let q = sb.from('seals').select('*').order('updated_at', { ascending: true }).order('seal_no').limit(1000)
-      if (cursor) q = q.gte('updated_at', cursor)
-      const { data, error } = await q
-      if (error) return
-      const rows = (data ?? []) as SealRow[]
-      changed.push(...rows)
-      const last = rows.at(-1)?.updated_at
-      if (rows.length < 1000 || !last || last === cursor) break
-      cursor = last
+    if (!cursor) {
+      const total = rollRows.reduce((n, r) => n + (r.to_no - r.from_no + 1), 0)
+      const pages = await Promise.all(
+        Array.from({ length: Math.ceil(total / PAGE) }, (_, i) => sb.from('seals').select(SEAL_COLS).order('seal_no').range(i * PAGE, i * PAGE + PAGE - 1)),
+      )
+      if (pages.some((r) => r.error)) return
+      for (const r of pages) changed.push(...((r.data ?? []) as SealRow[]))
+      changed.sort((a, b) => a.updated_at.localeCompare(b.updated_at))
+    } else {
+      for (;;) {
+        let q = sb.from('seals').select(SEAL_COLS).order('updated_at', { ascending: true }).order('seal_no').limit(PAGE)
+        if (cursor) q = q.gte('updated_at', cursor)
+        const { data, error } = await q
+        if (error) return
+        const rows = (data ?? []) as SealRow[]
+        changed.push(...rows)
+        const last = rows.at(-1)?.updated_at
+        if (rows.length < PAGE || !last || last === cursor) break
+        cursor = last
+      }
     }
 
+    const rollsNow = rollRows.map((r): SealRoll => ({ id: r.id, fromNo: r.from_no, toNo: r.to_no, receivedOn: r.received_on, note: r.note ?? '', headerText: r.header_text ?? null, sheetLabel: r.sheet_label ?? null, sheetPos: r.sheet_pos ?? null, sheetCol: r.sheet_col ?? null, sheetWidth: r.sheet_width == null ? null : Number(r.sheet_width), sheetTab: r.sheet_tab ?? null }))
+    const batchesNow = batchRows.map((b): SealBatch => ({ id: b.id, rollId: b.roll_id, batchNo: b.batch_no, technicianId: b.technician_id, issuedOn: b.issued_on, note: b.note ?? '', originalSeals: b.original_seals ?? null, blockFrom: b.block_from ?? null, blockOrd: b.block_ord ?? null, label: b.label ?? null, usageOrd: b.usage_ord ?? null, usageFill: b.usage_fill ?? null }))
+    const rollStamp = stamp(rollsNow)
+    const batchStamp = stamp(batchesNow)
+    const [oldRoll, oldBatch] = await Promise.all([getMeta<string>('seals:rolls'), getMeta<string>('seals:batches')])
+    const rollsChanged = rollStamp !== oldRoll
+    const batchesChanged = batchStamp !== oldBatch
+
     await db.transaction('rw', db.sealRolls, db.sealBatches, db.seals, db.meta, async () => {
-      await db.sealRolls.clear()
-      await db.sealRolls.bulkPut(rollRows.map((r): SealRoll => ({ id: r.id, fromNo: r.from_no, toNo: r.to_no, receivedOn: r.received_on, note: r.note ?? '', headerText: r.header_text ?? null, sheetLabel: r.sheet_label ?? null, sheetPos: r.sheet_pos ?? null, sheetCol: r.sheet_col ?? null })))
-      await db.sealBatches.clear()
-      await db.sealBatches.bulkPut(batchRows.map((b): SealBatch => ({ id: b.id, rollId: b.roll_id, batchNo: b.batch_no, technicianId: b.technician_id, issuedOn: b.issued_on, note: b.note ?? '', originalSeals: b.original_seals ?? null, blockFrom: b.block_from ?? null, blockOrd: b.block_ord ?? null, label: b.label ?? null, usageOrd: b.usage_ord ?? null })))
+      if (rollsChanged) {
+        await db.sealRolls.clear()
+        await db.sealRolls.bulkPut(rollsNow)
+        await setMeta('seals:rolls', rollStamp)
+      }
+      if (batchesChanged) {
+        await db.sealBatches.clear()
+        await db.sealBatches.bulkPut(batchesNow)
+        await setMeta('seals:batches', batchStamp)
+      }
       if (changed.length) await db.seals.bulkPut(changed.map(sealFromRow))
-      // Seals of a roll that no longer exists, and seals whose batch was removed.
-      const rollIds = new Set(rollRows.map((r) => r.id))
-      const batchIds = new Set(batchRows.map((b) => b.id))
-      const gone = (await db.seals.toArray()).filter((s) => !rollIds.has(s.rollId)).map((s) => s.sealNo)
-      if (gone.length) await db.seals.bulkDelete(gone)
-      const orphans = (await db.seals.where('batchId').notEqual('').toArray()).filter((s) => s.batchId && !batchIds.has(s.batchId))
-      if (orphans.length) await db.seals.bulkPut(orphans.map((s) => ({ ...s, batchId: null })))
+      if (rollsChanged || batchesChanged) {
+        // Seals of a roll that no longer exists, and seals whose batch was removed.
+        const rollIds = new Set(rollRows.map((r) => r.id))
+        const batchIds = new Set(batchRows.map((b) => b.id))
+        const gone = (await db.seals.toArray()).filter((s) => !rollIds.has(s.rollId)).map((s) => s.sealNo)
+        if (gone.length) await db.seals.bulkDelete(gone)
+        const orphans = (await db.seals.where('batchId').notEqual('').toArray()).filter((s) => s.batchId && !batchIds.has(s.batchId))
+        if (orphans.length) await db.seals.bulkPut(orphans.map((s) => ({ ...s, batchId: null })))
+      }
       const newest = changed.at(-1)?.updated_at
       if (newest) await setMeta(CURSOR, newest)
+      await setMeta(READY, true)
     })
   })().finally(() => {
     loading = null
   })
   return loading
+}
+
+/** False until the seals have been read from the server once on this device. */
+export function useSealsReady(): boolean {
+  return useLiveQuery(async () => !!(await getMeta<boolean>(READY)), [], false) ?? false
 }
 
 /** Opens fresh, and stays fresh while the page is open (someone else may be entering too). */

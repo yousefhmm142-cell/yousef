@@ -343,6 +343,15 @@ select test.ok(public.has_seals(), 'the permission given earlier still holds');
 reset role; select test.login('مجد عاشور'); set role authenticated;
 select test.fails($$select public.seal_delete_batch(gen_random_uuid())$$, 'not_allowed', 'a technician cannot delete batches');
 
+-- The tableau as she writes it: the whole name with its number.
+select test.ok(public.seal_board_no('طبلون 361 إعادة شبك (حمزة الداية )') = '361', 'board: number first');
+select test.ok(public.seal_board_no('طبلون أبو هويشل 10 فصل خالد') = 'أبو هويشل 10', 'board: name then number');
+select test.ok(public.seal_board_no('طبلون شمال المقبرة (19) فصل خدمة') = 'شمال المقبرة 19', 'board: number in brackets');
+select test.ok(public.seal_board_no('طبلون ساعات برج 10B إضافة مشتركين') = 'ساعات برج 10B', 'board: letter stuck to the number');
+select test.ok(public.seal_board_no('طبلون 8 a  الأبراج   ( تغيير )') = '8 a الأبراج', 'board: number, letter, then the name');
+select test.ok(public.seal_board_no('طبلون 12 فصل (احمد )') = '12', 'board: the work word is not part of it');
+select test.ok(public.seal_board_no('تفتيش') is null, 'board: none when no tableau is named');
+
 -- Importing an old roll (manager).
 reset role; select test.login('مسؤول النظام'); set role authenticated;
 select test.ok((public.seal_import_roll(jsonb_build_object('from', 162701, 'to', 162800, 'received_on', '2026-09-29', 'header_text', 'تاريخ الاستلام 29/9/2026 الاختام (162701-162800)', 'sheet_label', 'ورقة13', 'sheet_pos', 0, 'sheet_col', 4,

@@ -185,3 +185,6 @@ table.seal-table tbody tr:hover { background: color-mix(in srgb, var(--brand) 5%
 .tech-dot { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--sunken); font-size: 11px; font-weight: 800; color: var(--muted); flex: none; }
 .tech-badge { min-width: 26px; height: 26px; padding: 0 7px; border-radius: 999px; display: grid; place-items: center; background: var(--warn-soft); color: var(--warn); font-size: 13px; font-weight: 800; }
 .batch-head .icon-btn { width: 36px; height: 36px; }
+
+.seals-loading { display: grid; justify-items: center; gap: 10px; padding: 48px 20px; text-align: center; }
+.seals-loading .spinner { width: 28px; height: 28px; }

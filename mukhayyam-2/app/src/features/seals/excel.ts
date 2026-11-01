@@ -8,6 +8,13 @@ import { ordinalWord, type Seal, type SealBatch, type SealData, type SealRoll } 
 type ExcelJS = typeof ExcelJSType
 const thin = { style: 'thin' as const }
 const medium = { style: 'medium' as const }
+// Her files' colours (the Office palette they were made with), so nothing looks different.
+const BLUE = 'FFDEEBF7'
+const ORANGE = 'FFFBE5D6'
+const HEAD = 'FFADB9CA'
+const YELLOW = 'FFFFFF00'
+const ink = { argb: 'FF000000' }
+const solid = (argb: string) => ({ type: 'pattern' as const, pattern: 'solid' as const, fgColor: { argb } })
 const allSides = (style: { style: 'thin' | 'medium' }) => ({ top: style, left: style, bottom: style, right: style })
 
 /** "2026-08-02" as a date at noon UTC, so no time zone moves it to another day. */
@@ -64,8 +71,9 @@ export function buildIssueWorkbook(ExcelJS: ExcelJS, data: SealData): ExcelJSTyp
 
   const used = new Set<string>()
   for (const sh of sheets) {
-    const ws = wb.addWorksheet(sheetName(sh.name, used), { views: [{ rightToLeft: true }] })
-    ws.columns = [{ width: 12 }, { width: 13 }, { width: 20 }, { width: 81.4 }]
+    const ws = wb.addWorksheet(sheetName(sh.name, used), { views: [{ rightToLeft: true }], properties: { tabColor: { argb: sh.rolls.find((r) => r.sheetTab)?.sheetTab ?? YELLOW } } })
+    const widest = Math.max(81.375, ...sh.rolls.map((r) => r.sheetWidth ?? 0))
+    ws.getColumn(Math.max(0, ...sh.rolls.map((r) => r.sheetCol ?? 1)) + 3).width = widest
     let first = true
     for (const roll of sh.rolls) {
       const pad = Array<string>(Math.max(0, (roll.sheetCol ?? 1) - 1)).fill('')
@@ -78,8 +86,8 @@ export function buildIssueWorkbook(ExcelJS: ExcelJS, data: SealData): ExcelJSTyp
       head.height = 15.75
       head.eachCell((c, col) => {
         if (col <= pad.length) return
-        c.font = { name: 'Arial', size: 11, bold: true }
-        c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } }
+        c.font = { name: 'Arial', size: 11, bold: true, color: ink }
+        c.fill = solid(YELLOW)
         c.border = allSides(medium)
         if (col === at(4)) c.alignment = { horizontal: 'center' }
       })
@@ -96,7 +104,8 @@ export function buildIssueWorkbook(ExcelJS: ExcelJS, data: SealData): ExcelJSTyp
         row.height = 15
         row.eachCell({ includeEmpty: true }, (c, col) => {
           if (col <= pad.length) return
-          c.font = { name: 'Arial', size: 11 }
+          c.font = { name: 'Arial', size: 11, color: ink }
+          c.fill = solid(BLUE)
           c.border = allSides(medium)
           if (col === at(1)) c.numFmt = 'mm-dd-yy'
         })
@@ -107,7 +116,7 @@ export function buildIssueWorkbook(ExcelJS: ExcelJS, data: SealData): ExcelJSTyp
         ws.addRow([])
         for (const s of spoiled) {
           const r = put(['', '', s.status === 'lost' ? 'ضائع' : 'تالف', s.sealNo])
-          r.eachCell((c) => (c.font = { name: 'Arial', size: 11 }))
+          r.eachCell((c) => (c.font = { name: 'Arial', size: 11, color: ink }))
           r.getCell(at(4)).alignment = { horizontal: 'right' }
         }
       }
@@ -143,24 +152,29 @@ export function buildUsageWorkbook(ExcelJS: ExcelJS, data: SealData): ExcelJSTyp
 
   const used = new Set<string>()
   for (const id of techs) {
-    const ws = wb.addWorksheet(sheetName(data.sheets?.get(id) ?? data.names.get(id) ?? 'فني', used), { views: [{ rightToLeft: true }] })
-    ws.columns = [{ width: 12 }, { width: 11 }, { width: 12 }, { width: 77.1 }]
+    const ws = wb.addWorksheet(sheetName(data.sheets?.get(id) ?? data.names.get(id) ?? 'فني', used), { views: [{ rightToLeft: true }], properties: { tabColor: { argb: YELLOW } } })
+    ws.columns = [{ width: 10 }, { width: 9.125 }, { width: 10.125 }, { width: 77.125 }]
     const head = ws.addRow(['التاريخ', 'رقم الختم', 'المستخدم', 'التفاصيل'])
     head.height = 18
     head.eachCell((c, col) => {
-      c.font = { name: 'Arial', size: 14 }
+      c.font = { name: 'Arial', size: 14, color: ink }
+      c.fill = solid(HEAD)
       c.border = allSides(thin)
       if (col === 4) c.alignment = { horizontal: 'center' }
     })
     let n = 0
+    let shade = 0
     for (const b of byTech.get(id)!) {
+      const fill = solid(b.usageFill || (shade % 2 === 0 ? BLUE : ORANGE))
+      shade++
       for (const no of batchNumbers(data, b)) {
         const s = sealByNo.get(no)
         const mine = !!s && s.technicianId === id && s.status !== 'in_stock'
         const r = ws.addRow([mine ? asDate(s.usedOn) : null, no, mine ? stateWord(s) : '', mine ? s.details : ''])
         n++
         r.eachCell({ includeEmpty: true }, (c, col) => {
-          c.font = { name: 'Arial', size: 11 }
+          c.font = { name: 'Arial', size: 11, color: ink }
+          c.fill = fill
           c.border = allSides(thin)
           if (col === 1) c.numFmt = 'mm-dd-yy'
         })

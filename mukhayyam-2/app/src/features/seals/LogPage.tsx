@@ -9,8 +9,8 @@ import { useToast } from '../../ui/Toast'
 import { UseDialog } from './dialogs'
 import { downloadUsageLog } from './excel'
 import { hasQuery, noFilters, ordinalWord, searchSeals, totals, type GroupSort, type Seal, type SealData, type SearchFilters } from './model'
-import { dayLabel, SealPill, SealsTabs, StatusPill, TechNav } from './parts'
-import { refreshSeals, useSealData, useSealsLive } from './repo'
+import { dayLabel, SealPill, SealsLoading, SealsTabs, StatusPill, TechNav } from './parts'
+import { refreshSeals, useSealData, useSealsLive, useSealsReady } from './repo'
 
 const GROUP_LIMIT = 30
 const TABLE_LIMIT = 300
@@ -45,6 +45,7 @@ const sorts: Array<{ value: GroupSort; label: string }> = [
 export function SealLogPage() {
   useDocumentTitle('سجل الأختام')
   useSealsLive()
+  const ready = useSealsReady()
   const toast = useToast()
   const data = useSealData()
   const [query, setQuery] = useState('')
@@ -54,6 +55,7 @@ export function SealLogPage() {
   const [limit, setLimit] = useState(GROUP_LIMIT)
   const [dialog, setDialog] = useState<{ seal?: Seal } | null>(null)
   const [exporting, setExporting] = useState(false)
+  const [more, setMore] = useState(false)
   const input = useRef<HTMLInputElement>(null)
   const deferred = useDeferredValue(query)
 
@@ -92,7 +94,7 @@ export function SealLogPage() {
   }, [result, data, view, tableSort])
 
   if (isDemo) return <div className="empty card"><h3>الأختام تعمل على قاعدة البيانات الحقيقية</h3><p>هذه الصفحة غير متاحة في وضع التجربة.</p></div>
-  if (!data || !result) return <div className="loading-block" aria-busy="true" />
+  if (!ready || !data || !result) return <SealsLoading />
 
   const active = hasQuery(query, filters)
   const set = (patch: Partial<SearchFilters>) => setFilters((f) => ({ ...f, ...patch }))
@@ -169,17 +171,23 @@ export function SealLogPage() {
               <option value="">كل الفنيين</option>
               {techs.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
             </select>
-            <select className="select" aria-label="الرول" value={filters.rollId ?? ''} onChange={(e) => set({ rollId: e.target.value || null })}>
-              <option value="">كل الرولات</option>
-              {data.rolls.map((r) => <option key={r.id} value={r.id}>{r.fromNo} - {r.toNo}</option>)}
-            </select>
-            <Segmented<SearchFilters['period']> label="الفترة" value={filters.period} options={periods} onChange={(p) => set({ period: p })} />
             <span className="grow" />
-            <select className="select" aria-label="الفرز" value={sort} onChange={(e) => setSort(e.target.value as GroupSort)}>
-              {sorts.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-            </select>
-            <Segmented<View> label="طريقة العرض" value={view} options={views} onChange={setView} />
+            <Button variant="ghost" onClick={() => setMore((m) => !m)} aria-expanded={more}>{more ? 'إخفاء الخيارات' : 'خيارات أكثر'}</Button>
           </div>
+          {more && (
+            <div className="filters">
+              <select className="select" aria-label="الرول" value={filters.rollId ?? ''} onChange={(e) => set({ rollId: e.target.value || null })}>
+                <option value="">كل الرولات</option>
+                {data.rolls.map((r) => <option key={r.id} value={r.id}>{r.fromNo} - {r.toNo}</option>)}
+              </select>
+              <Segmented<SearchFilters['period']> label="الفترة" value={filters.period} options={periods} onChange={(p) => set({ period: p })} />
+              <span className="grow" />
+              <select className="select" aria-label="الفرز" value={sort} onChange={(e) => setSort(e.target.value as GroupSort)}>
+                {sorts.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+              </select>
+              <Segmented<View> label="طريقة العرض" value={view} options={views} onChange={setView} />
+            </div>
+          )}
           <div className="chips" role="group" aria-label="حالة الختم">
             {statuses.map((s) => <Chip key={s.label} pressed={filters.status === s.value} onClick={() => set({ status: s.value })}>{s.label}</Chip>)}
           </div>
@@ -206,7 +214,7 @@ export function SealLogPage() {
               {result.groups.slice(0, limit).map((g) => (
                 <article key={g.key} className="group-card card">
                   <div className="batch-head">
-                    <b>{g.batch ? `الدفعة ${ordinalWord(g.batch.batchNo)}` : 'في المخزن / تالف قبل الصرف'}</b>
+                    <b>{g.batch ? `الدفعة ${g.batch.label?.trim() || ordinalWord(g.batch.batchNo)}` : 'في المخزن / تالف قبل الصرف'}</b>
                     {g.technicianId && <span className="tech">{data.names.get(g.technicianId) ?? '—'}</span>}
                     <span className="muted num">{g.roll.fromNo}–{g.roll.toNo}</span>
                     <span className="grow" />

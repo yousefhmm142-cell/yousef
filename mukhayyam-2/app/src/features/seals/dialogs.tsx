@@ -7,7 +7,7 @@ import { Button } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
 import { addRoll, importRoll, importTechnician, importUsage, issueBatch, recordSeal, refreshSeals, returnToStock, sealErrorText, updateBatch, updateRoll, useTechnicians } from './repo'
 import { parseIssueWorkbook, parseUsageWorkbook, planImport, rollPayload, usagePayload, type ImportPlan } from './import'
-import { composeDetails, latinDigits, ordinalWord, parseSealNumbers, sealStatusInfo, splitDetails, WORK_CHOICES, type Seal, type SealBatch, type SealData, type SealRoll } from './model'
+import { composeDetails, latinDigits, ordinalWord, parseSealNumbers, sealStatusInfo, splitDetails, WORK_CHOICES, type Seal, type SealBatch, type SealData, type SealRoll, autoSeparate } from './model'
 import { dayLabel, SealPill } from './parts'
 
 // ---------- A new roll ----------
@@ -146,13 +146,13 @@ export function IssueDialog({ data, onClose, onDone, preset }: { data: SealData;
           <input type="date" className="input" max={todayISO()} value={date} onChange={(e) => setDate(e.target.value)} />
         </label>
         <label className="field">
-          <span className="label">أرقام الأختام: اكتبها أو الصقها، وحروف WK تُتجاهل</span>
+          <span className="label">أرقام الأختام: اكتبها ورا بعض والشرطة بتنزل لحالها بعد كل 6 أرقام (أو الصقها، وحروف WK تُتجاهل)</span>
           <textarea
             ref={area}
             className="seal-input"
             value={text}
-            placeholder="181365 181388 181355 ..."
-            onChange={(e) => setText(e.target.value)}
+            placeholder="181365-181388-181355 ..."
+            onChange={(e) => setText(autoSeparate(text, e.target.value, e.target.selectionStart === e.target.value.length))}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) void submit(false)
             }}
@@ -372,8 +372,8 @@ export function ImportDialog({ onClose }: { onClose(): void }) {
     try {
       const { default: ExcelJS } = await import('exceljs')
       const issue = await parseIssueWorkbook(ExcelJS, await issueFile.arrayBuffer())
-      const usage = usageFile ? await parseUsageWorkbook(ExcelJS, await usageFile.arrayBuffer()) : { rows: [], repeated: 0, order: {} as Record<string, number[]> }
-      setPlan(planImport(issue.rolls, usage.rows, issue.suspicious, usage.order))
+      const usage = usageFile ? await parseUsageWorkbook(ExcelJS, await usageFile.arrayBuffer()) : { rows: [], repeated: 0, order: {} as Record<string, number[]>, fills: {} as Record<string, string[]> }
+      setPlan(planImport(issue.rolls, usage.rows, issue.suspicious, usage.order, usage.fills))
     } catch {
       setError('تعذّرت قراءة الملف. تأكد أنه ملف Excel (xlsx) سليم.')
     }

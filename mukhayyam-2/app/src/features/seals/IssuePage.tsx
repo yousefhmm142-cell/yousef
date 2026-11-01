@@ -11,14 +11,15 @@ import { useConfirmTap } from '../sheets/useDraft'
 import { EditBatchDialog, EditRollDialog, ImportDialog, IssueDialog, NewRollDialog } from './dialogs'
 import { downloadIssueLog } from './excel'
 import { ordinalWord, rollStats, totals, type SealBatch, type SealData, type SealRoll } from './model'
-import { dayLabel, SealPill, SealsTabs, StackBar, TechNav } from './parts'
-import { deleteBatch, deleteRoll, refreshSeals, sealErrorText, useSealData, useSealsLive } from './repo'
+import { dayLabel, SealPill, SealsLoading, SealsTabs, StackBar, TechNav } from './parts'
+import { deleteBatch, deleteRoll, refreshSeals, sealErrorText, useSealData, useSealsLive, useSealsReady } from './repo'
 import { SealSlips } from './SealSlips'
 
 /** Page 1: the rolls and their balance, and handing batches of seals to technicians. */
 export function SealIssuePage() {
   useDocumentTitle('صرف الأختام')
   useSealsLive()
+  const ready = useSealsReady()
   const me = useEmployee()
   const toast = useToast()
   const data = useSealData()
@@ -38,7 +39,7 @@ export function SealIssuePage() {
   }, [data?.batches, tech])
 
   if (isDemo) return <div className="empty card"><h3>الأختام تعمل على قاعدة البيانات الحقيقية</h3><p>هذه الصفحة غير متاحة في وضع التجربة.</p></div>
-  if (!data) return <div className="loading-block" aria-busy="true" />
+  if (!ready || !data) return <SealsLoading />
 
   async function exportExcel() {
     if (!data) return

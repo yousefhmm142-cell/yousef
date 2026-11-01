@@ -15,6 +15,7 @@ export interface ParsedBatch {
   ord: number
   /** Where its first seal sits on the technician's sheet of the usage file. */
   usageOrd?: number | null
+  usageFill?: string | null
 }
 export interface ParsedRoll {
   from: number
@@ -25,6 +26,8 @@ export interface ParsedRoll {
   sheetLabel: string
   sheetPos: number
   sheetCol: number
+  sheetWidth: number | null
+  sheetTab: string | null
   batches: ParsedBatch[]
   damaged: number[]
 }
@@ -41,6 +44,8 @@ export interface UsageParse {
   repeated: number
   /** The seal numbers of each sheet in the order written (blank state too). */
   order: Record<string, number[]>
+  /** The cell colour (ARGB) of each of those lines. */
+  fills: Record<string, string[]>
 }
 
 type Cell = ExcelJSType.CellValue
@@ -56,6 +61,14 @@ export function cellText(v: Cell): string {
     return ''
   }
   return String(v)
+}
+
+/** The colour a cell is filled with, as ARGB (her files use the Office palette). */
+export function fillOf(c: ExcelJSType.Cell): string {
+  const g = (c.fill as { fgColor?: { argb?: string; theme?: number } } | undefined)?.fgColor
+  if (!g) return ''
+  if (g.argb) return g.argb.toUpperCase()
+  return g.theme === 4 ? 'FFDEEBF7' : g.theme === 5 ? 'FFFBE5D6' : g.theme === 3 ? 'FFADB9CA' : ''
 }
 
 /** A date cell, or text like 30/7/2026 (day first), as 2026-07-30. */
@@ -108,6 +121,8 @@ export async function parseIssueWorkbook(ExcelJS: typeof ExcelJSType, data: Arra
     sheet: string
     pos: number
     col: number
+    width: number | null
+    tab: string | null
     batches: ParsedBatch[]
     damaged: number[]
   }
@@ -124,7 +139,7 @@ export async function parseIssueWorkbook(ExcelJS: typeof ExcelJSType, data: Arra
       const iBatch = cells.indexOf('الدفعه')
       if (iDate > 0 && iBatch > 0) {
         const iTech = cells.indexOf('المستلم')
-        cur = { header: cells.slice(iTech + 1).join(' '), sheet: ws.name.trim(), pos: pos++, col: iDate, cols: { date: iDate, tech: iTech, seals: iTech + 1 }, batches: [], damaged: [] }
+        cur = { header: cells.slice(iTech + 1).join(' '), sheet: ws.name.trim(), pos: pos++, col: iDate, width: ws.getColumn(iTech + 1).width ?? null, tab: (ws.properties.tabColor as { argb?: string } | undefined)?.argb ?? null, cols: { date: iDate, tech: iTech, seals: iTech + 1 }, batches: [], damaged: [] }
         blocks.push(cur)
         return
       }
@@ -153,7 +168,7 @@ export async function parseIssueWorkbook(ExcelJS: typeof ExcelJSType, data: Arra
   const rolls = new Map<number, ParsedRoll>()
   const rollFor = (from: number, blk: Block | null): ParsedRoll => {
     let r = rolls.get(from)
-    if (!r) rolls.set(from, (r = { from, to: from + 99, receivedOn: blk ? receivedOf(blk.header) : '', headerText: blk?.header ?? '', sheetLabel: blk?.sheet ?? '', sheetPos: blk?.pos ?? 0, sheetCol: blk?.col ?? 1, batches: [], damaged: [] }))
+    if (!r) rolls.set(from, (r = { from, to: from + 99, receivedOn: blk ? receivedOf(blk.header) : '', headerText: blk?.header ?? '', sheetLabel: blk?.sheet ?? '', sheetPos: blk?.pos ?? 0, sheetCol: blk?.col ?? 1, sheetWidth: blk?.width ?? null, sheetTab: blk?.tab ?? null, batches: [], damaged: [] }))
     return r
   }
   const own = new Map<Block, number>()
@@ -199,6 +214,7 @@ export async function parseUsageWorkbook(ExcelJS: typeof ExcelJSType, data: Arra
   const bySeal = new Map<number, ParsedUsage>()
   let repeated = 0
   const order: Record<string, number[]> = {}
+  const fills: Record<string, string[]> = {}
   for (const ws of wb.worksheets) {
     let cols: { date: number; no: number; state: number; details: number } | null = null
     ws.eachRow({ includeEmpty: false }, (row) => {
@@ -211,7 +227,8 @@ export async function parseUsageWorkbook(ExcelJS: typeof ExcelJSType, data: Arra
       }
       const seal = parseSealNumbers(cells[cols.no] ?? '').numbers[0]
       if (!seal) return
-      ;(order[ws.name.trim()] ??= []).push(seal)
+      (order[ws.name.trim()] ??= []).push(seal)
+      ;(fills[ws.name.trim()] ??= []).push(fillOf(row.getCell(cols.no)))
       const details = cols.details > 0 ? (cells[cols.details] ?? '') : ''
       const status = statusOf(cols.state > 0 ? cells[cols.state] ?? '' : '') ?? (details ? 'used' : null)
       if (!status) return
@@ -220,7 +237,7 @@ export async function parseUsageWorkbook(ExcelJS: typeof ExcelJSType, data: Arra
       bySeal.set(seal, row2)
     })
   }
-  return { rows: [...bySeal.values()], repeated, order }
+  return { rows: [...bySeal.values()], repeated, order, fills }
 }
 
 // ---------- Putting the two together ----------
@@ -280,7 +297,7 @@ export function sheetOf(tech: string, sheets: string[]): string | null {
   return same.length === 1 ? same[0]! : null
 }
 
-export function planImport(parsed: ParsedRoll[], usage: ParsedUsage[], suspicious: Suspicious[] = [], order: Record<string, number[]> = {}): ImportPlan {
+export function planImport(parsed: ParsedRoll[], usage: ParsedUsage[], suspicious: Suspicious[] = [], order: Record<string, number[]> = {}, fills: Record<string, string[]> = {}): ImportPlan {
   const rolls = parsed.map((r) => ({ ...r, batches: r.batches.map((b) => ({ ...b, seals: [...b.seals] })) }))
   const listed = new Set(rolls.flatMap((r) => r.batches.flatMap((b) => b.seals)))
   const fixed: ImportPlan['fixed'] = []
@@ -302,6 +319,7 @@ export function planImport(parsed: ParsedRoll[], usage: ParsedUsage[], suspiciou
       const sheet = sheetOf(b.tech, sheetNames)
       const at = sheet ? order[sheet]!.indexOf(b.seals[0]!) : -1
       b.usageOrd = at >= 0 ? at : null
+      b.usageFill = at >= 0 ? fills[sheet!]?.[at] || null : null
     }
   const ordered = dependencyOrder(rolls)
   const inRolls = (n: number) => rolls.some((r) => n >= r.from && n <= r.to)
@@ -332,7 +350,9 @@ export function rollPayload(r: ParsedRoll, techId: (name: string) => string) {
     sheet_label: r.sheetLabel,
     sheet_pos: r.sheetPos,
     sheet_col: r.sheetCol,
-    batches: r.batches.map((b) => ({ date: b.date || r.receivedOn, tech: techId(b.tech), seals: b.seals, label: b.label, block_from: b.blockFrom === r.from ? null : b.blockFrom, ord: b.ord, usage_ord: b.usageOrd ?? null })),
+    sheet_width: r.sheetWidth,
+    sheet_tab: r.sheetTab,
+    batches: r.batches.map((b) => ({ date: b.date || r.receivedOn, tech: techId(b.tech), seals: b.seals, label: b.label, block_from: b.blockFrom === r.from ? null : b.blockFrom, ord: b.ord, usage_ord: b.usageOrd ?? null, fill: b.usageFill ?? null })),
     damaged: r.damaged,
   }
 }

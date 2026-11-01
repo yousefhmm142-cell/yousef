@@ -18,6 +18,10 @@ export interface SealRoll {
   sheetPos: number | null
   /** The column (1 = A) the block starts at on its sheet; blank means A. */
   sheetCol: number | null
+  /** Width of the numbers column on her sheet. */
+  sheetWidth: number | null
+  /** Colour of the sheet's tab as ARGB. */
+  sheetTab: string | null
 }
 
 export interface SealBatch {
@@ -35,6 +39,8 @@ export interface SealBatch {
   label: string | null
   /** Imported lines: the place of its first seal on the technician's usage sheet. */
   usageOrd: number | null
+  /** Imported lines: the colour (ARGB) its lines have on the usage sheet. */
+  usageFill: string | null
 }
 
 export interface Seal {
@@ -109,6 +115,16 @@ export interface UseDetails {
   subscriber: string
 }
 
+/**
+ * While typing seal numbers: when the sixth digit of a number is typed, put the dash after it, so the
+ * next number can be typed straight away. Only when a single character was typed at the end.
+ */
+export function autoSeparate(prev: string, next: string, caretAtEnd = true): string {
+  if (!caretAtEnd || next.length !== prev.length + 1 || !next.startsWith(prev)) return next
+  const run = /(\d+)$/.exec(next)?.[1]
+  return run && run.length === 6 ? `${next}-` : next
+}
+
 /** «طبلون 361 إعادة شبك (حمزة الداية)», the way her Excel sheet reads. */
 export function composeDetails({ board, work, subscriber }: UseDetails): string {
   return [board.trim() ? `طبلون ${board.trim()}` : '', work.trim(), subscriber.trim() ? `(${subscriber.trim()})` : ''].filter(Boolean).join(' ')
@@ -122,8 +138,15 @@ export function splitDetails(details: string, boardNo: string): UseDetails {
   if (sub) rest = rest.slice(0, sub.index).trim()
   let board = boardNo
   if (board) {
-    const m = new RegExp(`^طبلون(?:ات)?\\s*(?:رقم\\s*)?${board.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*`).exec(rest)
-    if (m) rest = rest.slice(m[0].length).trim()
+    // «طبلون أبو هويشل 10 فصل»: take the word «طبلون» and then the words of the name, ignoring brackets and spaces.
+    let r = rest.replace(/^طبلون(?:ات)?\s*(?:رقم\s*)?/, '')
+    let ok = r !== rest
+    for (const w of board.split(/\s+/)) {
+      const m = new RegExp(`^[\\s()]*${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\s()]*`).exec(r)
+      if (!m) { ok = false; break }
+      r = r.slice(m[0].length)
+    }
+    if (ok && r !== rest) rest = r.replace(/^[\s()]+/, '').trim()
     else board = ''
   }
   return { board, work: rest, subscriber }
