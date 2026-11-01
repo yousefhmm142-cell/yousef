@@ -24,6 +24,7 @@ import { router } from './app/router'
 import { AuthProvider } from './auth/AuthProvider'
 import { ToastProvider } from './ui/Toast'
 import { isDemo } from './config'
+import { startUpdateChecks } from './app/update'
 
 // A page left open across an update may ask for a screen file that the new version replaced:
 // load the new version instead of showing an error (at most once a minute, so it never loops).
@@ -55,6 +56,9 @@ registerSW({
     document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && check())
   },
 })
+
+// A newer site is taken on the next open or refresh, with «جاري تحديث الموقع…» while it loads.
+startUpdateChecks()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
