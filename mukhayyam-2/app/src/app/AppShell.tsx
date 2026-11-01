@@ -1,4 +1,4 @@
-import { Ellipsis, UserRound } from 'lucide-react'
+import { Ellipsis, Settings, UserRound } from 'lucide-react'
 import { Link, NavLink, Outlet } from 'react-router'
 import { useEmployee } from '../auth/AuthProvider'
 import { titleOf } from '../types'
@@ -8,8 +8,8 @@ import { navFor, type NavItem } from './nav'
 
 const MAX_TABS = 5
 const accountTab: NavItem = { to: '/account', label: 'حسابي', icon: UserRound }
-/** Reports and settings are symbols only; their name shows while the page is open. */
-const compactLinks = new Set(['/reports', '/settings'])
+/** Reports is a symbol only; its name shows while the page is open. Settings is the big gear at the end of the bar. */
+const compactLinks = new Set(['/reports'])
 const moreTab: NavItem = { to: '/more', label: 'المزيد', icon: Ellipsis }
 
 export function AppShell() {
@@ -18,9 +18,13 @@ export function AppShell() {
   // Phones: up to five tabs; the rest sit behind «المزيد».
   const tabs = items.length < MAX_TABS ? [...items, accountTab] : [...items.slice(0, MAX_TABS - 1), moreTab]
 
+  const hasSettings = items.some((i) => i.to === '/settings')
+  const barItems = items.filter((i) => i.to !== '/settings')
+
   return (
     <div className="shell">
       <a href="#main" className="skip">تخطَّ إلى المحتوى</a>
+      <div className="topbar-row">
       <header className="topbar glass">
         <Link to="/" className="app-brand" aria-label="الرئيسية">
           <Logo height={38} />
@@ -30,9 +34,9 @@ export function AppShell() {
           </span>
         </Link>
 
-        {items.length > 1 && (
+        {barItems.length > 1 && (
           <nav className="topnav" aria-label="الأقسام">
-            {items.map(({ to, label, icon: Icon }) => (
+            {barItems.map(({ to, label, icon: Icon }) => (
               <NavLink key={to} to={to} end={to === "/"} className={compactLinks.has(to) ? 'topnav-link compact' : 'topnav-link'} title={compactLinks.has(to) ? label : undefined}>
                 <Icon size={17} aria-hidden="true" />
                 <span>{label}</span>
@@ -43,7 +47,11 @@ export function AppShell() {
 
         <div className="topbar-end">
           <SyncStatus />
-          <ThemeToggle />
+          {hasSettings && (
+            <NavLink to="/settings" className="settings-btn" aria-label="الإعدادات" title="الإعدادات">
+              <Settings size={24} aria-hidden="true" />
+            </NavLink>
+          )}
           <NavLink to="/account" className="me" aria-label={`حسابي: ${employee.fullName}`}>
             <Avatar name={employee.fullName} />
             <span className="me-text">
@@ -53,6 +61,8 @@ export function AppShell() {
           </NavLink>
         </div>
       </header>
+      <ThemeToggle />
+      </div>
 
       <main className="page" id="main">
         <Outlet />
