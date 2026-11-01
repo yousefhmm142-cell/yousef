@@ -324,6 +324,7 @@ interface EmployeeRow {
   wa_code?: 970 | 972
   can_seals?: boolean
   pages?: string[] | null
+  deleted_at?: string | null
   seals_sheet?: string | null
 }
 interface ListRow { id: number; name: string; is_active: boolean; sort_order: number }
@@ -357,6 +358,7 @@ export async function pullReference(): Promise<void> {
       waCode: r.wa_code ?? 972,
       canSeals: r.can_seals ?? false,
       pages: r.pages ?? [],
+      deletedAt: r.deleted_at ?? null,
       sealsSheet: r.seals_sheet ?? null,
     })),
   )

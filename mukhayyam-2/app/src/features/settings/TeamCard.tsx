@@ -1,9 +1,9 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Copy, KeyRound, MessageCircle, Pencil, Plus, Users } from 'lucide-react'
+import { Copy, KeyRound, MessageCircle, Pencil, Plus, RotateCcw, Trash2, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useEmployee } from '../../auth/AuthProvider'
 import { isDemo } from '../../config'
-import { byRoleThenName, saveEmployee } from '../../data/admin'
+import { byRoleThenName, deleteEmployee, restoreEmployee, saveEmployee } from '../../data/admin'
 import { codeHolders, setAttendance as saveAttendance } from '../attendance/repo'
 import { db } from '../../data/db'
 import { formatPhone, isValidPhone, normalizePhone, toLatinDigits } from '../../lib/phone'
@@ -33,6 +33,8 @@ const errorText: Record<string, string> = {
   not_allowed: 'هذه الخطوة لمسؤول النظام فقط.',
   offline: 'إضافة الموظفين تحتاج إنترنت. اتصل وحاول مرة أخرى.',
   missing: 'لم يعد هذا الموظف موجوداً. حدّث الصفحة.',
+  self: 'لا تستطيع حذف نفسك.',
+  protected: 'لا يمكن حذف المدير أو مسؤول النظام.',
 }
 
 /** Only the manager, the admin and the site sign in; technicians get orders by message, staff use the office QR. */
@@ -43,7 +45,15 @@ const randomCode = () => String(crypto.getRandomValues(new Uint32Array(1))[0]! %
 
 /** Everyone on the team, their phone, and whether they can sign in. */
 export function TeamCard() {
-  const people = useLiveQuery(async () => (await db.employees.toArray()).sort(byRoleThenName), [])
+  const me = useEmployee()
+  const toast = useToast()
+  const all = useLiveQuery(async () => (await db.employees.toArray()).sort(byRoleThenName), [])
+  const people = all?.filter((e) => !e.deletedAt)
+  const trashed = all?.filter((e) => e.deletedAt) ?? []
+  // Only the branch manager deletes people.
+  const canDelete = me.role === 'manager'
+  const [toDelete, setToDelete] = useState<Employee | null>(null)
+  const [trashOpen, setTrashOpen] = useState(false)
   const [editing, setEditing] = useState<Employee | 'new' | null>(null)
   const [holders, setHolders] = useState<Set<string>>(new Set())
   useEffect(() => {
@@ -86,9 +96,81 @@ export function TeamCard() {
               <button type="button" className="icon-btn" aria-label={`تعديل ${e.fullName}`} onClick={() => setEditing(e)}>
                 <Pencil size={16} />
               </button>
+              {canDelete && !isManagerRole(e.role) && (
+                <button type="button" className="icon-btn danger-btn" aria-label={`حذف ${e.fullName}`} title="حذف" onClick={() => setToDelete(e)}>
+                  <Trash2 size={16} />
+                </button>
+              )}
             </li>
           ))}
         </ul>
+      )}
+      {canDelete && (
+        <div className="trash">
+          <button type="button" className="link-btn" aria-expanded={trashOpen} onClick={() => setTrashOpen((v) => !v)}>
+            <Trash2 size={15} aria-hidden="true" /> سلة المهملات{trashed.length ? ` (${trashed.length})` : ''}
+          </button>
+          {trashOpen &&
+            (trashed.length === 0 ? (
+              <p className="card-empty">السلة فاضية. الموظف المحذوف يظهر هنا ويمكنك إرجاعه.</p>
+            ) : (
+              <ul className="gen-list team-admin">
+                {trashed.map((e) => (
+                  <li key={e.id} data-off>
+                    <Avatar name={e.fullName} size={34} />
+                    <span className="gen-main">
+                      <b>{e.fullName}</b>
+                      <small>{titleOf(e)} · حُذف {e.deletedAt ? new Date(e.deletedAt).toLocaleDateString('ar-EG', { day: 'numeric', month: 'long' }) : ''}</small>
+                    </span>
+                    <Button
+                      variant="secondary"
+                      icon={<RotateCcw size={15} />}
+                      onClick={() =>
+                        void restoreEmployee(e.id).then(
+                          () => toast(`رجع ${e.fullName}`),
+                          () => toast('تعذّر الإرجاع. حاول مرة أخرى.', 'danger'),
+                        )
+                      }
+                    >
+                      إرجاع
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            ))}
+        </div>
+      )}
+      {toDelete && (
+        <Dialog
+          open
+          onClose={() => setToDelete(null)}
+          title={`حذف ${toDelete.fullName}؟`}
+          footer={
+            <>
+              <Button variant="ghost" onClick={() => setToDelete(null)}>إلغاء</Button>
+              <Button
+                variant="primary"
+                icon={<Trash2 size={16} />}
+                onClick={() =>
+                  void deleteEmployee(toDelete.id).then(
+                    () => {
+                      toast(`حُذف ${toDelete.fullName}، وهو في سلة المهملات`)
+                      setToDelete(null)
+                    },
+                    (err) => {
+                      toast(errorText[err instanceof SheetStateError ? err.message : ''] ?? 'تعذّر الحذف. حاول مرة أخرى.', 'danger')
+                      setToDelete(null)
+                    },
+                  )
+                }
+              >
+                حذف
+              </Button>
+            </>
+          }
+        >
+          <p>يختفي من كل القوائم ولا يستطيع الدخول. كل ما سجّله سابقاً يبقى محفوظاً، وتقدر ترجعه من «سلة المهملات».</p>
+        </Dialog>
       )}
       {editing && <EmployeeDialog person={editing === 'new' ? null : editing} hasCode={editing !== 'new' && holders.has(editing.id)} onClose={() => setEditing(null)} />}
     </section>

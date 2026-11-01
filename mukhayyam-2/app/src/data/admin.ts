@@ -22,10 +22,12 @@ export type AdminErrorCode =
   | 'pin_needed'
   | 'last_admin'
   | 'not_allowed'
+  | 'self'
+  | 'protected'
   | 'already_set_up'
   | 'unknown'
 
-const KNOWN: AdminErrorCode[] = ['bad_name', 'bad_phone', 'bad_pin', 'phone_taken', 'pin_needed', 'missing', 'last_admin', 'not_allowed', 'already_set_up']
+const KNOWN: AdminErrorCode[] = ['bad_name', 'bad_phone', 'bad_pin', 'phone_taken', 'pin_needed', 'missing', 'last_admin', 'not_allowed', 'already_set_up', 'self', 'protected']
 
 function fail(code: AdminErrorCode): never {
   throw new SheetStateError(code)
@@ -204,6 +206,27 @@ export async function setSealsAccess(id: string, value: boolean): Promise<void> 
   }
   const sb = online()
   const res = await sb.rpc('admin_set_seals_access', { p_id: id, p_value: value })
+  if (res.error) failFrom(res.error, res.status)
+  await refresh()
+}
+
+/** The branch manager deletes a person: they leave the lists and wait in the trash. */
+export async function deleteEmployee(id: string): Promise<void> {
+  if (isDemo) {
+    await db.employees.update(id, { deletedAt: new Date().toISOString(), isActive: false })
+    return
+  }
+  const res = await online().rpc('admin_delete_employee', { p_id: id })
+  if (res.error) failFrom(res.error, res.status)
+  await refresh()
+}
+
+export async function restoreEmployee(id: string): Promise<void> {
+  if (isDemo) {
+    await db.employees.update(id, { deletedAt: null, isActive: true })
+    return
+  }
+  const res = await online().rpc('admin_restore_employee', { p_id: id })
   if (res.error) failFrom(res.error, res.status)
   await refresh()
 }

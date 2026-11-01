@@ -401,4 +401,20 @@ reset role; select test.login('مشغّل الموقع'); set role authenticated
 select test.ok((select count(*) from public.tasks) = 0 and not public.has_page('tasks'), 'someone without the page sees no tasks');
 reset role;
 
+-- ---------- Deleting a person (branch manager only) ----------
+reset role; select test.login('مشغّل الموقع'); set role authenticated;
+select test.fails($$select public.admin_delete_employee((select id from public.employees where full_name = 'موظف إداري'))$$, '%not_allowed%', 'the site cannot delete people');
+reset role; select test.login('مسؤول النظام'); set role authenticated;
+select test.fails($$select public.admin_delete_employee((select id from public.employees where full_name = 'موظف إداري'))$$, '%not_allowed%', 'the admin cannot delete people either');
+reset role; select test.login('رامي أبو عجوة'); set role authenticated;
+select test.fails($$select public.admin_delete_employee(public.current_employee_id())$$, '%self%', 'nobody deletes themselves');
+select test.fails($$select public.admin_delete_employee((select id from public.employees where full_name = 'مسؤول النظام'))$$, '%protected%', 'the admin cannot be deleted');
+select public.admin_delete_employee((select id from public.employees where full_name = 'موظف إداري'));
+reset role;
+select test.ok((select deleted_at is not null and not is_active from public.employees where full_name = 'موظف إداري'), 'a deleted person is out and waits in the trash');
+select test.login('رامي أبو عجوة'); set role authenticated;
+select public.admin_restore_employee((select id from public.employees where full_name = 'موظف إداري'));
+reset role;
+select test.ok((select deleted_at is null and is_active from public.employees where full_name = 'موظف إداري'), 'the trash gives them back');
+
 \echo 'ALL CHECKS PASSED'

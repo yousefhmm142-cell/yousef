@@ -27,6 +27,8 @@ export interface Employee {
   pages?: string[]
   /** The name of this technician's sheet in the seals usage file. */
   sealsSheet?: string | null
+  /** Deleted by the branch manager: out of every list, waiting in the trash. */
+  deletedAt?: string | null
 }
 
 /** The seals pages: managers, and anyone the admin gave the permission. */

@@ -115,7 +115,10 @@
   .topbar .sync-label { display: none; }
 }
 
-/* The big settings gear, where the night-mode button used to be. */
-.settings-btn { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; flex: none; color: var(--brand); border: 1.5px solid color-mix(in srgb, var(--brand) 30%, transparent); background: color-mix(in srgb, var(--brand) 10%, transparent); transition: background .15s, transform .15s; }
-.settings-btn:hover { background: color-mix(in srgb, var(--brand) 34%, transparent); transform: rotate(40deg); }
-.settings-btn.active { background: color-mix(in srgb, var(--brand) 34%, transparent); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--brand) 38%, transparent); }
+/* The big settings gear: a round button like the others, the system colour on hover and while open. */
+.settings-btn { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; flex: none; color: var(--ink-2); border: 1px solid var(--line); background: var(--surface); transition: background .15s, color .15s, transform .15s; }
+:root[data-theme='dark'] .settings-btn { background: var(--glass); border-color: var(--glass-edge); }
+.settings-btn:hover { color: var(--brand); background: color-mix(in srgb, var(--brand) 34%, transparent); transform: rotate(40deg); }
+.settings-btn.active { color: var(--brand); background: color-mix(in srgb, var(--brand) 34%, transparent); border-color: color-mix(in srgb, var(--brand) 38%, transparent); }
+.danger-btn:hover { color: var(--danger); }
+.trash { padding: 6px 18px 16px; display: grid; gap: 10px; }
