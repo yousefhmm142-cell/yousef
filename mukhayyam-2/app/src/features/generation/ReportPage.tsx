@@ -1,6 +1,6 @@
-import { Zap } from 'lucide-react'
+import { PencilLine, Zap } from 'lucide-react'
 import { useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 import { useEmployee } from '../../auth/AuthProvider'
 import { useLiveSheets } from '../../data/sync'
 import { addDays, describeDay, isISODate, type ISODate } from '../../lib/dates'
@@ -33,6 +33,8 @@ function ReportForDay({ date }: { date: ISODate }) {
   // Still being filled (or not started yet today): follow it live.
   useLiveSheets(date >= addDays(today, -1) && (report === null || (report !== undefined && isEditableStatus(report.status))))
   const ctx = useReportContext(report)
+  // The manager fills the day's report too: open (or continue) it for the day being viewed.
+  const canFill = report !== undefined && date <= today && (report === null || isEditableStatus(report.status))
   useDocumentTitle(`تقرير التوليد · ${describeDay(date).weekday}`)
 
   return (
@@ -42,7 +44,14 @@ function ReportForDay({ date }: { date: ISODate }) {
           <div className="eyebrow"><Zap size={14} /> التوليد · التقرير اليومي</div>
           <h1>تقرير موقع التوليد</h1>
         </div>
-        <DateNav date={date} onChange={(d) => navigate(`/generation/${d}`)} />
+        <div className="ph-actions">
+          {canFill && (
+            <Link to={`/entry/${date}`} className="btn primary fill-btn">
+              <PencilLine size={17} /> {report ? 'متابعة تعبئة التقرير' : 'تعبئة التقرير'}
+            </Link>
+          )}
+          <DateNav date={date} onChange={(d) => navigate(`/generation/${d}`)} />
+        </div>
       </header>
 
       {report === undefined || !ctx.ready ? (

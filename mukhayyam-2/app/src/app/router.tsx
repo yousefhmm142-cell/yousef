@@ -64,13 +64,13 @@ export const router = createBrowserRouter([
           { index: true, element: <Home /> },
           { path: 'generation', element: <RoleGate roles={[...managers, ...site]}><GenerationIndex /></RoleGate> },
           { path: 'generation/:date', element: <RoleGate roles={[...managers, ...site]}><ReportPage /></RoleGate> },
-          { path: 'entry/:date', element: <RoleGate roles={site}><EntryPage /></RoleGate> },
+          { path: 'entry/:date', element: <RoleGate roles={[...managers, ...site]}><EntryPage /></RoleGate> },
           { path: 'distribution', element: <RoleGate roles={[...managers, ...site]}><DistributionIndex /></RoleGate> },
           { path: 'distribution/:date', element: <RoleGate roles={[...managers, ...site]}><SheetPage /></RoleGate> },
-          { path: 'sheet', element: <RoleGate roles={site}><DistributionEntryPage /></RoleGate> },
-          { path: 'sheet/:date', element: <RoleGate roles={site}><DistributionEntryPage /></RoleGate> },
+          { path: 'sheet', element: <RoleGate roles={[...managers, ...site]}><DistributionEntryPage /></RoleGate> },
+          { path: 'sheet/:date', element: <RoleGate roles={[...managers, ...site]}><DistributionEntryPage /></RoleGate> },
           // Older links.
-          { path: 'distribution/entry/:date', element: <RoleGate roles={site}><DistributionEntryPage /></RoleGate> },
+          { path: 'distribution/entry/:date', element: <RoleGate roles={[...managers, ...site]}><DistributionEntryPage /></RoleGate> },
           { path: 'history', element: <RoleGate roles={site}><SiteHistoryPage /></RoleGate> },
           { path: 'tasks', element: <RoleGate roles={managers}><Lazy><TasksPage /></Lazy></RoleGate> },
           {

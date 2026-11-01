@@ -31,12 +31,21 @@
 .form-grid { display: grid; gap: 16px; }
 
 /* ---------- Segmented choice (A / kW, bar / psi) ---------- */
-.segmented { display: inline-flex; gap: 3px; padding: 3px; border-radius: 999px; background: var(--sunken); border: 1px solid var(--line-2); flex: none; }
-.segmented button {
-  border: 0; background: transparent; padding: 6px 14px; border-radius: 999px; min-height: 34px;
-  font-size: 13px; font-weight: 700; color: var(--muted); transition: background .15s, color .15s;
+.segmented {
+  display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px; flex: none;
+  background: var(--sunken); border: 1.5px solid var(--line);
 }
-.segmented button[aria-checked='true'] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+.segmented button {
+  border: 0; background: transparent; padding: 8px 20px; border-radius: 999px; min-height: 40px;
+  font-size: 15px; font-weight: 700; color: var(--ink-2); cursor: pointer; transition: background .15s, color .15s, box-shadow .15s;
+}
+.segmented button:hover:not([aria-checked='true']) { background: color-mix(in srgb, var(--brand) 12%, transparent); color: var(--brand); }
+.segmented button:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--brand-soft); }
+/* The chosen one is filled with the system colour, so it is clear at a glance where you are. */
+.segmented button[aria-checked='true'] {
+  background: linear-gradient(160deg, var(--brand-hi), var(--brand)); color: var(--on-brand, #fff); font-weight: 800;
+  box-shadow: 0 6px 14px -8px var(--brand);
+}
 
 /* ---------- Chips ---------- */
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }

@@ -327,3 +327,8 @@
 .run-total span svg { color: var(--brand); }
 .run-total small { font-size: 11.5px; font-weight: 400; color: var(--muted); }
 .run-total b { font-size: 18px; font-weight: 800; }
+
+/* The manager's "fill this day" button, beside the day picker. */
+.fill-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 20px; border-radius: 999px; font-weight: 800; text-decoration: none; }
+.ph .ph-actions { align-items: center; }
+@media (max-width: 700px) { .ph .ph-actions { width: 100%; } .ph .ph-actions .fill-btn { width: 100%; justify-content: center; } .ph .ph-actions .datenav { width: 100%; } }

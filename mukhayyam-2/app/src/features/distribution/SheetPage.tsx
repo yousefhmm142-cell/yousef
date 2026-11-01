@@ -1,6 +1,6 @@
-import { LayoutGrid } from 'lucide-react'
+import { LayoutGrid, PencilLine } from 'lucide-react'
 import { useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 import { useEmployee } from '../../auth/AuthProvider'
 import { useLiveSheets } from '../../data/sync'
 import { addDays, describeDay, isISODate, type ISODate } from '../../lib/dates'
@@ -33,6 +33,8 @@ function SheetForDay({ date }: { date: ISODate }) {
   // Still being filled (or not started yet today): follow it live.
   useLiveSheets(date >= addDays(today, -1) && (sheet === null || (sheet !== undefined && isEditableStatus(sheet.status))))
   const ctx = useSheetContext(sheet)
+  // The manager fills the day's sheet too: open (or continue) it for the day being viewed.
+  const canFill = sheet !== undefined && date <= today && (sheet === null || isEditableStatus(sheet.status))
   useDocumentTitle(`كشف التوزيع · ${describeDay(date).weekday}`)
 
   return (
@@ -42,7 +44,14 @@ function SheetForDay({ date }: { date: ISODate }) {
           <div className="eyebrow"><LayoutGrid size={14} /> التوزيع · الكشف اليومي</div>
           <h1>كشف التوزيع والأحمال</h1>
         </div>
-        <DateNav date={date} onChange={(d) => navigate(`/distribution/${d}`)} />
+        <div className="ph-actions">
+          {canFill && (
+            <Link to={`/sheet/${date}`} className="btn primary fill-btn">
+              <PencilLine size={17} /> {sheet ? 'متابعة تعبئة الكشف' : 'تعبئة الكشف'}
+            </Link>
+          )}
+          <DateNav date={date} onChange={(d) => navigate(`/distribution/${d}`)} />
+        </div>
       </header>
 
       {sheet === undefined || !ctx.ready ? (

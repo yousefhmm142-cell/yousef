@@ -53,7 +53,7 @@ const KINDS: KindSpec[] = [
     header: 'site_reports',
     dateCol: 'report_date',
     dateIndex: 'reportDate',
-    fillers: SITE_ROLES,
+    fillers: ['admin', 'manager', ...SITE_ROLES],
     readers: ['admin', 'manager', ...SITE_ROLES],
     table: db.siteReports as unknown as Table<SheetDoc, string>,
     select: REPORT_SELECT,
@@ -66,7 +66,7 @@ const KINDS: KindSpec[] = [
     header: 'distribution_sheets',
     dateCol: 'sheet_date',
     dateIndex: 'sheetDate',
-    fillers: SITE_ROLES,
+    fillers: ['admin', 'manager', ...SITE_ROLES],
     readers: ['admin', 'manager', ...SITE_ROLES],
     table: db.distributionSheets as unknown as Table<SheetDoc, string>,
     select: SHEET_SELECT,
@@ -223,7 +223,12 @@ async function pushSheet(spec: KindSpec, doc: SheetDoc, me: Employee): Promise<v
   const { id, ...fields } = header
   const remoteStatus = remote?.status ?? null
 
-  if (filler) {
+  // A manager both fills sheets and acts on them: approving or reopening a sent sheet is not filling.
+  const managerAct =
+    isManagerRole(me.role) &&
+    ((remoteStatus === 'submitted' && (current.status === 'approved' || current.status === 'returned')) || (remoteStatus === 'approved' && current.status === 'returned'))
+
+  if (filler && !managerAct) {
     if (remoteStatus && !isEditableStatus(remoteStatus)) {
       // Already sent or approved on the server: the server's copy is the true one.
       return takeServerCopy(spec, current.id, current.id)
@@ -243,7 +248,7 @@ async function pushSheet(spec: KindSpec, doc: SheetDoc, me: Employee): Promise<v
           .eq('id', id),
       )
     }
-  } else if ((remoteStatus === 'submitted' && (current.status === 'approved' || current.status === 'returned')) || (remoteStatus === 'approved' && current.status === 'returned')) {
+  } else if (managerAct) {
     await run(
       sb
         .from(spec.header)

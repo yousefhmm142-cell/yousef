@@ -105,10 +105,6 @@ export function TasksPage() {
   const person = (id: string) => technicians.find((e) => e.id === id)
   const openTask = all.find((t) => t.id === openId) ?? null
   const people = useLiveQuery(() => db.employees.toArray(), [])
-  // The day's sheet: everything made today, finished today, or still open.
-  const dayTasks = all.filter(
-    (t) => t.status !== 'cancelled' && (toISODate(new Date(t.createdAt)) === today || (t.completedAt && toISODate(new Date(t.completedAt)) === today) || isOpen(t)),
-  )
 
   return (
     <div className="tasks">
@@ -205,9 +201,7 @@ export function TasksPage() {
         </ul>
       )}
 
-      {types && (
-        <TaskPrintSheet day={today} tasks={dayTasks} employees={people ?? []} types={types} zoneName={zoneName} />
-      )}
+      {types && <TaskPrintSheet day={today} tasks={doneToday} employees={people ?? []} types={types} />}
 
       <DailySheet tasks={all.filter((t) => t.status !== 'cancelled' && toISODate(new Date(t.createdAt)) === today)} />
 
