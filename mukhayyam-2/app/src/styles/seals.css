@@ -190,3 +190,10 @@ table.seal-table tbody tr:hover { background: color-mix(in srgb, var(--brand) 5%
 .seals-loading .spinner { width: 28px; height: 28px; }
 
 .issue-why { margin: 0; padding: 10px 12px; border-radius: var(--r-lg); background: var(--sunken); color: var(--ink); font-weight: 700; font-size: 14px; border: 1px dashed var(--line); }
+
+.roll-fixed { display: inline-block; padding: 1px 9px; border-radius: 10px; background: var(--brand-soft); color: var(--brand); font-size: 1.15em; letter-spacing: 1px; }
+.issue-why { margin: 0; padding: 10px 12px; border-radius: var(--r-lg); background: var(--sunken); font-weight: 700; font-size: 14px; border: 1px dashed var(--line); }
+.batch-head .tech.none { background: var(--sunken); color: var(--muted); }
+/* «تعبئة الاسم»: blue, so a batch still waiting for its name stands out */
+.btn.assign-btn { background: linear-gradient(180deg, #3f78cf, #2F5DA8); border-color: #2F5DA8; color: #fff; box-shadow: 0 8px 18px -8px #2F5DA8; }
+.btn.assign-btn:hover { background: linear-gradient(180deg, #356cc0, #264d8c); }

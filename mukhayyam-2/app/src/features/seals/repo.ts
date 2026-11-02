@@ -31,7 +31,7 @@ interface SealRow {
   updated_at: string
 }
 interface RollRow { id: string; from_no: number; to_no: number; received_on: string; note: string | null; header_text?: string | null; sheet_label?: string | null; sheet_pos?: number | null; sheet_col?: number | null; sheet_width?: number | null; sheet_tab?: string | null }
-interface BatchRow { id: string; roll_id: string; batch_no: number; technician_id: string; issued_on: string; note: string | null; original_seals?: number[] | null; block_from?: number | null; block_ord?: number | null; label?: string | null; usage_ord?: number | null; usage_fill?: string | null }
+interface BatchRow { id: string; roll_id: string; batch_no: number; technician_id: string | null; issued_on: string; note: string | null; original_seals?: number[] | null; block_from?: number | null; block_ord?: number | null; label?: string | null; usage_ord?: number | null; usage_fill?: string | null }
 
 const sealFromRow = (r: SealRow): Seal => ({
   sealNo: r.seal_no,
@@ -216,8 +216,11 @@ async function call<T>(fn: string, args: Record<string, unknown>): Promise<T> {
 export const addRoll = (fromNo: number, toNo: number | null, receivedOn: string, note: string) =>
   call<string>('seal_add_roll', { p_from: fromNo, p_to: toNo, p_received: receivedOn, p_note: note || null })
 
-export const issueBatch = (technicianId: string, issuedOn: string, seals: number[], note = '') =>
+export const issueBatch = (technicianId: string | null, issuedOn: string, seals: number[], note = '') =>
   call<{ batch_id: string; batch_no: number; roll_id: string; count: number }>('seal_issue', { p_technician: technicianId, p_issued_on: issuedOn, p_seals: seals, p_note: note || null })
+
+/** Gives a prepared batch its name. */
+export const assignBatch = (batchId: string, technicianId: string) => call<void>('seal_assign_batch', { p_batch: batchId, p_technician: technicianId })
 
 export const unissue = (seals: number[]) => call<number>('seal_unissue', { p_seals: seals })
 

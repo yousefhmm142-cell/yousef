@@ -37,7 +37,8 @@ const dmy = (iso: string) => {
 }
 
 /** How a technician is named in the files: the sheet name she used, else the full name. */
-const fileName = (data: SealData, id: string) => {
+const fileName = (data: SealData, id: string | null) => {
+  if (!id) return ''
   const sheet = data.sheets?.get(id)
   const full = data.names.get(id) ?? ''
   return sheet && sheet.trim().split(/\s+/).length >= 2 ? sheet : full
@@ -147,7 +148,8 @@ export function buildUsageWorkbook(ExcelJS: ExcelJS, data: SealData): ExcelJSTyp
       a.batchNo - b.batchNo,
   )
   const byTech = new Map<string, SealBatch[]>()
-  for (const b of batches) (byTech.get(b.technicianId) ?? byTech.set(b.technicianId, []).get(b.technicianId)!).push(b)
+  // A batch still without a name has no sheet of its own yet.
+  for (const b of batches) if (b.technicianId) (byTech.get(b.technicianId) ?? byTech.set(b.technicianId, []).get(b.technicianId)!).push(b)
   const techs = [...byTech.keys()].sort((a, b) => (byTech.get(a)![0]!.issuedOn).localeCompare(byTech.get(b)![0]!.issuedOn) || (data.names.get(a) ?? '').localeCompare(data.names.get(b) ?? '', 'ar'))
 
   const used = new Set<string>()

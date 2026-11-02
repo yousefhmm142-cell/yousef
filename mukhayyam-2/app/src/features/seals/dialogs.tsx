@@ -5,9 +5,9 @@ import { Dialog } from '../../ui/Dialog'
 import { Chip, TextField } from '../../ui/form'
 import { Button } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
-import { addRoll, importRoll, importTechnician, importUsage, issueBatch, recordSeal, refreshSeals, returnToStock, sealErrorText, updateBatch, updateRoll, useTechnicians } from './repo'
+import { addRoll, assignBatch, importRoll, importTechnician, importUsage, issueBatch, recordSeal, refreshSeals, returnToStock, sealErrorText, updateBatch, updateRoll, useTechnicians } from './repo'
 import { parseIssueWorkbook, parseUsageWorkbook, planImport, rollPayload, usagePayload, type ImportPlan } from './import'
-import { composeDetails, latinDigits, ordinalWord, parseSealNumbers, sealStatusInfo, splitDetails, WORK_CHOICES, type Seal, type SealBatch, type SealData, type SealRoll, autoSeparate } from './model'
+import { composeDetails, latinDigits, ordinalWord, parseSealNumbers, sealStatusInfo, splitDetails, WORK_CHOICES, type Seal, type SealBatch, type SealData, type SealRoll, autoSeparate, expandShort, rollPrefix, withRollStart } from './model'
 import { dayLabel, SealPill } from './parts'
 
 // ---------- A new roll ----------
@@ -69,10 +69,13 @@ export function NewRollDialog({ onClose }: { onClose(): void }) {
   )
 }
 
-// ---------- Handing a batch to a technician ----------
+// ---------- Preparing a batch (the name can come later) ----------
+const LATER = 'later'
+
 export function IssueDialog({ data, onClose, onDone, preset }: { data: SealData; onClose(): void; onDone(batchId: string): void; preset?: { rollId?: string } }) {
   const toast = useToast()
   const technicians = useTechnicians()
+  /** A technician's id, or «لاحقاً» to prepare the seals now and give the name afterwards. */
   const [tech, setTech] = useState<string | null>(null)
   const [date, setDate] = useState(todayISO())
   const [text, setText] = useState('')
@@ -80,8 +83,15 @@ export function IssueDialog({ data, onClose, onDone, preset }: { data: SealData;
   const [error, setError] = useState<string | null>(null)
   const area = useRef<HTMLTextAreaElement>(null)
 
+  // The roll she is taking from: its first digits are fixed, only the last two are typed.
+  const stocked = useMemo(() => data.rolls.filter((r) => data.seals.some((s) => s.rollId === r.id && s.status === 'in_stock')), [data.rolls, data.seals])
+  const [rollId, setRollId] = useState<string | null>(preset?.rollId ?? null)
+  const roll = data.rolls.find((r) => r.id === (rollId ?? stocked[0]?.id)) ?? null
+  const [short, setShort] = useState(true)
+
   const bySeal = useMemo(() => new Map(data.seals.map((s) => [s.sealNo, s])), [data.seals])
-  const parsed = useMemo(() => parseSealNumbers(text), [text])
+  const full = short ? withRollStart(text, roll) : text
+  const parsed = useMemo(() => parseSealNumbers(full), [full])
   const rows = parsed.numbers.map((n) => {
     const s = bySeal.get(n)
     const bad = !s ? 'غير موجود' : s.status !== 'in_stock' ? sealStatusInfo[s.status].label : null
@@ -89,30 +99,28 @@ export function IssueDialog({ data, onClose, onDone, preset }: { data: SealData;
   })
   const rolls = new Set(rows.flatMap((r) => (r.s ? [r.s.rollId] : [])))
   const mixed = rolls.size > 1
-  const rollOf = (id: string) => data.rolls.find((r) => r.id === id)
   const ok = rows.length > 0 && rows.every((r) => !r.bad) && !mixed && parsed.bad.length === 0 && tech !== null
-  const rollInfo = rolls.size === 1 ? rollOf([...rolls][0]!) : null
 
   useEffect(() => {
     area.current?.focus()
-  }, [])
+  }, [roll?.id])
   // A number the screen does not know may belong to a roll added a moment ago (or by someone else): look again.
   const unknown = rows.some((r) => !r.s)
   useEffect(() => {
     if (unknown) void refreshSeals(true)
   }, [unknown, rows.length])
-  void preset
 
   async function submit(again: boolean) {
-    if (!ok || !tech) return
+    if (!ok || tech === null) return
     setBusy(true)
     setError(null)
     try {
-      const res = await issueBatch(tech, date, parsed.numbers)
-      toast(`صُرفت دفعة ${ordinalWord(res.batch_no)} (${res.count} أختام)`)
+      const res = await issueBatch(tech === LATER ? null : tech, date, parsed.numbers)
+      toast(tech === LATER ? `جُهّزت دفعة ${ordinalWord(res.batch_no)} (${res.count} أختام). اختر اسمها من «آخر ما صُرف».` : `صُرفت دفعة ${ordinalWord(res.batch_no)} (${res.count} أختام)`)
       onDone(res.batch_id)
       if (again) {
         setText('')
+        setTech(null)
         setBusy(false)
         area.current?.focus()
       } else onClose()
@@ -122,47 +130,50 @@ export function IssueDialog({ data, onClose, onDone, preset }: { data: SealData;
     }
   }
 
+  const why = tech === null && rows.length > 0 && rows.every((r) => !r.bad) ? 'اختر الفني، أو «لاحقاً» لتجهيز الأختام وتسمية الدفعة بعدين.' : null
+
   return (
     <Dialog
       open
       onClose={onClose}
-      title="صرف دفعة أختام لفني"
+      title="تجهيز دفعة أختام"
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>إلغاء</Button>
-          <Button variant="secondary" disabled={!ok} busy={busy} onClick={() => void submit(true)}>صرف وإضافة دفعة أخرى</Button>
+          <Button variant="secondary" disabled={!ok} busy={busy} onClick={() => void submit(true)}>حفظ وإضافة دفعة أخرى</Button>
           <Button variant="primary" icon={<Check size={17} />} disabled={!ok} busy={busy} onClick={() => void submit(false)}>
-            {ok ? `صرف ${rows.length} ${rows.length > 10 ? 'ختماً' : 'أختام'}` : 'صرف'}
+            {ok ? `${tech === LATER ? 'تجهيز' : 'صرف'} ${rows.length} ${rows.length > 10 ? 'ختماً' : 'أختام'}` : 'صرف'}
           </Button>
         </>
       }
     >
       <div className="issue-form">
-        <div className="field">
-          <span className="label">الفني</span>
-          <div className="chips">
-            {technicians.map((t) => (
-              <Chip key={t.id} pressed={tech === t.id} onClick={() => setTech(t.id)}>{t.fullName}</Chip>
-            ))}
+        {stocked.length > 1 && (
+          <div className="field">
+            <span className="label">من أي رول؟</span>
+            <div className="chips">
+              {stocked.map((r) => <Chip key={r.id} pressed={roll?.id === r.id} onClick={() => setRollId(r.id)}>{r.fromNo}–{r.toNo}</Chip>)}
+            </div>
           </div>
-        </div>
+        )}
         <label className="field">
-          <span className="label">اليوم (اليوم تلقائياً)</span>
-          <input type="date" className="input" max={todayISO()} value={date} onChange={(e) => setDate(e.target.value)} />
-        </label>
-        <label className="field">
-          <span className="label">أرقام الأختام: اكتبها ورا بعض والشرطة بتنزل لحالها بعد كل 6 أرقام (أو الصقها، وحروف WK تُتجاهل)</span>
+          <span className="label">
+            {short && roll ? <>الأختام تبدأ بـ <b className="num roll-fixed">{rollPrefix(roll)}</b> جاهزة، اكتب <b>آخر رقمين</b> فقط من كل ختم</> : 'أرقام الأختام كاملة (حروف WK تُتجاهل)'}
+          </span>
           <textarea
             ref={area}
             className="seal-input"
             value={text}
-            placeholder="181365-181388-181355 ..."
-            onChange={(e) => setText(autoSeparate(text, e.target.value, e.target.selectionStart === e.target.value.length))}
+            placeholder={short && roll ? `${String(expandShort(roll, 2)).slice(-2)}-${String(expandShort(roll, 35)).slice(-2)}-87 …` : '181365-181388-181355 …'}
+            onChange={(e) => setText(autoSeparate(text, e.target.value, e.target.selectionStart === e.target.value.length, short ? 2 : 6))}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) void submit(false)
             }}
           />
         </label>
+        <button type="button" className="link-btn" onClick={() => { setShort((v) => !v); setText('') }}>
+          {short ? 'أكتب الأرقام كاملة بدل آخر رقمين' : 'أكتب آخر رقمين فقط'}
+        </button>
         <div className="parsed" aria-live="polite">
           {rows.map((r) => (
             <span key={r.n} className="seal-pill" data-status={r.s?.status ?? 'lost'} data-bad={r.bad ? true : undefined} title={r.bad ?? ''}>
@@ -181,22 +192,69 @@ export function IssueDialog({ data, onClose, onDone, preset }: { data: SealData;
           {parsed.duplicates.length > 0 && <small>مكرر وتم تجاهله: {parsed.duplicates.join('، ')}</small>}
         </div>
         <div className="issue-count">
-          <span>{mixed ? 'الأرقام من أكثر من رول، اصرف كل رول لحاله' : rollInfo ? `من الرول ${rollInfo.fromNo} - ${rollInfo.toNo}` : 'عدد الأختام'}</span>
+          <span>{mixed ? 'الأرقام من أكثر من رول، جهّز كل رول لحاله' : 'عدد الأختام'}</span>
           <b className="num">{rows.length}</b>
         </div>
-        {!ok && !error && (
-          <p className="issue-why" role="status">
-            {tech === null
-              ? 'اختر اسم الفني من الأعلى أولاً.'
-              : !rows.length && !parsed.bad.length
-                ? 'اكتب أرقام الأختام.'
-                : parsed.bad.length
-                  ? 'في رقم غير صحيح (لونه أحمر): صحّحه أو احذفه.'
-                  : mixed
-                    ? 'الأرقام من أكثر من رول: اصرف كل رول لحاله.'
-                    : 'في أختام ما هي في المخزن (لونها أحمر): احذفها من الكتابة.'}
-          </p>
-        )}
+        <div className="field">
+          <span className="label">لمن هذه الدفعة؟</span>
+          <div className="chips">
+            {technicians.map((t) => (
+              <Chip key={t.id} pressed={tech === t.id} onClick={() => setTech(t.id)}>{t.fullName}</Chip>
+            ))}
+            <Chip pressed={tech === LATER} onClick={() => setTech(LATER)}>لاحقاً</Chip>
+          </div>
+        </div>
+        <label className="field">
+          <span className="label">اليوم (اليوم تلقائياً)</span>
+          <input type="date" className="input" max={todayISO()} value={date} onChange={(e) => setDate(e.target.value)} />
+        </label>
+        {why && <p className="issue-why" role="status">{why}</p>}
+        {error && <p className="field-error" role="alert">{error}</p>}
+      </div>
+    </Dialog>
+  )
+}
+
+// ---------- Giving a prepared batch its name ----------
+export function AssignDialog({ batch, data, onClose }: { batch: SealBatch; data: SealData; onClose(): void }) {
+  const toast = useToast()
+  const technicians = useTechnicians()
+  const [tech, setTech] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const count = data.seals.filter((s) => s.batchId === batch.id).length
+
+  async function save() {
+    if (!tech) return
+    setBusy(true)
+    setError(null)
+    try {
+      await assignBatch(batch.id, tech)
+      toast(`سُلّمت الدفعة إلى ${technicians.find((t) => t.id === tech)?.fullName ?? ''}`)
+      onClose()
+    } catch (e) {
+      setError(sealErrorText(e))
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      title={`لمن الدفعة ${batch.label?.trim() || ordinalWord(batch.batchNo)}؟`}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>إلغاء</Button>
+          <Button variant="primary" busy={busy} disabled={!tech} onClick={() => void save()}>تسليم</Button>
+        </>
+      }
+    >
+      <div className="issue-form">
+        <p className="field-hint"><span className="num">{count}</span> أختام جاهزة بدون اسم. اختر الفني اللي استلمها.</p>
+        <div className="chips">
+          {technicians.map((t) => <Chip key={t.id} pressed={tech === t.id} onClick={() => setTech(t.id)}>{t.fullName}</Chip>)}
+        </div>
         {error && <p className="field-error" role="alert">{error}</p>}
       </div>
     </Dialog>
@@ -228,7 +286,7 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
   const n = parseSealNumbers(no).numbers[0]
   const found = n ? data.seals.find((s) => s.sealNo === n) : undefined
   const typed = no.replace(/\D/g, '').length >= 6
-  const bad = typed && !found ? 'هذا الرقم غير موجود في أي رول مسجّل.' : found && !found.technicianId && status === 'used' ? 'هذا الختم لم يُصرف لفني بعد.' : null
+  const bad = typed && !found ? 'هذا الرقم غير موجود في أي رول مسجّل.' : found && !found.technicianId && status === 'used' ? (found.status === 'issued' ? 'دفعة هذا الختم بدون اسم بعد: اختر اسمها من «آخر ما صُرف» أولاً.' : 'هذا الختم لم يُصرف لفني بعد.') : null
   const batch = found?.batchId ? data.batches.find((b) => b.id === found.batchId) : null
   const line = status === 'used' ? composeDetails({ board, work, subscriber }) : work.trim() || (status === 'damaged' ? 'تالف' : 'ضائع')
 
@@ -491,17 +549,18 @@ export function ImportDialog({ onClose }: { onClose(): void }) {
 export function EditBatchDialog({ batch, data, onClose }: { batch: SealBatch; data: SealData; onClose(): void }) {
   const toast = useToast()
   const technicians = useTechnicians()
-  const [tech, setTech] = useState(batch.technicianId)
+  const [tech, setTech] = useState<string | null>(batch.technicianId)
   const [date, setDate] = useState(batch.issuedOn)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   // A person no longer active still shows, so the batch keeps its name.
-  const list = technicians.some((t) => t.id === batch.technicianId) ? technicians : [{ id: batch.technicianId, fullName: data.names.get(batch.technicianId) ?? '—' }, ...technicians]
+  const list = !batch.technicianId || technicians.some((t) => t.id === batch.technicianId) ? technicians : [{ id: batch.technicianId, fullName: data.names.get(batch.technicianId) ?? '—' }, ...technicians]
 
   async function save() {
     setBusy(true)
     setError(null)
     try {
+      if (!tech) return
       await updateBatch(batch.id, tech, date)
       toast('عُدّلت الدفعة')
       onClose()
@@ -519,7 +578,7 @@ export function EditBatchDialog({ batch, data, onClose }: { batch: SealBatch; da
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>إلغاء</Button>
-          <Button variant="primary" busy={busy} onClick={() => void save()}>حفظ</Button>
+          <Button variant="primary" busy={busy} disabled={!tech} onClick={() => void save()}>حفظ</Button>
         </>
       }
     >

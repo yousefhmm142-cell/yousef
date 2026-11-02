@@ -417,4 +417,16 @@ select public.admin_restore_employee((select id from public.employees where full
 reset role;
 select test.ok((select deleted_at is null and is_active from public.employees where full_name = 'موظف إداري'), 'the trash gives them back');
 
+-- ---------- A batch prepared without a name, named later ----------
+reset role; select test.login('مسؤول النظام'); set role authenticated;
+select public.seal_add_roll(240101, 240200, '2026-10-30', null);
+select test.ok((public.seal_issue(null, '2026-10-30', array[240101, 240102, 240103], null) ->> 'count') = '3', 'a batch can be prepared without a name');
+select test.ok((select count(*) from public.seals where seal_no in (240101, 240102, 240103) and status = 'issued' and technician_id is null) = 3, 'its seals are issued to no one yet');
+select test.fails($$select public.seal_record(240101, 'used', null, 'طبلون 5')$$, '%not_issued%', 'nothing is recorded on a batch without a name');
+select test.fails($$select public.seal_assign_batch((select batch_id from public.seals where seal_no = 240101), (select id from public.employees where full_name = 'مشغّل الموقع'))$$, '%bad_technician%', 'only a technician can take a batch');
+select public.seal_assign_batch((select batch_id from public.seals where seal_no = 240101), (select id from public.employees where full_name = 'قصي الشافعي'));
+select test.ok((select count(*) from public.seals where seal_no in (240101, 240102, 240103) and technician_id = (select id from public.employees where full_name = 'قصي الشافعي')) = 3, 'naming the batch names all its seals');
+select public.seal_record(240101, 'used', null, 'طبلون 5');
+reset role;
+
 \echo 'ALL CHECKS PASSED'

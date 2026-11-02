@@ -28,6 +28,7 @@ const StockPage = page(() => import('../features/stock/StockPage'), 'StockPage')
 const ReportsPage = page(() => import('../features/reports/ReportsPage'), 'ReportsPage')
 const SealIssuePage = page(() => import('../features/seals/IssuePage'), 'SealIssuePage')
 const SealLogPage = page(() => import('../features/seals/LogPage'), 'SealLogPage')
+const SealRecentPage = page(() => import('../features/seals/RecentPage'), 'SealRecentPage')
 const AttendanceScanPage = page(() => import('../features/attendance/ScanPage'), 'AttendanceScanPage')
 
 const managers: Role[] = ['admin', 'manager']
@@ -81,6 +82,7 @@ export const router = createBrowserRouter([
           },
           { path: 'stock', element: <PageGate page="stock"><Lazy><StockPage /></Lazy></PageGate> },
           { path: 'seals', element: <SealsGate><Lazy><SealIssuePage /></Lazy></SealsGate> },
+          { path: 'seals/recent', element: <SealsGate><Lazy><SealRecentPage /></Lazy></SealsGate> },
           { path: 'seals/log', element: <SealsGate><Lazy><SealLogPage /></Lazy></SealsGate> },
           { path: 'reports', element: <RoleGate roles={managers}><Lazy><ReportsPage /></Lazy></RoleGate> },
           { path: 'settings', element: <RoleGate roles={managers}><Lazy><SettingsPage /></Lazy></RoleGate> },

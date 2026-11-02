@@ -15,7 +15,7 @@ export function SealSlips({ data, batches }: { data: SealData; batches: SealBatc
           return (
             <table key={b.id} className="slip">
               <thead>
-                <tr><th colSpan={3} className="slip-name">الموظف: <b>{data.names.get(b.technicianId) ?? ''}</b> <small>· الدفعة {ordinalWord(b.batchNo)}</small></th></tr>
+                <tr><th colSpan={3} className="slip-name">الموظف: <b>{b.technicianId ? data.names.get(b.technicianId) ?? '' : '………………'}</b> <small>· الدفعة {ordinalWord(b.batchNo)}</small></th></tr>
                 <tr><th className="n">الرقم</th><th>التاريخ: <span className="num">{describeDay(b.issuedOn).date}</span></th><th>الختم</th></tr>
               </thead>
               <tbody>

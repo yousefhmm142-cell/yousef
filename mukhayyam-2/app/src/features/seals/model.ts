@@ -28,7 +28,8 @@ export interface SealBatch {
   id: string
   rollId: string
   batchNo: number
-  technicianId: string
+  /** Null while the batch is prepared but has no name yet. */
+  technicianId: string | null
   issuedOn: string
   note: string
   /** The numbers of the batch as first written, until someone changes the batch. */
@@ -119,10 +120,39 @@ export interface UseDetails {
  * While typing seal numbers: when the sixth digit of a number is typed, put the dash after it, so the
  * next number can be typed straight away. Only when a single character was typed at the end.
  */
-export function autoSeparate(prev: string, next: string, caretAtEnd = true): string {
+export function autoSeparate(prev: string, next: string, caretAtEnd = true, groupLen = 6): string {
   if (!caretAtEnd || next.length !== prev.length + 1 || !next.startsWith(prev)) return next
   const run = /(\d+)$/.exec(next)?.[1]
-  return run && run.length === 6 ? `${next}-` : next
+  return run && run.length === groupLen ? `${next}-` : next
+}
+
+/**
+ * Seals of a roll share their first digits: only the last two change. «02» in the roll 223801-223900
+ * is 223802, and «00» is 223900 (the roll's last seal).
+ */
+export function expandShort(roll: { fromNo: number; toNo: number }, last2: number): number {
+  const base = Math.floor(roll.fromNo / 100) * 100
+  const n = base + last2
+  return n < roll.fromNo ? n + 100 : n
+}
+
+/** The fixed start the accountant sees: «2238» for the roll 223801-223900. */
+export const rollPrefix = (roll: { fromNo: number }) => String(Math.floor(roll.fromNo / 100))
+
+/**
+ * What she typed with the roll's start taken for granted: groups of one or two digits are the end
+ * of a seal number (completed with the roll's start); longer groups are whole numbers as before.
+ */
+export function withRollStart(text: string, roll: { fromNo: number; toNo: number } | null): string {
+  if (!roll) return text
+  return text
+    .split(/[^0-9٠-٩]+/)
+    .filter(Boolean)
+    .map((t) => {
+      const d = latinDigits(t)
+      return d.length <= 2 ? String(expandShort(roll, Number(d))) : d
+    })
+    .join('-')
 }
 
 /** «طبلون 361 إعادة شبك (حمزة الداية)», the way her Excel sheet reads. */

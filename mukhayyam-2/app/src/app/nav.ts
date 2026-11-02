@@ -36,6 +36,7 @@ function baseNav({ role, canSeals }: Pick<Employee, 'role' | 'canSeals'>): NavIt
   if (canSeals && (role === 'staff' || role === 'technician')) {
     return [
       { to: '/seals', label: 'صرف الأختام', icon: Stamp },
+      { to: '/seals/recent', label: 'آخر ما صُرف', icon: History },
       { to: '/seals/log', label: 'سجل الأختام', icon: ScrollText },
     ]
   }

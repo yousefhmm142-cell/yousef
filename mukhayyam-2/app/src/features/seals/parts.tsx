@@ -10,6 +10,7 @@ export function SealsTabs({ canIssue = true }: { canIssue?: boolean }) {
   return (
     <nav className="seals-tabs" aria-label="صفحات الأختام">
       <NavLink to="/seals" end>صرف الأختام</NavLink>
+      <NavLink to="/seals/recent">آخر ما صُرف</NavLink>
       <NavLink to="/seals/log">سجل الأختام والبحث</NavLink>
     </nav>
   )
