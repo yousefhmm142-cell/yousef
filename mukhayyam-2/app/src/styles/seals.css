@@ -197,3 +197,9 @@ table.seal-table tbody tr:hover { background: color-mix(in srgb, var(--brand) 5%
 /* «تعبئة الاسم»: blue, so a batch still waiting for its name stands out */
 .btn.assign-btn { background: linear-gradient(180deg, #3f78cf, #2F5DA8); border-color: #2F5DA8; color: #fff; box-shadow: 0 8px 18px -8px #2F5DA8; }
 .btn.assign-btn:hover { background: linear-gradient(180deg, #356cc0, #264d8c); }
+
+.unnamed { padding: 14px 18px; display: grid; gap: 10px; margin-bottom: 14px; border: 1.5px solid color-mix(in srgb, var(--info) 40%, transparent); }
+.unnamed h2 { margin: 0; font-size: 16px; font-weight: 800; color: var(--info); }
+.unnamed ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.unnamed li { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.unnamed li .muted { flex: 1; min-width: 0; }

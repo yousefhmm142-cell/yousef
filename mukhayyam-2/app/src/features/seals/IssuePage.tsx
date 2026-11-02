@@ -7,9 +7,9 @@ import { Button } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
 import { isManagerRole } from '../../types'
 import { useConfirmTap } from '../sheets/useDraft'
-import { EditRollDialog, ImportDialog, IssueDialog, NewRollDialog } from './dialogs'
+import { AssignDialog, EditRollDialog, ImportDialog, IssueDialog, NewRollDialog } from './dialogs'
 import { downloadIssueLog } from './excel'
-import { rollStats, totals, type SealRoll } from './model'
+import { ordinalWord, rollStats, totals, type SealBatch, type SealRoll } from './model'
 import { dayLabel, SealsLoading, SealsTabs, StackBar } from './parts'
 import { deleteRoll, refreshSeals, sealErrorText, useSealData, useSealsLive, useSealsReady } from './repo'
 
@@ -27,6 +27,7 @@ export function SealIssuePage() {
   const [, setFresh] = useState<string | null>(null)
   const [exporting, setExporting] = useState(false)
   const [editRoll, setEditRoll] = useState<SealRoll | null>(null)
+  const [assign, setAssign] = useState<SealBatch | null>(null)
 
   const sum = useMemo(() => totals(data?.seals ?? []), [data?.seals])
   if (isDemo) return <div className="empty card"><h3>الأختام تعمل على قاعدة البيانات الحقيقية</h3><p>هذه الصفحة غير متاحة في وضع التجربة.</p></div>
@@ -70,6 +71,27 @@ export function SealIssuePage() {
         <div className="kpi glass"><div className="kpi-label">تالفة أو ضائعة</div><div className="kpi-value num">{sum.damaged + sum.lost}</div><div className="kpi-sub">{sum.lost ? `${sum.lost} ضائع` : 'خارج المخزن'}</div></div>
       </div>
 
+      {data.batches.some((b) => !b.technicianId) && (
+        <section className="unnamed card" aria-label="دفعات بانتظار الاسم">
+          <h2>دفعات بانتظار الاسم</h2>
+          <ul>
+            {data.batches
+              .filter((b) => !b.technicianId)
+              .map((b) => {
+                const roll = data.rolls.find((r) => r.id === b.rollId)
+                const n = data.seals.filter((s) => s.batchId === b.id).length
+                return (
+                  <li key={b.id}>
+                    <b>الدفعة {b.label?.trim() || ordinalWord(b.batchNo)}</b>
+                    <span className="muted num">{roll ? `${roll.fromNo}–${roll.toNo}` : ''} · {n} أختام · {dayLabel(b.issuedOn)}</span>
+                    <Button variant="primary" className="assign-btn" onClick={() => setAssign(b)}>تعبئة الاسم</Button>
+                  </li>
+                )
+              })}
+          </ul>
+        </section>
+      )}
+
       {data.rolls.length === 0 ? (
         <section className="empty card">
           <span className="halo"><Stamp size={30} /></span>
@@ -102,6 +124,7 @@ export function SealIssuePage() {
         </section>
       )}
 
+      {assign && <AssignDialog batch={assign} data={data} onClose={() => setAssign(null)} />}
       {editRoll && <EditRollDialog roll={editRoll} onClose={() => setEditRoll(null)} />}
       {dialog === 'roll' && <NewRollDialog onClose={() => setDialog(null)} />}
       {dialog === 'issue' && <IssueDialog data={data} preset={issueRoll ? { rollId: issueRoll } : undefined} onClose={() => setDialog(null)} onDone={setFresh} />}

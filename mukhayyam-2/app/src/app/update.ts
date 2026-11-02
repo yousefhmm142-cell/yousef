@@ -94,5 +94,5 @@ export function startUpdateChecks() {
   void checkForUpdate()
   document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && void checkForUpdate())
   window.addEventListener('online', () => void checkForUpdate())
-  window.setInterval(() => document.visibilityState === 'visible' && void checkForUpdate(), 5 * 60_000)
+  window.setInterval(() => document.visibilityState === 'visible' && void checkForUpdate(), 60_000)
 }
