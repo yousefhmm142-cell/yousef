@@ -2,7 +2,9 @@ import { ChevronLeft, Download, LogOut, Moon, RefreshCw, Settings, Smartphone, S
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { useAuth, useEmployee } from '../auth/AuthProvider'
-import { config, isDemo } from '../config'
+import { isDemo } from '../config'
+import { buildLabel, checkNow } from '../app/update'
+import { useToast } from '../ui/Toast'
 import { formatPhone } from '../lib/phone'
 import { useTheme } from '../lib/theme'
 import { useDocumentTitle } from '../lib/useDocumentTitle'
@@ -16,6 +18,7 @@ import { formatTime } from '../lib/format'
 export function Account() {
   useDocumentTitle('حسابي')
   const employee = useEmployee()
+  const toast = useToast()
   const { signOut } = useAuth()
   const [theme, toggleTheme] = useTheme()
   const [confirming, setConfirming] = useState(false)
@@ -88,7 +91,18 @@ export function Account() {
         )}
         <div className="row">
           <span className="row-label">الإصدار</span>
-          <span className="row-value num ltr">{config.version}</span>
+          <span className="row-value">
+            <span className="num">{buildLabel()}</span>
+            <button
+              type="button"
+              className="link-btn"
+              onClick={() =>
+                void checkNow().then((r) => toast(r === 'current' ? 'أنت على آخر نسخة' : r === 'updating' ? 'جاري تحديث الموقع…' : 'لا يوجد اتصال بالإنترنت', r === 'offline' ? 'danger' : undefined))
+              }
+            >
+              تحقق من تحديث
+            </button>
+          </span>
         </div>
       </section>
 

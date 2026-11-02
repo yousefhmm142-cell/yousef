@@ -11,6 +11,30 @@ declare const __BUILD_ID__: string
 
 let busy = false
 
+const stamp = new Intl.DateTimeFormat('ar-EG-u-nu-latn', { day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Gaza' })
+
+/** When this copy of the site was built, e.g. «2 نوفمبر، 11:47 ص»: it moves with every update. */
+export const buildLabel = () => {
+  const id = typeof __BUILD_ID__ === 'string' ? __BUILD_ID__ : ''
+  const d = new Date(id)
+  return Number.isNaN(d.getTime()) ? 'نسخة التطوير' : stamp.format(d)
+}
+
+/** The button on the account page: look now; reload into the new site if there is one. */
+export async function checkNow(): Promise<'current' | 'updating' | 'offline'> {
+  if (!navigator.onLine) return 'offline'
+  const latest = await latestBuild()
+  if (!latest) return 'offline'
+  if (latest === __BUILD_ID__) return 'current'
+  try {
+    sessionStorage.removeItem('m2-update-tried')
+  } catch {
+    // Go on.
+  }
+  await checkForUpdate()
+  return 'updating'
+}
+
 function showCurtain() {
   if (document.getElementById('m2-updating')) return
   const el = document.createElement('div')

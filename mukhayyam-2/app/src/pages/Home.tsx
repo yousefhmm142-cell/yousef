@@ -3,7 +3,8 @@ import { ArrowLeft, Clock, CloudUpload, Database, Wifi, WifiOff } from 'lucide-r
 import { Link, Navigate } from 'react-router'
 import { useEmployee } from '../auth/AuthProvider'
 import { modules, type ModuleKey } from '../app/modules'
-import { config, isDemo } from '../config'
+import { isDemo } from '../config'
+import { buildLabel } from '../app/update'
 import { db } from '../data/db'
 import { useTeam } from '../data/team'
 import { clockOffsetMs } from '../lib/clock'
@@ -198,7 +199,7 @@ function SystemCard() {
     <section className="card system">
       <div className="card-h">
         <h2>حالة النظام</h2>
-        <span className="meta num ltr">v{config.version}</span>
+        <span className="meta num">{buildLabel()}</span>
       </div>
       <ul className="sys-list">
         <li>
