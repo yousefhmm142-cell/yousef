@@ -5,7 +5,7 @@ export const APK_PATH = '/mukhayyam2.apk'
 
 /** Already running as the installed app (Android app or added to the home screen). */
 export const isInstalled = () =>
-  window.matchMedia?.('(display-mode: standalone)').matches || document.referrer.startsWith('android-app://')
+  window.matchMedia?.('(display-mode: standalone)').matches || document.referrer.startsWith('android-app://') || /Mukhayyam2App/.test(navigator.userAgent)
 
 export const isAndroid = () => /Android/i.test(navigator.userAgent)
 

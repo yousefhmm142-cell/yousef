@@ -1,4 +1,5 @@
 import type ExcelJSType from 'exceljs'
+import { saveFile } from '../../lib/saveFile'
 import { ordinalWord, type Seal, type SealBatch, type SealData, type SealRoll } from './model'
 
 // Two Excel files, laid out exactly like the ones kept by hand until now:
@@ -190,11 +191,7 @@ export function buildUsageWorkbook(ExcelJS: ExcelJS, data: SealData): ExcelJSTyp
 
 async function save(wb: ExcelJSType.Workbook, fileName: string) {
   const buf = await wb.xlsx.writeBuffer()
-  const a = document.createElement('a')
-  a.href = URL.createObjectURL(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }))
-  a.download = fileName
-  a.click()
-  setTimeout(() => URL.revokeObjectURL(a.href), 10_000)
+  await saveFile(buf, fileName, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 }
 
 const stampName = () => new Date().toISOString().slice(0, 10)

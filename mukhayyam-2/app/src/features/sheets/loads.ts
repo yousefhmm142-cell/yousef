@@ -14,6 +14,12 @@ export const emptyLoads = (): Loads => [null, null, null]
 
 export const loadsComplete = (loads: Loads): loads is [number, number, number] => loads.every((l) => l !== null)
 
+/** The mean of the three phases, to one decimal: the single figure the paper sheet carries. Null until all three are typed. */
+export function loadAverage(loads: Loads): number | null {
+  if (!loadsComplete(loads)) return null
+  return Math.round(((loads[0] + loads[1] + loads[2]) / 3) * 10) / 10
+}
+
 /** Gap between the strongest and weakest phase, as a percentage of the strongest. Null until all three are typed. */
 export function phaseImbalancePct(loads: Loads): number | null {
   if (!loadsComplete(loads)) return null

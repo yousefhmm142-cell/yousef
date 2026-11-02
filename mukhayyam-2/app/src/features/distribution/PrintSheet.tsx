@@ -3,10 +3,12 @@ import { formatAmount } from '../../lib/numbers'
 import { stamp } from '../sheets/ui'
 import { RUN_NAMES, type DistributionSheet, type ZoneEntry } from './model'
 import { clock12 } from '../../lib/format'
+import { loadAverage } from '../sheets/loads'
 
 const loadsText = (z: ZoneEntry, i: number) => {
   const r = z.runs[i]
-  return r && r.loads.some((l) => l !== null) ? `${r.loads.map((l) => formatAmount(l)).join(' / ')} ${r.loadUnit}` : ''
+  const avg = r ? loadAverage(r.loads) : null
+  return r && avg !== null ? `${formatAmount(avg)} ${r.loadUnit}` : ''
 }
 const timeText = (z: ZoneEntry, i: number) => {
   const r = z.runs[i]

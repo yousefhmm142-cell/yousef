@@ -2,6 +2,7 @@ import { describeDay } from '../../lib/dates'
 import { formatAmount } from '../../lib/numbers'
 import { maintenanceLabel, type FuelType, type Generator, type SiteReport } from './model'
 import { stamp } from '../sheets/ui'
+import { loadAverage } from '../sheets/loads'
 import { clock12 } from '../../lib/format'
 
 const runHeaders = ['التشغيلة الأولى', 'التشغيلة الثانية', 'التشغيلة الثالثة']
@@ -16,7 +17,7 @@ export function PrintSheet({ report, generators, fuelTypes, names }: {
   const { weekday, date } = describeDay(report.reportDate)
   const gen = (id: number | null) => generators.find((g) => g.id === id)
   const loads = (l: SiteReport['generators'][number]) =>
-    l.loads.every((v) => v === null) ? '' : `${l.loads.map((v) => formatAmount(v)).join(' / ')} ${l.loadUnit}`
+    loadAverage(l.loads) === null ? '' : `${formatAmount(loadAverage(l.loads))} ${l.loadUnit}`
 
   return (
     <div className="print-sheet" aria-hidden="true">

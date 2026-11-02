@@ -1,7 +1,7 @@
 import { ArrowLeft, Clock, LayoutGrid, NotebookPen, Sun, TriangleAlert, Zap } from 'lucide-react'
 import { formatAmount } from '../../lib/numbers'
 import { useAlertSettings, useEmployeeNames } from '../generation/repo'
-import { phaseImbalancePct } from '../sheets/loads'
+import { loadAverage, phaseImbalancePct } from '../sheets/loads'
 import { AlertsCard, Signatures } from '../sheets/ui'
 import { computeZoneAlerts } from './alerts'
 import { RUN_NAMES, runSegments, sheetTotals, type DistributionSheet, type ZoneRun } from './model'
@@ -126,8 +126,8 @@ function RunCell({ run, imbalanceWarn }: { run: ZoneRun | undefined; imbalanceWa
   return (
     <div className="zr">
       <span className="run num">{clock12(run.start) || '—'}<ArrowLeft size={13} aria-label="إلى" />{clock12(run.end) || '—'}</span>
-      <span className={`zr-loads num ${gap !== null && gap >= imbalanceWarn ? 'warn' : ''}`}>
-        {run.loads.map((l) => formatAmount(l)).join(' · ')} <small>{run.loadUnit}</small>
+      <span className={`zr-loads num ${gap !== null && gap >= imbalanceWarn ? 'warn' : ''}`} title={`L1 ${formatAmount(run.loads[0])} · L2 ${formatAmount(run.loads[1])} · L3 ${formatAmount(run.loads[2])}`}>
+        {loadAverage(run.loads) === null ? run.loads.map((l) => formatAmount(l)).join(' · ') : formatAmount(loadAverage(run.loads))} <small>{run.loadUnit}</small>
       </span>
     </div>
   )

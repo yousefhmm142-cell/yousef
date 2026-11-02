@@ -8,7 +8,7 @@ import { dayName, describeDay, isISODate, todayISO, type ISODate } from '../../l
 import { formatAmount } from '../../lib/numbers'
 import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import { useOnline } from '../../lib/useOnline'
-import { advanceOnEnter, Chip, NumberField, Segmented, TimeField } from '../../ui/form'
+import { advanceOnEnter, CalcField, Chip, NumberField, Segmented, TimeField } from '../../ui/form'
 import { Button } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
 import { MissingList } from '../generation/EntrySteps'
@@ -16,10 +16,12 @@ import { OfflineSendNote } from '../generation/EntryPage'
 import { LOAD_UNIT_OPTIONS, PHASES } from '../sheets/loads'
 import { BackButton, DayJump, SaveBadge, SentHeader, UnsentBanner } from '../sheets/ui'
 import { useDraft } from '../sheets/useDraft'
+import { AverageLine } from '../sheets/ui'
 import { useConfirm } from '../../ui/Confirm'
 import { isEditableStatus, statusInfo } from '../sheets/workflow'
 import { isManagerRole } from '../../types'
 import {
+  applyAutoHours,
   crossesMidnight,
   emptyZoneRun,
   MAX_ZONE_RUNS,
@@ -77,7 +79,7 @@ function SheetForm({ date, initial, zones, previous }: {
   const [params, setParams] = useSearchParams()
   const editingSent = !!initial && !isEditableStatus(initial.status)
   const navigate = useNavigate()
-  const { doc: sheet, update, flush, saveState, latest } = useDraft<DistributionSheet>(
+  const { doc: sheet, update: rawUpdate, flush, saveState, latest } = useDraft<DistributionSheet>(
     () =>
       initial
         ? initial.status === 'draft' ? reconcileSheet(initial, zones) : initial
@@ -85,6 +87,8 @@ function SheetForm({ date, initial, zones, previous }: {
     (doc) => saveSheetDraft(doc, editingSent),
     !!initial,
   )
+  // The hours of each zone are worked out from its run times after every change.
+  const update = (change: (draft: DistributionSheet) => void) => rawUpdate((s) => { change(s); applyAutoHours(s) })
   const confirm = useConfirm()
   const [sending, setSending] = useState(false)
   const unsent = useUnsentSheetsBefore(date)
@@ -264,8 +268,17 @@ function ZoneStep({ entry, index, count, name, update }: { entry: ZoneEntry; ind
           </Chip>
         </header>
         {entry.supplied && (
-          <div className="fgrid">
-            <NumberField label="عدد الساعات" unit="ساعة" max={24} value={entry.supplyHours} onChange={(v) => set((z) => (z.supplyHours = v))} />
+          <div className="zone-top">
+            <CalcField label="عدد الساعات" unit="ساعة" value={entry.supplyHours} hint="يُحسب لحاله من أوقات التشغيلات" />
+            <div className="field">
+              <span className="label">وحدة الأحمال لكل التشغيلات</span>
+              <Segmented
+                label="وحدة الأحمال"
+                value={entry.runs[0]?.loadUnit ?? 'A'}
+                options={LOAD_UNIT_OPTIONS}
+                onChange={(v) => set((z) => z.runs.forEach((r) => (r.loadUnit = v)))}
+              />
+            </div>
           </div>
         )}
       </section>
@@ -298,10 +311,6 @@ function ZoneStep({ entry, index, count, name, update }: { entry: ZoneEntry; ind
             </div>
             {crossesMidnight(run) && <span className="next-day">حتى اليوم التالي</span>}
             <div className="group">
-              <div className="group-head">
-                <span>الأحمال</span>
-                <Segmented label={`وحدة أحمال التشغيلة ${RUN_NAMES[j]}`} value={run.loadUnit} options={LOAD_UNIT_OPTIONS} onChange={(v) => set((z) => (z.runs[j]!.loadUnit = v))} />
-              </div>
               <div className="fgrid three">
                 {PHASES.map((phase, k) => (
                   <NumberField
@@ -314,6 +323,7 @@ function ZoneStep({ entry, index, count, name, update }: { entry: ZoneEntry; ind
                   />
                 ))}
               </div>
+              <AverageLine loads={run.loads} unit={run.loadUnit} />
             </div>
           </section>
         ))}

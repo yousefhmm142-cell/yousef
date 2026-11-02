@@ -1,3 +1,4 @@
+import { loadAverage } from '../sheets/loads'
 import { ArrowLeft, Clock, Droplet, Gauge, NotebookPen, TriangleAlert, Wrench, Zap } from 'lucide-react'
 import { formatAmount } from '../../lib/numbers'
 import { Pill, type Tone } from '../../ui/primitives'
@@ -211,6 +212,7 @@ function GeneratorsTable({ report, generators, settings }: { report: SiteReport;
                             </span>
                           ))}
                           <small className="muted">{log.loadUnit === 'A' ? 'أمبير' : 'كيلوواط'}</small>
+                          {loadAverage(log.loads) !== null && <b className="num avg" title="المتوسط الحسابي">متوسط {formatAmount(loadAverage(log.loads))}</b>}
                         </div>
                       </td>
                       <td>

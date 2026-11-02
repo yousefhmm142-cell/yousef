@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { defaultAlertSettings } from '../generation/model'
-import { phaseImbalancePct } from '../sheets/loads'
+import { loadAverage, phaseImbalancePct } from '../sheets/loads'
 import { computeZoneAlerts } from './alerts'
-import { missingInZone, newSheet, reconcileSheet, runSegments, sheetTotals, type Zone } from './model'
+import { applyAutoHours, hoursFromZoneRuns, missingInZone, newSheet, reconcileSheet, runSegments, sheetTotals, type Zone } from './model'
 
 const zones: Zone[] = [
   { id: 1, name: 'المخيم القديم', isActive: true, sortOrder: 1 },
@@ -37,9 +37,9 @@ describe('a new sheet', () => {
 })
 
 describe('what is missing', () => {
-  it('asks for hours, times and loads of a supplied zone only', () => {
+  it('asks for times and loads of a supplied zone only (the hours come from the times)', () => {
     const s = newSheet('2026-10-30', zones, 'e1', null, '')
-    expect(missingInZone(s.zones[0]!)).toEqual(['عدد الساعات', 'وقت التشغيلة الأولى', 'أحمال التشغيلة الأولى'])
+    expect(missingInZone(s.zones[0]!)).toEqual(['وقت التشغيلة الأولى', 'أحمال التشغيلة الأولى'])
     s.zones[0]!.supplied = false
     expect(missingInZone(s.zones[0]!)).toEqual([])
   })
@@ -72,5 +72,26 @@ describe('totals and alerts', () => {
     expect(alerts[0]!.title).toContain('المخيم القديم')
     s.zones[0]!.runs[0]!.loads = [150, 80, 140]
     expect(computeZoneAlerts(s, names, defaultAlertSettings)[0]!.level).toBe('danger')
+  })
+})
+
+describe('hours and averages worked out for her', () => {
+  it('adds the run times, past midnight too', () => {
+    expect(hoursFromZoneRuns([{ start: '06:00', end: '09:30' }])).toBe(3.5)
+    expect(hoursFromZoneRuns([{ start: '06:00', end: '09:30' }, { start: '20:00', end: '01:00' }])).toBe(8.5)
+    expect(hoursFromZoneRuns([{ start: '06:00', end: '' }])).toBeNull()
+    expect(hoursFromZoneRuns([])).toBeNull()
+  })
+  it('fills the hours of every zone from its runs', () => {
+    const s = newSheet('2026-10-30', zones, 'e1', null, '')
+    s.zones[0]!.runs[0]!.start = '08:00'
+    s.zones[0]!.runs[0]!.end = '11:15'
+    expect(applyAutoHours(s).zones[0]!.supplyHours).toBe(3.25)
+    s.zones[0]!.supplied = false
+    expect(applyAutoHours(s).zones[0]!.supplyHours).toBeNull()
+  })
+  it('means the three phases to one decimal', () => {
+    expect(loadAverage([350, 310, 365])).toBe(341.7)
+    expect(loadAverage([100, null, 100])).toBeNull()
   })
 })

@@ -1,3 +1,4 @@
+import { saveFile } from '../lib/saveFile'
 import type { EntityTable } from 'dexie'
 import { isDemo } from '../config'
 import { SheetStateError } from '../features/sheets/workflow'
@@ -315,14 +316,7 @@ export async function downloadBackup(): Promise<void> {
     }
   }
   const now = new Date()
-  const file = new Blob([JSON.stringify({ app: 'mukhayyam2', version: 1, createdAt: now.toISOString(), demo: isDemo, tables })], {
-    type: 'application/json',
-  })
-  const a = document.createElement('a')
-  a.href = URL.createObjectURL(file)
-  a.download = `mukhayyam2-backup-${now.toISOString().slice(0, 10)}.json`
-  a.click()
-  setTimeout(() => URL.revokeObjectURL(a.href), 10_000)
+  await saveFile(JSON.stringify({ app: 'mukhayyam2', version: 1, createdAt: now.toISOString(), demo: isDemo, tables }), `mukhayyam2-backup-${now.toISOString().slice(0, 10)}.json`, 'application/json')
   await setMeta(LAST_BACKUP, now.toISOString())
 }
 
@@ -347,10 +341,5 @@ export async function downloadServerBackup(b: ServerBackup): Promise<void> {
   const sb = online()
   const { data, error, status } = await sb.from('backups').select('data').eq('id', b.id).single()
   if (error) failFrom(error, status)
-  const file = new Blob([JSON.stringify((data as { data: unknown }).data)], { type: 'application/json' })
-  const a = document.createElement('a')
-  a.href = URL.createObjectURL(file)
-  a.download = `mukhayyam2-backup-auto-${b.takenAt.slice(0, 10)}.json`
-  a.click()
-  setTimeout(() => URL.revokeObjectURL(a.href), 10_000)
+  await saveFile(JSON.stringify((data as { data: unknown }).data), `mukhayyam2-backup-auto-${b.takenAt.slice(0, 10)}.json`, 'application/json')
 }

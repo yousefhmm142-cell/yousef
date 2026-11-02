@@ -1,3 +1,4 @@
+import { saveFile } from '../../lib/saveFile'
 import type { Section } from './build'
 
 /** One Excel file, one right-to-left sheet per section, with a title and the period on top. */
@@ -29,9 +30,5 @@ export async function downloadExcel(sections: Section[], title: string, fileName
     })
   }
   const buf = await wb.xlsx.writeBuffer()
-  const a = document.createElement('a')
-  a.href = URL.createObjectURL(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }))
-  a.download = fileName
-  a.click()
-  setTimeout(() => URL.revokeObjectURL(a.href), 10_000)
+  await saveFile(buf, fileName, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 }

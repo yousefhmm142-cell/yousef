@@ -4,6 +4,7 @@ import { GeneratorDialog } from './GeneratorDialog'
 import { formatAmount } from '../../lib/numbers'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../data/db'
+import { AverageLine } from '../sheets/ui'
 import { CalcField, Chip, NumberField, Segmented, TextField, TimeField } from '../../ui/form'
 import {
   crossesMidnight,
@@ -241,6 +242,7 @@ export function RunsStep({ report, generators, update }: { report: SiteReport; g
                       />
                     ))}
                   </div>
+                  <AverageLine loads={log.loads} unit={log.loadUnit} />
                 </div>
 
                 <div className="fgrid gauges">

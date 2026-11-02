@@ -1,10 +1,7 @@
-// The Android app of Mukhayyam 2: a full-screen window on the web app (Trusted Web Activity).
+// The Android app of Mukhayyam 2: a full-screen window on the site (an Android WebView), with no libraries.
 // Everything the app shows comes from the site, so new versions of the site reach the app by themselves;
 // this shell only needs rebuilding if the site address changes.
 plugins { id 'com.android.application' }
-
-def siteUrl = 'https://mukhayyam2.pages.dev'
-def siteHost = 'mukhayyam2.pages.dev'
 
 android {
   namespace 'ps.abuzaed.mukhayyam2'
@@ -12,11 +9,9 @@ android {
   defaultConfig {
     applicationId 'ps.abuzaed.mukhayyam2'
     minSdk 24
-    targetSdk 35
-    versionCode 2
-    versionName '1.1'
-    manifestPlaceholders = [siteUrl: siteUrl + '/', siteHost: siteHost]
-    resValue 'string', 'asset_statements', """[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"web","site":"${siteUrl}"}}]"""
+    targetSdk 34
+    versionCode 3
+    versionName '2.0'
   }
   signingConfigs {
     release {
@@ -37,6 +32,7 @@ android {
       signingConfig signingConfigs.release
     }
   }
+  testOptions { unitTests { includeAndroidResources = true } }
   compileOptions {
     sourceCompatibility JavaVersion.VERSION_17
     targetCompatibility JavaVersion.VERSION_17
@@ -44,5 +40,8 @@ android {
 }
 
 dependencies {
-  implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.7.4'
+  // The app itself has no libraries at all: only what Android ships.
+  testImplementation 'junit:junit:4.13.2'
+  testImplementation 'org.robolectric:robolectric:4.14.1'
+  testImplementation 'androidx.test:core:1.6.1'
 }

@@ -77,11 +77,23 @@ export function sheetTotals(sheet: DistributionSheet) {
   }
 }
 
+/** Hours of supply from the run times (a run past midnight counts to the end), to two decimals; null until a run is complete. */
+export function hoursFromZoneRuns(runs: Array<Pick<ZoneRun, 'start' | 'end'>>): number | null {
+  const parts = runs.filter((r) => r.start && r.end && r.start !== r.end).map((r) => (minutes(r.end) - minutes(r.start) + 1440) % 1440)
+  if (!parts.length) return null
+  return Math.round((parts.reduce((a, b) => a + b, 0) / 60) * 100) / 100
+}
+
+/** The hours of every zone come from its run times: nobody types them. */
+export function applyAutoHours(sheet: DistributionSheet): DistributionSheet {
+  for (const z of sheet.zones) z.supplyHours = z.supplied ? hoursFromZoneRuns(z.runs) : null
+  return sheet
+}
+
 /** What is still empty in one zone, in plain words. */
 export function missingInZone(entry: ZoneEntry): string[] {
   if (!entry.supplied) return []
   const out: string[] = []
-  if (entry.supplyHours === null) out.push('عدد الساعات')
   entry.runs.forEach((r, i) => {
     if (!r.start || !r.end) out.push(`وقت التشغيلة ${RUN_NAMES[i]}`)
     if (r.loads.some((l) => l === null)) out.push(`أحمال التشغيلة ${RUN_NAMES[i]}`)
