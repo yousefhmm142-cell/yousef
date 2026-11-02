@@ -165,15 +165,60 @@ export function useSealsReady(): boolean {
   return useLiveQuery(async () => !!(await getMeta<boolean>(READY)), [], false) ?? false
 }
 
+// ---------- Live: what one accountant does shows on the other's screen at once ----------
+// Every write tells the others over a shared channel («changed»); the database's own change feed does
+// the same when the project has it on (update-17.sql). The timer below is only the last resort.
+type Channel = { send(m: { type: 'broadcast'; event: string; payload: object }): unknown; unsubscribe(): unknown }
+let channel: Channel | null = null
+let listeners = 0
+let nudge: number | undefined
+
+const refreshSoon = () => {
+  window.clearTimeout(nudge)
+  nudge = window.setTimeout(() => void refreshSeals(true), 150)
+}
+
+function openChannel() {
+  const sb = getSupabase()
+  if (isDemo || !sb || channel) return
+  try {
+    const ch = sb.channel('m2-seals', { config: { broadcast: { self: false } } })
+    ch.on('broadcast', { event: 'changed' }, refreshSoon)
+    for (const table of ['seals', 'seal_batches', 'seal_rolls']) ch.on('postgres_changes', { event: '*', schema: 'public', table }, refreshSoon)
+    ch.subscribe()
+    channel = ch as unknown as Channel
+  } catch {
+    channel = null
+  }
+}
+
+function closeChannel() {
+  const sb = getSupabase()
+  if (channel && sb) void sb.removeChannel(channel as never)
+  channel = null
+}
+
+/** Tells everyone else with the seals open that something changed. */
+function announce() {
+  openChannel()
+  try {
+    channel?.send({ type: 'broadcast', event: 'changed', payload: {} })
+  } catch {
+    // The others catch up on their next look.
+  }
+}
+
 /** Opens fresh, and stays fresh while the page is open (someone else may be entering too). */
 export function useSealsLive() {
   useEffect(() => {
     void refreshSeals()
-    const id = window.setInterval(() => document.visibilityState === 'visible' && void refreshSeals(), 20_000)
+    if (listeners++ === 0) openChannel()
+    const id = window.setInterval(() => document.visibilityState === 'visible' && void refreshSeals(), 8_000)
     const wake = () => document.visibilityState === 'visible' && void refreshSeals()
     document.addEventListener('visibilitychange', wake)
     window.addEventListener('online', wake)
     return () => {
+      if (--listeners === 0) closeChannel()
       window.clearInterval(id)
       document.removeEventListener('visibilitychange', wake)
       window.removeEventListener('online', wake)
@@ -210,6 +255,7 @@ async function call<T>(fn: string, args: Record<string, unknown>): Promise<T> {
   const res = await sb.rpc(fn, args)
   if (res.error) fail(res.error, res.status)
   await refreshSeals(true)
+  announce()
   return res.data as T
 }
 
