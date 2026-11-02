@@ -116,43 +116,30 @@ export interface UseDetails {
   subscriber: string
 }
 
-/**
- * While typing seal numbers: when the sixth digit of a number is typed, put the dash after it, so the
- * next number can be typed straight away. Only when a single character was typed at the end.
- */
-export function autoSeparate(prev: string, next: string, caretAtEnd = true, groupLen = 6): string {
-  if (!caretAtEnd || next.length !== prev.length + 1 || !next.startsWith(prev)) return next
-  const run = /(\d+)$/.exec(next)?.[1]
-  return run && run.length === groupLen ? `${next}-` : next
-}
-
-/**
- * Seals of a roll share their first digits: only the last two change. «02» in the roll 223801-223900
- * is 223802, and «00» is 223900 (the roll's last seal).
- */
-export function expandShort(roll: { fromNo: number; toNo: number }, last2: number): number {
-  const base = Math.floor(roll.fromNo / 100) * 100
-  const n = base + last2
-  return n < roll.fromNo ? n + 100 : n
-}
-
-/** The fixed start the accountant sees: «2238» for the roll 223801-223900. */
+/** The fixed start of a roll's numbers: «2238» for the roll 223801-223900. */
 export const rollPrefix = (roll: { fromNo: number }) => String(Math.floor(roll.fromNo / 100))
 
+const SEPARATOR = /[\s,،\-+]/
+
 /**
- * What she typed with the roll's start taken for granted: groups of one or two digits are the end
- * of a seal number (completed with the roll's start); longer groups are whole numbers as before.
+ * While typing seal numbers: each time a separator is typed at the end (space, dash, comma or a new
+ * line), the roll's start is put there for her, so she only completes the rest of the next number.
+ * Everything stays ordinary text she can edit. Nothing happens in the middle of the text, for a
+ * second separator in a row, or when the number just typed is still only the start.
  */
-export function withRollStart(text: string, roll: { fromNo: number; toNo: number } | null): string {
-  if (!roll) return text
-  return text
-    .split(/[^0-9٠-٩]+/)
-    .filter(Boolean)
-    .map((t) => {
-      const d = latinDigits(t)
-      return d.length <= 2 ? String(expandShort(roll, Number(d))) : d
-    })
-    .join('-')
+export function continueAfterSeparator(prev: string, next: string, prefix: string, caretAtEnd = true): string {
+  if (!caretAtEnd || !prefix || next.length !== prev.length + 1 || !next.startsWith(prev)) return next
+  const typed = next.slice(prev.length)
+  if (!SEPARATOR.test(typed)) return next
+  const last = /(\d+)$/.exec(prev)?.[1] ?? ''
+  if (!last || last === prefix) return prev
+  return `${prev}-${prefix}`
+}
+
+/** The text without the start that was put ahead of a number not yet typed. */
+export function withoutPendingStart(text: string, prefix: string): string {
+  if (!prefix) return text
+  return new RegExp(`(^|[^0-9٠-٩])${prefix}\\s*$`).test(latinDigits(text)) ? text.replace(/[0-9٠-٩]+\s*$/, '') : text
 }
 
 /** «طبلون 361 إعادة شبك (حمزة الداية)», the way her Excel sheet reads. */

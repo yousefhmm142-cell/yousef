@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { composeDetails, noFilters, ordinalWord, parseSealNumbers, rollStats, searchSeals, splitDetails, tokenize, autoSeparate, expandShort, withRollStart, rollPrefix, type Seal, type SealBatch, type SealData, type SealRoll } from './model'
+import { composeDetails, noFilters, ordinalWord, parseSealNumbers, rollStats, searchSeals, splitDetails, tokenize, continueAfterSeparator, withoutPendingStart, rollPrefix, type Seal, type SealBatch, type SealData, type SealRoll } from './model'
 
 const roll: SealRoll = { id: 'r1', fromNo: 181301, toNo: 181400, receivedOn: '2026-07-30', note: '', headerText: null, sheetLabel: null, sheetPos: null, sheetCol: null, sheetWidth: null, sheetTab: null }
 const roll2: SealRoll = { id: 'r2', fromNo: 183001, toNo: 183100, receivedOn: '2026-08-03', note: '', headerText: null, sheetLabel: null, sheetPos: null, sheetCol: null, sheetWidth: null, sheetTab: null }
@@ -108,38 +108,22 @@ describe('roll balance', () => {
   })
 })
 
-describe('autoSeparate', () => {
-  it('adds the dash after the sixth digit typed at the end', () => {
-    expect(autoSeparate('18136', '181365')).toBe('181365-')
-    expect(autoSeparate('181365-18138', '181365-181388')).toBe('181365-181388-')
-    expect(autoSeparate('WK20602', 'WK206022')).toBe('WK206022-')
+describe('the roll start after each separator', () => {
+  it('puts the start after a typed separator', () => {
+    expect(continueAfterSeparator('223802', '223802 ', '2238')).toBe('223802-2238')
+    expect(continueAfterSeparator('223802-2238', '223802-2238 ', '2238')).toBe('223802-2238')
+    expect(continueAfterSeparator('2238', '2238-', '2238')).toBe('2238')
+    expect(continueAfterSeparator('223802-22380', '223802-22380,', '2238')).toBe('223802-22380-2238')
   })
   it('leaves other edits alone', () => {
-    expect(autoSeparate('181365-', '181365')).toBe('181365')
-    expect(autoSeparate('1813', '18136')).toBe('18136')
-    expect(autoSeparate('', '181365 181388')).toBe('181365 181388')
-    expect(autoSeparate('18136', '181365', false)).toBe('181365')
-    expect(autoSeparate('1813655', '18136555')).toBe('18136555')
+    expect(continueAfterSeparator('2238', '22380', '2238')).toBe('22380')
+    expect(continueAfterSeparator('223802', '223802 ', '2238', false)).toBe('223802 ')
+    expect(continueAfterSeparator('', '2238 02 ', '2238')).toBe('2238 02 ')
   })
-})
-
-describe('numbers typed without the fixed start of the roll', () => {
-  const r = { fromNo: 223801, toNo: 223900 }
-  it('completes the last two digits from the roll', () => {
-    expect(rollPrefix(r)).toBe('2238')
-    expect(expandShort(r, 2)).toBe(223802)
-    expect(expandShort(r, 99)).toBe(223899)
-    expect(expandShort(r, 0)).toBe(223900)
-    expect(expandShort({ fromNo: 220001, toNo: 220100 }, 0)).toBe(220100)
-  })
-  it('keeps whole numbers as they are and accepts any separator', () => {
-    expect(withRollStart('02 35-87,00', r)).toBe('223802-223835-223887-223900')
-    expect(withRollStart('223802-35', r)).toBe('223802-223835')
-    expect(withRollStart('٠٢-٣٥', r)).toBe('223802-223835')
-    expect(withRollStart('02', null)).toBe('02')
-  })
-  it('puts the dash after two digits when asked to', () => {
-    expect(autoSeparate('0', '02', true, 2)).toBe('02-')
-    expect(autoSeparate('02-3', '02-35', true, 2)).toBe('02-35-')
+  it('does not count the start waiting for its number', () => {
+    expect(withoutPendingStart('223802-2238', '2238')).toBe('223802-')
+    expect(withoutPendingStart('223802-223835', '2238')).toBe('223802-223835')
+    expect(withoutPendingStart('2238', '2238')).toBe('')
+    expect(rollPrefix({ fromNo: 223801 })).toBe('2238')
   })
 })
