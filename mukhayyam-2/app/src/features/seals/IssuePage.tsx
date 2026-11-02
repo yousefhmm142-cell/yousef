@@ -22,6 +22,8 @@ export function SealIssuePage() {
   const toast = useToast()
   const data = useSealData()
   const [dialog, setDialog] = useState<'roll' | 'issue' | 'import' | null>(null)
+  /** The roll whose own «تجهيز دفعة» was pressed; none when the big button at the top was. */
+  const [issueRoll, setIssueRoll] = useState<string | null>(null)
   const [, setFresh] = useState<string | null>(null)
   const [exporting, setExporting] = useState(false)
   const [editRoll, setEditRoll] = useState<SealRoll | null>(null)
@@ -55,7 +57,7 @@ export function SealIssuePage() {
           <Button variant="secondary" icon={<FileSpreadsheet size={17} />} busy={exporting} onClick={() => void exportExcel()}>تصدير Excel</Button>
           {isManagerRole(me.role) && <Button variant="ghost" icon={<Upload size={17} />} onClick={() => setDialog('import')}>استيراد من Excel</Button>}
           <Button variant="secondary" icon={<Plus size={17} />} onClick={() => setDialog('roll')}>رول جديد</Button>
-          <Button variant="primary" icon={<Stamp size={17} />} disabled={!data.rolls.length} onClick={() => setDialog('issue')}>تجهيز دفعة</Button>
+          <Button variant="primary" icon={<Stamp size={17} />} disabled={!data.rolls.length} onClick={() => { setIssueRoll(null); setDialog('issue') }}>تجهيز دفعة</Button>
         </div>
       </header>
 
@@ -93,7 +95,7 @@ export function SealIssuePage() {
                   <div className="n-used"><b className="num">{st.used}</b><span>مستخدم</span></div>
                   <div className="n-bad"><b className="num">{st.damaged + st.lost}</b><span>تالف</span></div>
                 </div>
-                <RollActions rollId={r.id} canDelete={st.inStock === st.total} disabled={st.inStock === 0} onIssue={() => setDialog('issue')} onEdit={() => setEditRoll(r)} />
+                <RollActions rollId={r.id} canDelete={st.inStock === st.total} disabled={st.inStock === 0} onIssue={() => { setIssueRoll(r.id); setDialog('issue') }} onEdit={() => setEditRoll(r)} />
               </article>
             )
           })}
@@ -102,7 +104,7 @@ export function SealIssuePage() {
 
       {editRoll && <EditRollDialog roll={editRoll} onClose={() => setEditRoll(null)} />}
       {dialog === 'roll' && <NewRollDialog onClose={() => setDialog(null)} />}
-      {dialog === 'issue' && <IssueDialog data={data} onClose={() => setDialog(null)} onDone={setFresh} />}
+      {dialog === 'issue' && <IssueDialog data={data} preset={issueRoll ? { rollId: issueRoll } : undefined} onClose={() => setDialog(null)} onDone={setFresh} />}
       {dialog === 'import' && <ImportDialog onClose={() => setDialog(null)} />}
     </div>
   )

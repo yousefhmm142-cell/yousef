@@ -148,7 +148,9 @@ export function IssueDialog({ data, onClose, onDone, preset }: { data: SealData;
       }
     >
       <div className="issue-form">
-        {stocked.length > 1 && (
+        {preset?.rollId && roll && <p className="field-hint">من الرول <b className="num">{roll.fromNo}–{roll.toNo}</b></p>}
+        {/* Opened from a roll: that roll is the one. Opened from the big button: she picks. */}
+        {!preset?.rollId && stocked.length > 1 && (
           <div className="field">
             <span className="label">من أي رول؟</span>
             <div className="chips">
