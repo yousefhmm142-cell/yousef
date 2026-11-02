@@ -131,3 +131,12 @@
 
 /* On phones the gear sits behind «المزيد» in the bottom bar. */
 @media (max-width: 900px) { .settings-btn { display: none; } }
+
+/* What the connection is doing with the worker's work */
+.sync-notice { position: sticky; top: 84px; z-index: 35; max-width: 1280px; margin: 10px auto 0; padding: 11px 16px; border-radius: 999px; display: flex; align-items: center; gap: 10px; font-size: 14px; line-height: 1.5; box-shadow: 0 8px 22px -12px #0006; width: fit-content; max-width: calc(100% - 24px); }
+.sync-notice.ok { background: var(--ok-soft); color: var(--ok); border: 1.5px solid color-mix(in srgb, var(--ok) 35%, transparent); }
+.sync-notice.warn { background: var(--warn-soft); color: var(--warn); border: 1.5px solid color-mix(in srgb, var(--warn) 35%, transparent); }
+.sync-notice.info { background: var(--info-soft); color: var(--info); border: 1.5px solid color-mix(in srgb, var(--info) 35%, transparent); }
+.sync-notice svg { flex: none; }
+.sync-notice .spin { animation: m2spin 1s linear infinite; }
+@media (max-width: 900px) { .sync-notice { top: 70px; } }

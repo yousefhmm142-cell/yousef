@@ -61,14 +61,31 @@ export function FuelStep({ report, fuelTypes, previous, update }: {
   previous: SiteReport | null
   update: Update
 }) {
+  const nameOf = (id: number) => fuelTypes.find((f) => f.id === id)?.name ?? 'وقود'
   return (
     <>
+      {report.fuel.length > 1 && (
+        <nav className="fuel-jump" aria-label="انتقل بين الأصناف">
+          <span className="muted">اكتب بأي ترتيب:</span>
+          {report.fuel.map((l) => (
+            <button
+              key={l.id}
+              type="button"
+              className="fuel-jump-btn"
+              data-done={(l.openingBalance !== null && l.closingBalance !== null) || undefined}
+              onClick={() => document.getElementById(`fuel-${l.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            >
+              {nameOf(l.fuelTypeId)}
+            </button>
+          ))}
+        </nav>
+      )}
       {report.fuel.map((line, i) => {
-        const name = fuelTypes.find((f) => f.id === line.fuelTypeId)?.name ?? 'وقود'
+        const name = nameOf(line.fuelTypeId)
         const before = previous?.fuel.find((f) => f.fuelTypeId === line.fuelTypeId)?.closingBalance
         const set = (change: (l: typeof line) => void) => update((r) => change(r.fuel[i]!))
         return (
-          <section key={line.id} className="fcard">
+          <section key={line.id} id={`fuel-${line.id}`} className="fcard">
             <h3 className="fcard-title">
               <span className={`fuel-dot ${i === 0 ? '' : 'chrome'}`} aria-hidden="true" />
               {name}
@@ -91,8 +108,13 @@ export function FuelStep({ report, fuelTypes, previous, update }: {
               )}
               <NumberField label="الكمية الواردة" unit="لتر" max={200000} value={line.receivedQty} onChange={(v) => set((l) => (l.receivedQty = v))} />
               <CalcField label="المجموع" unit="لتر" value={line.totalQty} hint="الرصيد الموجود + الوارد" />
-              <NumberField label="الاستهلاك" unit="لتر" max={50000} value={line.consumption} onChange={(v) => set((l) => (l.consumption = v))} />
-              <CalcField label="الرصيد المتبقي" unit="لتر" value={line.closingBalance} hint="المجموع − الاستهلاك" />
+              <NumberField label="الرصيد المتبقي" unit="لتر" max={200000} value={line.closingBalance} onChange={(v) => set((l) => (l.closingBalance = v))} hint="اللي باقي بالخزان الآن" />
+              <CalcField
+                label="الاستهلاك"
+                unit="لتر"
+                value={line.consumption}
+                hint={line.consumption !== null && line.consumption < 0 ? 'تنبيه: المتبقي أكبر من المجموع، راجع الأرقام' : 'يُحسب لحاله: المجموع − المتبقي'}
+              />
               <TextField label="رقم الإرسالية" numeric value={line.shipmentNo} onChange={(v) => set((l) => (l.shipmentNo = v))} />
             </div>
             <NoteToggle value={line.notes} onChange={(v) => set((l) => (l.notes = v))} />

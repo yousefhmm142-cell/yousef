@@ -14,7 +14,7 @@ import { useToast } from '../../ui/Toast'
 import { MissingList } from '../generation/EntrySteps'
 import { OfflineSendNote } from '../generation/EntryPage'
 import { LOAD_UNIT_OPTIONS, PHASES } from '../sheets/loads'
-import { BackButton, DayJump, SaveBadge, SentHeader, UnsentBanner } from '../sheets/ui'
+import { BackButton, DayJump, DoPreviousFirst, SaveBadge, SentHeader, UnsentBanner } from '../sheets/ui'
 import { useDraft } from '../sheets/useDraft'
 import { AverageLine } from '../sheets/ui'
 import { useConfirm } from '../../ui/Confirm'
@@ -34,7 +34,7 @@ import {
   type Zone,
   type ZoneEntry,
 } from './model'
-import { lastSheetBefore, saveSheetDraft, submitSheet, useSheet, useUnsentSheetsBefore, useZones } from './repo'
+import { lastSheetBefore, saveSheetDraft, submitSheet, useMissingSheetBefore, useSheet, useUnsentSheetsBefore, useZones } from './repo'
 import { SheetView, useSheetContext } from './SheetView'
 
 type Update = (change: (draft: DistributionSheet) => void) => void
@@ -48,14 +48,18 @@ export function DistributionEntryPage() {
   const stored = useSheet(date)
   const zones = useZones()
   const previous = useLiveQuery(() => lastSheetBefore(date), [date])
+  const missingBefore = useMissingSheetBefore(date)
   useDocumentTitle(date === today ? 'كشف اليوم' : `كشف ${dayName(date, today)}`)
 
   if (date > today) {
     return <div className="empty"><h3>لا يمكن تعبئة يوم لم يأتِ بعد</h3><Link to="/sheet" className="btn">كشف اليوم</Link></div>
   }
-  if (stored === undefined || !zones || previous === undefined) return <div className="loading-block" aria-busy="true" />
+  if (stored === undefined || !zones || previous === undefined || missingBefore === undefined) return <div className="loading-block" aria-busy="true" />
   // A sent sheet is closed for the site, but the manager can still correct it.
   if (stored && !isEditableStatus(stored.status) && !isManagerRole(employee.role)) return <SentSheet sheet={stored} />
+  if (!isManagerRole(employee.role) && missingBefore && (!stored || stored.status === 'draft')) {
+    return <DoPreviousFirst missing={missingBefore} noun="الكشف" hrefFor={(d) => `/sheet/${d}`} />
+  }
   if (!zones.some((z) => z.isActive)) {
     return (
       <div className="empty">

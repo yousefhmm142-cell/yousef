@@ -3,7 +3,7 @@ import { Link, NavLink, Outlet } from 'react-router'
 import { useEmployee } from '../auth/AuthProvider'
 import { titleOf } from '../types'
 import { Avatar, Logo } from '../ui/primitives'
-import { StatusBadge, ThemeToggle } from '../ui/status'
+import { StatusBadge, SyncNotice, ThemeToggle } from '../ui/status'
 import { navFor, type NavItem } from './nav'
 
 const MAX_TABS = 5
@@ -66,6 +66,8 @@ export function AppShell() {
       </header>
       <ThemeToggle />
       </div>
+
+      <SyncNotice />
 
       <main className="page" id="main">
         <Outlet />

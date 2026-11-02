@@ -242,7 +242,7 @@ export function missingItems(r: SiteReport, fuelName: (id: number) => string, ge
   const out: string[] = []
   for (const f of r.fuel) {
     if (f.openingBalance === null) out.push(`${fuelName(f.fuelTypeId)}: الرصيد الموجود`)
-    if (f.consumption === null) out.push(`${fuelName(f.fuelTypeId)}: الاستهلاك`)
+    if (f.closingBalance === null) out.push(`${fuelName(f.fuelTypeId)}: الرصيد المتبقي`)
   }
   for (const g of r.generators) {
     if (!g.didRun) continue
@@ -295,14 +295,15 @@ const round1 = (n: number) => Math.round(n * 10) / 10
 /**
  * Fills the worked-out figures in place:
  * opening balance = yesterday's remaining (when there is a report before), total = opening + received,
- * remaining = total − consumption, running hours = sum of the run times.
+ * consumption = total − remaining (the remaining balance is what is typed), running hours = sum of the run times.
  */
 export function applyAutoFigures(r: SiteReport, previous: SiteReport | null): SiteReport {
   for (const line of r.fuel) {
     const before = previous?.fuel.find((f) => f.fuelTypeId === line.fuelTypeId)?.closingBalance
     if (before !== null && before !== undefined) line.openingBalance = before
     line.totalQty = add(line.openingBalance, line.receivedQty)
-    line.closingBalance = line.totalQty !== null && line.consumption !== null ? round1(line.totalQty - line.consumption) : null
+    // What is left in the tank is read and typed; what was used is the difference.
+    line.consumption = line.totalQty !== null && line.closingBalance !== null ? round1(line.totalQty - line.closingBalance) : null
   }
   for (const log of r.generators) log.runHours = log.didRun ? hoursFromRuns(log) : null
   return r

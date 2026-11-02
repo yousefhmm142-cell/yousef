@@ -1,3 +1,4 @@
+import { firstMissingDay } from '../sheets/gap'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../data/db'
 import { pullReference, syncSoon } from '../../data/sync'
@@ -79,6 +80,14 @@ export function useUnsentBefore(date: ISODate) {
         .map((r) => ({ id: r.id, date: r.reportDate, status: r.status })),
     [date],
   )
+}
+
+/** The day that has to be sent before `date` (see sheets/gap.ts), or null. */
+export function useMissingBefore(date: ISODate) {
+  return useLiveQuery(async () => {
+    const sent = await db.siteReports.where('status').anyOf('submitted', 'approved').toArray()
+    return firstMissingDay(sent.map((r) => r.reportDate), date)
+  }, [date])
 }
 
 export async function lastReportBefore(date: ISODate): Promise<SiteReport | null> {

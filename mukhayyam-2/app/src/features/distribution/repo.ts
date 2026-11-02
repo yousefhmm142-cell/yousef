@@ -1,3 +1,4 @@
+import { firstMissingDay } from '../sheets/gap'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../data/db'
 import { saveListItem } from '../../data/admin'
@@ -41,6 +42,14 @@ export function useUnsentSheetsBefore(date: ISODate) {
         .map((s) => ({ id: s.id, date: s.sheetDate, status: s.status })),
     [date],
   )
+}
+
+/** The day that has to be sent before `date` (see sheets/gap.ts), or null. */
+export function useMissingSheetBefore(date: ISODate) {
+  return useLiveQuery(async () => {
+    const sent = await db.distributionSheets.where('status').anyOf('submitted', 'approved').toArray()
+    return firstMissingDay(sent.map((s) => s.sheetDate), date)
+  }, [date])
 }
 
 export async function lastSheetBefore(date: ISODate): Promise<DistributionSheet | null> {

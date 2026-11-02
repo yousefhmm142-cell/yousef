@@ -10,20 +10,20 @@ const gens: Generator[] = [
 const blank = (date: string) => newReport(date, fuelTypes, gens, 'op', null, `${date}T08:00:00Z`)
 
 describe('worked-out report figures', () => {
-  it('opening from yesterday, total and remaining by themselves', () => {
+  it('opening from yesterday and total by themselves; the remaining is typed and the consumption follows', () => {
     const yesterday = blank('2026-10-29')
     yesterday.fuel[0]!.closingBalance = 3600
     const r = blank('2026-10-30')
     r.fuel[0]!.receivedQty = 2000
-    r.fuel[0]!.consumption = 820
+    r.fuel[0]!.closingBalance = 4780
     applyAutoFigures(r, yesterday)
-    expect(r.fuel[0]).toMatchObject({ openingBalance: 3600, totalQty: 5600, closingBalance: 4780 })
+    expect(r.fuel[0]).toMatchObject({ openingBalance: 3600, totalQty: 5600, closingBalance: 4780, consumption: 820 })
   })
   it('first report: the typed opening balance is kept', () => {
     const r = blank('2026-10-30')
     r.fuel[0]!.openingBalance = 2600
     applyAutoFigures(r, null)
-    expect(r.fuel[0]).toMatchObject({ openingBalance: 2600, totalQty: 2600, closingBalance: null })
+    expect(r.fuel[0]).toMatchObject({ openingBalance: 2600, totalQty: 2600, closingBalance: null, consumption: null })
   })
   it('running hours from run times, past midnight too', () => {
     const r = blank('2026-10-30')
@@ -41,7 +41,8 @@ describe('worked-out report figures', () => {
     const r = blank('2026-10-30')
     r.generators[0]!.runs = [{ id: 'a', runNo: 1, start: '06:00', end: '16:00' }]
     r.generators[1]!.runs = [{ id: 'b', runNo: 1, start: '16:00', end: '21:00' }]
-    r.fuel[0]!.consumption = 1100
+    r.fuel[0]!.openingBalance = 3000
+    r.fuel[0]!.closingBalance = 1900
     applyAutoFigures(r, null)
     const map = new Map(gens.map((g) => [g.id, g]))
     expect(expectedConsumption(r, map)).toBe(800) // 10 h × 60 + 5 h × 40
@@ -49,7 +50,8 @@ describe('worked-out report figures', () => {
       .find((a) => a.kind === 'expected_consumption')
     expect(alert?.level).toBe('danger')
     expect(alert?.title).toBe('الاستهلاك أعلى من المتوقع')
-    r.fuel[0]!.consumption = 820
+    r.fuel[0]!.closingBalance = 2180
+    applyAutoFigures(r, null)
     expect(computeAlerts(r, { history: [], generators: map, fuelNames: new Map(), settings: defaultAlertSettings }).some((a) => a.kind === 'expected_consumption')).toBe(false)
   })
 })

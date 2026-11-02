@@ -103,6 +103,20 @@ export function AverageLine({ loads, unit }: { loads: Loads; unit: LoadUnit }) {
   )
 }
 
+/** What the site sees when the day before was not sent yet: do that one first. */
+export function DoPreviousFirst({ missing, noun, hrefFor }: { missing: ISODate; noun: string; hrefFor(date: ISODate): string }) {
+  const today = todayISO()
+  return (
+    <div className="empty card do-first">
+      <span className="halo"><Clock size={30} /></span>
+      <h3>عبّي {dayName(missing, today)} أول</h3>
+      <p>ما بتقدر تعبّي {noun} هاليوم قبل ما يكون {noun} {dayName(missing, today)} معبّى ومُرسَل. افتحه وكمّله، وبعدها بيفتحلك هاليوم لحاله.</p>
+      <Link to={hrefFor(missing)} className="btn primary">افتح {noun} {dayName(missing, today)}</Link>
+      <small className="muted">إذا ما صار شي في ذاك اليوم ولا في شي تعبّيه، قول للمدير يعبّيه عنك.</small>
+    </div>
+  )
+}
+
 /** «رجوع»: the page before, or the given page when this one was opened directly. */
 export function BackButton({ fallback }: { fallback: string }) {
   const navigate = useNavigate()

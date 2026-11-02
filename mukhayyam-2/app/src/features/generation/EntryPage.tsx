@@ -11,14 +11,14 @@ import { useOnline } from '../../lib/useOnline'
 import { advanceOnEnter } from '../../ui/form'
 import { Button } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
-import { BackButton, DayJump, SaveBadge, SentHeader, Stepper, UnsentBanner } from '../sheets/ui'
+import { BackButton, DayJump, DoPreviousFirst, SaveBadge, SentHeader, Stepper, UnsentBanner } from '../sheets/ui'
 import { useDraft } from '../sheets/useDraft'
 import { useConfirm } from '../../ui/Confirm'
 import { statusInfo } from '../sheets/workflow'
 import { isManagerRole } from '../../types'
 import { FuelStep, MaintenanceStep, MissingList, NotesField, RunsStep } from './EntrySteps'
 import { applyAutoFigures, isEditableStatus, missingItems, newReport, reconcileReport, reportTotals, type FuelType, type Generator, type SiteReport } from './model'
-import { lastReportBefore, saveDraft, submitReport, useFuelTypes, useGenerators, useReport, useUnsentBefore } from './repo'
+import { lastReportBefore, saveDraft, submitReport, useFuelTypes, useGenerators, useMissingBefore, useReport, useUnsentBefore } from './repo'
 import { ReportView, useReportContext } from './ReportView'
 import { GeneratorDialog } from './GeneratorDialog'
 
@@ -39,16 +39,21 @@ export function EntryPage() {
   const fuelTypes = useFuelTypes()
   const generators = useGenerators()
   const previous = useLiveQuery(() => lastReportBefore(date), [date])
+  const missingBefore = useMissingBefore(date)
   useDocumentTitle(date === today ? 'تقرير اليوم' : `تقرير ${dayName(date, today)}`)
 
   if (date > today) {
     return <div className="empty"><h3>لا يمكن تعبئة يوم لم يأتِ بعد</h3><Link to="/" className="btn">تقرير اليوم</Link></div>
   }
-  if (stored === undefined || !fuelTypes || !generators || previous === undefined) {
+  if (stored === undefined || !fuelTypes || !generators || previous === undefined || missingBefore === undefined) {
     return <div className="loading-block" aria-busy="true" />
   }
   // A sent report is closed for the site, but the manager can still correct it.
   if (stored && !isEditableStatus(stored.status) && !isManagerRole(employee.role)) return <SentReport report={stored} />
+  // The site goes in order: the day before must be sent first (the manager can open any day).
+  if (!isManagerRole(employee.role) && missingBefore && (!stored || stored.status === 'draft')) {
+    return <DoPreviousFirst missing={missingBefore} noun="التقرير" hrefFor={(d) => `/entry/${d}`} />
+  }
   if (fuelTypes.length === 0 || generators.length === 0) {
     return (
       <NoGeneratorsYet generators={generators} />

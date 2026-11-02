@@ -1,4 +1,5 @@
-import { Moon, Sun } from 'lucide-react'
+import { CheckCircle2, CloudOff, Moon, RefreshCw, Sun } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { isDemo } from '../config'
 import { usePendingCount, useSyncState } from '../data/sync'
 import { useTheme } from '../lib/theme'
@@ -55,4 +56,61 @@ export function ThemeToggle() {
       {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
     </button>
   )
+}
+
+/**
+ * The bar under the menu that tells the worker what the connection is doing with his work:
+ * offline («محفوظ على جهازك»), then «جاري المزامنة…» when the internet is back, then «تمت المزامنة».
+ */
+export function SyncNotice() {
+  const online = useOnline()
+  const pending = usePendingCount()
+  const sync = useSyncState()
+  const [done, setDone] = useState(false)
+  // Something was waiting (or the line was down) and has now gone through.
+  const carrying = useRef(false)
+  if (!online || pending > 0) carrying.current = true
+
+  useEffect(() => {
+    if (online && pending === 0 && sync.phase === 'idle' && carrying.current) {
+      carrying.current = false
+      setDone(true)
+      const id = window.setTimeout(() => setDone(false), 6000)
+      return () => window.clearTimeout(id)
+    }
+  }, [online, pending, sync.phase])
+
+  if (isDemo) return null
+  if (!online)
+    return (
+      <div className="sync-notice warn" role="status" aria-live="polite">
+        <CloudOff size={18} aria-hidden="true" />
+        <span>
+          <b>بدون إنترنت</b> · اكتب عادي، كل شي محفوظ على جهازك وبينرسل لحاله لما يرجع الإنترنت.
+          {pending > 0 && <> ({pending} بانتظار الإرسال)</>}
+        </span>
+      </div>
+    )
+  if (pending > 0 && sync.phase === 'error')
+    return (
+      <div className="sync-notice warn" role="status" aria-live="polite">
+        <RefreshCw size={18} aria-hidden="true" />
+        <span><b>لسا ما انرسل</b> · بنحاول مرة ثانية تلقائي. ما تحذف شي.</span>
+      </div>
+    )
+  if (pending > 0 || sync.phase === 'syncing')
+    return (
+      <div className="sync-notice info" role="status" aria-live="polite">
+        <RefreshCw size={18} className="spin" aria-hidden="true" />
+        <span><b>جاري المزامنة…</b>{pending > 0 && <> يرسل ما عبّيته ({pending})</>}</span>
+      </div>
+    )
+  if (done)
+    return (
+      <div className="sync-notice ok" role="status" aria-live="polite">
+        <CheckCircle2 size={18} aria-hidden="true" />
+        <span><b>تمت المزامنة</b> · وصل المدير كل اللي عبّيته.</span>
+      </div>
+    )
+  return null
 }

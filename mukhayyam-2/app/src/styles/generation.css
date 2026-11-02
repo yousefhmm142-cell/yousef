@@ -352,3 +352,10 @@
 .phases .avg { margin-inline-start: 8px; color: var(--brand); }
 .zone-top { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; align-items: end; }
 @media (max-width: 600px) { .zone-top { grid-template-columns: 1fr; } }
+
+.fuel-jump { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 4px; font-size: 14px; }
+.fuel-jump-btn { padding: 8px 16px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--surface-2); color: var(--ink); font: inherit; font-weight: 800; cursor: pointer; }
+.fuel-jump-btn[data-done] { border-color: color-mix(in srgb, var(--ok) 45%, transparent); background: var(--ok-soft); color: var(--ok); }
+.do-first { gap: 12px; }
+.do-first .btn { margin-top: 4px; }
+.fcard { scroll-margin-top: 90px; }

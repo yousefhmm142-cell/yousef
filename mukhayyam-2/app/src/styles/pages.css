@@ -222,3 +222,6 @@ a.dash-kpi:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
 .team-list { }
 @media (min-width: 901px) { .home .team .team-list { display: grid; grid-template-columns: 1fr 1fr; column-gap: 18px; } }
 @media (max-width: 900px) { .dash-kpis { grid-template-columns: repeat(2, 1fr); gap: 10px; } .dash-kpi { padding: 14px 16px; } .dash-kpi-n { font-size: 30px; } }
+
+.appearance-body { padding: 4px 18px 18px; display: grid; gap: 14px; }
+.appearance-preview { margin: 0; padding: 14px 16px; border-radius: var(--r-in); background: var(--sunken); line-height: 1.9; font-size: 16px; }

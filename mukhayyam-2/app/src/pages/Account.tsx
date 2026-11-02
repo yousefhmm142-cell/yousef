@@ -5,6 +5,8 @@ import { useAuth, useEmployee } from '../auth/AuthProvider'
 import { isDemo } from '../config'
 import { buildLabel, checkNow } from '../app/update'
 import { useToast } from '../ui/Toast'
+import { Chip, Segmented } from '../ui/form'
+import { FONTS, setFont, setTextSize, TEXT_SIZES, useFont, useTextSize, type TextSize } from '../lib/appearance'
 import { useConfirm } from '../ui/Confirm'
 import { formatPhone } from '../lib/phone'
 import { useTheme } from '../lib/theme'
@@ -20,6 +22,8 @@ export function Account() {
   useDocumentTitle('حسابي')
   const employee = useEmployee()
   const toast = useToast()
+  const textSize = useTextSize()
+  const font = useFont()
   const { signOut } = useAuth()
   const [theme, toggleTheme] = useTheme()
   const confirm = useConfirm()
@@ -97,6 +101,28 @@ export function Account() {
               تحقق من تحديث
             </button>
           </span>
+        </div>
+      </section>
+
+      <section className="card appearance" aria-label="الخط والحجم">
+        <div className="card-h"><h2>الخط والحجم</h2></div>
+        <div className="appearance-body">
+          <div className="field">
+            <span className="label">حجم الكتابة</span>
+            <Segmented<TextSize> label="حجم الكتابة" value={textSize} options={TEXT_SIZES} onChange={setTextSize} />
+          </div>
+          <div className="field">
+            <span className="label">نوع الخط</span>
+            <div className="chips">
+              {FONTS.map((f) => (
+                <Chip key={f.value} pressed={font === f.value} onClick={() => setFont(f.value)}>
+                  <span style={{ fontFamily: f.css }}>{f.label}</span>
+                </Chip>
+              ))}
+            </div>
+          </div>
+          <p className="appearance-preview">هيك بتظهر الكتابة: تقرير اليوم، الرصيد المتبقي 1250 لتر، التشغيلة الأولى من 6:00 ص إلى 9:30 ص.</p>
+          <small className="muted">يُحفظ على هذا الجهاز فقط.</small>
         </div>
       </section>
 

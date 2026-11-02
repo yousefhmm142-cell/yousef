@@ -136,7 +136,7 @@ describe('before sending', () => {
     const blank = newReport('2026-10-29', fuelTypes, generators, 'e1', null, '')
     const items = missingItems(blank, (id) => fuelTypes.find((f) => f.id === id)!.name, (id) => generators.find((g) => g.id === id)!.name)
     expect(items).toContain('سولار صناعي: الرصيد الموجود')
-    expect(items).toContain('سولار صناعي: الاستهلاك')
+    expect(items).toContain('سولار صناعي: الرصيد المتبقي')
     expect(items).toContain('المولد 1: أوقات التشغيل')
   })
 })

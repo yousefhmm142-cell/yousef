@@ -92,3 +92,9 @@
   --nav-on: #ffffff0d;
   --nav-on-ring: inset 0 0 0 1px #d0364a59, 0 0 22px -8px #d0364a99;
 }
+
+/* The reader's own text size and font (account page): the whole screen follows. */
+:root[data-size='sm'] { zoom: .92; }
+:root[data-size='lg'] { zoom: 1.12; }
+:root[data-size='xl'] { zoom: 1.25; }
+:root[data-font='system'] { --font: system-ui, -apple-system, 'Segoe UI', Tahoma, Arial, sans-serif; }
