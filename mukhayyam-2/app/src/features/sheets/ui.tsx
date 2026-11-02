@@ -7,7 +7,8 @@ import { useNow } from '../../lib/useNow'
 import { Dialog } from '../../ui/Dialog'
 import { Button, Pill } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
-import { useConfirmTap, type SaveState } from './useDraft'
+import { type SaveState } from './useDraft'
+import { useConfirm } from '../../ui/Confirm'
 import { statusInfo, type SheetMeta, type SheetStatus } from './workflow'
 
 /** "الخميس · 11:42 م" for a stored time. */
@@ -207,7 +208,7 @@ export function StatusBar({ sheet, source, canAct, onApprove, onReturn, returnPl
   returnPlaceholder: string
 }) {
   const toast = useToast()
-  const [armed, arm, reset] = useConfirmTap()
+  const confirm = useConfirm()
   const [busy, setBusy] = useState(false)
   const [returnOpen, setReturnOpen] = useState(false)
   const [reason, setReason] = useState('')
@@ -216,7 +217,8 @@ export function StatusBar({ sheet, source, canAct, onApprove, onReturn, returnPl
   const canReopen = canAct && (sheet.status === 'submitted' || sheet.status === 'approved')
 
   async function approve() {
-    if (!armed) return arm()
+    const yes = await confirm({ title: 'اعتماد اليوم؟', message: 'بعد الاعتماد يُقفل اليوم. تقدر ترجع تفتحه بزر «إعادة فتح اليوم».', confirmLabel: 'اعتماد' })
+    if (!yes) return
     setBusy(true)
     try {
       await onApprove()
@@ -225,7 +227,6 @@ export function StatusBar({ sheet, source, canAct, onApprove, onReturn, returnPl
       toast('تعذّر الاعتماد. حدّث الصفحة وحاول مرة أخرى.', 'danger')
     } finally {
       setBusy(false)
-      reset()
     }
   }
 
@@ -270,7 +271,7 @@ export function StatusBar({ sheet, source, canAct, onApprove, onReturn, returnPl
         </Button>
         {waiting && (
           <Button variant="primary" busy={busy} icon={<Check size={17} />} onClick={() => void approve()}>
-            {armed ? 'اضغط مرة ثانية للتأكيد' : 'اعتماد'}
+            اعتماد
           </Button>
         )}
       </div>

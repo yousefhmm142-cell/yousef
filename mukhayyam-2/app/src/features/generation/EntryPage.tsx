@@ -12,7 +12,8 @@ import { advanceOnEnter } from '../../ui/form'
 import { Button } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
 import { BackButton, DayJump, SaveBadge, SentHeader, Stepper, UnsentBanner } from '../sheets/ui'
-import { useConfirmTap, useDraft } from '../sheets/useDraft'
+import { useDraft } from '../sheets/useDraft'
+import { useConfirm } from '../../ui/Confirm'
 import { statusInfo } from '../sheets/workflow'
 import { isManagerRole } from '../../types'
 import { FuelStep, MaintenanceStep, MissingList, NotesField, RunsStep } from './EntrySteps'
@@ -110,7 +111,7 @@ function EntryForm({ date, initial, fuelTypes, generators, previous }: {
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fuelTypes, generators])
-  const [armed, arm, disarm] = useConfirmTap()
+  const confirm = useConfirm()
   const [sending, setSending] = useState(false)
   const unsent = useUnsentBefore(date)
 
@@ -135,7 +136,12 @@ function EntryForm({ date, initial, fuelTypes, generators, previous }: {
   }
 
   async function send() {
-    if (!armed) return arm()
+    const yes = await confirm({
+      title: 'إغلاق اليوم وإرسال التقرير؟',
+      message: missing.length ? `في ${missing.length} حقول فارغة. بعد الإرسال يصل التقرير للمدير ولا تقدر تعدّله.` : 'بعد الإرسال يصل التقرير للمدير ولا تقدر تعدّله.',
+      confirmLabel: 'إغلاق وإرسال',
+    })
+    if (!yes) return
     setSending(true)
     try {
       await flush()
@@ -144,7 +150,6 @@ function EntryForm({ date, initial, fuelTypes, generators, previous }: {
     } catch {
       toast('تعذّر الإرسال. حاول مرة أخرى.', 'danger')
       setSending(false)
-      disarm()
     }
   }
 
@@ -221,7 +226,7 @@ function EntryForm({ date, initial, fuelTypes, generators, previous }: {
           </Button>
         ) : (
           <Button variant="primary" size="lg" block busy={sending} icon={<Send size={18} />} onClick={() => void send()}>
-            {armed ? (missing.length ? `تأكيد الإرسال مع ${missing.length} حقول فارغة` : 'اضغط مرة ثانية للتأكيد') : 'إغلاق اليوم وإرسال'}
+            إغلاق اليوم وإرسال
           </Button>
         )}
       </footer>

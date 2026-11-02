@@ -7,7 +7,7 @@ import { formatPhone } from '../../lib/phone'
 import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import { useOnline } from '../../lib/useOnline'
 import { Button, Logo, Pill } from '../../ui/primitives'
-import { useConfirmTap } from '../sheets/useDraft'
+import { useConfirm } from '../../ui/Confirm'
 import { SheetStateError } from '../sheets/workflow'
 import { durationText, priorityInfo } from './model'
 import { actOnTaskLink, openTaskLink, type LinkTask, type UsedMaterial } from './repo'
@@ -26,7 +26,7 @@ export function TaskLinkPage() {
   const [used, setUsed] = useState<UsedMaterial[]>([])
   const [busy, setBusy] = useState<'start' | 'done' | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [armed, arm, disarm] = useConfirmTap()
+  const confirm = useConfirm()
   useDocumentTitle(state.kind === 'ready' ? `مهمة ${state.task.number}` : 'مهمة')
 
   useEffect(() => {
@@ -40,7 +40,10 @@ export function TaskLinkPage() {
   }, [token, online])
 
   async function act(action: 'start' | 'done') {
-    if (action === 'done' && !armed) return arm()
+    if (action === 'done') {
+      const yes = await confirm({ title: 'إنهاء المهمة؟', message: 'سيصل المدير أن المهمة انتهت، ولا يمكن التراجع من عندك.', confirmLabel: 'أنهيت المهمة' })
+      if (!yes) return
+    }
     setBusy(action)
     setError(null)
     try {
@@ -51,7 +54,6 @@ export function TaskLinkPage() {
       setError(code === 'offline' ? 'لا يوجد إنترنت. اتصل واضغط مرة ثانية.' : code === 'cancelled' ? 'ألغى المدير هذه المهمة.' : 'لم يُحفظ. حاول مرة ثانية.')
     } finally {
       setBusy(null)
-      disarm()
     }
   }
 
@@ -113,7 +115,7 @@ export function TaskLinkPage() {
             <textarea className="textarea" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="مثلاً: تم التبديل، العداد القديم مع الفني" />
           </label>
           <Button variant="primary" size="lg" block icon={<CheckCircle2 size={20} />} busy={busy === 'done'} onClick={() => void act('done')} className="tlink-finish">
-            {armed ? 'اضغط مرة ثانية للتأكيد' : 'أنهيت المهمة'}
+            أنهيت المهمة
           </Button>
           {error && <p className="field-error" role="alert">{error}</p>}
         </section>

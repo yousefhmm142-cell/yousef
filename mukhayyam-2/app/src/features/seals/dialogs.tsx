@@ -5,6 +5,7 @@ import { Dialog } from '../../ui/Dialog'
 import { Chip, TextField } from '../../ui/form'
 import { Button } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
+import { useConfirm } from '../../ui/Confirm'
 import { addRoll, assignBatch, importRoll, importTechnician, importUsage, issueBatch, recordSeal, refreshSeals, returnToStock, sealErrorText, updateBatch, updateRoll, useTechnicians } from './repo'
 import { parseIssueWorkbook, parseUsageWorkbook, planImport, rollPayload, usagePayload, type ImportPlan } from './import'
 import { composeDetails, latinDigits, ordinalWord, parseSealNumbers, sealStatusInfo, splitDetails, WORK_CHOICES, type Seal, type SealBatch, type SealData, type SealRoll, continueAfterSeparator, rollPrefix, withoutPendingStart } from './model'
@@ -333,17 +334,17 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
   }
 
   const ready = !!found && !bad && (status !== 'used' || board.trim() !== '' || work.trim() !== '')
-  // Undo the record, or take the seal back to the stock: asks once more before doing it.
-  const [confirm, setConfirm] = useState<'undo' | 'stock' | null>(null)
-  useEffect(() => {
-    if (!confirm) return
-    const id = window.setTimeout(() => setConfirm(null), 4000)
-    return () => window.clearTimeout(id)
-  }, [confirm])
+  // Undo the record, or take the seal back to the stock: asks first, in a window.
+  const confirm = useConfirm()
   const recorded = !!seal && seal.status !== 'in_stock' && seal.status !== 'issued'
   async function undo(kind: 'undo' | 'stock') {
     if (!seal) return
-    if (confirm !== kind) return setConfirm(kind)
+    const yes = await confirm(
+      kind === 'undo'
+        ? { title: `إلغاء تسجيل الختم ${seal.sealNo}؟`, message: 'يرجع الختم «عند الفني» ويُمسح ما سُجّل عليه (الطبلون والعمل).', confirmLabel: 'إلغاء التسجيل', danger: true }
+        : { title: `إرجاع الختم ${seal.sealNo} للمخزن؟`, message: 'يخرج من الفني ويرجع جاهزاً للصرف، ويُمسح أي تسجيل عليه.', confirmLabel: 'إرجاع للمخزن', danger: true },
+    )
+    if (!yes) return
     setBusy(true)
     try {
       if (kind === 'undo') await recordSeal(seal.sealNo, 'issued', null, '')
@@ -353,7 +354,6 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
     } catch (e) {
       setError(sealErrorText(e))
       setBusy(false)
-      setConfirm(null)
     }
   }
 
@@ -364,8 +364,8 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
       title={seal ? `الختم ${seal.sealNo}` : 'تسجيل استخدام ختم'}
       footer={
         <>
-          {seal && recorded && <Button variant="ghost" disabled={busy} onClick={() => void undo('undo')}>{confirm === 'undo' ? 'اضغط للتأكيد' : 'إلغاء التسجيل'}</Button>}
-          {seal && seal.status !== 'in_stock' && <Button variant="ghost" disabled={busy} onClick={() => void undo('stock')}>{confirm === 'stock' ? 'اضغط للتأكيد' : 'إرجاع للمخزن'}</Button>}
+          {seal && recorded && <Button variant="ghost" disabled={busy} onClick={() => void undo('undo')}>إلغاء التسجيل</Button>}
+          {seal && seal.status !== 'in_stock' && <Button variant="ghost" disabled={busy} onClick={() => void undo('stock')}>إرجاع للمخزن</Button>}
           <Button variant="ghost" onClick={onClose}>إغلاق</Button>
           {!seal && <Button variant="secondary" disabled={!ready} busy={busy} onClick={() => void save(true)}>حفظ والتالي</Button>}
           <Button variant="primary" icon={<Check size={17} />} disabled={!ready} busy={busy} onClick={() => void save(false)}>حفظ</Button>

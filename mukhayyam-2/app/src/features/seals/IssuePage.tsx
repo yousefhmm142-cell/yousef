@@ -6,7 +6,7 @@ import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import { Button } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
 import { isManagerRole } from '../../types'
-import { useConfirmTap } from '../sheets/useDraft'
+import { useConfirm } from '../../ui/Confirm'
 import { AssignDialog, EditRollDialog, ImportDialog, IssueDialog, NewRollDialog } from './dialogs'
 import { downloadIssueLog } from './excel'
 import { ordinalWord, rollStats, totals, type SealBatch, type SealRoll } from './model'
@@ -135,7 +135,7 @@ export function SealIssuePage() {
 
 function RollActions({ rollId, canDelete, disabled, onIssue, onEdit }: { rollId: string; canDelete: boolean; disabled: boolean; onIssue(): void; onEdit(): void }) {
   const toast = useToast()
-  const [armed, arm, reset] = useConfirmTap()
+  const confirm = useConfirm()
   return (
     <div className="roll-actions">
       <Button variant="primary" disabled={disabled} onClick={onIssue}>تجهيز دفعة</Button>
@@ -146,8 +146,8 @@ function RollActions({ rollId, canDelete, disabled, onIssue, onEdit }: { rollId:
          
           icon={<Trash2 size={15} />}
           onClick={async () => {
-            if (!armed) return arm()
-            reset()
+            const yes = await confirm({ title: 'حذف الرول؟', message: 'يُحذف الرول وأختامه (ما انصرف منه شي).', confirmLabel: 'حذف الرول', danger: true })
+            if (!yes) return
             try {
               await deleteRoll(rollId)
               toast('حُذف الرول')
@@ -156,7 +156,7 @@ function RollActions({ rollId, canDelete, disabled, onIssue, onEdit }: { rollId:
             }
           }}
         >
-          {armed ? 'اضغط للتأكيد' : 'حذف'}
+          حذف
         </Button>
       )}
     </div>

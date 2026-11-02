@@ -23,6 +23,7 @@ import { registerSW } from 'virtual:pwa-register'
 import { router } from './app/router'
 import { AuthProvider } from './auth/AuthProvider'
 import { ToastProvider } from './ui/Toast'
+import { ConfirmProvider } from './ui/Confirm'
 import { isDemo } from './config'
 import { startUpdateChecks } from './app/update'
 
@@ -64,7 +65,9 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
       <ToastProvider>
-        <RouterProvider router={router} />
+        <ConfirmProvider>
+          <RouterProvider router={router} />
+        </ConfirmProvider>
       </ToastProvider>
     </AuthProvider>
   </StrictMode>,

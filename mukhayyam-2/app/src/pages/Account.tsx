@@ -1,10 +1,11 @@
 import { ChevronLeft, Download, LogOut, Moon, RefreshCw, Settings, Smartphone, Sun } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router'
 import { useAuth, useEmployee } from '../auth/AuthProvider'
 import { isDemo } from '../config'
 import { buildLabel, checkNow } from '../app/update'
 import { useToast } from '../ui/Toast'
+import { useConfirm } from '../ui/Confirm'
 import { formatPhone } from '../lib/phone'
 import { useTheme } from '../lib/theme'
 import { useDocumentTitle } from '../lib/useDocumentTitle'
@@ -21,17 +22,10 @@ export function Account() {
   const toast = useToast()
   const { signOut } = useAuth()
   const [theme, toggleTheme] = useTheme()
-  const [confirming, setConfirming] = useState(false)
+  const confirm = useConfirm()
   const [busy, setBusy] = useState(false)
   const pending = usePendingCount()
   const sync = useSyncState()
-
-  // The sign-out button asks once; the question goes away by itself.
-  useEffect(() => {
-    if (!confirming) return
-    const id = window.setTimeout(() => setConfirming(false), 4000)
-    return () => window.clearTimeout(id)
-  }, [confirming])
 
   return (
     <div className="account">
@@ -107,24 +101,28 @@ export function Account() {
       </section>
 
       <Button
-        variant={confirming ? 'primary' : 'danger'}
+        variant="danger"
         size="lg"
         block
         busy={busy}
         icon={<LogOut size={18} />}
         onClick={async () => {
-          if (!confirming) return setConfirming(true)
+          const yes = await confirm({
+            title: 'تسجيل الخروج؟',
+            message:
+              pending > 0
+                ? `على هذا الجهاز ${pending === 1 ? 'كشف لم يصل' : `${pending} كشوف لم تصل`} للخادم بعد. ستُرسل الآن قبل الخروج إن كان هناك إنترنت، وإلا تبقى محفوظة لك على الجهاز وتُرسل عند دخولك مرة ثانية.`
+                : 'ستحتاج رقم جوالك ورمزك السري لتدخل من جديد.',
+            confirmLabel: 'تسجيل الخروج',
+            danger: true,
+          })
+          if (!yes) return
           setBusy(true)
           await signOut()
         }}
       >
-        {confirming ? 'اضغط مرة ثانية للتأكيد' : 'تسجيل الخروج'}
+        تسجيل الخروج
       </Button>
-      {confirming && pending > 0 && (
-        <p className="banner" role="alert">
-          على هذا الجهاز {pending === 1 ? 'كشف لم يصل' : `${pending} كشوف لم تصل`} للخادم بعد. ستُرسل الآن قبل الخروج إن كان هناك إنترنت، وإلا تبقى محفوظة لك على الجهاز وتُرسل عند دخولك مرة ثانية.
-        </p>
-      )}
     </div>
   )
 }

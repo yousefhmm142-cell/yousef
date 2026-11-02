@@ -183,3 +183,10 @@
 .perm-chip[aria-pressed='true'] { background: var(--brand); border-color: var(--brand); color: var(--on-brand, #fff); box-shadow: 0 6px 16px -8px var(--brand); }
 .perm-chip:disabled { opacity: .6; cursor: progress; }
 @media (max-width: 900px) { .perm-cards { grid-template-columns: 1fr; } }
+
+/* ---------- «هل أنت متأكد؟» ---------- */
+.confirm-body { display: flex; gap: 14px; align-items: flex-start; }
+.confirm-body b { font-size: 17px; font-weight: 800; }
+.confirm-body p { margin: 6px 0 0; color: var(--muted); line-height: 1.7; }
+.confirm-ico { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; flex: none; background: var(--warn-soft); color: var(--warn); }
+.confirm-ico.danger { background: var(--danger-soft, #f8d9dc); color: var(--danger); }

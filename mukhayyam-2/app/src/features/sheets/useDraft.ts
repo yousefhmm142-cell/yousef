@@ -57,14 +57,3 @@ export function useDraft<T>(createInitial: () => T, save: (doc: T) => Promise<vo
 
   return { doc, update, flush, saveState, latest }
 }
-
-/** A button that asks once ("press again to confirm") and forgets after a few seconds. */
-export function useConfirmTap(timeoutMs = 4000): [armed: boolean, arm: () => void, reset: () => void] {
-  const [armed, setArmed] = useState(false)
-  useEffect(() => {
-    if (!armed) return
-    const id = window.setTimeout(() => setArmed(false), timeoutMs)
-    return () => window.clearTimeout(id)
-  }, [armed, timeoutMs])
-  return [armed, () => setArmed(true), () => setArmed(false)]
-}

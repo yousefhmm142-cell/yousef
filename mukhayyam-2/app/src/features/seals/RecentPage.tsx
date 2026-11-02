@@ -6,7 +6,7 @@ import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import { Button } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
 import { Pencil, Trash2 } from 'lucide-react'
-import { useConfirmTap } from '../sheets/useDraft'
+import { useConfirm } from '../../ui/Confirm'
 import { AssignDialog, EditBatchDialog } from './dialogs'
 import { ordinalWord, type SealBatch, type SealData } from './model'
 import { dayLabel, SealPill, SealsLoading, SealsTabs, TechNav } from './parts'
@@ -98,7 +98,7 @@ export function SealRecentPage() {
 
 function BatchCard({ data, batch, onPrint, onEdit, onAssign, onDeleted }: { data: SealData; batch: SealBatch; onPrint(): void; onEdit(): void; onAssign(): void; onDeleted(): void }) {
   const toast = useToast()
-  const [armed, arm, reset] = useConfirmTap()
+  const confirm = useConfirm()
   const seals = data.seals.filter((s) => s.batchId === batch.id).sort((a, b) => (a.batchPos ?? 0) - (b.batchPos ?? 0))
   const roll = data.rolls.find((r) => r.id === batch.rollId)
   const used = seals.filter((s) => s.status === 'used').length
@@ -122,8 +122,13 @@ function BatchCard({ data, batch, onPrint, onEdit, onAssign, onDeleted }: { data
           variant="ghost"
           icon={<Trash2 size={15} />}
           onClick={async () => {
-            if (!armed) return arm()
-            reset()
+            const yes = await confirm({
+              title: `حذف الدفعة ${batch.label?.trim() || ordinalWord(batch.batchNo)}؟`,
+              message: used ? `ترجع أختامها للمخزن، ويُمسح تسجيل استخدام ${used} ختم فيها.` : 'ترجع أختامها للمخزن.',
+              confirmLabel: 'حذف الدفعة',
+              danger: true,
+            })
+            if (!yes) return
             try {
               await deleteBatch(batch.id)
               onDeleted()
@@ -132,7 +137,7 @@ function BatchCard({ data, batch, onPrint, onEdit, onAssign, onDeleted }: { data
             }
           }}
         >
-          {armed ? (used ? `يمسح تسجيل ${used} ختم، اضغط للتأكيد` : 'اضغط للتأكيد') : 'حذف'}
+          حذف
         </Button>
       </div>
       <div className="batch-strip">

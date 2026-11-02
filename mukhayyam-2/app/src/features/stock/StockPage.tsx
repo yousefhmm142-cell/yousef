@@ -10,7 +10,7 @@ import { NumberField, TextField } from '../../ui/form'
 import { Button, Pill } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
 import { gazaDate } from '../attendance/rules'
-import { useConfirmTap } from '../sheets/useDraft'
+import { useConfirm } from '../../ui/Confirm'
 import { stamp } from '../sheets/ui'
 import { SheetStateError } from '../sheets/workflow'
 import { balances, isLow, type MoveKind, type StockItem } from './model'
@@ -123,7 +123,7 @@ export function StockPage() {
 
 function MoveRow({ move, item, by }: { move: { id: string; kind: MoveKind; qty: number; at: string; ref: string; note: string }; item: StockItem | undefined; by: string | undefined }) {
   const toast = useToast()
-  const [armed, arm, disarm] = useConfirmTap()
+  const confirm = useConfirm()
   return (
     <li className="move">
       <span className={`move-ico ${move.kind}`}>{move.kind === 'in' ? <ArrowDownToLine size={16} /> : <ArrowUpFromLine size={16} />}</span>
@@ -132,10 +132,17 @@ function MoveRow({ move, item, by }: { move: { id: string; kind: MoveKind; qty: 
         <small>{[move.note, move.ref].filter(Boolean).join(' · ') || (move.kind === 'in' ? 'وارد' : 'صرف')} · {stamp(move.at)}{by ? ` · ${by}` : ''}</small>
       </span>
       <button type="button" className="icon-btn sm" aria-label="حذف الحركة"
-        onClick={() => (armed ? void deleteMove(move.id).then(() => toast('حُذفت الحركة'), (e) => toast(errText(e), 'danger')).finally(disarm) : arm())}>
+        onClick={async () => {
+          const yes = await confirm({
+            title: 'حذف هذه الحركة؟',
+            message: `${move.kind === 'in' ? 'وارد' : 'صرف'} ${formatAmount(move.qty)} ${item?.unit ?? ''} ${item?.name ?? ''}: يتغيّر رصيد المخزن بعد حذفها.`,
+            confirmLabel: 'حذف الحركة',
+            danger: true,
+          })
+          if (yes) void deleteMove(move.id).then(() => toast('حُذفت الحركة'), (e) => toast(errText(e), 'danger'))
+        }}>
         <Trash2 size={15} />
       </button>
-      {armed && <small className="move-confirm">اضغط مرة ثانية للحذف</small>}
     </li>
   )
 }

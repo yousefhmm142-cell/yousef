@@ -13,7 +13,7 @@ import { Dialog } from '../../ui/Dialog'
 import { Segmented, TimeField } from '../../ui/form'
 import { Avatar, Button, Logo, Pill, type Tone } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
-import { useConfirmTap } from '../sheets/useDraft'
+import { useConfirm } from '../../ui/Confirm'
 import { stamp } from '../sheets/ui'
 import { SheetStateError } from '../sheets/workflow'
 import { durationText } from '../tasks/model'
@@ -369,7 +369,7 @@ function DayDialog({ employee, date, data, onClose }: { employee: Employee; date
   const [time, setTime] = useState(d?.inAt && !d.outAt ? '17:00' : '08:00')
   const [reason, setReason] = useState('')
   const [busy, setBusy] = useState<string | null>(null)
-  const [armed, arm, disarm] = useConfirmTap()
+  const confirm = useConfirm()
   const { weekday, date: long } = describeDay(date)
 
   async function run(key: string, f: () => Promise<void>, done: string) {
@@ -381,7 +381,6 @@ function DayDialog({ employee, date, data, onClose }: { employee: Employee; date
       toast(errText(e), 'danger')
     } finally {
       setBusy(null)
-      disarm()
     }
   }
 
@@ -409,7 +408,15 @@ function DayDialog({ employee, date, data, onClose }: { employee: Employee; date
                     />
                   </span>
                   <button type="button" className="icon-btn sm" aria-label="حذف هذا التسجيل" disabled={!!busy}
-                    onClick={() => (armed ? void run('del', () => deletePunch(p.id), 'حُذف التسجيل') : arm())}>
+                    onClick={async () => {
+                      const yes = await confirm({
+                        title: `حذف تسجيل ${p.kind === 'in' ? 'الحضور' : 'الانصراف'}؟`,
+                        message: `سيُحذف تسجيل ${p.kind === 'in' ? 'حضور' : 'انصراف'} ${employee.fullName} الساعة ${clock12(gazaTime(p.at))}، ويتغيّر حساب يومه.`,
+                        confirmLabel: 'حذف التسجيل',
+                        danger: true,
+                      })
+                      if (yes) void run('del', () => deletePunch(p.id), 'حُذف التسجيل')
+                    }}>
                     <Trash2 size={15} />
                   </button>
                 </span>
@@ -419,7 +426,6 @@ function DayDialog({ employee, date, data, onClose }: { employee: Employee; date
         ) : (
           <p className="muted">لا تسجيلات في هذا اليوم.</p>
         )}
-        {armed && <p className="field-hint">اضغط سلة الحذف مرة ثانية للتأكيد.</p>}
 
         <div className="att-manual">
           <b>سجّل حضور أو انصراف</b>
@@ -471,14 +477,20 @@ function SheetAndPhones({ people }: { people: Employee[] }) {
     qr.make()
     return qr.createSvgTag({ cellSize: 8, margin: 2, scalable: true })
   }, [url])
-  const [armed, arm, disarm] = useConfirmTap()
+  const confirm = useConfirm()
   const [busy, setBusy] = useState(false)
   const name = (id: string) => people.find((e) => e.id === id)?.fullName ?? '—'
   const active = (devices ?? []).filter((d) => !d.revokedAt).sort((a, b) => name(a.employeeId).localeCompare(name(b.employeeId), 'ar'))
 
   async function renew() {
     if (!point) return
-    if (!armed) return arm()
+    const yes = await confirm({
+      title: 'ورقة حضور جديدة؟',
+      message: 'الورقة القديمة المعلّقة تتوقف عن العمل فوراً، وعليك طباعة الجديدة وتعليقها بدلها.',
+      confirmLabel: 'ورقة جديدة',
+      danger: true,
+    })
+    if (!yes) return
     setBusy(true)
     try {
       await renewPoint(point)
@@ -487,7 +499,6 @@ function SheetAndPhones({ people }: { people: Employee[] }) {
       toast(errText(e), 'danger')
     } finally {
       setBusy(false)
-      disarm()
     }
   }
 
@@ -503,7 +514,7 @@ function SheetAndPhones({ people }: { people: Employee[] }) {
               <div className="task-actions">
                 <Button variant="primary" icon={<Printer size={17} />} onClick={() => window.print()}>طباعة الورقة</Button>
                 <Button variant="ghost" icon={<RefreshCw size={16} />} busy={busy} onClick={() => void renew()}>
-                  {armed ? 'اضغط مرة ثانية: الورقة القديمة تتوقف' : 'ورقة جديدة بدل القديمة'}
+                  ورقة جديدة بدل القديمة
                 </Button>
               </div>
             </>

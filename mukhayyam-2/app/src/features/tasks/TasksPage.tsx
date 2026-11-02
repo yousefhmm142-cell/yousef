@@ -19,7 +19,7 @@ import { Chip, Segmented } from '../../ui/form'
 import { Avatar, Button, Pill } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
 import { useZones } from '../distribution/repo'
-import { useConfirmTap } from '../sheets/useDraft'
+import { useConfirm } from '../../ui/Confirm'
 import { SheetStateError } from '../sheets/workflow'
 import { smsUrl, taskLink, taskMessage, whatsappUrl } from './message'
 import {
@@ -366,7 +366,7 @@ function TaskDialog({ task, tech, typeName, zoneName, now, onClose }: {
   const [busy, setBusy] = useState<string | null>(null)
   const [reason, setReason] = useState('')
   const [cancelling, setCancelling] = useState(false)
-  const [armed, arm, disarm] = useConfirmTap()
+  const confirm = useConfirm()
   const link = taskLink(task.linkToken)
   const text = taskMessage(task, { type: typeName, zone: zoneName }, link)
   const open = isOpen(task)
@@ -384,7 +384,8 @@ function TaskDialog({ task, tech, typeName, zoneName, now, onClose }: {
   }
 
   async function cancel() {
-    if (!armed) return arm()
+    const yes = await confirm({ title: `إلغاء المهمة ${task.number}؟`, message: 'تُلغى المهمة ويصل الإلغاء للفني، ويُحفظ السبب الذي كتبته.', confirmLabel: 'إلغاء المهمة', danger: true })
+    if (!yes) return
     setBusy('cancel')
     try {
       await cancelTask(task, reason)
@@ -393,7 +394,6 @@ function TaskDialog({ task, tech, typeName, zoneName, now, onClose }: {
     } catch (e) {
       toast(errText(e), 'danger')
       setBusy(null)
-      disarm()
     }
   }
 
@@ -462,7 +462,7 @@ function TaskDialog({ task, tech, typeName, zoneName, now, onClose }: {
               <>
                 <input className="input" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="سبب الإلغاء" aria-label="سبب الإلغاء" autoFocus />
                 <Button variant="danger" icon={<TimerReset size={16} />} busy={busy === 'cancel'} disabled={!reason.trim()} onClick={() => void cancel()}>
-                  {armed ? 'اضغط مرة ثانية للتأكيد' : 'إلغاء المهمة'}
+                  إلغاء المهمة
                 </Button>
               </>
             )}
