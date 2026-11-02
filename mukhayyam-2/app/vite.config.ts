@@ -7,6 +7,8 @@ import { VitePWA } from 'vite-plugin-pwa'
 const BUILD_ID = new Date().toISOString()
 
 export default defineConfig({
+  // Older phones (Android 7-9 whose web engine was never updated) must still run the site: write the code the way they read it.
+  build: { target: ['chrome80', 'safari13'] },
   define: { __BUILD_ID__: JSON.stringify(BUILD_ID) },
   plugins: [
     react(),

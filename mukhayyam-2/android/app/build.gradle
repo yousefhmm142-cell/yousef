@@ -13,8 +13,8 @@ android {
     applicationId 'ps.abuzaed.mukhayyam2'
     minSdk 24
     targetSdk 35
-    versionCode 1
-    versionName '1.0'
+    versionCode 2
+    versionName '1.1'
     manifestPlaceholders = [siteUrl: siteUrl + '/', siteHost: siteHost]
     resValue 'string', 'asset_statements', """[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"web","site":"${siteUrl}"}}]"""
   }
@@ -25,6 +25,10 @@ android {
       storePassword System.getenv('M2_KEYSTORE_PASSWORD')
       keyAlias 'mukhayyam2'
       keyPassword System.getenv('M2_KEYSTORE_PASSWORD')
+      // Old signature too, so phones from Android 5 and 6 accept the file (they know nothing of the new ones).
+      enableV1Signing true
+      enableV2Signing true
+      enableV3Signing true
     }
   }
   buildTypes {
