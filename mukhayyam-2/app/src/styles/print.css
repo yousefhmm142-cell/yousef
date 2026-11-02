@@ -64,3 +64,10 @@
 .print-sheet table.slip td { height: 8.2mm; }
 .print-sheet table.slip td.seal-no { font-size: 13pt; font-weight: 800; letter-spacing: .5pt; }
 .print-sheet table.slip th.n, .print-sheet table.slip td.n { width: 15%; }
+
+/* On paper nothing of the app chrome may appear: no moon button, no bars, no extra empty page. */
+@media print {
+  .topbar-row, .topbar, .sync-notice, .tabbar, .settings-btn, .update-curtain, .confirm-back { display: none !important; }
+  .shell, body, #root { min-height: 0 !important; height: auto !important; }
+  .page { min-height: 0 !important; }
+}

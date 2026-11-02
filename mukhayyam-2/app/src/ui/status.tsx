@@ -67,13 +67,13 @@ export function SyncNotice() {
   const pending = usePendingCount()
   const sync = useSyncState()
   const [done, setDone] = useState(false)
-  // Something was waiting (or the line was down) and has now gone through.
-  const carrying = useRef(false)
-  if (!online || pending > 0) carrying.current = true
+  // Only after the internet was gone: the usual quiet syncing while online shows nothing.
+  const wasOffline = useRef(false)
+  if (!online) wasOffline.current = true
 
   useEffect(() => {
-    if (online && pending === 0 && sync.phase === 'idle' && carrying.current) {
-      carrying.current = false
+    if (online && pending === 0 && sync.phase === 'idle' && wasOffline.current) {
+      wasOffline.current = false
       setDone(true)
       const id = window.setTimeout(() => setDone(false), 6000)
       return () => window.clearTimeout(id)
@@ -98,7 +98,7 @@ export function SyncNotice() {
         <span><b>لسا ما انرسل</b> · بنحاول مرة ثانية تلقائي. ما تحذف شي.</span>
       </div>
     )
-  if (pending > 0 || sync.phase === 'syncing')
+  if (wasOffline.current && (pending > 0 || sync.phase === 'syncing'))
     return (
       <div className="sync-notice info" role="status" aria-live="polite">
         <RefreshCw size={18} className="spin" aria-hidden="true" />

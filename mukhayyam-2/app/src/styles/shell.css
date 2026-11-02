@@ -126,7 +126,7 @@
 .me-avatar { position: relative; display: inline-flex; flex: none; }
 .status-badge { position: absolute; inset-inline-end: -1px; bottom: -1px; width: 13px; height: 13px; border-radius: 50%; background: var(--faint); border: 2.5px solid var(--bg); box-sizing: content-box; }
 .status-badge.ok { background: var(--ok); }
-.status-badge.warn { background: var(--warn); animation: breathe 1.6s ease-in-out infinite; }
+.status-badge.warn { background: #F2B705; animation: breathe 1.6s ease-in-out infinite; }
 .status-badge.brand { background: var(--brand); }
 
 /* On phones the gear sits behind «المزيد» in the bottom bar. */

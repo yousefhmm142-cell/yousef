@@ -85,7 +85,12 @@ function useAttendanceData() {
   const now = useNow(60_000)
   const today = todayISO()
   const nowMin = toMinutes(gazaTime(now.toISOString()))
-  const people = useMemo(() => (team ?? []).filter((e) => e.tracksAttendance), [team])
+  // The team's own order, with those on the «بطالة» hours at the end of the list (and of the printed sheet).
+  const people = useMemo(() => {
+    const idle = (e: Employee) => (schedules?.find((s) => s.id === e.scheduleId)?.name ?? '').includes('بطالة')
+    const list = (team ?? []).filter((e) => e.tracksAttendance)
+    return [...list.filter((e) => !idle(e)), ...list.filter(idle)]
+  }, [team, schedules])
   const byDay = useMemo(() => {
     const m = new Map<string, typeof punches>()
     for (const p of punches ?? []) {
@@ -324,13 +329,15 @@ function WeekPrint({ days, rows, label, scheduleOf }: {
       </header>
       <table className="att-print">
         <colgroup>
-          <col style={{ width: '19%' }} />
-          {days.map((d) => <col key={d} style={{ width: `${71 / days.length}%` }} />)}
+          <col style={{ width: '3%' }} />
+          <col style={{ width: '18%' }} />
+          {days.map((d) => <col key={d} style={{ width: `${69 / days.length}%` }} />)}
           <col style={{ width: '5%' }} />
           <col style={{ width: '5%' }} />
         </colgroup>
         <thead>
           <tr>
+            <th>م</th>
             <th>الموظف</th>
             {days.map((d) => <th key={d}>{formatWeekday(isoNoon(d))}<br /><span className="num">{describeDay(d).date.replace(/ \d{4}$/, '')}</span></th>)}
             <th>حضور</th>
@@ -338,8 +345,9 @@ function WeekPrint({ days, rows, label, scheduleOf }: {
           </tr>
         </thead>
         <tbody>
-          {rows.map(({ e, results, totals }) => (
+          {rows.map(({ e, results, totals }, n) => (
             <tr key={e.id}>
+              <td className="num">{n + 1}</td>
               <td className="ap-name">{e.fullName}<br /><small>{[e.jobTitle, scheduleOf(e)?.name].filter(Boolean).join(' · ')}</small></td>
               {results.map((d) => (
                 <td key={d.date} className="num">
