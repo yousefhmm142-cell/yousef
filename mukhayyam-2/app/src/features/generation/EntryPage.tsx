@@ -11,7 +11,7 @@ import { useOnline } from '../../lib/useOnline'
 import { advanceOnEnter } from '../../ui/form'
 import { Button } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
-import { SaveBadge, SentHeader, Stepper, UnsentBanner } from '../sheets/ui'
+import { BackButton, DayJump, SaveBadge, SentHeader, Stepper, UnsentBanner } from '../sheets/ui'
 import { useConfirmTap, useDraft } from '../sheets/useDraft'
 import { statusInfo } from '../sheets/workflow'
 import { isManagerRole } from '../../types'
@@ -160,6 +160,7 @@ function EntryForm({ date, initial, fuelTypes, generators, previous }: {
           <p>تعدّل تقريراً أُرسل من الموقع<span>كل تغيير يُحفظ ويظهر في التقرير مباشرة. حالته ({statusInfo[report.status].label}) لا تتغير.</span></p>
         </div>
       )}
+      {isManagerRole(employee.role) && <BackButton fallback={`/generation/${date}`} />}
       <header className="entry-head">
         <div>
           <h1>{date === todayISO() ? 'تقرير اليوم' : `تقرير ${dayName(date)}`}</h1>
@@ -167,6 +168,7 @@ function EntryForm({ date, initial, fuelTypes, generators, previous }: {
         </div>
         <SaveBadge state={saveState} online={online} />
       </header>
+      {isManagerRole(employee.role) && <DayJump date={date} hrefFor={(d) => `/entry/${d}`} />}
 
       {report.status === 'returned' && (
         <div className="banner danger" role="alert">

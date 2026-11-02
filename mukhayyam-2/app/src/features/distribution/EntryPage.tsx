@@ -14,7 +14,7 @@ import { useToast } from '../../ui/Toast'
 import { MissingList } from '../generation/EntrySteps'
 import { OfflineSendNote } from '../generation/EntryPage'
 import { LOAD_UNIT_OPTIONS, PHASES } from '../sheets/loads'
-import { SaveBadge, SentHeader, UnsentBanner } from '../sheets/ui'
+import { BackButton, DayJump, SaveBadge, SentHeader, UnsentBanner } from '../sheets/ui'
 import { useConfirmTap, useDraft } from '../sheets/useDraft'
 import { isEditableStatus, statusInfo } from '../sheets/workflow'
 import { isManagerRole } from '../../types'
@@ -131,6 +131,7 @@ function SheetForm({ date, initial, zones, previous }: {
           <p>تعدّل كشفاً أُرسل من الموقع<span>كل تغيير يُحفظ ويظهر في الكشف مباشرة. حالته ({statusInfo[sheet.status].label}) لا تتغير.</span></p>
         </div>
       )}
+      {isManagerRole(employee.role) && <BackButton fallback={`/distribution/${date}`} />}
       <header className="entry-head">
         <div>
           <h1>{date === todayISO() ? 'كشف اليوم' : `كشف ${dayName(date)}`}</h1>
@@ -138,6 +139,7 @@ function SheetForm({ date, initial, zones, previous }: {
         </div>
         <SaveBadge state={saveState} online={online} />
       </header>
+      {isManagerRole(employee.role) && <DayJump date={date} hrefFor={(d) => `/sheet/${d}`} />}
 
       {sheet.status === 'returned' && (
         <div className="banner danger" role="alert">

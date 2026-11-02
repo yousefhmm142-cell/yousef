@@ -7,7 +7,7 @@ import { addDays, describeDay, isISODate, type ISODate } from '../../lib/dates'
 import { setViewDay, useToday, useViewDay } from '../../lib/viewDay'
 import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import { isManagerRole } from '../../types'
-import { DateNav, NoSheet, StatusBar } from '../sheets/ui'
+import { BackButton, DateNav, NoSheet, StatusBar } from '../sheets/ui'
 import { isEditableStatus } from '../sheets/workflow'
 import { PrintSheet } from './PrintSheet'
 import { approveSheet, returnSheet, useSheet } from './repo'
@@ -39,6 +39,7 @@ function SheetForDay({ date }: { date: ISODate }) {
 
   return (
     <div className="report-page">
+      <BackButton fallback="/" />
       <header className="ph">
         <div>
           <div className="eyebrow"><LayoutGrid size={14} /> التوزيع · الكشف اليومي</div>

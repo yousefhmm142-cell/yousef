@@ -1,6 +1,6 @@
 import { CalendarDays, Check, ChevronLeft, ChevronRight, CircleCheck, ClipboardList, Clock, Printer, Send, TriangleAlert, Undo2, WifiOff, type LucideIcon } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { formatTime, formatWeekday } from '../../lib/format'
 import { addDays, dayName, describeDay, isISODate, todayISO, type ISODate } from '../../lib/dates'
 import { useNow } from '../../lib/useNow'
@@ -86,6 +86,42 @@ export function SentHeader({ sheet, date, noun }: { sheet: SheetMeta; date: ISOD
       </div>
       <Pill tone={statusInfo[sheet.status].tone}>{statusInfo[sheet.status].label}</Pill>
     </section>
+  )
+}
+
+/** «رجوع»: the page before, or the given page when this one was opened directly. */
+export function BackButton({ fallback }: { fallback: string }) {
+  const navigate = useNavigate()
+  return (
+    <button
+      type="button"
+      className="back-btn"
+      onClick={() => (((window.history.state as { idx?: number } | null)?.idx ?? 0) > 0 ? navigate(-1) : navigate(fallback))}
+    >
+      <ChevronRight size={18} aria-hidden="true" /> رجوع
+    </button>
+  )
+}
+
+/** On the fill page, for the manager: jump straight to the day before (or after) and fill it. */
+export function DayJump({ date, hrefFor }: { date: ISODate; hrefFor(date: ISODate): string }) {
+  const today = todayISO()
+  const before = addDays(date, -1)
+  const after = addDays(date, 1)
+  return (
+    <nav className="day-jump" aria-label="تغيير اليوم">
+      <Link to={hrefFor(before)} className="day-jump-link" replace>
+        <ChevronRight size={16} aria-hidden="true" /> {dayName(before, today)}
+      </Link>
+      {date !== today && (
+        <Link to={hrefFor(today)} className="day-jump-link today" replace>اليوم</Link>
+      )}
+      {after <= today && (
+        <Link to={hrefFor(after)} className="day-jump-link" replace>
+          {dayName(after, today)} <ChevronLeft size={16} aria-hidden="true" />
+        </Link>
+      )}
+    </nav>
   )
 }
 
