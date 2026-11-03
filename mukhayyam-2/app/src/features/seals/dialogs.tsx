@@ -417,10 +417,10 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
               <span className="label">العمل</span>
               <div className="work-chips">
                 {WORK_CHOICES.map((w) => (
-                  <Chip key={w} pressed={work === w} onClick={() => setWork(work === w ? '' : w)}>{w}</Chip>
+                  <Chip key={w} pressed={workParts(work).includes(w)} onClick={() => setWork(toggleWork(work, w))}>{w}</Chip>
                 ))}
               </div>
-              <input className="input" value={work} placeholder="أو اكتب العمل" onChange={(e) => setWork(e.target.value)} />
+              <input className="input" value={work} placeholder="اضغط أكثر من عمل، أو اكتب العمل" onChange={(e) => setWork(e.target.value)} />
             </div>
             <TextField label="اسم المشترك (اختياري)" value={subscriber} onChange={setSubscriber} />
             {line && <div className="details-preview">{line}</div>}
@@ -432,6 +432,13 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
       </div>
     </Dialog>
   )
+}
+
+// A seal can carry several jobs: the chips add and remove them from one line («تفتيش + إعادة شبك»).
+const workParts = (work: string) => work.split(/\s*\+\s*/).map((p) => p.trim()).filter(Boolean)
+const toggleWork = (work: string, w: string) => {
+  const parts = workParts(work)
+  return (parts.includes(w) ? parts.filter((p) => p !== w) : [...parts, w]).join(' + ')
 }
 
 // ---------- Her two Excel files, once ----------
