@@ -1,6 +1,23 @@
 import type { ISODate } from '../../lib/dates'
 import { splitDetails } from '../seals/model'
 
+/** The words a job starts with; whatever follows is the subscriber (longest first, so «فك ساعة فحص» wins over «فك ساعة»). */
+const WORK_STARTS = [
+  'فك ساعة فحص', 'تركيب ساعة فحص', 'فك ساعة', 'تركيب ساعة', 'تبديل ساعة', 'فصل خدمة', 'فصل خط', 'فصل', 'إعادة خدمة', 'إعادة شبك', 'إعادة', 'اعادة',
+  'إضافة مشترك', 'اضافة مشترك', 'تركيب اشتراك', 'نقل مشترك', 'رفع قدرة', 'تنزيل قدرة', 'تغذية طبلون', 'شد كابل', 'تفتيش', 'صيانة',
+].sort((a, b) => b.length - a.length)
+
+/** «فك ساعة نوح كلاب» written without brackets: the job, and the subscriber who follows it. */
+export function splitWorkSubscriber(work: string, subscriber: string): { work: string; subscriber: string } {
+  if (subscriber || work.includes('+')) return { work, subscriber }
+  const w = work.trim().replace(/\s+/g, ' ')
+  for (const start of WORK_STARTS) {
+    if (w === start) break
+    if (w.startsWith(`${start} `)) return { work: start, subscriber: w.slice(start.length).trim() }
+  }
+  return { work, subscriber }
+}
+
 /** A seal as the server returns it for the statement. */
 export interface SealWorkRow {
   seal_no: number
@@ -38,7 +55,8 @@ export function buildSealWork(rows: SealWorkRow[], names: Map<string, string>): 
       continue
     }
     const d = splitDetails(r.details, r.board_no)
-    lines.set(key, { date, techId: r.technician_id, tech: names.get(r.technician_id) ?? '—', seals: [r.seal_no], board: d.board, work: d.work, subscriber: d.subscriber })
+    const ws = splitWorkSubscriber(d.work, d.subscriber)
+    lines.set(key, { date, techId: r.technician_id, tech: names.get(r.technician_id) ?? '—', seals: [r.seal_no], board: d.board, work: ws.work, subscriber: ws.subscriber })
   }
   const out = [...lines.values()]
   for (const l of out) l.seals.sort((a, b) => a - b)

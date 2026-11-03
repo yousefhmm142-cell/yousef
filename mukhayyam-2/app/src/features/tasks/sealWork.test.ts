@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildSealWork, sealWorkTotals } from './sealWork'
+import { buildSealWork, splitWorkSubscriber, sealWorkTotals } from './sealWork'
 
 const names = new Map([['a', 'قصي'], ['b', 'مجد']])
 const row = (seal_no: number, technician_id: string, used_on: string, details: string, board_no = '') => ({ seal_no, technician_id, used_on, issued_on: null, details, board_no })
@@ -23,5 +23,15 @@ describe('seal work statement', () => {
       ['2026-11-03', 'قصي', '4'],
     ])
     expect(sealWorkTotals(lines)[0]).toEqual({ tech: 'قصي', seals: 4, jobs: 3 })
+  })
+
+  it('takes the subscriber out of the work when no brackets were used', () => {
+    expect(splitWorkSubscriber('فك ساعة نوح كلاب', '')).toEqual({ work: 'فك ساعة', subscriber: 'نوح كلاب' })
+    expect(splitWorkSubscriber('فصل خدمة عمر فرح الله', '')).toEqual({ work: 'فصل خدمة', subscriber: 'عمر فرح الله' })
+    expect(splitWorkSubscriber('إعادة جميل العايدي', '')).toEqual({ work: 'إعادة', subscriber: 'جميل العايدي' })
+    expect(splitWorkSubscriber('إضافة مشترك فارس عبد العزيز', '')).toEqual({ work: 'إضافة مشترك', subscriber: 'فارس عبد العزيز' })
+    expect(splitWorkSubscriber('فك ساعة فحص', '')).toEqual({ work: 'فك ساعة فحص', subscriber: '' })
+    expect(splitWorkSubscriber('تفتيش + صيانة', '')).toEqual({ work: 'تفتيش + صيانة', subscriber: '' })
+    expect(splitWorkSubscriber('تفتيش', 'علي')).toEqual({ work: 'تفتيش', subscriber: 'علي' })
   })
 })
