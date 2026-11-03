@@ -278,6 +278,9 @@ export const deleteRoll = (rollId: string) => call<void>('seal_delete_roll', { p
 export const updateBatch = (batchId: string, technicianId: string, issuedOn: string) =>
   call<void>('seal_update_batch', { p_batch: batchId, p_technician: technicianId, p_issued_on: issuedOn })
 
+/** Adds new seals (still in stock, from the batch's own roll) to a batch already made. */
+export const addToBatch = (batchId: string, seals: number[]) => call<number>('seal_add_to_batch', { p_batch: batchId, p_seals: seals })
+
 export const deleteBatch = (batchId: string) => call<number>('seal_delete_batch', { p_batch: batchId })
 
 /** Takes seals back to the stock; a used one loses its record. */

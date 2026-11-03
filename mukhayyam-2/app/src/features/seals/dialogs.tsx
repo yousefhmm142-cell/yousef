@@ -6,7 +6,7 @@ import { Chip, TextField } from '../../ui/form'
 import { Button } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
 import { useConfirm } from '../../ui/Confirm'
-import { addRoll, assignBatch, importRoll, importTechnician, importUsage, issueBatch, recordSeal, refreshSeals, returnToStock, sealErrorText, updateBatch, updateRoll, useTechnicians } from './repo'
+import { addRoll, addToBatch, assignBatch, importRoll, importTechnician, importUsage, issueBatch, recordSeal, refreshSeals, returnToStock, sealErrorText, updateBatch, updateRoll, useTechnicians } from './repo'
 import { parseIssueWorkbook, parseUsageWorkbook, planImport, rollPayload, usagePayload, type ImportPlan } from './import'
 import { composeDetails, latinDigits, ordinalWord, parseSealNumbers, sealStatusInfo, splitDetails, WORK_CHOICES, type Seal, type SealBatch, type SealData, type SealRoll, continueAfterSeparator, rollPrefix, withoutPendingStart } from './model'
 import { dayLabel, SealPill } from './parts'
@@ -557,6 +557,24 @@ export function EditBatchDialog({ batch, data, onClose }: { batch: SealBatch; da
   const [date, setDate] = useState(batch.issuedOn)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // New seals for this same batch: from its own roll, typed the same way as when issuing.
+  const roll = data.rolls.find((r) => r.id === batch.rollId) ?? null
+  const prefix = roll ? rollPrefix(roll) : ''
+  const [text, setText] = useState(prefix)
+  const bySeal = useMemo(() => new Map(data.seals.map((s) => [s.sealNo, s])), [data.seals])
+  const parsed = useMemo(() => parseSealNumbers(withoutPendingStart(text, prefix)), [text, prefix])
+  const numbers = parsed.numbers.map((n) => (roll && n < roll.fromNo && n % 100 === 0 && n + 100 <= roll.toNo ? n + 100 : n))
+  const rows = numbers.map((n) => {
+    const s = bySeal.get(n)
+    const bad = !s ? 'غير موجود' : s.rollId !== batch.rollId ? 'من رول آخر' : s.status !== 'in_stock' ? sealStatusInfo[s.status].label : null
+    return { n, s, bad }
+  })
+  const addOk = rows.every((r) => !r.bad) && parsed.bad.length === 0
+  // A number the screen does not know may belong to something added a moment ago: look again.
+  const unknown = rows.some((r) => !r.s)
+  useEffect(() => {
+    if (unknown) void refreshSeals(true)
+  }, [unknown, rows.length])
   // A person no longer active still shows, so the batch keeps its name.
   const list = !batch.technicianId || technicians.some((t) => t.id === batch.technicianId) ? technicians : [{ id: batch.technicianId, fullName: data.names.get(batch.technicianId) ?? '—' }, ...technicians]
 
@@ -564,9 +582,10 @@ export function EditBatchDialog({ batch, data, onClose }: { batch: SealBatch; da
     setBusy(true)
     setError(null)
     try {
-      if (!tech) return
-      await updateBatch(batch.id, tech, date)
-      toast('عُدّلت الدفعة')
+      if (!addOk) { setBusy(false); return }
+      if (tech && (tech !== batch.technicianId || date !== batch.issuedOn)) await updateBatch(batch.id, tech, date)
+      if (rows.length > 0) await addToBatch(batch.id, numbers)
+      toast(rows.length > 0 ? `عُدّلت الدفعة وأُضيف لها ${rows.length} ${rows.length > 10 ? 'ختماً' : 'أختام'}` : 'عُدّلت الدفعة')
       onClose()
     } catch (e) {
       setError(sealErrorText(e))
@@ -582,7 +601,7 @@ export function EditBatchDialog({ batch, data, onClose }: { batch: SealBatch; da
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>إلغاء</Button>
-          <Button variant="primary" busy={busy} disabled={!tech} onClick={() => void save()}>حفظ</Button>
+          <Button variant="primary" busy={busy} disabled={!addOk} onClick={() => void save()}>حفظ</Button>
         </>
       }
     >
@@ -597,7 +616,33 @@ export function EditBatchDialog({ batch, data, onClose }: { batch: SealBatch; da
           <span className="label">تاريخ الصرف</span>
           <input type="date" className="input" max={todayISO()} value={date} onChange={(e) => setDate(e.target.value)} />
         </label>
-        <p className="field-hint">يتغيّر الفني والتاريخ لكل أختام الدفعة. لتغيير ختم بعينه افتحه من «سجل الأختام».</p>
+        <label className="field">
+          <span className="label">
+            إضافة أختام جديدة للدفعة{roll ? <> (من الرول <b className="num">{roll.fromNo}–{roll.toNo}</b>). أول الرقم <b className="num roll-fixed">{prefix}</b> جاهز، وكل ما تضغط <b>مسافة</b> بيجيك من جديد</> : ''}
+          </span>
+          <textarea
+            className="seal-input"
+            dir="ltr"
+            value={text}
+            placeholder={`${prefix}02 ${prefix}35 …`}
+            onChange={(e) => setText(continueAfterSeparator(text, e.target.value, prefix, e.target.selectionStart === e.target.value.length))}
+          />
+        </label>
+        {(rows.length > 0 || parsed.bad.length > 0) && (
+          <div className="parsed" aria-live="polite">
+            {rows.map((r) => (
+              <span key={r.n} className="seal-pill" data-status={r.s?.status ?? 'lost'} data-bad={r.bad ? true : undefined}>
+                <i aria-hidden="true" />
+                <span className="num">{r.n}</span>
+                {r.bad && <small>{r.bad}</small>}
+              </span>
+            ))}
+            {parsed.bad.map((b) => (
+              <span key={b} className="seal-pill" data-status="lost" data-bad><i aria-hidden="true" /><span className="num">{b}</span><small>رقم غير صحيح</small></span>
+            ))}
+          </div>
+        )}
+        <p className="field-hint">الفني والتاريخ يتغيّران لكل أختام الدفعة، والأختام الجديدة تلتحق بها. تقدر ترجع تعدّلها وتضيف أكثر. لتغيير ختم بعينه افتحه من «سجل الأختام».</p>
         {error && <p className="field-error" role="alert">{error}</p>}
       </div>
     </Dialog>

@@ -427,6 +427,13 @@ select test.fails($$select public.seal_assign_batch((select batch_id from public
 select public.seal_assign_batch((select batch_id from public.seals where seal_no = 240101), (select id from public.employees where full_name = 'قصي الشافعي'));
 select test.ok((select count(*) from public.seals where seal_no in (240101, 240102, 240103) and technician_id = (select id from public.employees where full_name = 'قصي الشافعي')) = 3, 'naming the batch names all its seals');
 select public.seal_record(240101, 'used', null, 'طبلون 5');
+-- ---------- Adding new seals to a batch already made (again and again) ----------
+select test.ok(public.seal_add_to_batch((select batch_id from public.seals where seal_no = 240101), array[240104, 240105]) = 2, 'new seals can join an existing batch');
+select test.ok((select count(*) from public.seals where seal_no in (240104, 240105) and status = 'issued' and technician_id = (select id from public.employees where full_name = 'قصي الشافعي') and batch_id = (select batch_id from public.seals where seal_no = 240101)) = 2, 'they take the batch name and day');
+select test.ok(public.seal_add_to_batch((select batch_id from public.seals where seal_no = 240101), array[240106]) = 1, 'and it can be done a second time');
+select test.ok((select batch_pos from public.seals where seal_no = 240106) = 6, 'each one lands after the last');
+select test.fails($$select public.seal_add_to_batch((select batch_id from public.seals where seal_no = 240101), array[240104])$$, 'not_available:240104', 'a seal already out cannot be added');
+select test.fails($$select public.seal_add_to_batch((select batch_id from public.seals where seal_no = 240101), array[181302])$$, '%', 'a seal of another roll is refused');
 reset role;
 
 \echo 'ALL CHECKS PASSED'
