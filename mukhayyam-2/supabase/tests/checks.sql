@@ -436,4 +436,10 @@ select test.fails($$select public.seal_add_to_batch((select batch_id from public
 select test.fails($$select public.seal_add_to_batch((select batch_id from public.seals where seal_no = 240101), array[181302])$$, '%', 'a seal of another roll is refused');
 reset role;
 
+-- ---------- The work statement of the technicians' seals ----------
+select test.ok((select count(*) from public.seal_work_statement(null, null) where seal_no = 240101) = 1, 'the statement lists a used seal with its work');
+select test.ok((select details from public.seal_work_statement(null, null) where seal_no = 240101) like '%طبلون 5%', 'with the line written for it');
+select test.ok((select count(*) from public.seal_work_statement(date '2000-01-01', date '2000-01-02')) = 0, 'and only the days asked for');
+reset role;
+
 \echo 'ALL CHECKS PASSED'

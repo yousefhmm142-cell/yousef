@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ChevronLeft, ChevronRight, FileSpreadsheet, Printer } from 'lucide-react'
+import { ChevronLeft, ChevronRight, FileSpreadsheet, Printer, ScrollText } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router'
 import { db } from '../../data/db'
 import { addDays, describeDay, todayISO, type ISODate } from '../../lib/dates'
 import { formatAmount } from '../../lib/numbers'
@@ -35,6 +36,7 @@ const monthName = (d: ISODate) => new Intl.DateTimeFormat('ar-EG-u-nu-latn-ca-gr
 export function ReportsPage() {
   useDocumentTitle('التقارير')
   const toast = useToast()
+  const navigate = useNavigate()
   const today = todayISO()
   const now = useNow(60_000)
   const [period, setPeriod] = useState<Period>('week')
@@ -101,6 +103,7 @@ export function ReportsPage() {
         </div>
         <button type="button" className="icon-btn" aria-label="الفترة التالية" disabled={isCurrent} onClick={() => move(1)}><ChevronLeft size={18} /></button>
         <div className="ph-actions">
+          <Button variant="secondary" icon={<ScrollText size={17} />} onClick={() => navigate('/tasks/seal-work')}>كشف أعمال الأختام</Button>
           <Button variant="secondary" icon={<Printer size={17} />} onClick={() => window.print()}>طباعة / PDF</Button>
           <Button variant="primary" icon={<FileSpreadsheet size={17} />} busy={busy} disabled={!sections} onClick={() => void excel()}>Excel</Button>
         </div>

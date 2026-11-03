@@ -89,3 +89,32 @@
 .task-materials ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .task-materials li { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .task-mat-add { display: grid; grid-template-columns: 1fr 90px auto; gap: 8px; }
+
+/* ---------- Seal work statement: clear ruled table, a band for each day ---------- */
+.sw-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 14px; }
+.sw-table th, .sw-table td { border: 1px solid var(--line-2); padding: 8px 8px; text-align: center; vertical-align: middle; overflow-wrap: anywhere; }
+.sw-table thead th { background: var(--brand); color: #fff; font-weight: 800; }
+.sw-table .sw-day th { background: var(--surface-2); text-align: start; font-size: 14.5px; border-top: 2px solid var(--ink-2); }
+.sw-table .sw-week th { background: var(--ink); color: var(--surface); text-align: start; }
+.sw-table .sw-tech { font-weight: 800; }
+.sw-table .sw-seals { font-weight: 700; direction: ltr; }
+.sw-table tbody tr:not(.sw-day):not(.sw-week):nth-child(even) td { background: color-mix(in srgb, var(--surface-2) 55%, transparent); }
+.sw-totals { margin-top: 18px; max-width: 520px; }
+.sw-totals .sw-grand td { font-weight: 800; background: var(--surface-2); border-top: 2px solid var(--ink-2); }
+.seal-work .table-wrap { padding: 0; overflow-x: auto; }
+.seal-work .sw-table { min-width: 720px; }
+
+@media print {
+  .print-sheet.seal-work-print { font-size: 10.5pt; }
+  .seal-work-print .sw-table { page-break-inside: auto; }
+  .seal-work-print .sw-table tr { break-inside: avoid; }
+  .seal-work-print .sw-table thead { display: table-header-group; }
+  .seal-work-print .sw-table th, .seal-work-print .sw-table td { border: 1.2px solid #000; padding: 5px 5px; font-size: 10.5pt; }
+  .seal-work-print .sw-table thead th { background: #1c1c1c !important; color: #fff !important; font-size: 10.5pt; }
+  .seal-work-print .sw-table .sw-day th { background: #d9d9d9 !important; color: #000 !important; border-top: 2.5px solid #000; font-size: 11pt; }
+  .seal-work-print .sw-table .sw-week th { background: #000 !important; color: #fff !important; }
+  .seal-work-print .sw-table tbody tr:not(.sw-day):not(.sw-week):nth-child(even) td { background: #f3f3f3 !important; }
+  .seal-work-print .sw-table .sw-seals { font-size: 11pt; }
+  .seal-work-print .sw-totals { margin-top: 14px; width: 55%; max-width: none; break-inside: avoid; }
+  .seal-work-print .sw-totals .sw-grand td { background: #d9d9d9 !important; }
+}

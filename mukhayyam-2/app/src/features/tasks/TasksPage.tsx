@@ -1,11 +1,12 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { AlarmClock, CheckCheck, Copy, Hammer, ListChecks, MessageCircle, MessageSquareText, Plus, Printer, TimerReset, Trash2, XCircle } from 'lucide-react'
+import { AlarmClock, CheckCheck, Copy, Hammer, ListChecks, MessageCircle, MessageSquareText, Plus, Printer, ScrollText, TimerReset, Trash2, XCircle } from 'lucide-react'
 import { formatAmount, parseDecimal } from '../../lib/numbers'
 import { addMove, deleteMove } from '../stock/repo'
 import { taskMatrix } from '../reports/build'
 import { TaskPrintSheet } from './TaskPrintSheet'
 import { ReportTable } from '../reports/ReportsPage'
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router'
 import { useEmployee } from '../../auth/AuthProvider'
 import { db } from '../../data/db'
 import { toISODate, todayISO } from '../../lib/dates'
@@ -74,6 +75,7 @@ async function sendOrder(task: Task, channel: Channel, tech: Employee & { phone:
 
 export function TasksPage() {
   useDocumentTitle('المهام الميدانية')
+  const navigate = useNavigate()
   const tasks = useTasks()
   const types = useTaskTypes()
   const zones = useZones()
@@ -116,6 +118,9 @@ export function TasksPage() {
         <div className="ph-actions">
           <Button variant="secondary" size="lg" icon={<Printer size={18} />} onClick={() => window.print()}>
             طباعة كشف اليوم
+          </Button>
+          <Button variant="secondary" size="lg" icon={<ScrollText size={18} />} onClick={() => navigate('/tasks/seal-work')}>
+            كشف أعمال الأختام
           </Button>
           <Button variant="primary" size="lg" icon={<Plus size={18} />} onClick={() => setCreating(true)} className="ph-action">
             مهمة جديدة
