@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Clock3, MapPin, Printer, QrCode, RefreshCw, Smartphone, Trash2, UserCheck, UserX, Users } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Clock3, MapPin, MessageCircle, Printer, QrCode, RefreshCw, Smartphone, Trash2, UserCheck, UserX, Users } from 'lucide-react'
 import { SignFooter } from '../sheets/signers'
 import qrcode from 'qrcode-generator'
 import { useEffect, useMemo, useState } from 'react'
@@ -9,6 +9,7 @@ import { addDays, describeDay, isoNoon, todayISO, type ISODate } from '../../lib
 import { clock12, formatWeekday } from '../../lib/format'
 import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import { useNow } from '../../lib/useNow'
+import { sendSheetOnWhatsApp } from '../../lib/sheetPdf'
 import type { Employee } from '../../types'
 import { Dialog } from '../../ui/Dialog'
 import { Segmented, TimeField } from '../../ui/form'
@@ -240,6 +241,8 @@ function InOut({ inAt, outAt }: { inAt: string; outAt: string | null }) {
 
 function WeekSheet({ data, onOpen }: { data: Data; onOpen(e: Employee, date: ISODate): void }) {
   const [anchor, setAnchor] = useState(data.today)
+  const [sharing, setSharing] = useState(false)
+  const toast = useToast()
   const all = weekDays(anchor)
   // Friday is not shown at all; extra hours someone works on a Friday still count in the totals.
   const days = all.filter((d) => weekdayOf(d) !== 5)
@@ -249,6 +252,21 @@ function WeekSheet({ data, onOpen }: { data: Data; onOpen(e: Employee, date: ISO
   })
   const label = `${describeDay(all[0]!).date} ← ${describeDay(all[5]!).date}`
   const thisWeek = all.includes(data.today)
+
+  async function whatsapp() {
+    const el = document.querySelector<HTMLElement>('.print-sheet')
+    if (!el) return
+    setSharing(true)
+    try {
+      const title = `كشف الحضور والانصراف الأسبوعي · مخيم (2) · ${label}`
+      const res = await sendSheetOnWhatsApp(el, `كشف الحضور ${all[0]} - ${all[5]}.pdf`, title)
+      if (res === 'saved') toast('نزّل ملف PDF وانفتح واتساب، أرفق الملف بالمحادثة.')
+    } catch {
+      toast('تعذّر تجهيز ملف PDF. حاول مرة أخرى.', 'danger')
+    } finally {
+      setSharing(false)
+    }
+  }
 
   return (
     <>
@@ -260,6 +278,7 @@ function WeekSheet({ data, onOpen }: { data: Data; onOpen(e: Employee, date: ISO
         </div>
         <button type="button" className="icon-btn" aria-label="الأسبوع التالي" disabled={thisWeek} onClick={() => setAnchor(addDays(all[0]!, 7))}><ChevronLeft size={18} /></button>
         <Button variant="secondary" icon={<Printer size={17} />} onClick={() => window.print()} className="week-print">طباعة الكشف</Button>
+        <Button variant="secondary" busy={sharing} icon={<MessageCircle size={17} />} onClick={() => void whatsapp()}>إرسال واتساب (PDF)</Button>
       </div>
 
       <div className="card week-card">
