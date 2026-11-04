@@ -1,0 +1,27 @@
+const { chromium } = require('playwright');
+const BASE = 'http://localhost:4175';
+const sql = (q) => require('child_process').execSync(`docker compose -f /home/user/yousef/mukhayyam-2/supabase/local/docker-compose.yml exec -T db psql -U postgres -d postgres -Atc ${JSON.stringify(q)}`).toString().trim();
+(async () => {
+  sql(`update employees set tracks_attendance=true where full_name='مجد عاشور'`);
+  sql(`delete from attendance_punches where employee_id=(select id from employees where full_name='مجد عاشور')`);
+  sql(`delete from attendance_devices`);
+  sql(`insert into attendance_devices (employee_id, token_hash) values ((select id from employees where full_name='مجد عاشور'), encode(digest('tok123','sha256'),'hex'))`);
+  sql(`update attendance_points set lat=31.5, lng=34.45, radius_m=100`);
+  const code = sql(`select code from attendance_points limit 1`);
+  const b = await chromium.launch();
+  const mk = async (lat, lng) => { const c = await b.newContext({ viewport: { width: 420, height: 800 }, geolocation: { latitude: lat, longitude: lng, accuracy: 15 }, permissions: ['geolocation'] }); await c.addInitScript(() => localStorage.setItem('m2-attendance-device', JSON.stringify({ token: 'tok123', name: 'مجد' }))); return c };
+  const far = await (await mk(31.52, 34.45)).newPage(); await far.goto(`${BASE}/a/${code}`); await far.waitForTimeout(2500);
+  console.log('FAR  :', (await far.locator('.scan').innerText()).replace(/\s+/g, ' ').slice(0, 160));
+  const ctx = await mk(31.5004, 34.4503); const p = await ctx.newPage(); await p.goto(`${BASE}/a/${code}`); await p.waitForTimeout(2500);
+  console.log('NEAR :', (await p.locator('.scan').innerText()).replace(/\s+/g, ' ').slice(0, 160));
+  await p.reload(); await p.waitForTimeout(2500);
+  console.log('RELOAD:', (await p.locator('.scan').innerText()).replace(/\s+/g, ' ').slice(0, 220));
+  console.log('punches after reload:', sql(`select count(*) from attendance_punches`));
+  sql(`update attendance_punches set at = at - interval '61 minutes'`);
+  await p.waitForTimeout(100); await p.reload(); await p.waitForTimeout(2500);
+  console.log('RELOAD 61min later:', (await p.locator('.scan').innerText()).replace(/\s+/g, ' ').slice(0, 220), '| punches', sql(`select count(*) from attendance_punches`));
+  await p.getByRole('button', { name: /سجّل انصرافي/ }).click(); await p.waitForTimeout(2000);
+  console.log('AFTER BUTTON:', (await p.locator('.scan').innerText()).replace(/\s+/g, ' ').slice(0, 200), '| punches', sql(`select count(*) from attendance_punches`));
+  await p.screenshot({ path: '/tmp/m2-work/qr-done.png' });
+  sql(`update attendance_points set lat=null, lng=null`); await b.close();
+})().catch((e) => { console.log('FAILED ' + e.message); process.exit(1) });
