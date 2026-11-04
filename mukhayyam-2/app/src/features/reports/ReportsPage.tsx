@@ -16,6 +16,7 @@ import { gazaTime, toMinutes, weekStart } from '../attendance/rules'
 import { stamp } from '../sheets/ui'
 import { refreshStock } from '../stock/repo'
 import { refreshTasks } from '../tasks/repo'
+import { sealWorkAsTasks, useSealWork } from '../tasks/sealWork'
 import { buildReport, type Cell, type Section } from './build'
 import { downloadExcel } from './excel'
 
@@ -65,10 +66,14 @@ export function ReportsPage() {
     return { reports, sheets, tasks, punches, leaves, holidays, employees, schedules, generators, fuelTypes, zones, taskTypes, items, moves }
   }, [])
 
-  const sections = useMemo(
-    () => (data ? buildReport({ ...data, from, to, today, nowMin: toMinutes(gazaTime(now.toISOString())) }) : null),
-    [data, from, to, today, now],
-  )
+  // Seal work counts as finished tasks of the technician.
+  const sealNames = useMemo(() => (data ? new Map(data.employees.map((e) => [e.id, e.fullName] as [string, string])) : undefined), [data])
+  const sealLines = useSealWork(from, to, sealNames)
+  const sections = useMemo(() => {
+    if (!data) return null
+    const sw = sealWorkAsTasks(sealLines, data.taskTypes)
+    return buildReport({ ...data, tasks: [...data.tasks, ...sw.tasks], taskTypes: sw.types, from, to, today, nowMin: toMinutes(gazaTime(now.toISOString())) })
+  }, [data, sealLines, from, to, today, now])
 
   async function excel() {
     if (!sections) return

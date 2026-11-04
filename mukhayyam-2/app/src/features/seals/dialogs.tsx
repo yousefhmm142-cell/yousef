@@ -568,6 +568,10 @@ export function EditBatchDialog({ batch, data, onClose }: { batch: SealBatch; da
   const roll = data.rolls.find((r) => r.id === batch.rollId) ?? null
   const prefix = roll ? rollPrefix(roll) : ''
   const [text, setText] = useState(prefix)
+  // Seals taken out of this batch (back to the stock) when she presses save; tap again to keep one.
+  const [removed, setRemoved] = useState<Set<number>>(new Set())
+  const inBatch = useMemo(() => data.seals.filter((s) => s.batchId === batch.id).sort((a, b) => (a.batchPos ?? 0) - (b.batchPos ?? 0)), [data.seals, batch.id])
+  const flip = (no: number) => setRemoved((r) => { const n = new Set(r); if (n.has(no)) n.delete(no); else n.add(no); return n })
   const bySeal = useMemo(() => new Map(data.seals.map((s) => [s.sealNo, s])), [data.seals])
   const parsed = useMemo(() => parseSealNumbers(withoutPendingStart(text, prefix)), [text, prefix])
   const numbers = parsed.numbers.map((n) => (roll && n < roll.fromNo && n % 100 === 0 && n + 100 <= roll.toNo ? n + 100 : n))
@@ -591,8 +595,10 @@ export function EditBatchDialog({ batch, data, onClose }: { batch: SealBatch; da
     try {
       if (!addOk) { setBusy(false); return }
       if (tech && (tech !== batch.technicianId || date !== batch.issuedOn)) await updateBatch(batch.id, tech, date)
+      if (removed.size > 0) await returnToStock([...removed])
       if (rows.length > 0) await addToBatch(batch.id, numbers)
-      toast(rows.length > 0 ? `عُدّلت الدفعة وأُضيف لها ${rows.length} ${rows.length > 10 ? 'ختماً' : 'أختام'}` : 'عُدّلت الدفعة')
+      const parts = [rows.length > 0 ? `أُضيف ${rows.length}` : '', removed.size > 0 ? `رجع للمخزن ${removed.size}` : ''].filter(Boolean)
+      toast(parts.length ? `عُدّلت الدفعة: ${parts.join('، ')}` : 'عُدّلت الدفعة')
       onClose()
     } catch (e) {
       setError(sealErrorText(e))
@@ -623,6 +629,35 @@ export function EditBatchDialog({ batch, data, onClose }: { batch: SealBatch; da
           <span className="label">تاريخ الصرف</span>
           <input type="date" className="input" max={todayISO()} value={date} onChange={(e) => setDate(e.target.value)} />
         </label>
+        {inBatch.length > 0 && (
+          <div className="field">
+            <span className="label">أختام الدفعة (اضغط على الختم لحذفه من الدفعة)</span>
+            <div className="parsed">
+              {inBatch.map((s) => {
+                const out = removed.has(s.sealNo)
+                const locked = s.status !== 'issued'
+                return (
+                  <button
+                    key={s.sealNo}
+                    type="button"
+                    className="seal-pill"
+                    data-status={s.status}
+                    data-bad={out ? true : undefined}
+                    disabled={locked}
+                    aria-pressed={out}
+                    title={locked ? 'ختم مستخدم، ما بينحذف من هون' : out ? 'سيُحذف، اضغط للتراجع' : 'اضغط للحذف'}
+                    onClick={() => flip(s.sealNo)}
+                    style={out ? { textDecoration: 'line-through', opacity: 0.7 } : undefined}
+                  >
+                    <i aria-hidden="true" />
+                    <span className="num">{s.sealNo}</span>
+                    <small>{out ? 'سيُحذف' : locked ? 'مستخدم' : '✕'}</small>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
         <label className="field">
           <span className="label">
             إضافة أختام جديدة للدفعة{roll ? <> (من الرول <b className="num">{roll.fromNo}–{roll.toNo}</b>). أول الرقم <b className="num roll-fixed">{prefix}</b> جاهز، وكل ما تضغط <b>مسافة</b> بيجيك من جديد</> : ''}

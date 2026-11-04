@@ -1,5 +1,5 @@
 import { CircleAlert, CircleCheck } from 'lucide-react'
-import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 
 type ToastTone = 'ok' | 'danger'
 interface ToastItem {
@@ -20,6 +20,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setItems((all) => [...all.slice(-2), { id, text, tone }])
     window.setTimeout(() => setItems((all) => all.filter((t) => t.id !== id)), 3200)
   }, [])
+
+  // Code outside React (the offline queue) speaks through this event.
+  useEffect(() => {
+    const on = (e: Event) => {
+      const d = (e as CustomEvent<{ text: string; tone?: ToastTone }>).detail
+      if (d?.text) show(d.text, d.tone)
+    }
+    window.addEventListener('m2-toast', on)
+    return () => window.removeEventListener('m2-toast', on)
+  }, [show])
 
   const value = useMemo(() => show, [show])
   return (

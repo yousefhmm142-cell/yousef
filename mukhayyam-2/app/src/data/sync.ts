@@ -155,7 +155,7 @@ export function usePendingCount(): number {
     useLiveQuery(async () => {
       if (isDemo) return 0
       const sheets = await Promise.all(KINDS.map((k) => k.table.filter(hasUnsent).count()))
-      return sheets.reduce((a, b) => a + b, 0) + (await db.outbox.count())
+      return sheets.reduce((a, b) => a + b, 0) + (await db.outbox.count()) + ((await getMeta<unknown[]>('seals:queue'))?.length ?? 0)
     }, []) ?? 0
   )
 }

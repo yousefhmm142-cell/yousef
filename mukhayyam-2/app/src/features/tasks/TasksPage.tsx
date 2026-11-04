@@ -4,6 +4,8 @@ import { formatAmount, parseDecimal } from '../../lib/numbers'
 import { addMove, deleteMove } from '../stock/repo'
 import { taskMatrix } from '../reports/build'
 import { TaskPrintSheet } from './TaskPrintSheet'
+import { sealWorkAsTasks, useSealWork } from './sealWork'
+import type { TaskType } from './model'
 import { ReportTable } from '../reports/ReportsPage'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
@@ -107,6 +109,10 @@ export function TasksPage() {
   const person = (id: string) => technicians.find((e) => e.id === id)
   const openTask = all.find((t) => t.id === openId) ?? null
   const people = useLiveQuery(() => db.employees.toArray(), [])
+  // What the technicians did with seals today counts as their finished tasks too.
+  const sealNames = useMemo(() => (people ? new Map(people.map((e) => [e.id, e.fullName] as [string, string])) : undefined), [people])
+  const sealToday = useSealWork(today, today, sealNames)
+  const sealDone = useMemo(() => sealWorkAsTasks(sealToday, types ?? []), [sealToday, types])
 
   return (
     <div className="tasks">
@@ -141,7 +147,7 @@ export function TasksPage() {
         </div>
         <div className="kpi glass">
           <div className="kpi-label"><span className="kpi-ico"><CheckCheck size={16} /></span>أُنجزت اليوم</div>
-          <div className="kpi-value num">{doneToday.length}</div>
+          <div className="kpi-value num">{doneToday.length + sealDone.tasks.length}</div>
           <div className="kpi-sub">{avgToday !== null ? `متوسط المدة ${durationText(avgToday)}` : 'لا شيء بعد'}</div>
         </div>
         <div className="kpi glass">
@@ -206,9 +212,9 @@ export function TasksPage() {
         </ul>
       )}
 
-      {types && <TaskPrintSheet day={today} tasks={doneToday} employees={people ?? []} types={types} />}
+      {types && <TaskPrintSheet day={today} tasks={[...doneToday, ...sealDone.tasks]} employees={people ?? []} types={sealDone.types} />}
 
-      <DailySheet tasks={all.filter((t) => t.status !== 'cancelled' && toISODate(new Date(t.createdAt)) === today)} />
+      <DailySheet tasks={[...all.filter((t) => t.status !== 'cancelled' && toISODate(new Date(t.createdAt)) === today), ...sealDone.tasks]} types={sealDone.types} />
 
       {creating && (
         <NewTaskDialog
@@ -535,9 +541,10 @@ function TaskMaterials({ task }: { task: Task }) {
 }
 
 /** The paper "daily electricians' tasks" sheet: each technician against each task type, with totals. */
-function DailySheet({ tasks }: { tasks: Task[] }) {
+function DailySheet({ tasks, types: withSeals }: { tasks: Task[]; types: TaskType[] }) {
   const employees = useLiveQuery(() => db.employees.toArray(), [])
-  const types = useTaskTypes()
+  const own = useTaskTypes()
+  const types = own ? withSeals : undefined
   if (!employees || !types || tasks.length === 0) return null
   const section = taskMatrix(tasks, employees, types, 'today', 'كشف مهام اليوم')
   return (

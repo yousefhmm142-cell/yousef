@@ -75,6 +75,8 @@ export async function refreshSeals(afterWrite = false): Promise<void> {
   if (isDemo) return
   // A read already under way may have started before our own write: wait for it, then read again.
   if (loading && afterWrite) await loading.catch(() => undefined)
+  // Things written without internet go first, or the server's older copy would cover them.
+  if (!flushing && (await getSealQueue()).length > 0) await flushSealQueue()
   return readSeals()
 }
 
@@ -250,13 +252,181 @@ function fail(error: { code?: string; message?: string }, status: number): never
   throw new SealError(m?.[1] ?? 'unknown', m?.[2])
 }
 
-async function call<T>(fn: string, args: Record<string, unknown>): Promise<T> {
+// ---------- Working without internet ----------
+// What she writes is kept on this device at once and shown as done; the server gets it as soon as the
+// internet is there, in the same order. Rolls (rare, and others depend on them) still need internet.
+interface QueuedOp {
+  id: string
+  fn: string
+  args: Record<string, unknown>
+  /** A batch made here before the server knew it: the later steps that name it are renamed after sending. */
+  tmp?: string
+}
+const QUEUE = 'seals:queue'
+const TMP = 'tmp-'
+const OFFLINE_OK = new Set(['seal_issue', 'seal_record', 'seal_add_to_batch', 'seal_assign_batch', 'seal_update_batch', 'seal_return_to_stock', 'seal_unissue', 'seal_delete_batch'])
+const SEND_LIMIT_MS = 12_000
+
+export const getSealQueue = async () => (await getMeta<QueuedOp[]>(QUEUE)) ?? []
+let lock: Promise<unknown> = Promise.resolve()
+const locked = <T,>(job: () => Promise<T>): Promise<T> => {
+  const run = lock.then(job, job)
+  lock = run.catch(() => undefined)
+  return run
+}
+
+/** Tells the toast layer something (the toasts live in React; this file does not). */
+const say = (text: string, tone: 'ok' | 'danger' = 'ok') => window.dispatchEvent(new CustomEvent('m2-toast', { detail: { text, tone } }))
+
+const today = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Gaza' })
+
+/** The same change on this device's copy, so the screen shows it straight away. */
+async function applyLocal(fn: string, args: Record<string, unknown>, opId: string): Promise<{ result: unknown; tmp?: string }> {
+  const nums = (args.p_seals ?? []) as number[]
+  const clear = { status: 'in_stock' as SealStatus, batchId: null, batchPos: null, technicianId: null, issuedOn: null, usedOn: null, details: '', boardNo: '' }
+  const dropEmptyBatches = async (ids: (string | null)[]) => {
+    for (const id of new Set(ids.filter(Boolean) as string[])) {
+      const b = await db.sealBatches.get(id)
+      if (b && (await db.seals.where('batchId').equals(id).count()) === 0 && (b.originalSeals === null || id.startsWith(TMP))) await db.sealBatches.delete(id)
+    }
+  }
+  switch (fn) {
+    case 'seal_record': {
+      const no = args.p_seal as number
+      const st = args.p_status as SealStatus
+      const line = String(args.p_details ?? '')
+      await db.seals.update(no, st === 'issued' ? { status: st, usedOn: null, details: '', boardNo: '' } : { status: st, usedOn: (args.p_date as string | null) ?? today(), details: line })
+      return { result: null }
+    }
+    case 'seal_issue': {
+      const first = await db.seals.get(nums[0]!)
+      const rollId = first?.rollId ?? ''
+      const mine = (await db.sealBatches.where('id').notEqual('').toArray()).filter((b) => b.rollId === rollId)
+      const batchNo = Math.max(0, ...mine.map((b) => b.batchNo)) + 1
+      const tmp = `${TMP}${opId}`
+      await db.sealBatches.put({ id: tmp, rollId, batchNo, technicianId: (args.p_technician as string | null) ?? null, issuedOn: args.p_issued_on as string, note: String(args.p_note ?? ''), originalSeals: nums, blockFrom: null, blockOrd: null, label: null, usageOrd: null, usageFill: null })
+      await Promise.all(nums.map((n, i) => db.seals.update(n, { status: 'issued', batchId: tmp, batchPos: i + 1, technicianId: (args.p_technician as string | null) ?? null, issuedOn: args.p_issued_on as string, usedOn: null, details: '', boardNo: '' })))
+      return { result: { batch_id: tmp, batch_no: batchNo, roll_id: rollId, count: nums.length }, tmp }
+    }
+    case 'seal_add_to_batch': {
+      const id = args.p_batch as string
+      const b = await db.sealBatches.get(id)
+      const pos = Math.max(0, ...(await db.seals.where('batchId').equals(id).toArray()).map((x) => x.batchPos ?? 0))
+      await Promise.all(nums.map((n, i) => db.seals.update(n, { status: 'issued', batchId: id, batchPos: pos + i + 1, technicianId: b?.technicianId ?? null, issuedOn: b?.issuedOn ?? null, usedOn: null, details: '', boardNo: '' })))
+      if (b) await db.sealBatches.update(id, { originalSeals: null })
+      return { result: nums.length }
+    }
+    case 'seal_assign_batch': {
+      const id = args.p_batch as string
+      await db.sealBatches.update(id, { technicianId: args.p_technician as string })
+      await db.seals.where('batchId').equals(id).modify({ technicianId: args.p_technician as string })
+      return { result: null }
+    }
+    case 'seal_update_batch': {
+      const id = args.p_batch as string
+      await db.sealBatches.update(id, { technicianId: args.p_technician as string, issuedOn: args.p_issued_on as string })
+      await db.seals.where('batchId').equals(id).modify({ technicianId: args.p_technician as string, issuedOn: args.p_issued_on as string })
+      return { result: null }
+    }
+    case 'seal_return_to_stock':
+    case 'seal_unissue': {
+      const was = (await db.seals.bulkGet(nums)).map((x) => x?.batchId ?? null)
+      await Promise.all(nums.map((n) => db.seals.update(n, clear)))
+      await dropEmptyBatches(was)
+      return { result: nums.length }
+    }
+    case 'seal_delete_batch': {
+      const id = args.p_batch as string
+      await db.seals.where('batchId').equals(id).modify(clear)
+      await db.sealBatches.delete(id)
+      return { result: 0 }
+    }
+    default:
+      return { result: null }
+  }
+}
+
+async function queueOp<T>(fn: string, args: Record<string, unknown>, notify: boolean): Promise<T> {
+  const op: QueuedOp = { id: crypto.randomUUID(), fn, args }
+  const done = await applyLocal(fn, args, op.id)
+  if (done.tmp) op.tmp = done.tmp
+  await locked(async () => setMeta(QUEUE, [...(await getSealQueue()), op]))
+  if (notify) say('انحفظ على جهازك · بانتظار الإنترنت، وبينرسل لحاله لما يرجع')
+  else void flushSealQueue()
+  return done.result as T
+}
+
+async function send<T>(fn: string, args: Record<string, unknown>): Promise<T> {
   const sb = client()
-  const res = await sb.rpc(fn, args)
+  const res = await sb.rpc(fn, args).abortSignal(AbortSignal.timeout(SEND_LIMIT_MS))
   if (res.error) fail(res.error, res.status)
   await refreshSeals(true)
   announce()
   return res.data as T
+}
+
+async function call<T>(fn: string, args: Record<string, unknown>): Promise<T> {
+  if (!OFFLINE_OK.has(fn) || isDemo || !getSupabase()) return send<T>(fn, args)
+  const waiting = (await getSealQueue()).length > 0
+  if (!navigator.onLine) return queueOp<T>(fn, args, true)
+  // Earlier things still waiting: this one goes behind them, so the order stays as written.
+  if (waiting) return queueOp<T>(fn, args, false)
+  try {
+    return await send<T>(fn, args)
+  } catch (e) {
+    if (e instanceof SealError && e.code === 'offline') return queueOp<T>(fn, args, true)
+    throw e
+  }
+}
+
+let flushing: Promise<void> | null = null
+/** Sends what was written without internet, one by one, oldest first. */
+export function flushSealQueue(): Promise<void> {
+  if (flushing) return flushing
+  flushing = (async () => {
+    const sb = getSupabase()
+    if (isDemo || !sb || !navigator.onLine) return
+    let sent = 0
+    let refused = 0
+    for (;;) {
+      const op = (await getSealQueue())[0]
+      if (!op) break
+      const res = await sb.rpc(op.fn, op.args).abortSignal(AbortSignal.timeout(SEND_LIMIT_MS * 2))
+      if (res.error) {
+        let code = ''
+        try { fail(res.error, res.status) } catch (e) { code = e instanceof SealError ? e.code : '' }
+        // No internet or the server is busy: keep it and try again later.
+        if (code === 'offline' || code === 'not_installed' || code === 'unknown') break
+        refused++
+      } else sent++
+      const real = op.tmp && !res.error ? (res.data as { batch_id?: string } | null)?.batch_id : undefined
+      await locked(async () => {
+        const rest = (await getSealQueue()).filter((o) => o.id !== op.id)
+        await setMeta(QUEUE, op.tmp && real ? rest.map((o) => (o.args.p_batch === op.tmp ? { ...o, args: { ...o.args, p_batch: real } } : o)) : rest)
+      })
+    }
+    if (sent + refused > 0 && (await getSealQueue()).length === 0) {
+      // The names given here to batches are gone now: the server's own list replaces them.
+      await db.sealBatches.filter((b) => b.id.startsWith(TMP)).delete()
+      await setMeta('seals:batches', '')
+      if (loading) await loading.catch(() => undefined)
+      await readSeals()
+      announce()
+      if (sent > 0) say(`وصل المدير ${sent} ${sent > 10 ? 'عملية' : 'عمليات'} على الأختام`)
+      if (refused > 0) say(`${refused} من عمليات الأختام ما انقبلت (تعارضت مع شي تغيّر). راجع الصفحة.`, 'danger')
+    }
+  })().finally(() => {
+    flushing = null
+  })
+  return flushing
+}
+
+/** Called once when the app starts: sends what is waiting whenever the internet is back. */
+export function startSealQueue() {
+  const go = () => void flushSealQueue()
+  window.addEventListener('online', go)
+  window.setInterval(() => navigator.onLine && go(), 20_000)
+  go()
 }
 
 export const addRoll = (fromNo: number, toNo: number | null, receivedOn: string, note: string) =>

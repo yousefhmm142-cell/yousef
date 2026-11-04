@@ -1,5 +1,9 @@
+import { useEffect, useMemo, useState } from 'react'
+import { isDemo } from '../../config'
+import { getSupabase } from '../../data/supabase'
 import type { ISODate } from '../../lib/dates'
 import { splitDetails } from '../seals/model'
+import type { Task, TaskType } from './model'
 
 /** The words a job starts with; whatever follows is the subscriber (longest first, so «فك ساعة فحص» wins over «فك ساعة»). */
 const WORK_STARTS = [
@@ -73,4 +77,57 @@ export function sealWorkTotals(lines: SealWorkLine[]): { tech: string; seals: nu
     m.set(l.techId, t)
   }
   return [...m.values()].sort((a, b) => b.seals - a.seals || a.tech.localeCompare(b.tech, 'ar'))
+}
+
+// ---------- Seal work counted as tasks ----------
+/** The «type» for seal work that matches none of the task types. */
+export const SEAL_TYPE_ID = -1
+const norm = (t: string) => t.replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/\s+/g, ' ').trim()
+
+/**
+ * Every line of the statement is one finished task for its technician on its day, of the type whose
+ * name matches the work («تفتيش», «فك ساعة»…), or of «أعمال الأختام» when none does.
+ */
+export function sealWorkAsTasks(lines: SealWorkLine[], types: TaskType[]): { tasks: Task[]; types: TaskType[] } {
+  const tasks: Task[] = []
+  let used = false
+  for (const l of lines) {
+    const parts = (l.work.split(/\s*\+\s*/).map((p) => p.trim()).filter(Boolean))
+    for (const part of parts.length ? parts : ['']) {
+      const p = norm(part)
+      const hit = p ? types.find((t) => norm(t.name) === p) ?? types.find((t) => p.includes(norm(t.name)) || norm(t.name).includes(p)) : undefined
+      if (!hit) used = true
+      tasks.push({
+        id: `seal-${l.date}-${l.techId}-${l.seals[0]}-${tasks.length}`, number: 0, typeId: hit?.id ?? SEAL_TYPE_ID, assigneeId: l.techId, createdBy: null,
+        details: part, subscriberName: l.subscriber, subscriberPhone: null, zoneId: null, location: '', priority: 'normal', expectedMinutes: 0, status: 'done',
+        sentAt: null, seenAt: null, startedAt: null, completedAt: `${l.date}T12:00:00+02:00`, cancelledAt: null, completionNotes: '', cancelReason: '', linkToken: '', createdAt: `${l.date}T12:00:00+02:00`,
+      })
+    }
+  }
+  return { tasks, types: used ? [...types, { id: SEAL_TYPE_ID, name: 'أعمال الأختام', isActive: true, sortOrder: 9999 }] : types }
+}
+
+/** The seal work of a period (or of everything), refreshed while the page is open. Empty when the server cannot be reached. */
+export function useSealWork(from: ISODate | null, to: ISODate | null, names: Map<string, string> | undefined): SealWorkLine[] {
+  const [rows, setRows] = useState<SealWorkRow[]>([])
+  useEffect(() => {
+    const sb = getSupabase()
+    if (isDemo || !sb) return
+    let live = true
+    const load = () => {
+      if (!navigator.onLine) return
+      void sb.rpc('seal_work_statement', { p_from: from, p_to: to }).then((res) => {
+        if (live && !res.error) setRows((res.data ?? []) as SealWorkRow[])
+      })
+    }
+    load()
+    const id = window.setInterval(load, 60_000)
+    window.addEventListener('online', load)
+    return () => {
+      live = false
+      window.clearInterval(id)
+      window.removeEventListener('online', load)
+    }
+  }, [from, to])
+  return useMemo(() => (names ? buildSealWork(rows, names) : []), [rows, names])
 }
