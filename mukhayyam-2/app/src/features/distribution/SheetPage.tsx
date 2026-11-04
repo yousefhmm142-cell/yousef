@@ -70,7 +70,7 @@ function SheetForDay({ date }: { date: ISODate }) {
             returnPlaceholder="مثال: أحمال التشغيلة الثانية في الرازي غير منطقية"
           />
           <SheetView sheet={sheet} ctx={ctx} />
-          <PrintSheet sheet={sheet} zoneNames={ctx.zoneNames} names={ctx.names} />
+          <PrintSheet sheet={sheet} zoneNames={ctx.zoneNames} />
         </>
       )}
     </div>

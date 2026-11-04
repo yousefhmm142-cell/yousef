@@ -1,4 +1,4 @@
-import { CalendarDays, Check, ChevronLeft, ChevronRight, CircleCheck, ClipboardList, Clock, Printer, Send, TriangleAlert, Undo2, WifiOff, type LucideIcon } from 'lucide-react'
+import { CalendarDays, Check, ChevronLeft, ChevronRight, CircleCheck, ClipboardList, Clock, MessageCircle, Printer, Send, TriangleAlert, Undo2, WifiOff, type LucideIcon } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { formatTime, formatWeekday } from '../../lib/format'
@@ -11,6 +11,7 @@ import { Button, Pill } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
 import { type SaveState } from './useDraft'
 import { useConfirm } from '../../ui/Confirm'
+import { sendSheetOnWhatsApp } from '../../lib/sheetPdf'
 import { statusInfo, type SheetMeta, type SheetStatus } from './workflow'
 
 /** "الخميس · 11:42 م" for a stored time. */
@@ -257,6 +258,22 @@ export function StatusBar({ sheet, source, canAct, onApprove, onReturn, returnPl
     }
   }
 
+  /** The printed form as a PDF, into WhatsApp (the phone's share list), or saved when sharing is not possible here. */
+  async function whatsapp() {
+    const el = document.querySelector<HTMLElement>('.print-sheet')
+    if (!el) return
+    setBusy(true)
+    try {
+      const title = document.title.replace(/[\\/:*?"<>|]/g, ' ').trim() || 'كشف'
+      const res = await sendSheetOnWhatsApp(el, `${title}.pdf`, title)
+      if (res === 'saved') toast('نزّل ملف PDF وانفتح واتساب، أرفق الملف بالمحادثة.')
+    } catch {
+      toast('تعذّر تجهيز ملف PDF. حاول مرة أخرى.', 'danger')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function sendBack() {
     if (!reason.trim()) return
     setBusy(true)
@@ -295,6 +312,9 @@ export function StatusBar({ sheet, source, canAct, onApprove, onReturn, returnPl
         )}
         <Button icon={<Printer size={17} />} onClick={() => window.print()}>
           طباعة كالورقة
+        </Button>
+        <Button variant="secondary" busy={busy} icon={<MessageCircle size={17} />} onClick={() => void whatsapp()}>
+          إرسال واتساب (PDF)
         </Button>
         {waiting && (
           <Button variant="primary" busy={busy} icon={<Check size={17} />} onClick={() => void approve()}>

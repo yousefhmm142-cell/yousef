@@ -1,6 +1,6 @@
 import { describeDay } from '../../lib/dates'
+import { SignFooter } from '../sheets/signers'
 import { formatAmount } from '../../lib/numbers'
-import { stamp } from '../sheets/ui'
 import { RUN_NAMES, type DistributionSheet, type ZoneEntry } from './model'
 import { clock12 } from '../../lib/format'
 import { loadAverage } from '../sheets/loads'
@@ -16,7 +16,7 @@ const timeText = (z: ZoneEntry, i: number) => {
 }
 
 /** The sheet laid out like the paper form (landscape, runs 1–3 then 4–6), shown only when printing. */
-export function PrintSheet({ sheet, zoneNames, names }: { sheet: DistributionSheet; zoneNames: Map<number, string>; names: Map<string, string> }) {
+export function PrintSheet({ sheet, zoneNames }: { sheet: DistributionSheet; zoneNames: Map<number, string> }) {
   const { weekday, date } = describeDay(sheet.sheetDate)
   const block = (from: number, withHours: boolean) => (
     <table>
@@ -62,16 +62,7 @@ export function PrintSheet({ sheet, zoneNames, names }: { sheet: DistributionShe
       <div className="ps-gap" />
       {block(3, false)}
       {sheet.notes && <div className="ps-notes small">{sheet.notes}</div>}
-      <footer className="ps-foot">
-        <div>
-          <b>توقيع مشرف المواقع</b>
-          <span>{sheet.submittedAt ? `${names.get(sheet.submittedBy ?? '') ?? ''} · ${stamp(sheet.submittedAt)}` : '—'}</span>
-        </div>
-        <div>
-          <b>اعتماد المدير</b>
-          <span>{sheet.approvedAt ? `${names.get(sheet.approvedBy ?? '') ?? ''} · ${stamp(sheet.approvedAt)}` : '—'}</span>
-        </div>
-      </footer>
+      <SignFooter approval={{ submittedAt: sheet.submittedAt, approvedAt: sheet.approvedAt }} />
     </div>
   )
 }

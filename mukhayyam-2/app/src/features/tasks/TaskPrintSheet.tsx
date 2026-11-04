@@ -1,6 +1,7 @@
 import { describeDay, type ISODate } from '../../lib/dates'
 import type { Employee } from '../../types'
 import { stamp } from '../sheets/ui'
+import { SignFooter } from '../sheets/signers'
 import type { Task, TaskType } from './model'
 
 /**
@@ -93,9 +94,7 @@ export function TaskPrintSheet({ day, tasks, employees, types }: {
         </tfoot>
       </table>
 
-      <footer className="tf-sign">
-        <div><b>توقيع المشرف</b><span>&nbsp;</span></div>
-      </footer>
+      <SignFooter />
     </div>
   )
 }

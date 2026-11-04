@@ -1,4 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
+import { SignFooter } from '../sheets/signers'
 import { ChevronLeft, ChevronRight, FileSpreadsheet, Printer, ScrollText } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
@@ -136,10 +137,7 @@ export function ReportsPage() {
               <ReportTable section={s} />
             </div>
           ))}
-          <footer className="ps-foot">
-            <div><b>إعداد</b><span>نظام مخيم 2</span></div>
-            <div><b>اعتماد المدير</b><span>&nbsp;</span></div>
-          </footer>
+          <SignFooter />
         </div>
       )}
     </div>

@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight, Clock3, MapPin, Printer, QrCode, RefreshCw, Smartphone, Trash2, UserCheck, UserX, Users } from 'lucide-react'
+import { SignFooter } from '../sheets/signers'
 import qrcode from 'qrcode-generator'
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
@@ -362,10 +363,7 @@ function WeekPrint({ days, rows, label, scheduleOf }: {
           ))}
         </tbody>
       </table>
-      <footer className="ps-foot">
-        <div><b>إعداد</b><span>نظام مخيم 2</span></div>
-        <div><b>اعتماد المدير</b><span>&nbsp;</span></div>
-      </footer>
+      <SignFooter />
     </div>
   )
 }

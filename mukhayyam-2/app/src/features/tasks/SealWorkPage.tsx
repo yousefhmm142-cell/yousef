@@ -1,4 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
+import { SignFooter } from '../sheets/signers'
 import { ChevronLeft, ChevronRight, Printer } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { db } from '../../data/db'
@@ -113,10 +114,7 @@ export function SealWorkPage() {
             <span>عدد الأختام: <b className="num">{sealCount}</b></span>
           </div>
           <SealWorkTable lines={lines} totals={totals} period={period} />
-          <footer className="ps-foot">
-            <div><b>إعداد</b><span>نظام مخيم 2</span></div>
-            <div><b>اعتماد نائب المدير</b><span>&nbsp;</span></div>
-          </footer>
+          <SignFooter />
         </div>
       )}
     </div>

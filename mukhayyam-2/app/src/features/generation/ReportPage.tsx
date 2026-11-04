@@ -70,7 +70,7 @@ function ReportForDay({ date }: { date: ISODate }) {
             returnPlaceholder="مثال: الرصيد الموجود لا يطابق متبقي أمس"
           />
           <ReportView report={report} ctx={ctx} />
-          <PrintSheet report={report} generators={ctx.generators} fuelTypes={ctx.fuelTypes} names={ctx.names} />
+          <PrintSheet report={report} generators={ctx.generators} fuelTypes={ctx.fuelTypes} />
         </>
       )}
     </div>

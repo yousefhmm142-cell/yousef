@@ -1,18 +1,17 @@
 import { describeDay } from '../../lib/dates'
+import { SignFooter } from '../sheets/signers'
 import { formatAmount } from '../../lib/numbers'
 import { maintenanceLabel, type FuelType, type Generator, type SiteReport } from './model'
-import { stamp } from '../sheets/ui'
 import { loadAverage } from '../sheets/loads'
 import { clock12 } from '../../lib/format'
 
 const runHeaders = ['التشغيلة الأولى', 'التشغيلة الثانية', 'التشغيلة الثالثة']
 
 /** The report laid out like the paper form, shown only when printing. */
-export function PrintSheet({ report, generators, fuelTypes, names }: {
+export function PrintSheet({ report, generators, fuelTypes }: {
   report: SiteReport
   generators: Generator[]
   fuelTypes: FuelType[]
-  names: Map<string, string>
 }) {
   const { weekday, date } = describeDay(report.reportDate)
   const gen = (id: number | null) => generators.find((g) => g.id === id)
@@ -96,16 +95,7 @@ export function PrintSheet({ report, generators, fuelTypes, names }: {
       <h2>الملاحظات</h2>
       <div className="ps-notes">{report.generalNotes}</div>
 
-      <footer className="ps-foot">
-        <div>
-          <b>توقيع مدير الموقع</b>
-          <span>{report.submittedAt ? `أرسله ${names.get(report.submittedBy ?? '') ?? ''} · ${stamp(report.submittedAt)}` : '—'}</span>
-        </div>
-        <div>
-          <b>اعتماد المدير</b>
-          <span>{report.approvedAt ? `${names.get(report.approvedBy ?? '') ?? ''} · ${stamp(report.approvedAt)}` : '—'}</span>
-        </div>
-      </footer>
+      <SignFooter approval={{ submittedAt: report.submittedAt, approvedAt: report.approvedAt }} />
     </div>
   )
 }
