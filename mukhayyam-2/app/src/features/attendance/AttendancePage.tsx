@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Clock3, Printer, QrCode, RefreshCw, Smartphone, Trash2, UserCheck, UserX, Users } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Clock3, MapPin, Printer, QrCode, RefreshCw, Smartphone, Trash2, UserCheck, UserX, Users } from 'lucide-react'
 import qrcode from 'qrcode-generator'
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
@@ -25,6 +25,8 @@ import {
   updatePunchTime,
   refreshAttendance,
   renewPoint,
+  getPlace,
+  setPointPlace,
   revokeDevice,
   useDevices,
   useHolidays,
@@ -487,8 +489,28 @@ function SheetAndPhones({ people }: { people: Employee[] }) {
   }, [url])
   const confirm = useConfirm()
   const [busy, setBusy] = useState(false)
+  const [radius, setRadius] = useState(100)
+  const [locating, setLocating] = useState(false)
+  useEffect(() => {
+    if (point?.radiusM) setRadius(point.radiusM)
+  }, [point?.radiusM])
   const name = (id: string) => people.find((e) => e.id === id)?.fullName ?? '—'
   const active = (devices ?? []).filter((d) => !d.revokedAt).sort((a, b) => name(a.employeeId).localeCompare(name(b.employeeId), 'ar'))
+
+  /** Standing in the office: this phone's place becomes the place scans must come from. */
+  async function setPlace() {
+    if (!point) return
+    setLocating(true)
+    try {
+      const here = await getPlace()
+      await setPointPlace(point, { lat: here.lat, lng: here.lng }, radius)
+      toast(`اعتُمد مكانك كموقع المكتب (دقة الجوال ${Math.round(here.acc)} متر)`)
+    } catch (e) {
+      toast(errText(e) || 'تعذّر معرفة مكانك. فعّل الموقع واسمح للمتصفح.', 'danger')
+    } finally {
+      setLocating(false)
+    }
+  }
 
   async function renew() {
     if (!point) return
@@ -524,6 +546,26 @@ function SheetAndPhones({ people }: { people: Employee[] }) {
                 <Button variant="ghost" icon={<RefreshCw size={16} />} busy={busy} onClick={() => void renew()}>
                   ورقة جديدة بدل القديمة
                 </Button>
+              </div>
+              <div className="att-place">
+                <b>موقع المكتب</b>
+                {point.lat != null && point.lng != null ? (
+                  <p className="muted">محدّد: التسجيل ما بينقبل إلا من مسافة <b className="num">{point.radiusM ?? 100}</b> متر من المكتب.</p>
+                ) : (
+                  <p className="muted">لسا ما حدّدته: التسجيل بينقبل من أي مكان. وإنت واقف في المكتب اضغط الزر.</p>
+                )}
+                <label className="field">
+                  <span className="label">أبعد مسافة مسموحة (متر)</span>
+                  <input className="input" type="number" inputMode="numeric" min={20} max={1000} value={radius} onChange={(e) => setRadius(Math.min(1000, Math.max(20, Number(e.target.value) || 100)))} />
+                </label>
+                <div className="task-actions">
+                  <Button variant="secondary" icon={<MapPin size={16} />} busy={locating} onClick={() => void setPlace()}>
+                    {point.lat != null ? 'تحديث موقع المكتب لمكاني الحالي' : 'اعتماد مكاني الحالي كموقع المكتب'}
+                  </Button>
+                  {point.lat != null && (
+                    <Button variant="ghost" onClick={() => void setPointPlace(point, null, radius).then(() => toast('أُلغي تحديد الموقع'), (e) => toast(errText(e), 'danger'))}>إلغاء التحديد</Button>
+                  )}
+                </div>
               </div>
             </>
           ) : (

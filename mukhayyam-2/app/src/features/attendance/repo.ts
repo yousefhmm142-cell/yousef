@@ -50,7 +50,7 @@ export async function refreshAttendance(): Promise<void> {
     sb.from('attendance_punches').select('id, employee_id, kind, at, method, reason, recorded_by').gte('at', since).order('at').limit(5000),
     sb.from('leaves').select('id, employee_id, from_date, to_date, type, notes').gte('to_date', since.slice(0, 10)),
     sb.from('holidays').select('holiday_date, name'),
-    sb.from('attendance_points').select('id, name, code, is_active, revoked_at'),
+    sb.from('attendance_points').select('id, name, code, is_active, revoked_at, lat, lng, radius_m'),
     sb.from('attendance_devices').select('id, employee_id, label, created_at, last_used_at, revoked_at'),
   ])
   if (punches.error || leaves.error || holidays.error || points.error || devices.error) return
@@ -61,11 +61,14 @@ export async function refreshAttendance(): Promise<void> {
     await db.holidays.bulkPut((holidays.data as Array<{ holiday_date: string; name: string }>).map((h) => ({ date: h.holiday_date, name: h.name })))
     await replace<AttendancePoint>(
       db.attendancePoints,
-      (points.data as Array<{ id: number; name: string; code: string; is_active: boolean; revoked_at: string | null }>).map((p) => ({
+      (points.data as Array<{ id: number; name: string; code: string; is_active: boolean; revoked_at: string | null; lat: number | null; lng: number | null; radius_m: number }>).map((p) => ({
         id: p.id,
         name: p.name,
         code: p.code,
         isActive: p.is_active && !p.revoked_at,
+        lat: p.lat,
+        lng: p.lng,
+        radiusM: p.radius_m,
       })),
     )
     await replace<AttendanceDevice>(
@@ -193,6 +196,10 @@ export async function codeHolders(): Promise<Set<string>> {
 export interface ScanResult {
   name: string
   repeat: boolean
+  /** recorded: just recorded · repeat: a second look within minutes · wait: too soon to leave · ready: can record now (peek) · full: two scans already today. */
+  status?: 'recorded' | 'repeat' | 'wait' | 'ready' | 'full'
+  next?: PunchKind
+  wait_until?: string | null
   punches: Array<{ kind: PunchKind; at: string }>
 }
 
@@ -228,7 +235,30 @@ export async function scanRegister(point: string, employeeId: string, code: stri
   return (data as string | null) ?? null
 }
 
-export async function scanPunch(point: string, token: string): Promise<ScanResult> {
+export interface PhonePlace { lat: number; lng: number; acc: number }
+
+/** Where this phone is now (asks the person's permission the first time). */
+export function getPlace(): Promise<PhonePlace> {
+  return new Promise((resolve, reject) => {
+    if (!('geolocation' in navigator)) return reject(new SheetStateError('location_failed'))
+    navigator.geolocation.getCurrentPosition(
+      (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude, acc: p.coords.accuracy }),
+      (e) => reject(new SheetStateError(e.code === 1 ? 'location_denied' : 'location_failed')),
+      { enableHighAccuracy: true, timeout: 20_000, maximumAge: 15_000 },
+    )
+  })
+}
+
+/** The manager, standing in the office, marks it as the place scans must come from. */
+export async function setPointPlace(point: AttendancePoint, place: { lat: number; lng: number } | null, radiusM = 100) {
+  if (isDemo) return void (await db.attendancePoints.update(point.id, { lat: place?.lat ?? null, lng: place?.lng ?? null, radiusM }))
+  const sb = online()
+  const res = await sb.from('attendance_points').update({ lat: place?.lat ?? null, lng: place?.lng ?? null, radius_m: radiusM }).eq('id', point.id)
+  check(res.error, res.status)
+  await refreshAttendance()
+}
+
+export async function scanPunch(point: string, token: string, opts: { peek?: boolean; place?: PhonePlace } = {}): Promise<ScanResult> {
   if (isDemo) {
     // A phone opening the sheet or the link for the first time: the sample data may still be loading.
     await ensureDemoData()
@@ -251,7 +281,7 @@ export async function scanPunch(point: string, token: string): Promise<ScanResul
     return { name: who?.fullName ?? '', repeat, punches: mine.map((p) => ({ kind: p.kind, at: p.at })) }
   }
   const sb = online()
-  const { data, error, status } = await sb.rpc('attendance_punch', { p_point: point, p_token: token })
+  const { data, error, status } = await sb.rpc('attendance_punch', { p_point: point, p_token: token, p_lat: opts.place?.lat ?? null, p_lng: opts.place?.lng ?? null, p_acc: opts.place?.acc ?? null, p_peek: !!opts.peek })
   check(error, status)
   return data as ScanResult
 }

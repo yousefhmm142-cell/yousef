@@ -119,3 +119,7 @@ table.week { width: 100%; border-collapse: collapse; min-width: 900px; }
 .att-punches .punch-time.out .time-btn b { color: var(--t-out); }
 .punch-time .time-btn { min-height: 46px; min-width: 104px; padding: 4px 10px; }
 .punch-time .time-btn b { font-size: 18px; }
+
+.att-place { display: grid; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--line-2); }
+.att-place p { margin: 0; }
+.att-place .input { max-width: 160px; }

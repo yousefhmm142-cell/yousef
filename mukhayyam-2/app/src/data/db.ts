@@ -39,6 +39,10 @@ export interface AttendancePoint {
   name: string
   code: string
   isActive: boolean
+  /** Where the office is (set from a phone standing in it), and how far from it a scan still counts. */
+  lat?: number | null
+  lng?: number | null
+  radiusM?: number
 }
 
 /** A phone allowed to record attendance for one person. tokenHash is used in demo mode only. */
