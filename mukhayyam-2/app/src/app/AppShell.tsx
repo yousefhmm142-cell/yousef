@@ -9,7 +9,7 @@ import { navFor, type NavItem } from './nav'
 const MAX_TABS = 5
 const accountTab: NavItem = { to: '/account', label: 'حسابي', icon: UserRound }
 /** Reports is a symbol only; its name shows while the page is open. Settings is the big gear at the end of the bar. */
-const compactLinks = new Set(['/reports'])
+const compactLinks = new Set(['/reports', '/tasks/seal-work'])
 const moreTab: NavItem = { to: '/more', label: 'المزيد', icon: Ellipsis }
 
 export function AppShell() {

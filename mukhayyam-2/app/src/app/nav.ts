@@ -16,11 +16,12 @@ const managerItems: NavItem[] = [
   { to: '/attendance', label: 'الحضور', icon: Users },
   { to: '/stock', label: 'المخزن', icon: Boxes },
   { to: '/seals', label: 'الأختام', icon: Stamp },
+  { to: '/tasks/seal-work', label: 'كشف أعمال الأختام', icon: ScrollText },
   { to: '/reports', label: 'التقارير', icon: FileBarChart },
 ]
 
 /** Field roles open straight on their one job; managers get the full set. */
-const grantedIcon = { generation: Zap, distribution: LayoutGrid, tasks: ListChecks, attendance: Users, stock: Boxes } as const
+const grantedIcon = { generation: Zap, distribution: LayoutGrid, tasks: ListChecks, 'seal-work': ScrollText, attendance: Users, stock: Boxes } as const
 
 /** The menu of the role, plus the pages the manager opened for this person to look at. */
 export function navFor(e: Pick<Employee, 'role' | 'canSeals' | 'pages'>): NavItem[] {

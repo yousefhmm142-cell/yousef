@@ -20,7 +20,7 @@
 ## 1) قواعد الشغل (إلزامية)
 
 1. عدّل ثم شغّل: `cd app && npx tsc -b && npx vitest run` (الآن **77 اختباراً**، كلها يجب أن تنجح).
-2. إن لمست قاعدة البيانات: أضف migration جديدة في `supabase/migrations/` **و** ملف `supabase/updates/update-N.sql` (نفس المحتوى مع ترويسة)، وأعد توليد `supabase/setup.sql` بـ `supabase/build-setup.sh`، وأضف فحوصاً في `supabase/tests/checks.sql`، وشغّل `supabase/tests/run.sh` حتى تظهر `ALL CHECKS PASSED`. آخر رقم الآن: **update-20** (migration `…0023`).
+2. إن لمست قاعدة البيانات: أضف migration جديدة في `supabase/migrations/` **و** ملف `supabase/updates/update-N.sql` (نفس المحتوى مع ترويسة)، وأعد توليد `supabase/setup.sql` بـ `supabase/build-setup.sh`، وأضف فحوصاً في `supabase/tests/checks.sql`، وشغّل `supabase/tests/run.sh` حتى تظهر `ALL CHECKS PASSED`. آخر رقم الآن: **update-21** (migration `…0024`).
 3. كل ملف update يجب أن يكون **idempotent** (تكراره لا يضر) لأنه يُطبَّق تلقائياً مرة واحدة ويُسجَّل في `m2_ops.applied_updates`.
 4. لا تغيّر دالة RPC موجودة بتغيير توقيعها بدون `drop function` للقديمة (وإلا يبقى overload ملتبس في PostgREST).
 5. اجعل الرفع صغيراً ومتتابعاً: commit بوصف واضح ثم `git push` على الفرع. الرفع يشغّل النشر تلقائياً. **لا تفتح Pull Request** إلا إذا طُلب.
@@ -45,6 +45,7 @@
 - الأدوار: `admin`, `manager`, `generation_operator`, `distribution_supervisor`, `technician`, `staff`. `is_manager()` = admin أو manager.
 - `employees.pages text[]` + `has_page(p)` + `admin_set_pages`: المدير يقرر من **الإعدادات ← الصلاحيات** أي صفحات يرى كل شخص. `PageGate`/`RoleGate`/`SealsGate` في `guards.tsx`.
 - `can_seals` + `has_seals()` للأختام. حذف الموظف لمدير الفرع (`manager`) فقط مع سلة (`deleted_at`، `admin_delete_employee/restore`).
+- «كشف أعمال الأختام» صفحة مستقلة بمفتاح `seal-work` في الصلاحيات والقائمة، ومسارها `/tasks/seal-work`. المدير يفعّلها لمن يختار؛ لا تُمنح تلقائياً مع المهام أو الأختام، ولا تسمح بتعديل الأختام. فرزها حسب فترة محددة، والفني، واسم المشترك، والطباعة تطابق النتائج.
 - **المسمى الوظيفي** `job_title` يظهر بدل الدور (`titleOf`). مدير الموقع/مدير المكتب يُستخرجان منه (انظر 3.7).
 
 ### 3.2 الأعمال بدون إنترنت (مهم جداً عنده)

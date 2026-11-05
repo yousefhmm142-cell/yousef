@@ -458,4 +458,24 @@ select test.ok((select details from public.seal_work_statement(null, null) where
 select test.ok((select count(*) from public.seal_work_statement(date '2000-01-01', date '2000-01-02')) = 0, 'and only the days asked for');
 reset role;
 
+-- ---------- Independent statement permission: grant, read only, revoke ----------
+reset role; select test.login('مسؤول النظام'); set role authenticated;
+select public.admin_set_seals_access((select id from public.employees where full_name = 'موظف إداري'), false);
+select public.admin_set_pages((select id from public.employees where full_name = 'موظف إداري'), array['seal-work', 'seal-work', 'bogus']);
+select test.ok((select pages = array['seal-work'] from public.employees where full_name = 'موظف إداري'), 'the statement is saved as its own grantable page');
+reset role; select test.login('موظف إداري'); set role authenticated;
+select test.ok(public.has_page('seal-work') and not public.has_page('tasks') and not public.has_seals(), 'the statement permission does not open tasks or seals');
+select test.ok((select count(*) from public.seal_work_statement(null, null) where seal_no = 240101) = 1, 'a statement-only reader can see the used seals');
+select test.ok((select count(*) from public.seals) = 0, 'a statement-only reader cannot read the seals tables');
+select test.fails($$select public.seal_record(240101, 'lost', null, null)$$, 'not_allowed', 'a statement-only reader cannot edit seals');
+select test.fails($$select public.admin_set_pages(public.current_employee_id(), array['tasks'])$$, 'not_allowed', 'a statement reader cannot grant themselves another page');
+reset role; select test.login('مسؤول النظام'); set role authenticated;
+select public.admin_set_pages((select id from public.employees where full_name = 'موظف إداري'), array[]::text[]);
+reset role; select test.login('موظف إداري'); set role authenticated;
+select test.ok(not public.has_page('seal-work'), 'the statement permission can be switched off');
+select test.fails($$select * from public.seal_work_statement(null, null)$$, 'not_allowed', 'revoking the page closes its data too');
+reset role; select set_config('request.jwt.claims', '', false); set role anon;
+select test.fails($$select * from public.seal_work_statement(null, null)$$, '%permission denied%', 'visitors cannot read the statement');
+reset role;
+
 \echo 'ALL CHECKS PASSED'

@@ -60,6 +60,7 @@ export const GRANTABLE_PAGES = [
   { key: 'generation', label: 'التوليد', to: '/generation' },
   { key: 'distribution', label: 'التوزيع', to: '/distribution' },
   { key: 'tasks', label: 'المهام', to: '/tasks' },
+  { key: 'seal-work', label: 'كشف أعمال الأختام', to: '/tasks/seal-work' },
   { key: 'attendance', label: 'الحضور', to: '/attendance' },
   { key: 'stock', label: 'المخزن', to: '/stock' },
 ] as const

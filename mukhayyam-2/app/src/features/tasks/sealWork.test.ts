@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildSealWork, splitWorkSubscriber, sealWorkTotals } from './sealWork'
+import { buildSealWork, filterSealWork, splitWorkSubscriber, sealWorkTotals } from './sealWork'
 
 const names = new Map([['a', 'قصي'], ['b', 'مجد']])
 const row = (seal_no: number, technician_id: string, used_on: string, details: string, board_no = '') => ({ seal_no, technician_id, used_on, issued_on: null, details, board_no })
@@ -33,5 +33,21 @@ describe('seal work statement', () => {
     expect(splitWorkSubscriber('فك ساعة فحص', '')).toEqual({ work: 'فك ساعة فحص', subscriber: '' })
     expect(splitWorkSubscriber('تفتيش + صيانة', '')).toEqual({ work: 'تفتيش + صيانة', subscriber: '' })
     expect(splitWorkSubscriber('تفتيش', 'علي')).toEqual({ work: 'تفتيش', subscriber: 'علي' })
+  })
+
+  it('combines inclusive date limits, technician identity and Arabic subscriber search without changing the source', () => {
+    const lines = buildSealWork([
+      row(1, 'a', '2026-11-01', 'تفتيش (أَحْمَد  علي)'),
+      row(2, 'a', '2026-11-02', 'تفتيش (أحمد علي)'),
+      row(3, 'b', '2026-11-02', 'تفتيش (أحمد علي)'),
+      row(4, 'a', '2026-11-03', 'تفتيش (سارة)'),
+    ], names)
+    const shown = filterSealWork(lines, { from: '2026-11-01', to: '2026-11-02', technician: 'a', subscriber: 'احمد علي' })
+    expect(shown.flatMap((l) => l.seals)).toEqual([1, 2])
+    expect(sealWorkTotals(shown)).toEqual([{ tech: 'قصي', seals: 2, jobs: 2 }])
+    expect(lines).toHaveLength(4)
+    expect(filterSealWork(lines, { subscriber: 'غير موجود' })).toEqual([])
+    expect(filterSealWork(lines, { from: '2026-11-03', to: '2026-11-01' })).toEqual([])
+    expect(filterSealWork(lines, { subscriber: '  ' })).toEqual(lines)
   })
 })

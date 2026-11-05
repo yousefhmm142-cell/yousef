@@ -11,13 +11,14 @@ import { Segmented } from '../../ui/form'
 import { Button } from '../../ui/primitives'
 import { weekStart } from '../attendance/rules'
 import { stamp } from '../sheets/ui'
-import { buildSealWork, sealWorkTotals, type SealWorkLine, type SealWorkRow } from './sealWork'
+import { buildSealWork, filterSealWork, sealWorkTotals, type SealWorkLine, type SealWorkRow } from './sealWork'
 
-type Period = 'week' | 'month' | 'all'
+type Period = 'week' | 'month' | 'all' | 'range'
 const periods = [
   { value: 'week', label: 'أسبوعي' },
   { value: 'month', label: 'شهري' },
   { value: 'all', label: 'إجمالي' },
+  { value: 'range', label: 'تاريخ محدد' },
 ] as const
 
 const monthStart = (d: ISODate) => `${d.slice(0, 8)}01`
@@ -34,13 +35,18 @@ export function SealWorkPage() {
   const viewDay = useViewDay()
   const [period, setPeriod] = useState<Period>('week')
   const [anchor, setAnchor] = useState(viewDay)
+  const [rangeFrom, setRangeFrom] = useState(weekStart(viewDay))
+  const [rangeTo, setRangeTo] = useState(addDays(weekStart(viewDay), 6))
+  const [technician, setTechnician] = useState('')
+  const [subscriber, setSubscriber] = useState('')
   const [rows, setRows] = useState<SealWorkRow[] | null>(null)
   const [failed, setFailed] = useState(false)
   const names = useLiveQuery(async () => new Map((await db.employees.toArray()).map((e) => [e.id, e.fullName] as [string, string])), [])
 
-  const from = period === 'week' ? weekStart(anchor) : period === 'month' ? monthStart(anchor) : null
-  const to = period === 'week' ? addDays(weekStart(anchor), 6) : period === 'month' ? monthEnd(anchor) : null
-  const label = period === 'all' ? 'كل الفترة (إجمالي)' : period === 'week' ? `الأسبوع ${describeDay(from!).date} ← ${describeDay(to!).date}` : `شهر ${monthName(from!)}`
+  const from = period === 'week' ? weekStart(anchor) : period === 'month' ? monthStart(anchor) : period === 'range' ? rangeFrom || null : null
+  const to = period === 'week' ? addDays(weekStart(anchor), 6) : period === 'month' ? monthEnd(anchor) : period === 'range' ? rangeTo || null : null
+  const invalidRange = !!from && !!to && from > to
+  const label = period === 'all' ? 'كل الفترة (إجمالي)' : period === 'range' ? `${from ? describeDay(from).date : 'من البداية'} ← ${to ? describeDay(to).date : 'حتى اليوم'}` : period === 'week' ? `الأسبوع ${describeDay(from!).date} ← ${describeDay(to!).date}` : `شهر ${monthName(from!)}`
   const isCurrent = !!to && today >= from! && today <= to
 
   useEffect(() => {
@@ -48,7 +54,7 @@ export function SealWorkPage() {
     setRows(null)
     setFailed(false)
     const sb = getSupabase()
-    if (!sb) {
+    if (!sb || invalidRange) {
       setRows([])
       return
     }
@@ -58,9 +64,15 @@ export function SealWorkPage() {
       else setRows((res.data ?? []) as SealWorkRow[])
     })
     return () => { live = false }
-  }, [from, to])
+  }, [from, to, invalidRange])
 
-  const lines = useMemo(() => (rows && names ? buildSealWork(rows, names) : null), [rows, names])
+  const allLines = useMemo(() => (rows && names ? buildSealWork(rows, names) : null), [rows, names])
+  const technicians = useMemo(() => {
+    const list = new Map((allLines ?? []).map((l) => [l.techId, l.tech]))
+    if (technician) list.set(technician, names?.get(technician) ?? '—')
+    return [...list].sort((a, b) => a[1].localeCompare(b[1], 'ar'))
+  }, [allLines, names, technician])
+  const lines = useMemo(() => allLines && filterSealWork(allLines, { from, to, technician, subscriber }), [allLines, from, to, technician, subscriber])
   const totals = useMemo(() => (lines ? sealWorkTotals(lines) : []), [lines])
   const sealCount = lines?.reduce((n, l) => n + l.seals.length, 0) ?? 0
   const move = (dir: -1 | 1) => setAnchor(period === 'week' ? addDays(from!, 7 * dir) : addDays(dir < 0 ? from! : to!, dir))
@@ -70,29 +82,43 @@ export function SealWorkPage() {
       <header className="ph">
         <div>
           <h1>كشف أعمال الأختام</h1>
-          <p className="muted">ما عمله كل فني بالأختام التي استخدمها، سطراً سطراً بترتيب الأيام.</p>
+          <p className="muted">اختار الفترة والفني، أو ابحث باسم المشترك. الكشف والطباعة حسب اللي اخترته.</p>
         </div>
         <Segmented<Period> label="الفترة" value={period} options={periods} onChange={setPeriod} />
       </header>
 
       <div className="week-bar card">
-        {period !== 'all' && <button type="button" className="icon-btn" aria-label="الفترة السابقة" onClick={() => move(-1)}><ChevronRight size={18} /></button>}
+        {(period === 'week' || period === 'month') && <button type="button" className="icon-btn" aria-label="الفترة السابقة" onClick={() => move(-1)}><ChevronRight size={18} /></button>}
         <div className="week-label">
-          <b>{period === 'all' ? 'الإجمالي' : isCurrent ? (period === 'week' ? 'هذا الأسبوع' : 'هذا الشهر') : period === 'week' ? 'الأسبوع' : 'الشهر'}</b>
+          <b>{period === 'range' ? 'الفترة المختارة' : period === 'all' ? 'الإجمالي' : isCurrent ? (period === 'week' ? 'هذا الأسبوع' : 'هذا الشهر') : period === 'week' ? 'الأسبوع' : 'الشهر'}</b>
           <span className="num">{label}</span>
         </div>
-        {period !== 'all' && <button type="button" className="icon-btn" aria-label="الفترة التالية" disabled={isCurrent} onClick={() => move(1)}><ChevronLeft size={18} /></button>}
+        {(period === 'week' || period === 'month') && <button type="button" className="icon-btn" aria-label="الفترة التالية" disabled={isCurrent} onClick={() => move(1)}><ChevronLeft size={18} /></button>}
         <div className="ph-actions">
           <Button variant="primary" icon={<Printer size={17} />} disabled={!lines || lines.length === 0} onClick={() => window.print()}>طباعة الكشف</Button>
         </div>
       </div>
 
-      {failed ? (
+      <section className="card sw-filters" aria-label="فرز كشف أعمال الأختام">
+        {period === 'range' && <>
+          <label className="field"><span className="label">من تاريخ</span><input className="input" type="date" value={rangeFrom} max={rangeTo || undefined} onChange={(e) => setRangeFrom(e.target.value)} /></label>
+          <label className="field"><span className="label">إلى تاريخ</span><input className="input" type="date" value={rangeTo} min={rangeFrom || undefined} onChange={(e) => setRangeTo(e.target.value)} /></label>
+        </>}
+        <label className="field"><span className="label">الفني</span><select className="select" aria-label="الفني" value={technician} onChange={(e) => setTechnician(e.target.value)}>
+          <option value="">كل الفنيين</option>
+          {technicians.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+        </select></label>
+        <label className="field"><span className="label">اسم المشترك</span><input className="input" type="search" placeholder="اكتب الاسم أو جزء منه" value={subscriber} onChange={(e) => setSubscriber(e.target.value)} /></label>
+      </section>
+
+      {invalidRange ? (
+        <p className="card card-empty" role="alert">تاريخ البداية لازم يكون قبل تاريخ النهاية أو بنفس اليوم.</p>
+      ) : failed ? (
         <p className="card card-empty">تعذّر تحميل الكشف. تأكد من الإنترنت وحاول مرة أخرى.</p>
       ) : !lines ? (
         <div className="loading-block" aria-busy="true" />
       ) : lines.length === 0 ? (
-        <p className="card card-empty">لا أختام مستخدمة في هذه الفترة.</p>
+        <p className="card card-empty">{technician || subscriber.trim() ? 'لا نتائج حسب الفرز اللي اخترته.' : 'لا أختام مستخدمة في هذه الفترة.'}</p>
       ) : (
         <div className="card table-wrap">
           <SealWorkTable lines={lines} totals={totals} period={period} />
@@ -110,6 +136,8 @@ export function SealWorkPage() {
             <div className="ps-date">طُبع: <span className="num">{stamp(new Date().toISOString())}</span></div>
           </header>
           <div className="tf-meta">
+            {technician && <span>الفني: <b>{names?.get(technician) ?? '—'}</b></span>}
+            {subscriber.trim() && <span>بحث المشترك: <b>{subscriber.trim()}</b></span>}
             <span>عدد الأسطر: <b className="num">{lines.length}</b></span>
             <span>عدد الأختام: <b className="num">{sealCount}</b></span>
           </div>

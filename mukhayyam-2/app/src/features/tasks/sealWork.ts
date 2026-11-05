@@ -43,6 +43,16 @@ export interface SealWorkLine {
   subscriber: string
 }
 
+/** Search names without making spelling variants of Arabic letters or vowel marks a barrier. */
+const searchName = (s: string) => s.normalize('NFKC').replace(/[\u064B-\u065F\u0670\u0640]/g, '').replace(/[أإآ]/g, 'ا').replace(/ى/g, 'ي').replace(/\s+/g, ' ').trim().toLocaleLowerCase('ar')
+
+export function filterSealWork(lines: SealWorkLine[], filters: { from?: ISODate | null; to?: ISODate | null; technician?: string; subscriber?: string }): SealWorkLine[] {
+  const subscriber = searchName(filters.subscriber ?? '')
+  return lines.filter((l) => (!filters.from || l.date >= filters.from) && (!filters.to || l.date <= filters.to)
+    && (!filters.technician || l.techId === filters.technician)
+    && (!subscriber || searchName(l.subscriber).includes(subscriber)))
+}
+
 /**
  * Lines in date order. The same technician on the same day with the same written work is one line
  * (several seals); everything else is its own line, and a name may come back as often as needed.

@@ -67,7 +67,7 @@
 
 /* On paper nothing of the app chrome may appear: no moon button, no bars, no extra empty page. */
 @media print {
-  .topbar-row, .topbar, .sync-notice, .tabbar, .settings-btn, .update-curtain, .confirm-back { display: none !important; }
+  .topbar-row, .topbar, .sync-notice, .tabbar, .settings-btn, .update-curtain, .confirm-back, .view-note { display: none !important; }
   .shell, body, #root { min-height: 0 !important; height: auto !important; }
   .page { min-height: 0 !important; }
 }

@@ -77,7 +77,7 @@ export const router = createBrowserRouter([
           { path: 'distribution/entry/:date', element: <RoleGate roles={[...managers, ...site]}><DistributionEntryPage /></RoleGate> },
           { path: 'history', element: <RoleGate roles={site}><SiteHistoryPage /></RoleGate> },
           { path: 'tasks', element: <PageGate page="tasks"><Lazy><TasksPage /></Lazy></PageGate> },
-          { path: 'tasks/seal-work', element: <PageGate page="tasks"><Lazy><SealWorkPage /></Lazy></PageGate> },
+          { path: 'tasks/seal-work', element: <PageGate page="seal-work"><Lazy><SealWorkPage /></Lazy></PageGate> },
           {
             path: 'attendance',
             element: <PageGate page="attendance"><Lazy><AttendancePage /></Lazy></PageGate>,

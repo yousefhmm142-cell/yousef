@@ -103,6 +103,9 @@
 .sw-totals .sw-grand td { font-weight: 800; background: var(--surface-2); border-top: 2px solid var(--ink-2); }
 .seal-work .table-wrap { padding: 0; overflow-x: auto; }
 .seal-work .sw-table { min-width: 720px; }
+.seal-work .ph .segmented { max-width: 100%; flex-wrap: wrap; }
+.sw-filters { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 18px; }
+.sw-filters .field { flex: 1 1 190px; min-width: 0; margin: 0; }
 
 @media print {
   .print-sheet.seal-work-print { font-size: 10.5pt; }

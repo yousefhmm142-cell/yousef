@@ -17,6 +17,7 @@ import { formatPhone, isValidPhone, normalizePhone } from '../../lib/phone'
 import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import { useNow } from '../../lib/useNow'
 import type { Employee } from '../../types'
+import { hasPage } from '../../types'
 import { Dialog } from '../../ui/Dialog'
 import { Chip, Segmented } from '../../ui/form'
 import { Avatar, Button, Pill } from '../../ui/primitives'
@@ -77,6 +78,7 @@ async function sendOrder(task: Task, channel: Channel, tech: Employee & { phone:
 
 export function TasksPage() {
   useDocumentTitle('المهام الميدانية')
+  const employee = useEmployee()
   const navigate = useNavigate()
   const tasks = useTasks()
   const types = useTaskTypes()
@@ -125,9 +127,9 @@ export function TasksPage() {
           <Button variant="secondary" size="lg" icon={<Printer size={18} />} onClick={() => window.print()}>
             طباعة كشف اليوم
           </Button>
-          <Button variant="secondary" size="lg" icon={<ScrollText size={18} />} onClick={() => navigate('/tasks/seal-work')}>
+          {hasPage(employee, 'seal-work') && <Button variant="secondary" size="lg" icon={<ScrollText size={18} />} onClick={() => navigate('/tasks/seal-work')}>
             كشف أعمال الأختام
-          </Button>
+          </Button>}
           <Button variant="primary" size="lg" icon={<Plus size={18} />} onClick={() => setCreating(true)} className="ph-action">
             مهمة جديدة
           </Button>
