@@ -33,10 +33,10 @@ export function LoginRoute() {
 
 function Login() {
   useDocumentTitle('تسجيل الدخول')
-  const { signIn, state } = useAuth()
+  const { signIn } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const [phone, setPhone] = useState(() => state.status === 'locked' ? state.employee.phone || lastPhone() : lastPhone())
+  const [phone, setPhone] = useState(lastPhone)
   const [pin, setPin] = useState('')
   const [busy, setBusy] = useState(false)
   const [verified, setVerified] = useState(false)
@@ -134,7 +134,7 @@ function Login() {
         <div className="login-card-head">
           <Logo height={88} className="login-logo-sm" />
           <h2 aria-live="polite">{verified ? 'أهلاً وسهلاً' : 'تسجيل الدخول'}</h2>
-          <p>{verified ? 'تم التحقق من الرمز' : state.status === 'locked' ? 'اكتب رمزك لتكمل، رقمك محفوظ' : 'برقم جوالك والرمز السري'}</p>
+          <p>{verified ? 'تم التحقق من الرمز' : 'برقم جوالك والرمز السري'}</p>
         </div>
 
         <form onSubmit={onSubmit} noValidate className="login-form">

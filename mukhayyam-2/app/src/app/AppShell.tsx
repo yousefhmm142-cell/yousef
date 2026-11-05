@@ -1,20 +1,20 @@
 import { Ellipsis, Settings, UserRound } from 'lucide-react'
 import { Link, NavLink, Outlet } from 'react-router'
 import { useEmployee } from '../auth/AuthProvider'
-import { titleOf } from '../types'
+import { isManagerRole, titleOf } from '../types'
 import { Avatar, Logo } from '../ui/primitives'
 import { StatusBadge, SyncNotice, ThemeToggle } from '../ui/status'
 import { navFor, type NavItem } from './nav'
-import { NavWave } from '../ui/NavWave'
 
 const MAX_TABS = 5
 const accountTab: NavItem = { to: '/account', label: 'حسابي', icon: UserRound }
-/** Reports is a symbol only; its name shows while the page is open. Settings is the big gear at the end of the bar. */
+/** Managers keep these two links icon-only, including hover and the active page. */
 const compactLinks = new Set(['/reports', '/tasks/seal-work'])
 const moreTab: NavItem = { to: '/more', label: 'المزيد', icon: Ellipsis }
 
 export function AppShell() {
   const employee = useEmployee()
+  const compact = isManagerRole(employee.role)
   const items = navFor(employee)
   // Phones: up to five tabs; the rest sit behind «المزيد».
   const tabs = items.length < MAX_TABS ? [...items, accountTab] : [...items.slice(0, MAX_TABS - 1), moreTab]
@@ -37,9 +37,8 @@ export function AppShell() {
 
         {barItems.length > 1 && (
           <nav className="topnav" aria-label="الأقسام">
-            <NavWave />
             {barItems.map(({ to, label, icon: Icon }) => (
-              <NavLink key={to} to={to} end={to === '/' || to === '/tasks'} className={compactLinks.has(to) ? 'topnav-link compact' : 'topnav-link'} title={compactLinks.has(to) ? label : undefined}>
+              <NavLink key={to} to={to} end={to === '/' || to === '/tasks'} className={compact && compactLinks.has(to) ? 'topnav-link compact' : 'topnav-link'} aria-label={label} title={compact && compactLinks.has(to) ? label : undefined}>
                 <Icon size={17} aria-hidden="true" />
                 <span>{label}</span>
               </NavLink>
@@ -77,7 +76,6 @@ export function AppShell() {
 
       {tabs.length > 1 && (
         <nav className="tabbar glass" aria-label="الأقسام">
-          <NavWave />
           {tabs.map(({ to, label, icon: Icon }) => (
             <NavLink key={to} to={to} end={to === '/' || to === '/tasks'} className="tab">
               <span className="tab-icon">
