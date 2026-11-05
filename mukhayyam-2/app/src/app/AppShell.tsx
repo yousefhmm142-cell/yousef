@@ -5,6 +5,7 @@ import { titleOf } from '../types'
 import { Avatar, Logo } from '../ui/primitives'
 import { StatusBadge, SyncNotice, ThemeToggle } from '../ui/status'
 import { navFor, type NavItem } from './nav'
+import { NavWave } from '../ui/NavWave'
 
 const MAX_TABS = 5
 const accountTab: NavItem = { to: '/account', label: 'حسابي', icon: UserRound }
@@ -36,8 +37,9 @@ export function AppShell() {
 
         {barItems.length > 1 && (
           <nav className="topnav" aria-label="الأقسام">
+            <NavWave />
             {barItems.map(({ to, label, icon: Icon }) => (
-              <NavLink key={to} to={to} end={to === "/"} className={compactLinks.has(to) ? 'topnav-link compact' : 'topnav-link'} title={compactLinks.has(to) ? label : undefined}>
+              <NavLink key={to} to={to} end={to === '/' || to === '/tasks'} className={compactLinks.has(to) ? 'topnav-link compact' : 'topnav-link'} title={compactLinks.has(to) ? label : undefined}>
                 <Icon size={17} aria-hidden="true" />
                 <span>{label}</span>
               </NavLink>
@@ -75,8 +77,9 @@ export function AppShell() {
 
       {tabs.length > 1 && (
         <nav className="tabbar glass" aria-label="الأقسام">
+          <NavWave />
           {tabs.map(({ to, label, icon: Icon }) => (
-            <NavLink key={to} to={to} end={to === '/'} className="tab">
+            <NavLink key={to} to={to} end={to === '/' || to === '/tasks'} className="tab">
               <span className="tab-icon">
                 <Icon size={21} aria-hidden="true" />
               </span>

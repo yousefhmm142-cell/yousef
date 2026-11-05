@@ -12,7 +12,7 @@ export interface AuthBackend {
   signOut(): Promise<void>
 }
 
-export type AuthErrorCode = 'bad_credentials' | 'offline' | 'inactive' | 'unknown'
+export type AuthErrorCode = 'bad_credentials' | 'offline' | 'unlock_needs_connection' | 'inactive' | 'unknown'
 
 export class AuthError extends Error {
   readonly code: AuthErrorCode
@@ -25,6 +25,7 @@ export class AuthError extends Error {
 export const authErrorText: Record<AuthErrorCode, { title: string; detail: string }> = {
   bad_credentials: { title: 'رقم الجوال أو الرمز غير صحيح', detail: 'تأكد منهما وحاول مرة أخرى.' },
   offline: { title: 'لا يوجد اتصال بالإنترنت', detail: 'أول دخول على هذا الجهاز يحتاج إنترنت، وبعدها يعمل التطبيق بدونه.' },
+  unlock_needs_connection: { title: 'اتصل بالإنترنت لهذه المرة', detail: 'ادخل برمزك مرة واحدة لتقدر تفتح حسابك بعدها بدون إنترنت.' },
   inactive: { title: 'هذا الحساب غير مفعّل', detail: 'تواصل مع مسؤول النظام لتفعيله.' },
   unknown: { title: 'تعذّر الدخول الآن', detail: 'حاول مرة أخرى بعد قليل.' },
 }

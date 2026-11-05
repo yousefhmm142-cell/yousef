@@ -33,12 +33,14 @@ export function LoginRoute() {
 
 function Login() {
   useDocumentTitle('تسجيل الدخول')
-  const { signIn } = useAuth()
+  const { signIn, state } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const [phone, setPhone] = useState(lastPhone)
+  const [phone, setPhone] = useState(() => state.status === 'locked' ? state.employee.phone || lastPhone() : lastPhone())
   const [pin, setPin] = useState('')
   const [busy, setBusy] = useState(false)
+  const [verified, setVerified] = useState(false)
+  const submitting = useRef(false)
   const [error, setError] = useState<AuthErrorCode | null>(null)
   const [phoneTouched, setPhoneTouched] = useState(false)
   const phoneRef = useRef<HTMLInputElement>(null)
@@ -64,7 +66,7 @@ function Login() {
   const phoneInvalid = phoneTouched && phone.length > 0 && !isValidPhone(phone)
 
   async function submit(p = phone, code = pin) {
-    if (busy) return
+    if (submitting.current) return
     if (!isValidPhone(p)) {
       setPhoneTouched(true)
       phoneRef.current?.focus()
@@ -74,17 +76,22 @@ function Login() {
       pinRef.current?.focus()
       return
     }
+    submitting.current = true
     setBusy(true)
     setError(null)
     try {
-      await signIn(p, code)
+      await signIn(p, code, async () => {
+        setVerified(true)
+        await new Promise((resolve) => setTimeout(resolve, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 650))
+      })
       const from = (location.state as { from?: string } | null)?.from
       navigate(from && from !== '/login' ? from : '/', { replace: true })
     } catch (e) {
       setError(e instanceof AuthError ? e.code : 'unknown')
       setPin('')
-      pinRef.current?.focus()
       setBusy(false)
+      submitting.current = false
+      requestAnimationFrame(() => pinRef.current?.focus())
     }
   }
 
@@ -107,7 +114,7 @@ function Login() {
         </ul>
       </section>
 
-      <section className="login-card glass">
+      <section className="login-card glass" data-verified={verified || undefined}>
         {db === 'setup' ? (
           <FirstSetup onDone={() => setDb('ready')} />
         ) : (
@@ -126,8 +133,8 @@ function Login() {
         )}
         <div className="login-card-head">
           <Logo height={88} className="login-logo-sm" />
-          <h2>تسجيل الدخول</h2>
-          <p>برقم جوالك والرمز السري</p>
+          <h2 aria-live="polite">{verified ? 'أهلاً وسهلاً' : 'تسجيل الدخول'}</h2>
+          <p>{verified ? 'تم التحقق من الرمز' : state.status === 'locked' ? 'اكتب رمزك لتكمل، رقمك محفوظ' : 'برقم جوالك والرمز السري'}</p>
         </div>
 
         <form onSubmit={onSubmit} noValidate className="login-form">
@@ -142,6 +149,7 @@ function Login() {
               autoComplete="tel"
               placeholder="059 000 0000"
               value={formatPhone(phone)}
+              disabled={busy}
               aria-invalid={phoneInvalid || undefined}
               aria-describedby={phoneInvalid ? 'phone-error' : undefined}
               onBlur={() => setPhoneTouched(true)}
@@ -166,6 +174,7 @@ function Login() {
               id="pin"
               inputRef={pinRef}
               value={pin}
+              status={verified ? 'verified' : busy ? 'checking' : 'idle'}
               length={PIN_LENGTH}
               invalid={error === 'bad_credentials'}
               disabled={busy}
