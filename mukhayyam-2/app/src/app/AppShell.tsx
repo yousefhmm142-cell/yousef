@@ -1,5 +1,6 @@
 import { Ellipsis, Settings, UserRound } from 'lucide-react'
-import { Link, NavLink, Outlet } from 'react-router'
+import { useLayoutEffect, useRef, useState } from 'react'
+import { Link, NavLink, Outlet, useLocation } from 'react-router'
 import { useEmployee } from '../auth/AuthProvider'
 import { isManagerRole, titleOf } from '../types'
 import { Avatar, Logo } from '../ui/primitives'
@@ -22,6 +23,24 @@ export function AppShell() {
   const hasSettings = items.some((i) => i.to === '/settings')
   const barItems = items.filter((i) => i.to !== '/settings')
 
+  // The arch follows the current section's link, as wide as its word.
+  const navRef = useRef<HTMLElement>(null)
+  const { pathname } = useLocation()
+  const [arch, setArch] = useState<{ x: number; w: number } | null>(null)
+  useLayoutEffect(() => {
+    const nav = navRef.current
+    if (!nav) return
+    const place = () => {
+      const a = nav.querySelector<HTMLElement>('.topnav-link.active')
+      setArch(a ? { x: a.offsetLeft, w: a.offsetWidth } : null)
+    }
+    place()
+    const ro = new ResizeObserver(place)
+    ro.observe(nav)
+    void document.fonts?.ready.then(place)
+    return () => ro.disconnect()
+  }, [pathname, barItems.length])
+
   return (
     <div className="shell">
       <a href="#main" className="skip">تخطَّ إلى المحتوى</a>
@@ -36,7 +55,8 @@ export function AppShell() {
         </Link>
 
         {barItems.length > 1 && (
-          <nav className="topnav" aria-label="الأقسام">
+          <nav className="topnav" aria-label="الأقسام" ref={navRef}>
+            <span className={`nav-arch${arch ? ' on' : ''}`} aria-hidden="true" style={arch ? { width: arch.w, transform: `translateX(${arch.x}px)` } : undefined} />
             {barItems.map(({ to, label, icon: Icon }) => (
               <NavLink key={to} to={to} end={to === '/' || to === '/tasks'} className={compact && compactLinks.has(to) ? 'topnav-link compact' : 'topnav-link'} aria-label={label} title={compact && compactLinks.has(to) ? label : undefined}>
                 <Icon size={17} aria-hidden="true" />

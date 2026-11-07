@@ -34,34 +34,27 @@
 .topnav-link > span { position: relative; z-index: 3; }
 .topnav-link:hover > svg, .topnav-link:focus-visible > svg { transform: translateY(-2px); }
 
-/* A small overhead spotlight behind the whole label; it never changes the link's size. */
-.topnav-link, .tab { position: relative; isolation: isolate; overflow: hidden; }
-.topnav-link::before, .tab::before {
-  content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
-  background: linear-gradient(180deg, #b1263840 0%, #b126381c 48%, #b1263800 100%);
-  clip-path: polygon(35% 0, 65% 0, 100% 100%, 0 100%);
-  opacity: 0; transform: translateY(-4px) scaleX(.8); transform-origin: 50% 0;
-  transition: opacity .2s, transform .3s var(--ease);
+/* The glowing arch around the current section: it slides to the page you open and stretches to its word. */
+.topnav-link { position: relative; z-index: 2; }
+.topnav-link.active { background: transparent; box-shadow: none; }
+.nav-arch {
+  position: absolute; top: 0; bottom: 0; left: 0; z-index: 1; pointer-events: none; border-radius: 999px; opacity: 0;
+  transition: transform .5s cubic-bezier(.3, 1.25, .45, 1), width .62s cubic-bezier(.3, 1.25, .45, 1), opacity .25s;
+  background: radial-gradient(120% 110% at 50% 0%, color-mix(in srgb, var(--brand) 20%, transparent) 0%, transparent 72%);
 }
-.topnav-link::after, .tab::after {
-  content: ''; position: absolute; top: 1px; left: 35%; width: 30%; height: 3px; z-index: 0; pointer-events: none;
-  border-radius: 999px; background: var(--brand-hi); box-shadow: 0 0 8px #b1263866;
-  opacity: 0; transform: translateY(-3px); transition: opacity .2s, transform .3s var(--ease);
+.nav-arch.on { opacity: 1; }
+.nav-arch::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  box-shadow: inset 0 0 0 1.6px var(--brand-hi), 0 0 12px -1px color-mix(in srgb, var(--brand-hi) 70%, transparent);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 52%, transparent 96%); mask-image: linear-gradient(180deg, #000 0%, #000 52%, transparent 96%);
 }
-:root[data-theme='dark'] .topnav-link::before, :root[data-theme='dark'] .tab::before {
-  background: linear-gradient(180deg, #e5485b52 0%, #d0364a24 48%, #d0364a00 100%);
+.nav-arch::after {
+  content: ''; position: absolute; left: -28px; right: -28px; bottom: -1px; height: 2px; border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--brand-hi) 30%, var(--brand-hi) 70%, transparent);
+  box-shadow: 0 0 10px 0 color-mix(in srgb, var(--brand-hi) 60%, transparent); opacity: .85;
 }
-.topnav-link.active::before, .topnav-link.active::after,
-.tab.active::before, .tab.active::after { opacity: 1; transform: none; }
-.topnav-link:focus-visible::before, .topnav-link:focus-visible::after,
-.tab:focus-visible::before, .tab:focus-visible::after { opacity: 1; transform: none; }
-.tab > span { position: relative; z-index: 1; }
-@media (hover: hover) {
-  .topnav:hover .topnav-link.active::before, .topnav:hover .topnav-link.active::after,
-  .tabbar:hover .tab.active::before, .tabbar:hover .tab.active::after { opacity: 0; }
-  .topnav:hover .topnav-link:hover::before, .topnav:hover .topnav-link:hover::after,
-  .tabbar:hover .tab:hover::before, .tabbar:hover .tab:hover::after { opacity: 1; transform: none; }
-}
+:root[data-theme='dark'] .nav-arch { background: radial-gradient(120% 110% at 50% 0%, color-mix(in srgb, var(--brand-hi) 26%, transparent) 0%, transparent 72%); }
+@media (prefers-reduced-motion: reduce) { .nav-arch { transition: opacity .2s; } }
 
 .topbar-end { margin-inline-start: auto; display: flex; align-items: center; gap: 10px; flex: none; }
 
