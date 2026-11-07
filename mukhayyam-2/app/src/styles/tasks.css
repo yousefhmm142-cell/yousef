@@ -157,3 +157,11 @@
   .sub-phone { order: 3; flex: 1 1 auto; text-align: center; }
   .sub-card .icon-btn { order: 4; }
 }
+
+/* «تم»: the office marks a task done for a technician without a smartphone. */
+.task-li { display: flex; align-items: stretch; gap: 8px; }
+.task-li > .task-row { flex: 1; min-width: 0; }
+.done-btn { flex: none; width: 74px; border-radius: var(--r-in, 16px); border: 1.5px solid color-mix(in srgb, var(--ok) 45%, transparent); background: var(--ok-soft); color: var(--ok);
+  display: grid; place-items: center; align-content: center; gap: 2px; font: inherit; font-weight: 800; font-size: 14px; cursor: pointer; }
+.done-btn:hover, .done-btn:focus-visible { background: var(--ok); color: #fff; outline: none; }
+@media (max-width: 560px) { .done-btn { width: 58px; font-size: 13px; } }

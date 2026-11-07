@@ -100,14 +100,31 @@ function syncServerClock(sb: SupabaseClient) {
   })
 }
 
+/** A slow line counts as no line: the app opens from what it already has. */
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([p, new Promise<T>((_, no) => setTimeout(() => no(new Error('timeout')), ms))])
+}
+
+/** Is a sign-in saved on this device (even if its short-lived key needs renewing when the internet is back)? */
+async function sessionStored(): Promise<boolean> {
+  try {
+    return Object.keys(localStorage).some((k) => k.startsWith('sb-') && k.endsWith('-auth-token'))
+  } catch {
+    return false
+  }
+}
+
 export function supabaseBackend(sb: SupabaseClient): AuthBackend {
   return {
     async restore() {
-      const { data } = await sb.auth.getSession()
+      // Opening without internet: straight in with the profile saved at the last sign-in (no waiting on the network).
+      const saved = await getMeta<Employee>(PROFILE)
+      if (!navigator.onLine && saved) return saved
+      const { data } = await withTimeout(sb.auth.getSession(), 4000).catch(() => ({ data: { session: null as null | { user: { id: string } } } }))
       const user = data.session?.user
-      if (!user) return null
+      if (!user) return saved && !navigator.onLine ? saved : saved && (await sessionStored()) ? saved : null
       try {
-        const employee = await loadProfile(sb, user.id)
+        const employee = await withTimeout(loadProfile(sb, user.id), 5000)
         if (!employee?.isActive) {
           await sb.auth.signOut()
           await deleteMeta(PROFILE)

@@ -503,4 +503,10 @@ select test.fails($$select public.subscribers_import('[]'::jsonb)$$, '%not_allow
 select test.ok((select count(*) from public.subscribers) = 0, 'and someone without the tasks page cannot read it');
 reset role;
 
+-- ---------- The office marks a task done for a technician without a smartphone ----------
+select test.login('موظف إداري'); set role authenticated;
+update public.tasks set status = 'done' where subscriber_name = 'متصل تجريبي';
+select test.ok((select status = 'done' and completed_at is not null and started_at is not null from public.tasks where subscriber_name = 'متصل تجريبي'), 'the office marks a sent task done for the technician');
+reset role;
+
 \echo 'ALL CHECKS PASSED'

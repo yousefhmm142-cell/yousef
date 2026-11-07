@@ -42,7 +42,7 @@ import {
   type Task,
   type TaskPriority,
 } from './model'
-import { assignTask, cancelTask, createTask, recordSent, refreshTasks, useTasks, useTaskTypes } from './repo'
+import { assignTask, cancelTask, markDone, createTask, recordSent, refreshTasks, useTasks, useTaskTypes } from './repo'
 
 const errorText: Record<string, string> = {
   offline: 'المهام تحتاج إنترنت لأنها تُرسل برسالة. اتصل وحاول مرة أخرى.',
@@ -66,9 +66,11 @@ function useTechnicians(): Employee[] {
 /** Sends an order: opens WhatsApp (new tab) or the SMS app with the text ready, then marks it sent. */
 async function sendOrder(task: Task, channel: Channel, tech: Employee & { phone: string }, text: string) {
   const phone = tech.phone
-  const url = channel === 'whatsapp' ? whatsappUrl(phone, text, tech.waCode ?? 972) : smsUrl(phone, text)
+  // Without internet WhatsApp's web link cannot open, but the WhatsApp app itself can (it sends when online); SMS needs no internet.
+  const web = whatsappUrl(phone, text, tech.waCode ?? 972)
+  const url = channel === 'whatsapp' ? (navigator.onLine ? web : web.replace(/^https:\/\/wa\.me\/(\d+)\?text=/, 'whatsapp://send?phone=$1&text=')) : smsUrl(phone, text)
   // Opened before any waiting, so the browser does not block it as a pop-up.
-  const win = channel === 'whatsapp' ? window.open('', '_blank') : null
+  const win = channel === 'whatsapp' && navigator.onLine ? window.open('', '_blank') : null
   try {
     await recordSent(task, channel, phone, text)
   } catch (e) {
@@ -117,6 +119,19 @@ export function TasksPage() {
   const zoneName = (id: number | null) => (id ? zones?.find((z) => z.id === id)?.name ?? null : null)
   const person = (id: string | null) => (id ? technicians.find((e) => e.id === id) : undefined)
   const givingTask = all.find((t) => t.id === giving) ?? null
+  const confirmDone = useConfirm()
+  const toastDone = useToast()
+  async function doneFor(t: Task) {
+    const who = person(t.assigneeId)?.fullName ?? 'الفني'
+    const yes = await confirmDone({ title: `${who} خلّص المهمة؟`, message: `${typeName(t.typeId)}${t.subscriberName ? ` · ${t.subscriberName}` : ''}. بتنحسب منجزة باسمه بوقت هلأ.`, confirmLabel: 'تم الإنجاز ✓' })
+    if (!yes) return
+    try {
+      await markDone(t)
+      toastDone(`انحسبت منجزة لـ ${who}`)
+    } catch (e) {
+      toastDone(errText(e), 'danger')
+    }
+  }
   const openTask = all.find((t) => t.id === openId) ?? null
   const people = useLiveQuery(() => db.employees.toArray(), [])
   // What the technicians did with seals today counts as their finished tasks too.
@@ -183,7 +198,7 @@ export function TasksPage() {
           <ul className="prep-list">
             {prepared.map((t) => (
               <li key={t.id} className="prep-row">
-                <span className="task-no num">{t.number}</span>
+                <span className="task-no num">{t.number || '…'}</span>
                 <span className="prep-main">
                   <b>{typeName(t.typeId)}{t.details && <span className="prep-need"> · {t.details}</span>}</b>
                   <span className="prep-meta">
@@ -227,9 +242,9 @@ export function TasksPage() {
             const mins = elapsedMinutes(t, now)
             const overdue = isOverdue(t, now)
             return (
-              <li key={t.id}>
+              <li key={t.id} className="task-li">
                 <button type="button" className="task-row card" data-late={overdue || undefined} onClick={() => setOpenId(t.id)}>
-                  <span className="task-no num">{t.number}</span>
+                  <span className="task-no num">{t.number || '…'}</span>
                   <span className="task-main">
                     <span className="task-title">
                       <b>{typeName(t.typeId)}</b>
@@ -250,6 +265,11 @@ export function TasksPage() {
                     </span>
                   </span>
                 </button>
+                {t.assigneeId && isOpen(t) && (
+                  <button type="button" className="done-btn" aria-label={`تم إنجاز المهمة ${t.number || ''}`} title="الفني خلّصها: علّمها منجزة" onClick={() => void doneFor(t)}>
+                    <CheckCheck size={20} /><span>تم</span>
+                  </button>
+                )}
               </li>
             )
           })}

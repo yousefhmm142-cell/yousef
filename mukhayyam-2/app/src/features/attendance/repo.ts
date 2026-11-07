@@ -4,6 +4,7 @@ import { isDemo } from '../../config'
 import { ensureDemoData } from '../../data/demo'
 import { db, getMeta, setMeta, type AttendanceDevice, type AttendancePoint } from '../../data/db'
 import { getSupabase } from '../../data/supabase'
+import { flushActions, getActions, onActionsSent, runOrQueue } from '../../data/actions'
 import { serverNow } from '../../lib/clock'
 import { addDays, todayISO, type ISODate } from '../../lib/dates'
 import { SheetStateError } from '../sheets/workflow'
@@ -33,8 +34,11 @@ export const useHolidays = () => useLiveQuery(() => db.holidays.toArray(), [])
 export const usePoints = () => useLiveQuery(() => db.attendancePoints.toArray(), [])
 export const useDevices = () => useLiveQuery(() => db.attendanceDevices.toArray(), [])
 
+/** Rows written here without internet and not sent yet: kept on screen until they are. */
+let waiting = new Set<string>()
 async function replace<T extends { id: string | number }>(table: EntityTable<T, 'id'>, rows: T[]) {
-  const keep = new Set(rows.map((r) => r.id))
+  const keep = new Set<string | number>([...rows.map((r) => r.id), ...waiting])
+  rows = rows.filter((r) => !waiting.has(String(r.id)))
   const old = await table.toArray()
   await table.bulkDelete(old.filter((o) => !keep.has(o.id)).map((o) => o.id) as Parameters<typeof table.bulkDelete>[0])
   await table.bulkPut(rows)
@@ -43,6 +47,8 @@ async function replace<T extends { id: string | number }>(table: EntityTable<T, 
 /** Brings the last 120 days of punches, leaves, holidays, the QR sheet and the phones. */
 export async function refreshAttendance(): Promise<void> {
   if (isDemo) return
+  await flushActions()
+  waiting = new Set((await getActions()).filter((a) => a.table === 'attendance_punches' || a.table === 'leaves').map((a) => String(a.row?.id ?? a.rowId)))
   const sb = getSupabase()
   if (!sb || !navigator.onLine) return
   const since = new Date(Date.now() - 120 * 86_400_000).toISOString()
@@ -95,10 +101,18 @@ export async function addManualPunch(employeeId: string, date: ISODate, time: st
     await db.punches.put({ id: crypto.randomUUID(), employeeId, kind, at, method: 'manual', reason: text, recordedBy: by })
     return
   }
-  const sb = online()
-  const res = await sb.from('attendance_punches').insert({ employee_id: employeeId, kind, at, method: 'manual', reason: text, recorded_by: by })
-  check(res.error, res.status)
-  await refreshAttendance()
+  const id = crypto.randomUUID()
+  await act({ table: 'attendance_punches', op: 'insert', row: { id, employee_id: employeeId, kind, at, method: 'manual', reason: text, recorded_by: by }, label: 'تسجيل يدوي' },
+    () => db.punches.put({ id, employeeId, kind, at, method: 'manual', reason: text, recordedBy: by }))
+}
+
+/** Sends now, or keeps it on this device until the internet is back (see data/actions). */
+async function act(a: Parameters<typeof runOrQueue>[0], local: () => Promise<unknown>) {
+  try {
+    if ((await runOrQueue(a, async () => { await local() })) === 'sent') { await local(); void refreshAttendance() }
+  } catch {
+    throw new SheetStateError('not_allowed')
+  }
 }
 
 /**
@@ -114,19 +128,13 @@ export async function updatePunchTime(punch: Punch, date: ISODate, time: string,
     await db.punches.put({ ...punch, at, method: 'manual', reason, recordedBy: by })
     return
   }
-  const sb = online()
-  const res = await sb.from('attendance_punches').update({ at, method: 'manual', reason, recorded_by: by }).eq('id', punch.id).select('id')
-  check(res.error, res.status)
-  if (!res.data?.length) throw new SheetStateError('not_allowed')
-  await refreshAttendance()
+  await act({ table: 'attendance_punches', op: 'update', rowId: punch.id, row: { at, method: 'manual', reason, recorded_by: by }, label: 'تعديل وقت' },
+    () => db.punches.put({ ...punch, at, method: 'manual', reason, recordedBy: by }))
 }
 
 export async function deletePunch(id: string) {
   if (isDemo) return void (await db.punches.delete(id))
-  const sb = online()
-  const res = await sb.from('attendance_punches').delete().eq('id', id)
-  check(res.error, res.status)
-  await db.punches.delete(id)
+  await act({ table: 'attendance_punches', op: 'delete', rowId: id, label: 'حذف تسجيل' }, () => db.punches.delete(id))
 }
 
 export async function addLeave(employeeId: string, date: ISODate, type: LeaveType, by: string, notes = '', days = 1) {
@@ -136,19 +144,17 @@ export async function addLeave(employeeId: string, date: ISODate, type: LeaveTyp
     await db.leaves.put({ id: crypto.randomUUID(), employeeId, from: date, to, type, notes: why })
     return
   }
-  const sb = online()
-  const res = await sb.from('leaves').insert({ employee_id: employeeId, from_date: date, to_date: to, type, approved_by: by, notes: why || null })
-  check(res.error, res.status)
-  await refreshAttendance()
+  const id = crypto.randomUUID()
+  await act({ table: 'leaves', op: 'insert', row: { id, employee_id: employeeId, from_date: date, to_date: to, type, approved_by: by, notes: why || null }, label: 'إجازة' },
+    () => db.leaves.put({ id, employeeId, from: date, to, type, notes: why }))
 }
 
 export async function deleteLeave(id: string) {
   if (isDemo) return void (await db.leaves.delete(id))
-  const sb = online()
-  const res = await sb.from('leaves').delete().eq('id', id)
-  check(res.error, res.status)
-  await db.leaves.delete(id)
+  await act({ table: 'leaves', op: 'delete', rowId: id, label: 'إلغاء إجازة' }, () => db.leaves.delete(id))
 }
+
+onActionsSent(refreshAttendance)
 
 const newPointCode = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, '0')).join('')
 

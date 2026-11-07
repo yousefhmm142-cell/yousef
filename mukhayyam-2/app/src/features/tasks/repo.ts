@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { isDemo } from '../../config'
 import { ensureDemoData } from '../../data/demo'
 import { db } from '../../data/db'
+import { flushActions, getActions, onActionsSent, runOrQueue } from '../../data/actions'
 import { getSupabase } from '../../data/supabase'
 import { serverNow } from '../../lib/clock'
 import { bySortOrder } from '../generation/repo'
@@ -88,6 +89,9 @@ export async function refreshTasks(): Promise<void> {
   if (isDemo) return
   const sb = getSupabase()
   if (!sb || !navigator.onLine) return
+  // What was written without internet goes up first; anything still waiting stays on screen.
+  await flushActions()
+  const waiting = new Set((await getActions()).filter((a) => a.table === 'tasks').map((a) => String(a.row?.id ?? a.rowId)))
   const since = new Date(Date.now() - 120 * 86_400_000).toISOString()
   const { data, error } = await sb
     .from('tasks')
@@ -100,8 +104,8 @@ export async function refreshTasks(): Promise<void> {
   await db.transaction('rw', db.tasks, async () => {
     const keep = new Set(rows.map((r) => r.id))
     const old = await db.tasks.toArray()
-    await db.tasks.bulkDelete(old.filter((t) => !keep.has(t.id)).map((t) => t.id))
-    await db.tasks.bulkPut(rows)
+    await db.tasks.bulkDelete(old.filter((t) => !keep.has(t.id) && !waiting.has(t.id)).map((t) => t.id))
+    await db.tasks.bulkPut(rows.filter((r) => !waiting.has(r.id)))
   })
 }
 
@@ -133,26 +137,38 @@ export async function createTask(input: NewTask, createdBy: string): Promise<Tas
     await db.tasks.put(task)
     return task
   }
-  const sb = online()
-  const { data, error, status } = await sb
-    .from('tasks')
-    .insert({
-      task_type_id: input.typeId,
-      assignee_id: input.assigneeId,
-      details: input.details.trim() || null,
-      subscriber_name: input.subscriberName.trim() || null,
-      subscriber_phone: input.subscriberPhone || null,
-      zone_id: input.zoneId,
-      location_text: input.location.trim() || null,
-      priority: input.priority,
-      expected_minutes: input.expectedMinutes,
-    })
-    .select('*')
-    .single()
-  check(error, status)
-  const task = taskFromRow(data as TaskRow)
-  await db.tasks.put(task)
-  return task
+  // The id and the link are made here, so the task (and its link in an SMS) exist even without internet.
+  const id = crypto.randomUUID()
+  const linkToken = randomToken()
+  const row = {
+    id,
+    link_token: linkToken,
+    task_type_id: input.typeId,
+    assignee_id: input.assigneeId,
+    details: input.details.trim() || null,
+    subscriber_name: input.subscriberName.trim() || null,
+    subscriber_phone: input.subscriberPhone || null,
+    zone_id: input.zoneId,
+    location_text: input.location.trim() || null,
+    priority: input.priority,
+    expected_minutes: input.expectedMinutes,
+  }
+  const local: Task = {
+    ...input, id, number: 0, createdBy, status: 'new', sentAt: null, seenAt: null, startedAt: null, completedAt: null, cancelledAt: null,
+    completionNotes: '', cancelReason: '', linkToken, createdAt: serverNow().toISOString(),
+  }
+  const how = await queued(() => runOrQueue({ table: 'tasks', op: 'insert', row, label: `مهمة ${input.subscriberName || ''}`.trim() }, () => db.tasks.put(local).then(() => undefined)))
+  if (how === 'sent') await reload(id)
+  return (await db.tasks.get(id)) ?? local
+}
+
+/** The server said no (not «no internet»): the same message as before. */
+async function queued<T>(run: () => Promise<T>): Promise<T> {
+  try {
+    return await run()
+  } catch {
+    throw new SheetStateError('unknown')
+  }
 }
 
 /** Gives a prepared task (or one not yet sent) to a technician. */
@@ -161,12 +177,13 @@ export async function assignTask(task: Task, assigneeId: string, priority: Task[
     await db.tasks.update(task.id, { assigneeId, priority, expectedMinutes, status: 'new', sentAt: null, seenAt: null })
     return (await db.tasks.get(task.id))!
   }
-  const sb = online()
-  const { data, error, status } = await sb.from('tasks').update({ assignee_id: assigneeId, priority, expected_minutes: expectedMinutes }).eq('id', task.id).select('*').single()
-  check(error, status)
-  const next = taskFromRow(data as TaskRow)
-  await db.tasks.put(next)
-  return next
+  const how = await queued(() => runOrQueue(
+    { table: 'tasks', op: 'update', rowId: task.id, row: { assignee_id: assigneeId, priority, expected_minutes: expectedMinutes }, label: `تعيين مهمة ${task.number || ''}`.trim() },
+    () => db.tasks.update(task.id, { assigneeId, priority, expectedMinutes, status: 'new', sentAt: null, seenAt: null }).then(() => undefined),
+  ))
+  if (how === 'sent') await reload(task.id)
+  else await db.tasks.update(task.id, { assigneeId, priority, expectedMinutes })
+  return (await db.tasks.get(task.id))!
 }
 
 /** Records that the order was handed to WhatsApp or the SMS app; the task becomes "sent". */
@@ -175,10 +192,11 @@ export async function recordSent(task: Task, channel: Channel, toPhone: string, 
     await db.tasks.update(task.id, { status: task.status === 'new' ? 'sent' : task.status, sentAt: task.sentAt ?? serverNow().toISOString() })
     return
   }
-  const sb = online()
-  const res = await sb.from('outgoing_messages').insert({ task_id: task.id, channel, to_phone: toPhone, body })
-  check(res.error, res.status)
-  await reload(task.id)
+  const how = await queued(() => runOrQueue(
+    { table: 'outgoing_messages', op: 'insert', row: { id: crypto.randomUUID(), task_id: task.id, channel, to_phone: toPhone, body }, label: `إرسال مهمة ${task.number || ''}`.trim() },
+    () => db.tasks.update(task.id, { status: task.status === 'new' ? 'sent' : task.status, sentAt: task.sentAt ?? serverNow().toISOString() }).then(() => undefined),
+  ))
+  if (how === 'sent') await reload(task.id)
 }
 
 export async function cancelTask(task: Task, reason: string): Promise<void> {
@@ -188,11 +206,28 @@ export async function cancelTask(task: Task, reason: string): Promise<void> {
     await db.tasks.update(task.id, { status: 'cancelled', cancelReason: text, cancelledAt: serverNow().toISOString() })
     return
   }
-  const sb = online()
-  const res = await sb.from('tasks').update({ status: 'cancelled', cancel_reason: text }).eq('id', task.id)
-  check(res.error, res.status)
-  await reload(task.id)
+  const how = await queued(() => runOrQueue(
+    { table: 'tasks', op: 'update', rowId: task.id, row: { status: 'cancelled', cancel_reason: text }, label: `إلغاء مهمة ${task.number || ''}`.trim() },
+    () => db.tasks.update(task.id, { status: 'cancelled', cancelReason: text, cancelledAt: serverNow().toISOString() }).then(() => undefined),
+  ))
+  if (how === 'sent') await reload(task.id)
 }
+
+/** The technician has no smartphone: the office marks his task done (also without internet). */
+export async function markDone(task: Task): Promise<void> {
+  const now = serverNow().toISOString()
+  if (isDemo) {
+    await db.tasks.update(task.id, { status: 'done', startedAt: task.startedAt ?? now, completedAt: now })
+    return
+  }
+  const how = await queued(() => runOrQueue(
+    { table: 'tasks', op: 'update', rowId: task.id, row: { status: 'done', device_time: now, recorded_offline: !navigator.onLine }, label: `إنجاز مهمة ${task.number || ''}`.trim() },
+    () => db.tasks.update(task.id, { status: 'done', startedAt: task.startedAt ?? now, completedAt: now }).then(() => undefined),
+  ))
+  if (how === 'sent') await reload(task.id)
+}
+
+onActionsSent(refreshTasks)
 
 async function reload(id: string) {
   const sb = getSupabase()

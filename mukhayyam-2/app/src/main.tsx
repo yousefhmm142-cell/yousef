@@ -27,6 +27,7 @@ import { ConfirmProvider } from './ui/Confirm'
 import { isDemo } from './config'
 import { startUpdateChecks } from './app/update'
 import { startSealQueue } from './features/seals/repo'
+import { startActions } from './data/actions'
 
 // A page left open across an update may ask for a screen file that the new version replaced:
 // load the new version instead of showing an error (at most once a minute, so it never loops).
@@ -62,6 +63,7 @@ registerSW({
 // A newer site is taken on the next open or refresh, with «جاري تحديث الموقع…» while it loads.
 startUpdateChecks()
 startSealQueue()
+startActions()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

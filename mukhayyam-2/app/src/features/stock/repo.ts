@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { isDemo } from '../../config'
 import { db } from '../../data/db'
 import { getSupabase } from '../../data/supabase'
+import { flushActions, getActions, onActionsSent, runOrQueue } from '../../data/actions'
 import { serverNow } from '../../lib/clock'
 import { bySortOrder } from '../generation/repo'
 import { SheetStateError } from '../sheets/workflow'
@@ -33,13 +34,6 @@ const moveFromRow = (r: MoveRow): StockMove => ({
   createdBy: r.created_by,
 })
 
-function online() {
-  const sb = getSupabase()
-  if (!sb) throw new SheetStateError('unknown')
-  if (!navigator.onLine) throw new SheetStateError('offline')
-  return sb
-}
-
 export const useStockItems = () => useLiveQuery(async () => (await db.stockItems.toArray()).sort(bySortOrder), [])
 export const useStockMoves = () => useLiveQuery(async () => (await db.stockMoves.toArray()).sort((a, b) => b.at.localeCompare(a.at)), [])
 
@@ -47,6 +41,8 @@ export async function refreshStock(): Promise<void> {
   if (isDemo) return
   const sb = getSupabase()
   if (!sb || !navigator.onLine) return
+  await flushActions()
+  const waiting = new Set((await getActions()).filter((a) => a.table === 'stock_moves').map((a) => String(a.row?.id ?? a.rowId)))
   const rows: MoveRow[] = []
   for (let from = 0; ; from += 1000) {
     const { data, error } = await sb.from('stock_moves').select('id, item_id, kind, qty, at, note, ref, task_id, created_by').order('at').range(from, from + 999)
@@ -55,8 +51,9 @@ export async function refreshStock(): Promise<void> {
     if (data.length < 1000) break
   }
   await db.transaction('rw', db.stockMoves, async () => {
+    const mine = (await db.stockMoves.toArray()).filter((m) => waiting.has(m.id))
     await db.stockMoves.clear()
-    await db.stockMoves.bulkPut(rows.map(moveFromRow))
+    await db.stockMoves.bulkPut([...rows.map(moveFromRow).filter((m) => !waiting.has(m.id)), ...mine])
   })
 }
 
@@ -67,16 +64,23 @@ export async function addMove(input: { itemId: number; kind: MoveKind; qty: numb
     await db.stockMoves.put({ id: crypto.randomUUID(), itemId: input.itemId, kind: input.kind, qty: input.qty, at: serverNow().toISOString(), note: input.note ?? '', ref: input.ref ?? '', taskId: input.taskId ?? null, createdBy: by })
     return
   }
-  const sb = online()
-  const res = await sb.from('stock_moves').insert({ item_id: input.itemId, kind: input.kind, qty: input.qty, ref: input.ref || null, note: input.note || null, task_id: input.taskId ?? null })
-  if (res.error) throw new SheetStateError(res.status === 0 || !res.error.code ? 'offline' : 'unknown')
-  await refreshStock()
+  const id = crypto.randomUUID()
+  const local = () => db.stockMoves.put({ id, itemId: input.itemId, kind: input.kind, qty: input.qty, at: serverNow().toISOString(), note: input.note ?? '', ref: input.ref ?? '', taskId: input.taskId ?? null, createdBy: by }).then(() => undefined)
+  try {
+    if ((await runOrQueue({ table: 'stock_moves', op: 'insert', row: { id, item_id: input.itemId, kind: input.kind, qty: input.qty, ref: input.ref || null, note: input.note || null, task_id: input.taskId ?? null }, label: 'حركة مخزن' }, local)) === 'sent') { await local(); void refreshStock() }
+  } catch {
+    throw new SheetStateError('unknown')
+  }
 }
 
 export async function deleteMove(id: string) {
   if (isDemo) return void (await db.stockMoves.delete(id))
-  const sb = online()
-  const res = await sb.from('stock_moves').delete().eq('id', id)
-  if (res.error) throw new SheetStateError(res.status === 0 || !res.error.code ? 'offline' : 'unknown')
-  await db.stockMoves.delete(id)
+  try {
+    await runOrQueue({ table: 'stock_moves', op: 'delete', rowId: id, label: 'حذف حركة مخزن' }, () => db.stockMoves.delete(id).then(() => undefined))
+    await db.stockMoves.delete(id)
+  } catch {
+    throw new SheetStateError('unknown')
+  }
 }
+
+onActionsSent(refreshStock)
