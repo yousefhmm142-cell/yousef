@@ -236,6 +236,7 @@ export function TasksPage() {
                       {tech && <><Avatar name={tech.fullName} size={20} />{tech.fullName}</>}
                       {t.subscriberName && <> · {t.subscriberName}</>}
                       {zoneName(t.zoneId) && <> · {zoneName(t.zoneId)}</>}
+                      {t.location && <> · {t.location}</>}
                     </span>
                   </span>
                   <span className="task-side">
@@ -279,17 +280,24 @@ export function TasksPage() {
   )
 }
 
+/** The places the office uses when a subscriber says where he is (sorted, for quick finding). */
+const PLACES = [
+  'الشوافعة', 'الفقي', 'حارة الشافعي', 'القدس', 'الأهرام', 'أبو ذر', 'هويشل', 'مكتب', 'أبو رحمة', 'الطلاع', 'أبو عمرة', 'صبح', 'مدارس', 'شقاقي',
+  'زهرة الربيع', 'مكتبة', 'الحاج', 'الأبراج', 'نونة', 'فنونة', 'أبو عمار', 'الحملاوي', 'نادي الأهلي', 'الدهلي', 'العلي', 'الحلو', 'عشرين', 'التحلي',
+  'دباغ', 'الحسنات', 'النور', 'شمال', 'برج', 'أبو بطيحان', 'أبو عبيدة', 'شرقية', 'حميدة', 'أبو أنور', 'خوالدة', 'المقبرة', 'مدخل', 'محل', 'عاشور',
+  'السنة', 'النهرام',
+].sort((a, b) => a.localeCompare(b, 'ar'))
+
 /** A subscriber calls: write down who, what, where and the phone. The technician comes later. */
 function PrepareDialog({ onClose }: { onClose(): void }) {
   const me = useEmployee()
   const toast = useToast()
   const types = useTaskTypes()
-  const zones = useZones()
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [typeId, setTypeId] = useState<number | null>(null)
   const [details, setDetails] = useState('')
-  const [zoneId, setZoneId] = useState<number | null>(null)
+  const [place, setPlace] = useState('')
   const [location, setLocation] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -301,10 +309,10 @@ function PrepareDialog({ onClose }: { onClose(): void }) {
     setBusy(true)
     setError(null)
     try {
-      const t = await createTask({ typeId, assigneeId: null, details, subscriberName: name, subscriberPhone: phone || null, zoneId, location, priority: 'normal', expectedMinutes: 30 }, me.id)
+      const t = await createTask({ typeId, assigneeId: null, details, subscriberName: name, subscriberPhone: phone || null, zoneId: null, location: [place, location.trim()].filter(Boolean).join(' · '), priority: 'normal', expectedMinutes: 30 }, me.id)
       toast(`جُهّزت المهمة ${t.number}، بانتظار فني`)
       if (again) {
-        setName(''); setPhone(''); setTypeId(null); setDetails(''); setZoneId(null); setLocation(''); setBusy(false)
+        setName(''); setPhone(''); setTypeId(null); setDetails(''); setPlace(''); setLocation(''); setBusy(false)
       } else onClose()
     } catch (e) {
       setError(errText(e))
@@ -343,12 +351,18 @@ function PrepareDialog({ onClose }: { onClose(): void }) {
           </div>
           <input className="input" value={details} onChange={(e) => setDetails(e.target.value)} placeholder="تفاصيل إضافية (اختياري)، مثل: فصل خط + إحضار الساعة" />
         </div>
-        <div className="field">
-          <span className="label">المنطقة</span>
-          <div className="chips">
-            {(zones ?? []).filter((z) => z.isActive).map((z) => <Chip key={z.id} pressed={zoneId === z.id} onClick={() => setZoneId(zoneId === z.id ? null : z.id)}>{z.name}</Chip>)}
-          </div>
-          <input className="input" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="المكان بالتحديد (اختياري)، مثل: شارع أبو عمار" />
+        <div className="two-col">
+          <label className="field">
+            <span className="label">المكان (اختياري)</span>
+            <select className="select" value={place} onChange={(e) => setPlace(e.target.value)}>
+              <option value="">اختر من القائمة</option>
+              {PLACES.map((p) => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </label>
+          <label className="field">
+            <span className="label">وصف إضافي (اختياري)</span>
+            <input className="input" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="مثل: قرب المسجد" />
+          </label>
         </div>
         <span className="field-hint">الفني بتختاره بعدين من «مهام مجهّزة بانتظار فني»، ومنها بتنبعت له على واتساب أو SMS.</span>
         {error && <p className="field-error" role="alert">{error}</p>}
@@ -461,13 +475,12 @@ function NewTaskDialog({ technicians, onClose, typeName, zoneName }: {
   const me = useEmployee()
   const toast = useToast()
   const types = useTaskTypes()
-  const zones = useZones()
   const [typeId, setTypeId] = useState<number | null>(null)
   const [assigneeId, setAssigneeId] = useState<string | null>(null)
   const [details, setDetails] = useState('')
   const [subscriberName, setSubscriberName] = useState('')
   const [subscriberPhone, setSubscriberPhone] = useState('')
-  const [zoneId, setZoneId] = useState<number | null>(null)
+  const [place, setPlace] = useState('')
   const [location, setLocation] = useState('')
   const [priority, setPriority] = useState<TaskPriority>('normal')
   const [expected, setExpected] = useState(30)
@@ -486,7 +499,7 @@ function NewTaskDialog({ technicians, onClose, typeName, zoneName }: {
     setError(null)
     try {
       const task = await createTask(
-        { typeId, assigneeId: tech.id, details, subscriberName, subscriberPhone: subscriberPhone || null, zoneId, location, priority, expectedMinutes: expected },
+        { typeId, assigneeId: tech.id, details, subscriberName, subscriberPhone: subscriberPhone || null, zoneId: null, location: [place, location.trim()].filter(Boolean).join(' · '), priority, expectedMinutes: expected },
         me.id,
       )
       const text = taskMessage(task, { type: typeName(task.typeId), zone: zoneName(task.zoneId) }, taskLink(task.linkToken))
@@ -549,14 +562,14 @@ function NewTaskDialog({ technicians, onClose, typeName, zoneName }: {
         </div>
         <div className="two-col">
           <label className="field">
-            <span className="label">المنطقة (اختياري)</span>
-            <select className="select" value={zoneId ?? ''} onChange={(e) => setZoneId(e.target.value ? Number(e.target.value) : null)}>
-              <option value="">بدون</option>
-              {(zones ?? []).filter((z) => z.isActive).map((z) => <option key={z.id} value={z.id}>{z.name}</option>)}
+            <span className="label">المكان (اختياري)</span>
+            <select className="select" value={place} onChange={(e) => setPlace(e.target.value)}>
+              <option value="">اختر من القائمة</option>
+              {PLACES.map((p) => <option key={p} value={p}>{p}</option>)}
             </select>
           </label>
           <label className="field">
-            <span className="label">المكان بالتحديد (اختياري)</span>
+            <span className="label">وصف إضافي (اختياري)</span>
             <input className="input" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="مثل: قرب المسجد" />
           </label>
         </div>
