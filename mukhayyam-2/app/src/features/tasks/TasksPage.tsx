@@ -7,7 +7,7 @@ import { TaskPrintSheet } from './TaskPrintSheet'
 import { sealWorkAsTasks, useSealWork } from './sealWork'
 import { SubscriberField } from './SubscriberField'
 import { FootHint, SummaryAside, saveOnCtrlEnter } from '../../ui/SummaryAside'
-import { importSubscribers, readSubscribersFile, searchSubscribers, useSubscribers, type Subscriber } from './subscribers'
+import { fold, importSubscribers, readSubscribersFile, searchSubscribers, useSubscribers, type Subscriber } from './subscribers'
 import type { TaskType } from './model'
 import { ReportTable } from '../reports/ReportsPage'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -292,6 +292,13 @@ const PLACES = [
   'السنة', 'النهرام',
 ].sort((a, b) => a.localeCompare(b, 'ar'))
 
+/** The subscriber's area as a place: the list's own spelling when it is one of them, else the area as written. */
+function placeFor(area: string): string {
+  const a = fold(area)
+  if (!a) return ''
+  return PLACES.find((p) => fold(p) === a) ?? PLACES.find((p) => a.includes(fold(p)) || fold(p).includes(a)) ?? area.trim()
+}
+
 /** A subscriber calls: write down who, what, where and the phone. The technician comes later. */
 function PrepareDialog({ onClose }: { onClose(): void }) {
   const me = useEmployee()
@@ -313,10 +320,10 @@ function PrepareDialog({ onClose }: { onClose(): void }) {
   const activeTypes = useMemo(() => (types ?? []).filter((t) => t.isActive), [types])
   const matches = useMemo(() => (picked ? [] : searchSubscribers(subscribers, name)), [subscribers, name, picked])
   const typeLabel = activeTypes.find((t) => t.id === typeId)?.name ?? ''
-  const where = [area, board && `طبلون ${board}`, place, location.trim()].filter(Boolean).join(' · ')
+  const where = [place, board && `طبلون ${board}`, location.trim()].filter(Boolean).join(' · ')
 
   function choose(s: Subscriber) {
-    setPicked(s); setName(s.n); setPhone(s.p); setBoard(s.b); setArea(s.a); setFocus(false)
+    setPicked(s); setName(s.n); setPhone(s.p); setBoard(s.b); setArea(s.a); setPlace(placeFor(s.a)); setFocus(false)
   }
   function clearPick() {
     setPicked(null); setPhone(''); setBoard(''); setArea('')
@@ -436,6 +443,7 @@ function PrepareDialog({ onClose }: { onClose(): void }) {
           <div className="two-col">
             <select className="select" aria-label="المكان (اختياري)" value={place} onChange={(e) => setPlace(e.target.value)}>
               <option value="">اختر من القائمة</option>
+              {place && !PLACES.includes(place) && <option value={place}>{place}</option>}
               {PLACES.map((p) => <option key={p} value={p}>{p}</option>)}
             </select>
             <input className="input" aria-label="وصف إضافي (اختياري)" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="وصف إضافي، مثل: قرب المسجد" />
@@ -689,7 +697,7 @@ function NewTaskDialog({ technicians, onClose, typeName, zoneName }: {
           <textarea className="textarea" rows={3} value={details} onChange={(e) => setDetails(e.target.value)} placeholder="ماذا يعمل بالضبط؟" />
         </label>
         <div className="two-col">
-          <SubscriberField label="اسم المشترك (اختياري)" value={subscriberName} onChange={setSubscriberName} onPick={(x) => { if (x.p) setSubscriberPhone(x.p); setLocation([x.a, x.b && `طبلون ${x.b}`].filter(Boolean).join(' · ')) }} placeholder="اكتب اسمين وبتطلع بياناته" />
+          <SubscriberField label="اسم المشترك (اختياري)" value={subscriberName} onChange={setSubscriberName} onPick={(x) => { if (x.p) setSubscriberPhone(x.p); setPlace(placeFor(x.a)); if (x.b) setDetails((d) => d || `طبلون ${x.b}`) }} placeholder="اكتب اسمين وبتطلع بياناته" />
           <label className="field">
             <span className="label">جوال المشترك (اختياري)</span>
             <input className="input ltr num" type="tel" inputMode="tel" placeholder="059 000 0000" value={formatPhone(subscriberPhone)} onChange={(e) => setSubscriberPhone(normalizePhone(e.target.value))} />
@@ -700,6 +708,7 @@ function NewTaskDialog({ technicians, onClose, typeName, zoneName }: {
             <span className="label">المكان (اختياري)</span>
             <select className="select" value={place} onChange={(e) => setPlace(e.target.value)}>
               <option value="">اختر من القائمة</option>
+              {place && !PLACES.includes(place) && <option value={place}>{place}</option>}
               {PLACES.map((p) => <option key={p} value={p}>{p}</option>)}
             </select>
           </label>

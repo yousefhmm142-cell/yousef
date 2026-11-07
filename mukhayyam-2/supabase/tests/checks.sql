@@ -62,7 +62,7 @@ from (values ('مسؤول النظام', 'admin', '0590000001', true),
              ('موظف إداري', 'staff', '0590000007', true)) v (n, r, p, t);
 
 select test.ok((select count(*) from public.employees where auth_user_id is not null) = 7, 'seven test logins exist');
-select test.ok((select count(*) from public.zones) = 6 and (select count(*) from public.task_types) = 10, 'seed: 6 zones and 10 task types');
+select test.ok((select count(*) from public.zones) = 6 and (select count(*) from public.task_types) = 16, 'seed: 6 zones and 16 task types');
 
 -- ---------- Generation report ----------
 select test.login('مشغّل الموقع'); set role authenticated;
