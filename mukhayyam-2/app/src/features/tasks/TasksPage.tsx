@@ -312,6 +312,14 @@ function PrepareDialog({ onClose }: { onClose(): void }) {
   const [picked, setPicked] = useState<Subscriber | null>(null)
   const [focus, setFocus] = useState(false)
   const [typeId, setTypeId] = useState<number | null>(null)
+  // More than one job for one task: the first chosen is the task's type, the others are written with it.
+  const [extraTypes, setExtraTypes] = useState<number[]>([])
+  const toggleType = (id: number) => {
+    if (typeId === id) { setTypeId(extraTypes[0] ?? null); setExtraTypes(extraTypes.slice(1)) }
+    else if (extraTypes.includes(id)) setExtraTypes(extraTypes.filter((x) => x !== id))
+    else if (typeId === null) setTypeId(id)
+    else setExtraTypes([...extraTypes, id])
+  }
   const [details, setDetails] = useState('')
   const [place, setPlace] = useState('')
   const [location, setLocation] = useState('')
@@ -319,7 +327,9 @@ function PrepareDialog({ onClose }: { onClose(): void }) {
   const [error, setError] = useState<string | null>(null)
   const activeTypes = useMemo(() => (types ?? []).filter((t) => t.isActive), [types])
   const matches = useMemo(() => (picked ? [] : searchSubscribers(subscribers, name)), [subscribers, name, picked])
-  const typeLabel = activeTypes.find((t) => t.id === typeId)?.name ?? ''
+  const nameOf = (id: number | null) => activeTypes.find((t) => t.id === id)?.name ?? ''
+  const typeLabel = [typeId, ...extraTypes].map(nameOf).filter(Boolean).join(' + ')
+  const fullDetails = [extraTypes.map(nameOf).join(' + '), details.trim()].filter(Boolean).join(' · ')
   const where = [place, board && `طبلون ${board}`, location.trim()].filter(Boolean).join(' · ')
 
   function choose(s: Subscriber) {
@@ -335,10 +345,10 @@ function PrepareDialog({ onClose }: { onClose(): void }) {
     setBusy(true)
     setError(null)
     try {
-      const t = await createTask({ typeId, assigneeId: null, details, subscriberName: name, subscriberPhone: phone || null, zoneId: null, location: where, priority: 'normal', expectedMinutes: 30 }, me.id)
+      const t = await createTask({ typeId, assigneeId: null, details: fullDetails, subscriberName: name, subscriberPhone: phone || null, zoneId: null, location: where, priority: 'normal', expectedMinutes: 30 }, me.id)
       toast(`جُهّزت المهمة ${t.number}، بانتظار فني`)
       if (again) {
-        setName(''); clearPick(); setTypeId(null); setDetails(''); setPlace(''); setLocation(''); setBusy(false)
+        setName(''); clearPick(); setTypeId(null); setExtraTypes([]); setDetails(''); setPlace(''); setLocation(''); setBusy(false)
       } else onClose()
     } catch (e) {
       setError(errText(e))
@@ -432,9 +442,9 @@ function PrepareDialog({ onClose }: { onClose(): void }) {
           </div>
         )}
         <div className="form-card">
-          <span className="form-card-title">المطلوب</span>
+          <span className="form-card-title">المطلوب <small>· بتقدر تختار أكثر من عمل</small></span>
           <div className="chips">
-            {activeTypes.map((t) => <Chip key={t.id} pressed={typeId === t.id} onClick={() => setTypeId(t.id)}>{t.name}</Chip>)}
+            {activeTypes.map((t) => <Chip key={t.id} pressed={typeId === t.id || extraTypes.includes(t.id)} onClick={() => toggleType(t.id)}>{t.name}</Chip>)}
           </div>
           <input className="input" value={details} onChange={(e) => setDetails(e.target.value)} placeholder="تفاصيل إضافية (اختياري)، مثل: فصل خط + إحضار الساعة" />
         </div>
@@ -607,6 +617,14 @@ function NewTaskDialog({ technicians, onClose, typeName, zoneName }: {
   const toast = useToast()
   const types = useTaskTypes()
   const [typeId, setTypeId] = useState<number | null>(null)
+  // More than one job for one task: the first chosen is the task's type, the others are written with it.
+  const [extraTypes, setExtraTypes] = useState<number[]>([])
+  const toggleType = (id: number) => {
+    if (typeId === id) { setTypeId(extraTypes[0] ?? null); setExtraTypes(extraTypes.slice(1)) }
+    else if (extraTypes.includes(id)) setExtraTypes(extraTypes.filter((x) => x !== id))
+    else if (typeId === null) setTypeId(id)
+    else setExtraTypes([...extraTypes, id])
+  }
   const [assigneeId, setAssigneeId] = useState<string | null>(null)
   const [details, setDetails] = useState('')
   const [subscriberName, setSubscriberName] = useState('')
@@ -630,7 +648,7 @@ function NewTaskDialog({ technicians, onClose, typeName, zoneName }: {
     setError(null)
     try {
       const task = await createTask(
-        { typeId, assigneeId: tech.id, details, subscriberName, subscriberPhone: subscriberPhone || null, zoneId: null, location: [place, location.trim()].filter(Boolean).join(' · '), priority, expectedMinutes: expected },
+        { typeId, assigneeId: tech.id, details: [extraTypes.map((x) => activeTypes.find((t) => t.id === x)?.name ?? '').filter(Boolean).join(' + '), details.trim()].filter(Boolean).join(' · '), subscriberName, subscriberPhone: subscriberPhone || null, zoneId: null, location: [place, location.trim()].filter(Boolean).join(' · '), priority, expectedMinutes: expected },
         me.id,
       )
       const text = taskMessage(task, { type: typeName(task.typeId), zone: zoneName(task.zoneId) }, taskLink(task.linkToken))
@@ -648,7 +666,7 @@ function NewTaskDialog({ technicians, onClose, typeName, zoneName }: {
       title="ملخص المهمة"
       bigLabel="الفني"
       big={tech?.fullName ?? 'اختر الفني'}
-      rows={[['المطلوب', activeTypes.find((t) => t.id === typeId)?.name ?? ''], ['المشترك', subscriberName.trim()], ['الجوال', subscriberPhone ? <bdi dir="ltr">{formatPhone(subscriberPhone)}</bdi> : ''], ['المكان', [place, location.trim()].filter(Boolean).join(' · ')]]}
+      rows={[['المطلوب', [typeId, ...extraTypes].map((x) => activeTypes.find((t) => t.id === x)?.name ?? '').filter(Boolean).join(' + ')], ['المشترك', subscriberName.trim()], ['الجوال', subscriberPhone ? <bdi dir="ltr">{formatPhone(subscriberPhone)}</bdi> : ''], ['المكان', [place, location.trim()].filter(Boolean).join(' · ')]]}
       more={[['الأولوية', priorityInfo[priority].label], ['المدة المتوقعة', durationText(expected)]]}
       note={<span>بتنبعت للفني فوراً على واتساب أو SMS مع رابط «أنهيت».</span>}
     />
@@ -685,10 +703,10 @@ function NewTaskDialog({ technicians, onClose, typeName, zoneName }: {
           {tech && !tech.phone && <span className="field-error">لا يوجد رقم جوال لهذا الفني. أضفه من الإعدادات.</span>}
         </div>
         <div className="field">
-          <span className="label">نوع المهمة</span>
+          <span className="label">نوع المهمة <small className="muted">· بتقدر تختار أكثر من عمل</small></span>
           <div className="chips">
             {activeTypes.map((t) => (
-              <Chip key={t.id} pressed={typeId === t.id} onClick={() => setTypeId(t.id)}>{t.name}</Chip>
+              <Chip key={t.id} pressed={typeId === t.id || extraTypes.includes(t.id)} onClick={() => toggleType(t.id)}>{t.name}</Chip>
             ))}
           </div>
         </div>
