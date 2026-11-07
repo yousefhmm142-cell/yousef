@@ -71,3 +71,6 @@
   .shell, body, #root { min-height: 0 !important; height: auto !important; }
   .page { min-height: 0 !important; }
 }
+
+/* The reason of a leave, under its name on the weekly sheet. */
+.print-sheet .ap-why { display: block; font-size: 7.5pt; font-weight: 400; color: #444; line-height: 1.2; }

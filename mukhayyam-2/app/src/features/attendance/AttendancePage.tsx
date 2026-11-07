@@ -246,11 +246,15 @@ function WeekSheet({ data, onOpen }: { data: Data; onOpen(e: Employee, date: ISO
   const all = weekDays(anchor)
   // Friday is not shown at all; extra hours someone works on a Friday still count in the totals.
   const days = all.filter((d) => weekdayOf(d) !== 5)
-  const rows = data.people.map((e) => {
+  // Two separate sheets: the official staff, and the people on «بطالة» hours.
+  const [group, setGroup] = useState<'staff' | 'idle'>('staff')
+  const isIdle = (e: Employee) => (data.scheduleOf(e)?.name ?? '').includes('بطالة')
+  const rows = data.people.filter((e) => (group === 'idle') === isIdle(e)).map((e) => {
     const week = all.map((d) => data.day(e, d)).filter((x): x is DayResult => !!x)
     return { e, results: week.filter((r) => weekdayOf(r.date) !== 5), totals: weekTotals(week) }
   })
   const label = `${describeDay(all[0]!).date} ← ${describeDay(all[5]!).date}`
+  const sheetTitle = group === 'idle' ? 'كشف حضور وانصراف البطالة الأسبوعي · مخيم (2)' : 'كشف الحضور والانصراف الأسبوعي للموظفين · مخيم (2)'
   const thisWeek = all.includes(data.today)
 
   async function whatsapp() {
@@ -258,8 +262,8 @@ function WeekSheet({ data, onOpen }: { data: Data; onOpen(e: Employee, date: ISO
     if (!el) return
     setSharing(true)
     try {
-      const title = `كشف الحضور والانصراف الأسبوعي · مخيم (2) · ${label}`
-      const res = await sendSheetOnWhatsApp(el, `كشف الحضور ${all[0]} - ${all[5]}.pdf`, title)
+      const title = `${sheetTitle} · ${label}`
+      const res = await sendSheetOnWhatsApp(el, `${group === 'idle' ? 'كشف البطالة' : 'كشف الحضور'} ${all[0]} - ${all[5]}.pdf`, title)
       if (res === 'saved') toast('نزّل ملف PDF وانفتح واتساب، أرفق الملف بالمحادثة.')
     } catch {
       toast('تعذّر تجهيز ملف PDF. حاول مرة أخرى.', 'danger')
@@ -277,7 +281,8 @@ function WeekSheet({ data, onOpen }: { data: Data; onOpen(e: Employee, date: ISO
           <span className="num">{label}</span>
         </div>
         <button type="button" className="icon-btn" aria-label="الأسبوع التالي" disabled={thisWeek} onClick={() => setAnchor(addDays(all[0]!, 7))}><ChevronLeft size={18} /></button>
-        <Button variant="secondary" icon={<Printer size={17} />} onClick={() => window.print()} className="week-print">طباعة الكشف</Button>
+        <Segmented<'staff' | 'idle'> label="الكشف" value={group} options={[{ value: 'staff', label: 'الموظفون' }, { value: 'idle', label: 'البطالة' }]} onChange={setGroup} />
+        <Button variant="secondary" icon={<Printer size={17} />} onClick={() => window.print()} className="week-print">{group === 'idle' ? 'طباعة كشف البطالة' : 'طباعة كشف الموظفين'}</Button>
         <Button variant="secondary" busy={sharing} icon={<MessageCircle size={17} />} onClick={() => void whatsapp()}>إرسال واتساب (PDF)</Button>
       </div>
 
@@ -314,7 +319,7 @@ function WeekSheet({ data, onOpen }: { data: Data; onOpen(e: Employee, date: ISO
                             {d.punches.some((p) => p.method === 'manual') && <i className="tag">يدوي</i>}
                           </>
                         ) : (
-                          <span className={`week-mark ${d.status}`}>{d.status === 'leave' && d.leave ? leaveLabel[d.leave.type] : statusLabel[d.status]}</span>
+                          <span className={`week-mark ${d.status}`} title={d.leave?.notes || undefined}>{d.status === 'leave' && d.leave ? leaveLabel[d.leave.type] : statusLabel[d.status]}</span>
                         )}
                       </button>
                     </td>
@@ -327,13 +332,14 @@ function WeekSheet({ data, onOpen }: { data: Data; onOpen(e: Employee, date: ISO
           </table>
         </div>
       </div>
-      <WeekPrint days={days} rows={rows} label={label} scheduleOf={data.scheduleOf} />
+      <WeekPrint days={days} rows={rows} label={label} title={sheetTitle} scheduleOf={data.scheduleOf} />
     </>
   )
 }
 
 /** The weekly sheet on paper (landscape), shown only when printing. */
-function WeekPrint({ days, rows, label, scheduleOf }: {
+function WeekPrint({ days, rows, label, title, scheduleOf }: {
+  title: string
   days: ISODate[]
   rows: Array<{ e: Employee; results: DayResult[]; totals: ReturnType<typeof weekTotals> }>
   label: string
@@ -344,7 +350,7 @@ function WeekPrint({ days, rows, label, scheduleOf }: {
       <header className="ps-head">
         <img src="/logo.webp" alt="" className="ps-logo" />
         <div className="ps-title">
-          <b>كشف الحضور والانصراف الأسبوعي · مخيم (2)</b>
+          <b>{title}</b>
           <span className="num">{label}</span>
         </div>
         <div className="ps-date">طُبع: <span className="num">{stamp(new Date().toISOString())}</span></div>
@@ -373,7 +379,7 @@ function WeekPrint({ days, rows, label, scheduleOf }: {
               <td className="ap-name">{e.fullName}<br /><small>{[e.jobTitle, scheduleOf(e)?.name].filter(Boolean).join(' · ')}</small></td>
               {results.map((d) => (
                 <td key={d.date} className="num">
-                  {d.inAt ? <InOut inAt={d.inAt} outAt={d.outAt} /> : d.status === 'future' ? '' : d.status === 'leave' && d.leave ? leaveLabel[d.leave.type] : statusLabel[d.status]}
+                  {d.inAt ? <InOut inAt={d.inAt} outAt={d.outAt} /> : d.status === 'future' ? '' : d.status === 'leave' && d.leave ? <>{leaveLabel[d.leave.type]}{d.leave.notes && <small className="ap-why">{d.leave.notes}</small>}</> : statusLabel[d.status]}
                 </td>
               ))}
               <td className="num">{totals.present}</td>
@@ -395,6 +401,7 @@ function DayDialog({ employee, date, data, onClose }: { employee: Employee; date
   const [kind, setKind] = useState<PunchKind>(d?.inAt && !d.outAt ? 'out' : 'in')
   const [time, setTime] = useState(d?.inAt && !d.outAt ? '17:00' : '08:00')
   const [reason, setReason] = useState('')
+  const [leaveWhy, setLeaveWhy] = useState('')
   const [busy, setBusy] = useState<string | null>(null)
   const confirm = useConfirm()
   const { weekday, date: long } = describeDay(date)
@@ -473,16 +480,21 @@ function DayDialog({ employee, date, data, onClose }: { employee: Employee; date
           {d.leave ? (
             <div className="att-manual-row">
               <Pill tone="info">{leaveLabel[d.leave.type]}</Pill>
+              {d.leave.notes && <span className="muted">السبب: {d.leave.notes}</span>}
               <Button variant="ghost" busy={busy === 'unleave'} onClick={() => void run('unleave', () => deleteLeave(d.leave!.id), 'أُلغيت الإجازة')}>إلغاء الإجازة</Button>
             </div>
           ) : (
+            <>
+            <input className="input" placeholder="سبب الإجازة، مثلاً: مراجعة طبية" aria-label="سبب الإجازة" value={leaveWhy} onChange={(e) => setLeaveWhy(e.target.value)} />
+            <span className="field-hint">اكتب السبب، ثم اختر نوع الإجازة.</span>
             <div className="chips">
               {(Object.keys(leaveLabel) as LeaveType[]).map((t) => (
-                <button key={t} type="button" className="chip" disabled={!!busy} onClick={() => void run('leave', () => addLeave(employee.id, date, t, me.id), `سُجّلت ${leaveLabel[t]}`)}>
+                <button key={t} type="button" className="chip" disabled={!!busy} onClick={() => void run('leave', () => addLeave(employee.id, date, t, me.id, leaveWhy), `سُجّلت ${leaveLabel[t]}`)}>
                   {leaveLabel[t]}
                 </button>
               ))}
             </div>
+            </>
           )}
         </div>
       </div>
