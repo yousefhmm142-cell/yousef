@@ -5,6 +5,8 @@ import { addMove, deleteMove } from '../stock/repo'
 import { taskMatrix } from '../reports/build'
 import { TaskPrintSheet } from './TaskPrintSheet'
 import { sealWorkAsTasks, useSealWork } from './sealWork'
+import { SubscriberField } from './SubscriberField'
+import { FootHint, SummaryAside, saveOnCtrlEnter } from '../../ui/SummaryAside'
 import { importSubscribers, readSubscribersFile, searchSubscribers, useSubscribers, type Subscriber } from './subscribers'
 import type { TaskType } from './model'
 import { ReportTable } from '../reports/ReportsPage'
@@ -523,20 +525,36 @@ function GiveDialog({ task, technicians, typeName, zoneName, onClose }: {
     }
   }
 
+  const aside = (
+    <SummaryAside
+      title="ملخص الإرسال"
+      tag={`مهمة ${task.number}`}
+      bigLabel="الفني"
+      big={tech?.fullName ?? 'اختر الفني'}
+      rows={[['المطلوب', typeName(task.typeId)], ['المشترك', task.subscriberName], ['الجوال', task.subscriberPhone ? <bdi dir="ltr">{formatPhone(task.subscriberPhone)}</bdi> : ''], ['المكان', [zoneName(task.zoneId), task.location].filter(Boolean).join(' · ')]]}
+      more={[['الأولوية', priorityInfo[priority].label], ['المدة المتوقعة', durationText(expected)]]}
+      note={<span>بيفتح واتساب أو الرسائل والنص جاهز، وبتصير المهمة «أُرسلت».</span>}
+    />
+  )
+
   return (
     <Dialog
       open
       onClose={onClose}
       title={`أعطِ المهمة ${task.number} لفني`}
+      subtitle="اختر الفني وابعتها بضغطة."
+      icon={<MessageCircle size={20} />}
+      aside={aside}
       footer={
         <>
+          <FootHint />
           <Button variant="ghost" onClick={() => setCancelling((c) => !c)}>إلغاء الطلب</Button>
           <Button variant="secondary" icon={<MessageSquareText size={17} />} busy={busy === 'sms'} disabled={!!busy} onClick={() => void give('sms')}>SMS</Button>
           <Button variant="primary" icon={<MessageCircle size={17} />} busy={busy === 'whatsapp'} disabled={!!busy} onClick={() => void give('whatsapp')}>إرسال واتساب</Button>
         </>
       }
     >
-      <div className="form-grid">
+      <div className="form-grid" onKeyDown={saveOnCtrlEnter(() => void give('whatsapp'))}>
         <div className="prep-summary">
           <b>{typeName(task.typeId)}{task.details && ` · ${task.details}`}</b>
           <span>{[task.subscriberName, task.subscriberPhone && formatPhone(task.subscriberPhone), zoneName(task.zoneId), task.location].filter(Boolean).join(' · ') || 'بدون تفاصيل المشترك'}</span>
@@ -617,20 +635,35 @@ function NewTaskDialog({ technicians, onClose, typeName, zoneName }: {
     }
   }
 
+  const aside = (
+    <SummaryAside
+      title="ملخص المهمة"
+      bigLabel="الفني"
+      big={tech?.fullName ?? 'اختر الفني'}
+      rows={[['المطلوب', activeTypes.find((t) => t.id === typeId)?.name ?? ''], ['المشترك', subscriberName.trim()], ['الجوال', subscriberPhone ? <bdi dir="ltr">{formatPhone(subscriberPhone)}</bdi> : ''], ['المكان', [place, location.trim()].filter(Boolean).join(' · ')]]}
+      more={[['الأولوية', priorityInfo[priority].label], ['المدة المتوقعة', durationText(expected)]]}
+      note={<span>بتنبعت للفني فوراً على واتساب أو SMS مع رابط «أنهيت».</span>}
+    />
+  )
+
   return (
     <Dialog
       open
       onClose={onClose}
       title="مهمة جديدة"
+      subtitle="اختر الفني والمطلوب، وابعتها بضغطة."
+      icon={<Plus size={20} />}
+      aside={aside}
       footer={
         <>
+          <FootHint />
           <Button variant="ghost" onClick={onClose}>إلغاء</Button>
           <Button variant="secondary" icon={<MessageSquareText size={17} />} busy={busy === 'sms'} disabled={!!busy} onClick={() => void save('sms')}>SMS</Button>
           <Button variant="primary" icon={<MessageCircle size={17} />} busy={busy === 'whatsapp'} disabled={!!busy} onClick={() => void save('whatsapp')}>إرسال واتساب</Button>
         </>
       }
     >
-      <div className="form-grid">
+      <div className="form-grid" onKeyDown={saveOnCtrlEnter(() => void save('whatsapp'))}>
         <div className="field">
           <span className="label">الفني</span>
           <div className="chips">
@@ -656,10 +689,7 @@ function NewTaskDialog({ technicians, onClose, typeName, zoneName }: {
           <textarea className="textarea" rows={3} value={details} onChange={(e) => setDetails(e.target.value)} placeholder="ماذا يعمل بالضبط؟" />
         </label>
         <div className="two-col">
-          <label className="field">
-            <span className="label">اسم المشترك (اختياري)</span>
-            <input className="input" value={subscriberName} onChange={(e) => setSubscriberName(e.target.value)} />
-          </label>
+          <SubscriberField label="اسم المشترك (اختياري)" value={subscriberName} onChange={setSubscriberName} onPick={(x) => { if (x.p) setSubscriberPhone(x.p); setLocation([x.a, x.b && `طبلون ${x.b}`].filter(Boolean).join(' · ')) }} placeholder="اكتب اسمين وبتطلع بياناته" />
           <label className="field">
             <span className="label">جوال المشترك (اختياري)</span>
             <input className="input ltr num" type="tel" inputMode="tel" placeholder="059 000 0000" value={formatPhone(subscriberPhone)} onChange={(e) => setSubscriberPhone(normalizePhone(e.target.value))} />

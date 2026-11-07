@@ -1,4 +1,5 @@
-import { Check, FileSpreadsheet, Upload } from 'lucide-react'
+import { Check, FileSpreadsheet, Stamp, Upload, UserRound } from 'lucide-react'
+import { FootHint, SummaryAside, saveOnCtrlEnter } from '../../ui/SummaryAside'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { todayISO } from '../../lib/dates'
 import { Dialog } from '../../ui/Dialog'
@@ -138,13 +139,29 @@ export function IssueDialog({ data, onClose, onDone, preset }: { data: SealData;
 
   const why = tech === null && rows.length > 0 && rows.every((r) => !r.bad) ? 'اختر الفني، أو «لاحقاً» لتجهيز الأختام وتسمية الدفعة بعدين.' : null
 
+  const techName = tech === LATER ? 'لاحقاً (بدون اسم)' : technicians.find((t) => t.id === tech)?.fullName ?? ''
+  const aside = (
+    <SummaryAside
+      title="ملخص الدفعة"
+      bigLabel="عدد الأختام"
+      big={<span className="num">{rows.length}</span>}
+      rows={[['الرول', roll ? <span className="num">{roll.fromNo}–{roll.toNo}</span> : ''], ['من', rows[0] ? <span className="num">{rows[0].n}</span> : ''], ['إلى', rows.length > 1 ? <span className="num">{rows[rows.length - 1]!.n}</span> : '']]}
+      more={[['الفني', techName], ['اليوم', dayLabel(date)]]}
+      note={<span>{rows.some((r) => r.bad) ? 'في أرقام عليها ملاحظة بالأحمر، صحّحها قبل الصرف.' : 'بعد الصرف بتطلع بـ «آخر ما صُرف» وبتقدر تطبع ورقة الصرف.'}</span>}
+    />
+  )
+
   return (
     <Dialog
       open
       onClose={onClose}
       title="تجهيز دفعة أختام"
+      subtitle="اكتب آخر الرقم بس، وبداية الرول جاهزة."
+      icon={<Stamp size={20} />}
+      aside={aside}
       footer={
         <>
+          <FootHint />
           <Button variant="ghost" onClick={onClose}>إلغاء</Button>
           <Button variant="secondary" disabled={!ok} busy={busy} onClick={() => void submit(true)}>حفظ وإضافة دفعة أخرى</Button>
           <Button variant="primary" icon={<Check size={17} />} disabled={!ok} busy={busy} onClick={() => void submit(false)}>
@@ -153,7 +170,7 @@ export function IssueDialog({ data, onClose, onDone, preset }: { data: SealData;
         </>
       }
     >
-      <div className="issue-form">
+      <div className="issue-form" onKeyDown={saveOnCtrlEnter(() => void submit(false))}>
         {preset?.rollId && roll && <p className="field-hint">من الرول <b className="num">{roll.fromNo}–{roll.toNo}</b></p>}
         {/* Opened from a roll: that roll is the one. Opened from the big button: she picks. */}
         {!preset?.rollId && stocked.length > 1 && (
@@ -244,19 +261,32 @@ export function AssignDialog({ batch, data, onClose }: { batch: SealBatch; data:
     }
   }
 
+  const aside = (
+    <SummaryAside
+      title="ملخص الدفعة"
+      bigLabel="الفني"
+      big={technicians.find((t) => t.id === tech)?.fullName ?? 'اختر الفني'}
+      rows={[['الدفعة', batch.label?.trim() || ordinalWord(batch.batchNo)], ['عدد الأختام', <span className="num">{count}</span>], ['اليوم', dayLabel(batch.issuedOn)]]}
+    />
+  )
+
   return (
     <Dialog
       open
       onClose={onClose}
       title={`لمن الدفعة ${batch.label?.trim() || ordinalWord(batch.batchNo)}؟`}
+      subtitle="اختر الفني اللي استلم الأختام."
+      icon={<UserRound size={20} />}
+      aside={aside}
       footer={
         <>
+          <FootHint />
           <Button variant="ghost" onClick={onClose}>إلغاء</Button>
           <Button variant="primary" busy={busy} disabled={!tech} onClick={() => void save()}>تسليم</Button>
         </>
       }
     >
-      <div className="issue-form">
+      <div className="issue-form" onKeyDown={saveOnCtrlEnter(() => void save())}>
         <p className="field-hint"><span className="num">{count}</span> أختام جاهزة بدون اسم. اختر الفني اللي استلمها.</p>
         <div className="chips">
           {technicians.map((t) => <Chip key={t.id} pressed={tech === t.id} onClick={() => setTech(t.id)}>{t.fullName}</Chip>)}
@@ -358,13 +388,28 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
     }
   }
 
+  const aside = (
+    <SummaryAside
+      title="ملخص الختم"
+      bigLabel="رقم الختم"
+      big={found ? <span className="num">{found.sealNo}</span> : ''}
+      rows={[['الفني', found?.technicianId ? data.names.get(found.technicianId) ?? '' : ''], ['الحالة', status === 'used' ? 'مستخدم' : status === 'damaged' ? 'تالف' : 'ضائع'], ['التاريخ', dayLabel(date)]]}
+      more={status === 'used' ? [['المشترك', subscriber.trim()], ['الطبلون', board.trim()], ['العمل', work.trim()]] : [['ملاحظة', work.trim()]]}
+      note={line ? <span>بينكتب بالسجل: «{line}»</span> : undefined}
+    />
+  )
+
   return (
     <Dialog
       open
       onClose={onClose}
       title={seal ? `الختم ${seal.sealNo}` : 'تسجيل استخدام ختم'}
+      subtitle="اكتب اسم المشترك وبيتعبّى الطبلون لحاله."
+      icon={<Stamp size={20} />}
+      aside={aside}
       footer={
         <>
+          <FootHint />
           {seal && recorded && <Button variant="ghost" disabled={busy} onClick={() => void undo('undo')}>إلغاء التسجيل</Button>}
           {seal && seal.status !== 'in_stock' && <Button variant="ghost" disabled={busy} onClick={() => void undo('stock')}>إرجاع للمخزن</Button>}
           <Button variant="ghost" onClick={onClose}>إغلاق</Button>
@@ -373,7 +418,7 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
         </>
       }
     >
-      <div className="issue-form">
+      <div className="issue-form" onKeyDown={saveOnCtrlEnter(() => { if (ready && !busy) void save(false) })}>
         {!seal && (
           <label className="seal-field">
             <span className="label">رقم الختم (يكفي الرقم، وحروف WK تُتجاهل)</span>
@@ -607,19 +652,33 @@ export function EditBatchDialog({ batch, data, onClose }: { batch: SealBatch; da
     }
   }
 
+  const aside = (
+    <SummaryAside
+      title="ملخص التعديل"
+      bigLabel="الفني"
+      big={list.find((t) => t.id === tech)?.fullName ?? 'بدون اسم'}
+      rows={[['الدفعة', ordinalWord(batch.batchNo)], ['التاريخ', dayLabel(date)], ['أختام الدفعة', <span className="num">{inBatch.length - removed.size + rows.length}</span>]]}
+      more={[['يُضاف', <span className="num">{rows.length}</span>], ['يُحذف', <span className="num">{removed.size}</span>]]}
+    />
+  )
+
   return (
     <Dialog
       open
       onClose={onClose}
       title={`تعديل الدفعة ${ordinalWord(batch.batchNo)}`}
+      subtitle="غيّر الفني أو التاريخ، أضف أختام أو احذفها."
+      icon={<Stamp size={20} />}
+      aside={aside}
       footer={
         <>
+          <FootHint />
           <Button variant="ghost" onClick={onClose}>إلغاء</Button>
           <Button variant="primary" busy={busy} disabled={!addOk} onClick={() => void save()}>حفظ</Button>
         </>
       }
     >
-      <div className="issue-form">
+      <div className="issue-form" onKeyDown={saveOnCtrlEnter(() => void save())}>
         <div className="field">
           <span className="label">الفني</span>
           <div className="chips">
