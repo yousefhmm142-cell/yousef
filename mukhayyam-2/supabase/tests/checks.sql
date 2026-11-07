@@ -494,4 +494,13 @@ reset role;
 select test.ok((select count(*) from information_schema.columns where table_name = 'zone_runs' and column_name = 'load_extra') = 1, 'a run keeps extra load readings');
 select test.fails($$insert into public.zone_runs (entry_id, run_no, load_extra) values (gen_random_uuid(), 1, array[-5])$$, '%', 'a negative extra reading is refused');
 
+-- ---------- The subscribers' list for quick tasks ----------
+select test.login('رامي أبو عجوة'); set role authenticated;
+select test.ok(public.subscribers_import('[{"n":"محمد أحمد سالم","a":"الحملاوي","b":"12","p":"059-123-4567"},{"n":"x"}]'::jsonb) = 1, 'the manager loads the subscribers (bad lines are skipped)');
+select test.ok((select phone from public.subscribers where full_name = 'محمد أحمد سالم') = '0591234567', 'the phone keeps only its digits');
+reset role; select test.login('مشغّل الموقع'); set role authenticated;
+select test.fails($$select public.subscribers_import('[]'::jsonb)$$, '%not_allowed%', 'only a manager replaces the list');
+select test.ok((select count(*) from public.subscribers) = 0, 'and someone without the tasks page cannot read it');
+reset role;
+
 \echo 'ALL CHECKS PASSED'

@@ -135,3 +135,18 @@
 .prep-summary { display: grid; gap: 4px; padding: 12px 14px; border-radius: var(--r-in); background: var(--surface-2); border: 1px solid var(--line); }
 .prep-summary span { color: var(--ink-2); font-size: 14px; }
 @media (max-width: 640px) { .prep-row { flex-wrap: wrap; } .prep-row .btn { width: 100%; } }
+
+/* ---------- Subscriber search and card (task form) ---------- */
+.sub-search { position: relative; }
+.input.big { font-size: 20px; font-weight: 700; padding-block: 14px; }
+.sub-list { list-style: none; margin: -4px 0 0; padding: 6px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); box-shadow: var(--shadow-lg); display: grid; gap: 2px; max-height: 300px; overflow: auto; }
+.sub-list button { width: 100%; display: grid; gap: 2px; text-align: start; padding: 10px 12px; border: 0; border-radius: 10px; background: none; font: inherit; color: var(--ink); cursor: pointer; }
+.sub-list button:hover, .sub-list button:focus-visible { background: var(--brand-soft); outline: none; }
+.sub-list small { color: var(--muted); }
+.sub-card { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 18px; border: 1px solid var(--line); background: var(--surface-2); }
+.sub-avatar { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; flex: none; font-weight: 800; color: #fff; background: linear-gradient(150deg, #2a2d33, #121418); }
+.sub-main { flex: 1; min-width: 0; display: grid; gap: 3px; }
+.sub-main b { font-size: 17px; }
+.sub-main small { color: var(--muted); }
+.sub-phone { font-weight: 800; color: var(--brand); padding: 6px 12px; border-radius: 999px; background: var(--brand-soft); }
+.aside-label { font-size: 12.5px; color: #a9afb8; }

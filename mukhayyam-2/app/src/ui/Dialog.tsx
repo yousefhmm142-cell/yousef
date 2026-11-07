@@ -7,10 +7,15 @@ interface DialogProps {
   title: string
   children: ReactNode
   footer?: ReactNode
+  /** Wide, two-part window: a live summary on one side (dark), the form on the other. */
+  aside?: ReactNode
+  subtitle?: string
+  icon?: ReactNode
+  className?: string
 }
 
 /** Native modal: focus is trapped, Esc closes, tapping outside closes. */
-export function Dialog({ open, onClose, title, children, footer }: DialogProps) {
+export function Dialog({ open, onClose, title, children, footer, aside, subtitle, icon, className }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null)
   const titleId = useId()
 
@@ -24,7 +29,7 @@ export function Dialog({ open, onClose, title, children, footer }: DialogProps) 
   return (
     <dialog
       ref={ref}
-      className="dialog"
+      className={`dialog${aside ? ' dialog-split' : ''}${className ? ` ${className}` : ''}`}
       aria-labelledby={titleId}
       onClose={onClose}
       onClick={(e) => {
@@ -32,14 +37,21 @@ export function Dialog({ open, onClose, title, children, footer }: DialogProps) 
       }}
     >
       <div className="dialog-panel">
-        <header className="dialog-head">
-          <h2 id={titleId}>{title}</h2>
-          <button type="button" className="icon-btn" onClick={onClose} aria-label="إغلاق">
-            <X size={18} />
-          </button>
-        </header>
-        <div className="dialog-body">{children}</div>
-        {footer && <footer className="dialog-foot">{footer}</footer>}
+        <div className="dialog-main">
+          <header className="dialog-head">
+            {icon && <span className="dialog-icon" aria-hidden="true">{icon}</span>}
+            <div className="dialog-titles">
+              <h2 id={titleId}>{title}</h2>
+              {subtitle && <p>{subtitle}</p>}
+            </div>
+            <button type="button" className="icon-btn" onClick={onClose} aria-label="إغلاق">
+              <X size={18} />
+            </button>
+          </header>
+          <div className="dialog-body">{children}</div>
+          {footer && <footer className="dialog-foot">{footer}</footer>}
+        </div>
+        {aside && <aside className="dialog-aside">{aside}</aside>}
       </div>
     </dialog>
   )

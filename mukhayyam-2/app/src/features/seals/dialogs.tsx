@@ -6,6 +6,7 @@ import { Chip, TextField } from '../../ui/form'
 import { Button } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
 import { useConfirm } from '../../ui/Confirm'
+import { SubscriberField } from '../tasks/SubscriberField'
 import { addRoll, addToBatch, assignBatch, importRoll, importTechnician, importUsage, issueBatch, recordSeal, refreshSeals, returnToStock, sealErrorText, updateBatch, updateRoll, useTechnicians } from './repo'
 import { parseIssueWorkbook, parseUsageWorkbook, planImport, rollPayload, usagePayload, type ImportPlan } from './import'
 import { composeDetails, latinDigits, ordinalWord, parseSealNumbers, sealStatusInfo, splitDetails, WORK_CHOICES, type Seal, type SealBatch, type SealData, type SealRoll, continueAfterSeparator, rollPrefix, withoutPendingStart } from './model'
@@ -409,6 +410,7 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
 
         {status === 'used' ? (
           <>
+            <SubscriberField label="اسم المشترك (اختياري) · اكتب اسمين وبيطلع الطبلون" value={subscriber} onChange={setSubscriber} onPick={(x) => { if (x.b) setBoard(x.b) }} placeholder="مثل: محمد أحمد" />
             <label className="seal-field">
               <span className="label">رقم الطبلون</span>
               <input ref={boardBox} value={board} placeholder="361" onChange={(e) => setBoard(e.target.value)} />
@@ -422,7 +424,6 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
               </div>
               <input className="input" value={work} placeholder="اضغط أكثر من عمل، أو اكتب العمل" onChange={(e) => setWork(e.target.value)} />
             </div>
-            <TextField label="اسم المشترك (اختياري)" value={subscriber} onChange={setSubscriber} />
             {line && <div className="details-preview">{line}</div>}
           </>
         ) : (
