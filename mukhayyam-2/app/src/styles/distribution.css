@@ -127,3 +127,12 @@
 .extra-load { position: relative; }
 .extra-load .icon-btn { position: absolute; top: -4px; inset-inline-end: 0; width: 26px; height: 26px; }
 .add-load { margin-top: 10px; }
+
+/* All the readings, then their average after them. */
+.zr-loads { display: grid; gap: 2px; }
+.zr-all { font-weight: 400; font-size: 12px; color: var(--muted); }
+.zr-avg { font-weight: 800; }
+@media print {
+  .print-sheet .ps-readings { display: block; font-size: 8pt; font-weight: 400; line-height: 1.25; }
+  .print-sheet .ps-avg { display: block; font-size: 9.5pt; }
+}

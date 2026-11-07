@@ -126,8 +126,9 @@ function RunCell({ run, imbalanceWarn }: { run: ZoneRun | undefined; imbalanceWa
   return (
     <div className="zr">
       <span className="run num">{clock12(run.start) || '—'}<ArrowLeft size={13} aria-label="إلى" />{clock12(run.end) || '—'}</span>
-      <span className={`zr-loads num ${gap !== null && gap >= imbalanceWarn ? 'warn' : ''}`} title={`L1 ${formatAmount(run.loads[0])} · L2 ${formatAmount(run.loads[1])} · L3 ${formatAmount(run.loads[2])}`}>
-        {readingsAverage(run.loads, run.extra) === null ? run.loads.map((l) => formatAmount(l)).join(' · ') : formatAmount(readingsAverage(run.loads, run.extra))} <small>{run.loadUnit}</small>
+      <span className={`zr-loads num ${gap !== null && gap >= imbalanceWarn ? 'warn' : ''}`}>
+        <span className="zr-all">{[...run.loads, ...(run.extra ?? [])].filter((l, i) => i < 3 || l !== null).map((l) => formatAmount(l)).join(' · ')}</span>
+        {readingsAverage(run.loads, run.extra) !== null && <span className="zr-avg">المتوسط {formatAmount(readingsAverage(run.loads, run.extra))} <small>{run.loadUnit}</small></span>}
       </span>
     </div>
   )

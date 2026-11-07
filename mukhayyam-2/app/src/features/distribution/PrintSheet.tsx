@@ -7,8 +7,16 @@ import { readingsAverage } from '../sheets/loads'
 
 const loadsText = (z: ZoneEntry, i: number) => {
   const r = z.runs[i]
-  const avg = r ? readingsAverage(r.loads, r.extra) : null
-  return r && avg !== null ? `${formatAmount(avg)} ${r.loadUnit}` : ''
+  if (!r) return ''
+  const all = [...r.loads, ...(r.extra ?? [])].filter((l, k) => k < 3 || l !== null)
+  if (all.every((l) => l === null)) return ''
+  const avg = readingsAverage(r.loads, r.extra)
+  return (
+    <>
+      <span className="ps-readings">{all.map((l) => formatAmount(l)).join(' · ')}</span>
+      {avg !== null && <b className="ps-avg">المتوسط {formatAmount(avg)} {r.loadUnit}</b>}
+    </>
+  )
 }
 const timeText = (z: ZoneEntry, i: number) => {
   const r = z.runs[i]
