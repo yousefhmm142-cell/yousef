@@ -12,7 +12,7 @@ import { useNow } from '../../lib/useNow'
 import { sendSheetOnWhatsApp } from '../../lib/sheetPdf'
 import type { Employee } from '../../types'
 import { Dialog } from '../../ui/Dialog'
-import { Segmented, TimeField } from '../../ui/form'
+import { Chip, Segmented, TimeField } from '../../ui/form'
 import { Avatar, Button, Logo, Pill, type Tone } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
 import { useConfirm } from '../../ui/Confirm'
@@ -213,7 +213,8 @@ function TodayBoard({ data, onOpen }: { data: Data; onOpen(e: Employee): void })
                 </span>
                 {d.inAt && <span className="att-times"><InOut inAt={d.inAt} outAt={d.outAt} /></span>}
                 <span className="att-tags">
-                  <Pill tone={statusTone[d.status]}>{statusLabel[d.status]}</Pill>
+                  <Pill tone={statusTone[d.status]}>{d.status === 'leave' && d.leave ? leaveLabel[d.leave.type] : statusLabel[d.status]}</Pill>
+                  {d.status === 'leave' && d.leave?.notes && <small className="wk-why">{d.leave.notes}</small>}
                 </span>
               </button>
             </li>
@@ -319,7 +320,7 @@ function WeekSheet({ data, onOpen }: { data: Data; onOpen(e: Employee, date: ISO
                             {d.punches.some((p) => p.method === 'manual') && <i className="tag">يدوي</i>}
                           </>
                         ) : (
-                          <span className={`week-mark ${d.status}`} title={d.leave?.notes || undefined}>{d.status === 'leave' && d.leave ? leaveLabel[d.leave.type] : statusLabel[d.status]}</span>
+                          <span className={`week-mark ${d.status}`}>{d.status === 'leave' && d.leave ? leaveLabel[d.leave.type] : statusLabel[d.status]}{d.status === 'leave' && d.leave?.notes && <small className="wk-why">{d.leave.notes}</small>}</span>
                         )}
                       </button>
                     </td>
@@ -393,6 +394,8 @@ function WeekPrint({ days, rows, label, title, scheduleOf }: {
   )
 }
 
+const LEAVE_REASONS = ['مراجعة طبية', 'مرض', 'ظرف عائلي', 'مناسبة', 'سفر', 'معاملة رسمية']
+
 /** One person's day: the scans, and the manager's corrections (forgotten scan, leave). */
 function DayDialog({ employee, date, data, onClose }: { employee: Employee; date: ISODate; data: Data; onClose(): void }) {
   const me = useEmployee()
@@ -402,6 +405,8 @@ function DayDialog({ employee, date, data, onClose }: { employee: Employee; date
   const [time, setTime] = useState(d?.inAt && !d.outAt ? '17:00' : '08:00')
   const [reason, setReason] = useState('')
   const [leaveWhy, setLeaveWhy] = useState('')
+  const [leaveType, setLeaveType] = useState<LeaveType>('annual')
+  const [leaveDays, setLeaveDays] = useState(1)
   const [busy, setBusy] = useState<string | null>(null)
   const confirm = useConfirm()
   const { weekday, date: long } = describeDay(date)
@@ -485,14 +490,19 @@ function DayDialog({ employee, date, data, onClose }: { employee: Employee; date
             </div>
           ) : (
             <>
-            <input className="input" placeholder="سبب الإجازة، مثلاً: مراجعة طبية" aria-label="سبب الإجازة" value={leaveWhy} onChange={(e) => setLeaveWhy(e.target.value)} />
-            <span className="field-hint">اكتب السبب، ثم اختر نوع الإجازة.</span>
             <div className="chips">
-              {(Object.keys(leaveLabel) as LeaveType[]).map((t) => (
-                <button key={t} type="button" className="chip" disabled={!!busy} onClick={() => void run('leave', () => addLeave(employee.id, date, t, me.id, leaveWhy), `سُجّلت ${leaveLabel[t]}`)}>
-                  {leaveLabel[t]}
-                </button>
-              ))}
+              {(Object.keys(leaveLabel) as LeaveType[]).map((t) => <Chip key={t} pressed={leaveType === t} onClick={() => setLeaveType(t)}>{leaveLabel[t]}</Chip>)}
+            </div>
+            <input className="input" placeholder="السبب، مثلاً: مراجعة طبية" aria-label="سبب الإجازة" value={leaveWhy} onChange={(e) => setLeaveWhy(e.target.value)} />
+            <div className="chips quick-why">
+              {LEAVE_REASONS.map((r) => <Chip key={r} pressed={leaveWhy === r} onClick={() => setLeaveWhy(leaveWhy === r ? '' : r)}>{r}</Chip>)}
+            </div>
+            <div className="att-manual-row">
+              <Segmented<string> label="المدة" value={String(leaveDays)} options={[{ value: '1', label: 'يوم' }, { value: '2', label: 'يومين' }, { value: '3', label: '3 أيام' }, { value: '7', label: 'أسبوع' }]} onChange={(v) => setLeaveDays(Number(v))} />
+              <Button variant="secondary" busy={busy === 'leave'} disabled={!!busy}
+                onClick={() => void run('leave', () => addLeave(employee.id, date, leaveType, me.id, leaveWhy, leaveDays), `سُجّلت ${leaveLabel[leaveType]}${leaveDays > 1 ? ` (${leaveDays} أيام)` : ''}`)}>
+                تسجيل {leaveLabel[leaveType]}
+              </Button>
             </div>
             </>
           )}

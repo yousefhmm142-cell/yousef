@@ -129,14 +129,15 @@ export async function deletePunch(id: string) {
   await db.punches.delete(id)
 }
 
-export async function addLeave(employeeId: string, date: ISODate, type: LeaveType, by: string, notes = '') {
+export async function addLeave(employeeId: string, date: ISODate, type: LeaveType, by: string, notes = '', days = 1) {
   const why = notes.trim()
+  const to = addDays(date, Math.max(1, days) - 1)
   if (isDemo) {
-    await db.leaves.put({ id: crypto.randomUUID(), employeeId, from: date, to: date, type, notes: why })
+    await db.leaves.put({ id: crypto.randomUUID(), employeeId, from: date, to, type, notes: why })
     return
   }
   const sb = online()
-  const res = await sb.from('leaves').insert({ employee_id: employeeId, from_date: date, to_date: date, type, approved_by: by, notes: why || null })
+  const res = await sb.from('leaves').insert({ employee_id: employeeId, from_date: date, to_date: to, type, approved_by: by, notes: why || null })
   check(res.error, res.status)
   await refreshAttendance()
 }
