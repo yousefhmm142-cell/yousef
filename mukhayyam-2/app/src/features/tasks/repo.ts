@@ -16,7 +16,7 @@ interface TaskRow {
   id: string
   number: number
   task_type_id: number
-  assignee_id: string
+  assignee_id: string | null
   created_by: string | null
   details: string | null
   subscriber_name: string | null
@@ -155,6 +155,20 @@ export async function createTask(input: NewTask, createdBy: string): Promise<Tas
   return task
 }
 
+/** Gives a prepared task (or one not yet sent) to a technician. */
+export async function assignTask(task: Task, assigneeId: string, priority: Task['priority'], expectedMinutes: number): Promise<Task> {
+  if (isDemo) {
+    await db.tasks.update(task.id, { assigneeId, priority, expectedMinutes, status: 'new', sentAt: null, seenAt: null })
+    return (await db.tasks.get(task.id))!
+  }
+  const sb = online()
+  const { data, error, status } = await sb.from('tasks').update({ assignee_id: assigneeId, priority, expected_minutes: expectedMinutes }).eq('id', task.id).select('*').single()
+  check(error, status)
+  const next = taskFromRow(data as TaskRow)
+  await db.tasks.put(next)
+  return next
+}
+
 /** Records that the order was handed to WhatsApp or the SMS app; the task becomes "sent". */
 export async function recordSent(task: Task, channel: Channel, toPhone: string, body: string): Promise<void> {
   if (isDemo) {
@@ -213,7 +227,7 @@ export interface LinkTask {
 async function demoLinkTask(token: string): Promise<LinkTask | null> {
   const t = await db.tasks.where('linkToken').equals(token).first()
   if (!t) return null
-  const [type, who, zone] = await Promise.all([db.taskTypes.get(t.typeId), db.employees.get(t.assigneeId), t.zoneId ? db.zones.get(t.zoneId) : undefined])
+  const [type, who, zone] = await Promise.all([db.taskTypes.get(t.typeId), t.assigneeId ? db.employees.get(t.assigneeId) : undefined, t.zoneId ? db.zones.get(t.zoneId) : undefined])
   return {
     number: t.number,
     type: type?.name ?? 'مهمة',
@@ -270,7 +284,7 @@ export async function actOnTaskLink(token: string, action: 'start' | 'done', not
     if (action === 'done' && t.status !== 'done') {
       await db.tasks.update(t.id, { status: 'done', startedAt: started, completedAt: now, completionNotes: notes.trim() })
       for (const m of materials.filter((x) => x.qty > 0))
-        await db.stockMoves.put({ id: crypto.randomUUID(), itemId: m.itemId, kind: 'out', qty: m.qty, at: now, note: `مهمة #${t.number}`, ref: '', taskId: t.id, createdBy: t.assigneeId })
+        await db.stockMoves.put({ id: crypto.randomUUID(), itemId: m.itemId, kind: 'out', qty: m.qty, at: now, note: `مهمة #${t.number}`, ref: '', taskId: t.id, createdBy: t.assigneeId ?? null })
     }
     return demoLinkTask(token)
   }

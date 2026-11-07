@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { AlarmClock, CheckCheck, Copy, Hammer, ListChecks, MessageCircle, MessageSquareText, Plus, Printer, ScrollText, TimerReset, Trash2, XCircle } from 'lucide-react'
+import { AlarmClock, CheckCheck, Copy, Hammer, ListChecks, MapPin, MessageCircle, MessageSquareText, Phone, PhoneIncoming, Plus, Printer, ScrollText, TimerReset, Trash2, UserRound, XCircle } from 'lucide-react'
 import { formatAmount, parseDecimal } from '../../lib/numbers'
 import { addMove, deleteMove } from '../stock/repo'
 import { taskMatrix } from '../reports/build'
@@ -39,7 +39,7 @@ import {
   type Task,
   type TaskPriority,
 } from './model'
-import { cancelTask, createTask, recordSent, refreshTasks, useTasks, useTaskTypes } from './repo'
+import { assignTask, cancelTask, createTask, recordSent, refreshTasks, useTasks, useTaskTypes } from './repo'
 
 const errorText: Record<string, string> = {
   offline: 'المهام تحتاج إنترنت لأنها تُرسل برسالة. اتصل وحاول مرة أخرى.',
@@ -88,6 +88,8 @@ export function TasksPage() {
   const [view, setView] = useState<View>('open')
   const [who, setWho] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
+  const [preparing, setPreparing] = useState(false)
+  const [giving, setGiving] = useState<string | null>(null)
   const [openId, setOpenId] = useState<string | null>(null)
 
   // Fresh from the server while this screen is open: a finished task shows up within seconds.
@@ -99,16 +101,19 @@ export function TasksPage() {
 
   const today = todayISO()
   const all = tasks ?? []
-  const open = all.filter(isOpen)
+  // A call written down, waiting for a technician: shown on its own, above everything.
+  const prepared = all.filter((t) => !t.assigneeId && isOpen(t)).sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+  const open = all.filter((t) => isOpen(t) && !!t.assigneeId)
   const doneToday = all.filter((t) => t.status === 'done' && t.completedAt && toISODate(new Date(t.completedAt)) === today)
   const late = open.filter((t) => isOverdue(t, now))
   const working = open.filter((t) => t.status === 'in_progress' || t.status === 'seen')
   const avgToday = doneToday.length ? Math.round(doneToday.reduce((n, t) => n + elapsedMinutes(t, now), 0) / doneToday.length) : null
 
-  const shown = (view === 'open' ? open : view === 'today' ? doneToday : all).filter((t) => !who || t.assigneeId === who)
+  const shown = (view === 'open' ? open : view === 'today' ? doneToday : all.filter((t) => !!t.assigneeId)).filter((t) => !who || t.assigneeId === who)
   const typeName = (id: number) => types?.find((t) => t.id === id)?.name ?? 'مهمة'
   const zoneName = (id: number | null) => (id ? zones?.find((z) => z.id === id)?.name ?? null : null)
-  const person = (id: string) => technicians.find((e) => e.id === id)
+  const person = (id: string | null) => (id ? technicians.find((e) => e.id === id) : undefined)
+  const givingTask = all.find((t) => t.id === giving) ?? null
   const openTask = all.find((t) => t.id === openId) ?? null
   const people = useLiveQuery(() => db.employees.toArray(), [])
   // What the technicians did with seals today counts as their finished tasks too.
@@ -130,8 +135,11 @@ export function TasksPage() {
           {hasPage(employee, 'seal-work') && <Button variant="secondary" size="lg" icon={<ScrollText size={18} />} onClick={() => navigate('/tasks/seal-work')}>
             كشف أعمال الأختام
           </Button>}
-          <Button variant="primary" size="lg" icon={<Plus size={18} />} onClick={() => setCreating(true)} className="ph-action">
+          <Button variant="secondary" size="lg" icon={<Plus size={18} />} onClick={() => setCreating(true)}>
             مهمة جديدة
+          </Button>
+          <Button variant="primary" size="lg" icon={<PhoneIncoming size={18} />} onClick={() => setPreparing(true)} className="ph-action">
+            تجهيز مهمة
           </Button>
         </div>
       </header>
@@ -158,6 +166,35 @@ export function TasksPage() {
           <div className="kpi-sub">{technicians.filter((t) => !t.phone).length ? `${technicians.filter((t) => !t.phone).length} بدون رقم جوال` : 'كلهم برقم جوال'}</div>
         </div>
       </div>
+
+      <section className="card prep-card">
+        <div className="card-h">
+          <span className="ico-round brand"><PhoneIncoming size={16} /></span>
+          <h2>مهام مجهّزة بانتظار فني</h2>
+          <span className="meta num">{prepared.length}</span>
+        </div>
+        {prepared.length === 0 ? (
+          <p className="card-empty">لما يتصل مشترك اضغط «تجهيز مهمة» واكتب طلبه، وبعدين أعطيها لفني من هون.</p>
+        ) : (
+          <ul className="prep-list">
+            {prepared.map((t) => (
+              <li key={t.id} className="prep-row">
+                <span className="task-no num">{t.number}</span>
+                <span className="prep-main">
+                  <b>{typeName(t.typeId)}{t.details && <span className="prep-need"> · {t.details}</span>}</b>
+                  <span className="prep-meta">
+                    <span><UserRound size={14} />{t.subscriberName || 'بدون اسم'}</span>
+                    {t.subscriberPhone && <a href={`tel:${t.subscriberPhone}`} className="num ltr" onClick={(e) => e.stopPropagation()}><Phone size={14} />{formatPhone(t.subscriberPhone)}</a>}
+                    {(zoneName(t.zoneId) || t.location) && <span><MapPin size={14} />{[zoneName(t.zoneId), t.location].filter(Boolean).join(' · ')}</span>}
+                    <span className="muted num">{(() => { const m = Math.round((now.getTime() - Date.parse(t.createdAt)) / 60000); return m < 1 ? 'الآن' : `من ${durationText(m)}` })()}</span>
+                  </span>
+                </span>
+                <Button variant="primary" onClick={() => setGiving(t.id)}>أعطيها لفني</Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <div className="task-filters">
         <Segmented<View> label="عرض المهام" value={view} options={views} onChange={setView} />
@@ -218,6 +255,8 @@ export function TasksPage() {
 
       <DailySheet tasks={[...all.filter((t) => t.status !== 'cancelled' && toISODate(new Date(t.createdAt)) === today), ...sealDone.tasks]} types={sealDone.types} />
 
+      {preparing && <PrepareDialog onClose={() => setPreparing(false)} />}
+      {givingTask && <GiveDialog task={givingTask} technicians={technicians} typeName={typeName} zoneName={zoneName} onClose={() => setGiving(null)} />}
       {creating && (
         <NewTaskDialog
           technicians={technicians}
@@ -237,6 +276,179 @@ export function TasksPage() {
         />
       )}
     </div>
+  )
+}
+
+/** A subscriber calls: write down who, what, where and the phone. The technician comes later. */
+function PrepareDialog({ onClose }: { onClose(): void }) {
+  const me = useEmployee()
+  const toast = useToast()
+  const types = useTaskTypes()
+  const zones = useZones()
+  const [name, setName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [typeId, setTypeId] = useState<number | null>(null)
+  const [details, setDetails] = useState('')
+  const [zoneId, setZoneId] = useState<number | null>(null)
+  const [location, setLocation] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const activeTypes = useMemo(() => (types ?? []).filter((t) => t.isActive), [types])
+
+  async function save(again: boolean) {
+    if (!typeId) return setError('اختر المطلوب.')
+    if (phone && !isValidPhone(phone)) return setError('رقم الجوال 10 خانات ويبدأ بـ 059 أو 056.')
+    setBusy(true)
+    setError(null)
+    try {
+      const t = await createTask({ typeId, assigneeId: null, details, subscriberName: name, subscriberPhone: phone || null, zoneId, location, priority: 'normal', expectedMinutes: 30 }, me.id)
+      toast(`جُهّزت المهمة ${t.number}، بانتظار فني`)
+      if (again) {
+        setName(''); setPhone(''); setTypeId(null); setDetails(''); setZoneId(null); setLocation(''); setBusy(false)
+      } else onClose()
+    } catch (e) {
+      setError(errText(e))
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      title="تجهيز مهمة"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>إلغاء</Button>
+          <Button variant="secondary" busy={busy} onClick={() => void save(true)}>حفظ وتجهيز ثانية</Button>
+          <Button variant="primary" busy={busy} icon={<CheckCheck size={17} />} onClick={() => void save(false)}>حفظ</Button>
+        </>
+      }
+    >
+      <div className="form-grid">
+        <div className="two-col">
+          <label className="field">
+            <span className="label">اسم المتصل / المشترك</span>
+            <input className="input" autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="مثل: محمد أحمد" />
+          </label>
+          <label className="field">
+            <span className="label">رقم الجوال</span>
+            <input className="input ltr num" type="tel" inputMode="tel" placeholder="059 000 0000" value={formatPhone(phone)} onChange={(e) => setPhone(normalizePhone(e.target.value))} />
+          </label>
+        </div>
+        <div className="field">
+          <span className="label">المطلوب</span>
+          <div className="chips">
+            {activeTypes.map((t) => <Chip key={t.id} pressed={typeId === t.id} onClick={() => setTypeId(t.id)}>{t.name}</Chip>)}
+          </div>
+          <input className="input" value={details} onChange={(e) => setDetails(e.target.value)} placeholder="تفاصيل إضافية (اختياري)، مثل: فصل خط + إحضار الساعة" />
+        </div>
+        <div className="field">
+          <span className="label">المنطقة</span>
+          <div className="chips">
+            {(zones ?? []).filter((z) => z.isActive).map((z) => <Chip key={z.id} pressed={zoneId === z.id} onClick={() => setZoneId(zoneId === z.id ? null : z.id)}>{z.name}</Chip>)}
+          </div>
+          <input className="input" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="المكان بالتحديد (اختياري)، مثل: شارع أبو عمار" />
+        </div>
+        <span className="field-hint">الفني بتختاره بعدين من «مهام مجهّزة بانتظار فني»، ومنها بتنبعت له على واتساب أو SMS.</span>
+        {error && <p className="field-error" role="alert">{error}</p>}
+      </div>
+    </Dialog>
+  )
+}
+
+/** A prepared task goes to a technician, and is sent at once. */
+function GiveDialog({ task, technicians, typeName, zoneName, onClose }: {
+  task: Task
+  technicians: Employee[]
+  typeName(id: number): string
+  zoneName(id: number | null): string | null
+  onClose(): void
+}) {
+  const toast = useToast()
+  const [assigneeId, setAssigneeId] = useState<string | null>(null)
+  const [priority, setPriority] = useState<TaskPriority>(task.priority)
+  const [expected, setExpected] = useState(task.expectedMinutes)
+  const [busy, setBusy] = useState<Channel | 'cancel' | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [cancelling, setCancelling] = useState(false)
+  const [reason, setReason] = useState('')
+  const tech = technicians.find((t) => t.id === assigneeId)
+
+  async function give(channel: Channel) {
+    if (!tech) return setError('اختر الفني.')
+    if (!tech.phone) return setError(`لا يوجد رقم جوال لـ ${tech.fullName}. أضفه من الإعدادات.`)
+    setBusy(channel)
+    setError(null)
+    try {
+      const next = await assignTask(task, tech.id, priority, expected)
+      const text = taskMessage(next, { type: typeName(next.typeId), zone: zoneName(next.zoneId) }, taskLink(next.linkToken))
+      await sendOrder(next, channel, { ...tech, phone: tech.phone! }, text)
+      toast(`أُرسلت المهمة ${next.number} إلى ${tech.fullName}`)
+      onClose()
+    } catch (e) {
+      setError(errText(e))
+      setBusy(null)
+    }
+  }
+
+  async function cancel() {
+    setBusy('cancel')
+    try {
+      await cancelTask(task, reason)
+      toast(`أُلغيت المهمة ${task.number}`)
+      onClose()
+    } catch (e) {
+      setError(errText(e))
+      setBusy(null)
+    }
+  }
+
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      title={`أعطِ المهمة ${task.number} لفني`}
+      footer={
+        <>
+          <Button variant="ghost" onClick={() => setCancelling((c) => !c)}>إلغاء الطلب</Button>
+          <Button variant="secondary" icon={<MessageSquareText size={17} />} busy={busy === 'sms'} disabled={!!busy} onClick={() => void give('sms')}>SMS</Button>
+          <Button variant="primary" icon={<MessageCircle size={17} />} busy={busy === 'whatsapp'} disabled={!!busy} onClick={() => void give('whatsapp')}>إرسال واتساب</Button>
+        </>
+      }
+    >
+      <div className="form-grid">
+        <div className="prep-summary">
+          <b>{typeName(task.typeId)}{task.details && ` · ${task.details}`}</b>
+          <span>{[task.subscriberName, task.subscriberPhone && formatPhone(task.subscriberPhone), zoneName(task.zoneId), task.location].filter(Boolean).join(' · ') || 'بدون تفاصيل المشترك'}</span>
+        </div>
+        <div className="field">
+          <span className="label">الفني</span>
+          <div className="chips">
+            {technicians.map((t) => <Chip key={t.id} pressed={assigneeId === t.id} onClick={() => setAssigneeId(t.id)}>{t.fullName}</Chip>)}
+          </div>
+          {tech && !tech.phone && <span className="field-error">لا يوجد رقم جوال لهذا الفني. أضفه من الإعدادات.</span>}
+        </div>
+        <div className="field">
+          <span className="label">الأولوية</span>
+          <Segmented<TaskPriority> label="الأولوية" value={priority} options={PRIORITY_OPTIONS} onChange={setPriority} />
+        </div>
+        <div className="field">
+          <span className="label">المدة المتوقعة</span>
+          <div className="chips">
+            {EXPECTED_OPTIONS.map((m) => <Chip key={m} pressed={expected === m} onClick={() => setExpected(m)}>{durationText(m)}</Chip>)}
+          </div>
+        </div>
+        {cancelling && (
+          <div className="field">
+            <span className="label">سبب إلغاء الطلب</span>
+            <input className="input" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="مثل: المشترك حلّها لحاله" />
+            <Button variant="danger" busy={busy === 'cancel'} disabled={!reason.trim()} onClick={() => void cancel()}>تأكيد الإلغاء</Button>
+          </div>
+        )}
+        {error && <p className="field-error" role="alert">{error}</p>}
+      </div>
+    </Dialog>
   )
 }
 

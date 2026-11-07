@@ -121,3 +121,17 @@
   .seal-work-print .sw-totals { margin-top: 14px; width: 55%; max-width: none; break-inside: avoid; }
   .seal-work-print .sw-totals .sw-grand td { background: #d9d9d9 !important; }
 }
+
+/* ---------- Prepared tasks (a call written down, waiting for a technician) ---------- */
+.prep-card { margin-bottom: 16px; }
+.prep-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.prep-row { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-radius: var(--r-in); border: 1px solid var(--line); background: var(--surface-2); }
+.prep-main { flex: 1; min-width: 0; display: grid; gap: 6px; }
+.prep-main b { font-size: 16px; }
+.prep-need { font-weight: 400; color: var(--ink-2); }
+.prep-meta { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--ink-2); font-size: 14px; }
+.prep-meta > * { display: inline-flex; align-items: center; gap: 5px; }
+.prep-meta a { color: var(--brand); text-decoration: none; font-weight: 700; }
+.prep-summary { display: grid; gap: 4px; padding: 12px 14px; border-radius: var(--r-in); background: var(--surface-2); border: 1px solid var(--line); }
+.prep-summary span { color: var(--ink-2); font-size: 14px; }
+@media (max-width: 640px) { .prep-row { flex-wrap: wrap; } .prep-row .btn { width: 100%; } }

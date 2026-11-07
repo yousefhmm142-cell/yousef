@@ -478,4 +478,16 @@ reset role; select set_config('request.jwt.claims', '', false); set role anon;
 select test.fails($$select * from public.seal_work_statement(null, null)$$, '%permission denied%', 'visitors cannot read the statement');
 reset role;
 
+-- ---------- Preparing a task from a phone call, before choosing the technician ----------
+update public.employees set pages = array['tasks'] where full_name = 'موظف إداري';
+select test.login('موظف إداري'); set role authenticated;
+insert into public.tasks (task_type_id, assignee_id, expected_minutes, subscriber_name, subscriber_phone, location_text)
+  values (2, null, 30, 'متصل تجريبي', '0591234567', 'قرب المسجد');
+select test.ok((select count(*) from public.tasks where subscriber_name = 'متصل تجريبي' and assignee_id is null and status = 'new') = 1, 'someone with the tasks page prepares a task with no technician yet');
+update public.tasks set assignee_id = (select id from public.employees where full_name = 'مجد عاشور') where subscriber_name = 'متصل تجريبي';
+select test.ok((select assignee_id is not null and status = 'new' from public.tasks where subscriber_name = 'متصل تجريبي'), 'later it is given to a technician');
+insert into public.outgoing_messages (task_id, channel, to_phone, body) select id, 'whatsapp', '0590000005', 'x' from public.tasks where subscriber_name = 'متصل تجريبي';
+select test.ok((select status = 'sent' from public.tasks where subscriber_name = 'متصل تجريبي'), 'and sent to him');
+reset role;
+
 \echo 'ALL CHECKS PASSED'

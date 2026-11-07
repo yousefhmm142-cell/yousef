@@ -18,7 +18,8 @@ export interface Task {
   id: string
   number: number
   typeId: number
-  assigneeId: string
+  /** Null while the task is only prepared (a call written down, no technician yet). */
+  assigneeId: string | null
   createdBy: string | null
   details: string
   subscriberName: string
@@ -41,7 +42,7 @@ export interface Task {
 
 export interface NewTask {
   typeId: number
-  assigneeId: string
+  assigneeId: string | null
   details: string
   subscriberName: string
   subscriberPhone: string | null
