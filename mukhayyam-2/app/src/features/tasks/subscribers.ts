@@ -13,7 +13,12 @@ export interface Subscriber {
   /** Phone */ p: string
 }
 
-const KEY = 'subs:list'
+const KEY = 'subs:packed'
+const FIELD = '\u001f', ROW = '\u001e'
+/** Kept on the device as one short text (no field names repeated 3000 times). */
+const pack = (l: Subscriber[]) => l.map((s) => [s.n, s.a, s.b, s.p].join(FIELD)).join(ROW)
+const unpack = (t: string): Subscriber[] => (t ? t.split(ROW).map((r) => { const [n = '', a = '', b = '', p = ''] = r.split(FIELD); return { n, a, b, p } }) : [])
+let fetchedAt = 0
 
 /** Arabic letters folded so «أحمد»/«احمد», «ة»/«ه» and «ى»/«ي» match. */
 export const fold = (s: string) =>
@@ -33,12 +38,21 @@ const words = (s: string) => fold(s).split(' ').filter(Boolean)
  * Subscribers whose name holds every typed word (each as the start of one of the name's words), so two,
  * three or four parts of the name all work. Best matches first; at most `limit`.
  */
+const indexes = new WeakMap<Subscriber[], string[][]>()
+const indexOf = (list: Subscriber[]) => {
+  let ix = indexes.get(list)
+  if (!ix) { ix = list.map((s) => words(s.n)); indexes.set(list, ix) }
+  return ix
+}
+
 export function searchSubscribers(list: Subscriber[], query: string, limit = 6): Subscriber[] {
   const q = words(query)
   if (!q.length || q.join('').length < 2) return []
+  const ix = indexOf(list)
   const scored: Array<[number, Subscriber]> = []
-  for (const s of list) {
-    const w = words(s.n)
+  for (let i = 0; i < list.length; i++) {
+    const s = list[i]!
+    const w = ix[i]!
     let score = 0
     let ok = true
     for (const t of q) {
@@ -61,15 +75,17 @@ const announce = (l: Subscriber[]) => { memory = l; for (const f of listeners) f
 export async function refreshSubscribers(): Promise<void> {
   const sb = getSupabase()
   if (isDemo || !sb || !navigator.onLine) return
+  if (Date.now() - fetchedAt < 10 * 60_000) return
+  fetchedAt = Date.now()
   const all: Subscriber[] = []
   for (let from = 0; ; from += 1000) {
     const { data, error } = await sb.from('subscribers').select('full_name, area, board, phone').order('id').range(from, from + 999)
-    if (error) return
+    if (error) { fetchedAt = 0; return }
     for (const r of (data ?? []) as Array<{ full_name: string; area: string | null; board: string | null; phone: string | null }>)
       all.push({ n: r.full_name, a: r.area ?? '', b: r.board ?? '', p: r.phone ?? '' })
     if (!data || data.length < 1000) break
   }
-  await setMeta(KEY, all)
+  await setMeta(KEY, pack(all))
   announce(all)
 }
 
@@ -77,7 +93,7 @@ export function useSubscribers(): Subscriber[] {
   const [list, setList] = useState<Subscriber[]>(memory ?? [])
   useEffect(() => {
     listeners.add(setList)
-    if (!memory) void getMeta<Subscriber[]>(KEY).then((l) => l && !memory && announce(l))
+    if (!memory) void getMeta<string>(KEY).then((t) => t && !memory && announce(unpack(t)))
     void refreshSubscribers()
     return () => void listeners.delete(setList)
   }, [])
@@ -113,7 +129,10 @@ function fromTable(rows: string[][]): Subscriber[] {
   for (const r of rows.slice(headAt + 1)) {
     const n = cell(r, c.n).replace(/\s+/g, ' ')
     if (n.length < 2) continue
-    const s = { n, a: cell(r, c.a), b: cell(r, c.b), p: cell(r, c.p).replace(/[^0-9]/g, '') }
+    let p = cell(r, c.p).replace(/[^0-9]/g, '')
+    if (p.length === 9 && p.startsWith('5')) p = `0${p}`
+    const b = cell(r, c.b)
+    const s = { n, a: cell(r, c.a), b: b === '0' ? '' : b, p }
     const key = `${fold(s.n)}|${s.p}|${s.b}`
     if (seen.has(key)) continue
     seen.add(key)
@@ -125,7 +144,7 @@ function fromTable(rows: string[][]): Subscriber[] {
 /** The rows of an Excel/CSV/HTML file, as a list of subscribers (columns found by their titles). */
 export async function readSubscribersFile(file: File): Promise<Subscriber[]> {
   const name = file.name.toLowerCase()
-  if (name.endsWith('.xlsx')) {
+  if (name.endsWith('.xlsx') || name.endsWith('.xltx') || name.endsWith('.xlsm')) {
     const { Workbook } = await import('exceljs')
     const wb = new Workbook()
     await wb.xlsx.load(await file.arrayBuffer())
@@ -154,6 +173,7 @@ export async function importSubscribers(list: Subscriber[]): Promise<number> {
   if (!sb) throw new Error('offline')
   const { data, error } = await sb.rpc('subscribers_import', { p: list })
   if (error) throw new Error(error.code === '42501' ? 'not_allowed' : 'failed')
+  fetchedAt = 0
   await refreshSubscribers()
   return data as number
 }

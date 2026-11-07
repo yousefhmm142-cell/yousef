@@ -468,7 +468,7 @@ function SubscribersButton() {
   }
   return (
     <>
-      <input ref={input} type="file" accept=".xlsx,.csv,.htm,.html" hidden onChange={(e) => e.target.files?.[0] && void pick(e.target.files[0])} />
+      <input ref={input} type="file" accept=".xlsx,.xltx,.xlsm,.csv,.htm,.html" hidden onChange={(e) => e.target.files?.[0] && void pick(e.target.files[0])} />
       <Button variant="ghost" size="lg" busy={busy} icon={<UserRound size={18} />} onClick={() => input.current?.click()}>
         قائمة المشتركين{subscribers.length ? ` (${subscribers.length})` : ''}
       </Button>
