@@ -5,7 +5,7 @@ import { formatTime, formatWeekday } from '../../lib/format'
 import { addDays, dayName, describeDay, isISODate, todayISO, type ISODate } from '../../lib/dates'
 import { useNow } from '../../lib/useNow'
 import { formatAmount } from '../../lib/numbers'
-import { loadAverage, type Loads, type LoadUnit } from './loads'
+import { readingsAverage, type Loads, type LoadUnit } from './loads'
 import { Dialog } from '../../ui/Dialog'
 import { Button, Pill } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
@@ -94,8 +94,8 @@ export function SentHeader({ sheet, date, noun }: { sheet: SheetMeta; date: ISOD
 }
 
 /** The mean of L1, L2, L3 as it goes on the sheet: worked out as the three are typed. */
-export function AverageLine({ loads, unit }: { loads: Loads; unit: LoadUnit }) {
-  const avg = loadAverage(loads)
+export function AverageLine({ loads, unit, extra = [] }: { loads: Loads; unit: LoadUnit; extra?: ReadonlyArray<number | null> }) {
+  const avg = readingsAverage(loads, extra)
   return (
     <div className="avg-line" aria-live="polite">
       <span>المتوسط الحسابي <small>(هو الرقم اللي بينكتب بالكشف)</small></span>

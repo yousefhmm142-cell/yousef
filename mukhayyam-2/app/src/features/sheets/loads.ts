@@ -10,6 +10,13 @@ export const LOAD_UNIT_OPTIONS: ReadonlyArray<{ value: LoadUnit; label: string }
 
 export const PHASES = ['L1', 'L2', 'L3'] as const
 
+/** The mean of every reading typed: the three phases first, then any extra reading added on site. Null until the three phases are typed. */
+export function readingsAverage(loads: Loads, extra: ReadonlyArray<number | null> = []): number | null {
+  if (!loadsComplete(loads)) return null
+  const all = [...loads, ...extra.filter((x): x is number => x !== null)]
+  return Math.round((all.reduce((a, b) => a + b, 0) / all.length) * 10) / 10
+}
+
 export const emptyLoads = (): Loads => [null, null, null]
 
 export const loadsComplete = (loads: Loads): loads is [number, number, number] => loads.every((l) => l !== null)

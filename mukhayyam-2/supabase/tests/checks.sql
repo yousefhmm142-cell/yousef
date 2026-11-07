@@ -490,4 +490,8 @@ insert into public.outgoing_messages (task_id, channel, to_phone, body) select i
 select test.ok((select status = 'sent' from public.tasks where subscriber_name = 'متصل تجريبي'), 'and sent to him');
 reset role;
 
+-- ---------- Extra load readings on a distribution run ----------
+select test.ok((select count(*) from information_schema.columns where table_name = 'zone_runs' and column_name = 'load_extra') = 1, 'a run keeps extra load readings');
+select test.fails($$insert into public.zone_runs (entry_id, run_no, load_extra) values (gen_random_uuid(), 1, array[-5])$$, '%', 'a negative extra reading is refused');
+
 \echo 'ALL CHECKS PASSED'

@@ -326,8 +326,23 @@ function ZoneStep({ entry, index, count, name, update }: { entry: ZoneEntry; ind
                     onChange={(v) => set((z) => (z.runs[j]!.loads[k] = v))}
                   />
                 ))}
+                {(run.extra ?? []).map((x, k) => (
+                  <div key={`x${k}`} className="extra-load">
+                    <NumberField
+                      label={`قراءة ${k + 4}`}
+                      unit={run.loadUnit}
+                      max={run.loadUnit === 'A' ? 2000 : 1000}
+                      value={x}
+                      onChange={(v) => set((z) => (z.runs[j]!.extra[k] = v))}
+                    />
+                    <button type="button" className="icon-btn sm" aria-label={`حذف القراءة ${k + 4}`} onClick={() => set((z) => void z.runs[j]!.extra.splice(k, 1))}><X size={14} /></button>
+                  </div>
+                ))}
               </div>
-              <AverageLine loads={run.loads} unit={run.loadUnit} />
+              <button type="button" className="btn dashed sm add-load" onClick={() => set((z) => { const r = z.runs[j]!; r.extra = [...(r.extra ?? []), null] })}>
+                <Plus size={16} /> قراءة حمل إضافية
+              </button>
+              <AverageLine loads={run.loads} unit={run.loadUnit} extra={run.extra ?? []} />
             </div>
           </section>
         ))}

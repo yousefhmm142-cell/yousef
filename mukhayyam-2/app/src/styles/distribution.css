@@ -122,3 +122,8 @@
 @media (max-width: 480px) {
   .zone-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* Extra load readings beyond L1–L3 (as many as the site needs). */
+.extra-load { position: relative; }
+.extra-load .icon-btn { position: absolute; top: -4px; inset-inline-end: 0; width: 26px; height: 26px; }
+.add-load { margin-top: 10px; }

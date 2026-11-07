@@ -45,6 +45,7 @@ interface ZoneRunRow {
   load_l1: number | null
   load_l2: number | null
   load_l3: number | null
+  load_extra?: Array<number | string> | null
 }
 
 export function sheetToRows(s: DistributionSheet): { header: Record<string, unknown>; children: ChildRows[] } {
@@ -77,6 +78,7 @@ export function sheetToRows(s: DistributionSheet): { header: Record<string, unkn
             load_l1: r.loads[0],
             load_l2: r.loads[1],
             load_l3: r.loads[2],
+            load_extra: (r.extra ?? []).filter((x): x is number => x !== null),
           })),
         ),
       },
@@ -114,6 +116,7 @@ export function sheetFromRow(row: SheetRow): DistributionSheet {
             end: fromTime(r.end_time),
             loadUnit: r.load_unit,
             loads: [num(r.load_l1), num(r.load_l2), num(r.load_l3)],
+            extra: (r.load_extra ?? []).map((x) => num(x as number)),
           })),
       })),
   }

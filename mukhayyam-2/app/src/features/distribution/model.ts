@@ -22,6 +22,8 @@ export interface ZoneRun {
   end: string
   loadUnit: LoadUnit
   loads: Loads
+  /** Readings added beyond L1–L3 (as many as needed); they count in the average. */
+  extra: Array<number | null>
 }
 
 export interface ZoneEntry {
@@ -43,7 +45,7 @@ export const MAX_ZONE_RUNS = 6
 export const RUN_NAMES = ['الأولى', 'الثانية', 'الثالثة', 'الرابعة', 'الخامسة', 'السادسة'] as const
 
 export function emptyZoneRun(runNo: number, loadUnit: LoadUnit = 'A'): ZoneRun {
-  return { id: newId(), runNo, start: '', end: '', loadUnit, loads: emptyLoads() }
+  return { id: newId(), runNo, start: '', end: '', loadUnit, loads: emptyLoads(), extra: [] }
 }
 
 function emptyEntry(zone: Zone, previous: DistributionSheet | null): ZoneEntry {

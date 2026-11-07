@@ -3,11 +3,11 @@ import { SignFooter } from '../sheets/signers'
 import { formatAmount } from '../../lib/numbers'
 import { RUN_NAMES, type DistributionSheet, type ZoneEntry } from './model'
 import { clock12 } from '../../lib/format'
-import { loadAverage } from '../sheets/loads'
+import { readingsAverage } from '../sheets/loads'
 
 const loadsText = (z: ZoneEntry, i: number) => {
   const r = z.runs[i]
-  const avg = r ? loadAverage(r.loads) : null
+  const avg = r ? readingsAverage(r.loads, r.extra) : null
   return r && avg !== null ? `${formatAmount(avg)} ${r.loadUnit}` : ''
 }
 const timeText = (z: ZoneEntry, i: number) => {

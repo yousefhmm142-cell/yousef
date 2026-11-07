@@ -52,6 +52,7 @@ function buildHistory(today: string, managerId: string, supervisorId: string): D
         end,
         loadUnit: 'A' as const,
         loads: yesterday && entry.zoneId === 3 && i === 1 ? ([140, 95, 132] as Loads) : amps(plan.amps),
+        extra: [],
       }))
       return { ...entry, supplyHours: plan.hours, runs }
     })
