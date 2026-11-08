@@ -79,7 +79,7 @@ export function SheetView({ sheet, ctx }: { sheet: DistributionSheet; ctx: Ctx }
       </div>
 
       <AlertsCard alerts={alerts} />
-      <Timeline sheet={sheet} zoneNames={zoneNames} />
+      <Timeline sheet={sheet} zoneNames={zoneNames} imbalanceWarn={ctx.settings.imbalanceWarnPct} />
       <Matrix sheet={sheet} zoneNames={zoneNames} imbalanceWarn={ctx.settings.imbalanceWarnPct} />
 
       <section className="card">
@@ -92,22 +92,22 @@ export function SheetView({ sheet, ctx }: { sheet: DistributionSheet; ctx: Ctx }
 }
 
 /** One bar per zone across the 24 hours: when each zone actually had power. */
-function Timeline({ sheet, zoneNames }: { sheet: DistributionSheet; zoneNames: Map<number, string> }) {
+function Timeline({ sheet, zoneNames, imbalanceWarn }: { sheet: DistributionSheet; zoneNames: Map<number, string>; imbalanceWarn: number }) {
   // The load chart: each run's block rises with its average load (scaled to the day's highest, per unit).
-  // Heights from the day's lowest to its highest load (per unit), so the difference between runs shows.
+  // Heights from zero to the day's highest load (per unit): the difference you see is the real one.
   const top: Record<string, number> = {}
-  const low: Record<string, number> = {}
   for (const z of sheet.zones) for (const r of z.runs) {
     const v = readingsAverage(r.loads, r.extra)
-    if (v !== null) { top[r.loadUnit] = Math.max(top[r.loadUnit] ?? 0, v); low[r.loadUnit] = Math.min(low[r.loadUnit] ?? Infinity, v) }
+    if (v !== null) top[r.loadUnit] = Math.max(top[r.loadUnit] ?? 0, v)
   }
-  const height = (v: number, u: string) => { const a = low[u]!, b = top[u]!; return b > a ? 30 + 70 * ((v - a) / (b - a)) : 70 }
+  const height = (v: number, u: string) => Math.max(10, (v / (top[u] || v)) * 100)
+  const peak = Object.entries(top).map(([u, v]) => `${formatAmount(v)}${u}`).join(' · ')
   return (
     <section className="card">
       <div className="card-h">
         <span className="ico-round"><Clock size={16} /></span>
         <h2>التغذية والأحمال خلال اليوم</h2>
-        <span className="meta">من 7 الصبح لـ 2 بعد نص الليل · ارتفاع الشكل = متوسط الحمل</span>
+        <span className="meta">من 7 الصبح لـ 2 بعد نص الليل · ارتفاع الشكل = متوسط الحمل من الصفر{peak && <> · الخط المتقطع = أعلى حمل اليوم <b className="num">{peak}</b></>} · <span className="tl-key-warn">⚠ فازات مش متوازنة</span></span>
       </div>
       <div className="tl" role="img" aria-label="أوقات تغذية المناطق وأحمالها خلال اليوم">
         <div className="tl-row tl-axis" aria-hidden="true">
@@ -125,18 +125,22 @@ function Timeline({ sheet, zoneNames }: { sheet: DistributionSheet; zoneNames: M
               <small className="num">{z.supplied ? `${formatAmount(z.supplyHours)} ساعة` : 'بدون تغذية'}</small>
             </div>
             <div className="tl-track" data-off={!z.supplied || undefined}>
+              {z.supplied && peak && <i className="tl-ref" aria-hidden="true" />}
               {z.supplied &&
                 z.runs.flatMap((r, i) => {
                   const avg = readingsAverage(r.loads, r.extra)
                   const h = avg !== null ? height(avg, r.loadUnit) : 0
+                  const gap = phaseImbalancePct(r.loads)
+                  const warn = gap !== null && gap >= imbalanceWarn
+                  const phases = r.loads.map((l, j) => `L${j + 1} ${formatAmount(l)}`).join(' · ')
                   return windowSegments(r).map(([a, b], k) => (
                     <span
                       key={`${r.id}-${k}`}
                       className="tl-run"
                       style={{ insetInlineStart: `${(a / SPAN) * 100}%`, width: `${((b - a) / SPAN) * 100}%` }}
-                      title={`التشغيلة ${RUN_NAMES[i]}: ${clock12(r.start)} ← ${clock12(r.end)}${avg !== null ? ` · متوسط الحمل ${formatAmount(avg)} ${r.loadUnit}` : ''}`}
+                      title={`التشغيلة ${RUN_NAMES[i]}: ${clock12(r.start)} ← ${clock12(r.end)}${avg !== null ? ` · متوسط الحمل ${formatAmount(avg)} ${r.loadUnit} · ${phases}` : ''}${warn ? ` · الفازات مش متوازنة (فرق ${Math.round(gap!)}%)` : ''}`}
                     >
-                      {avg !== null && <span className="tl-load" style={{ height: `${h}%` }}>{k === 0 && <b className="num">{formatAmount(avg)}<small>{r.loadUnit}</small></b>}</span>}
+                      {avg !== null && <span className="tl-load" data-warn={warn || undefined} style={{ height: `${h}%` }}>{k === 0 && <b className="num">{warn && '⚠ '}{formatAmount(avg)}<small>{r.loadUnit}</small></b>}</span>}
                       <span className="tl-seg" />
                     </span>
                   ))

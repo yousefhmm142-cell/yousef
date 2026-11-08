@@ -149,3 +149,9 @@
 }
 
 @media (max-width: 560px) { .tl-ticks i[data-third] { display: none; } .tl-track { height: 56px; } .tl-load b small { display: none; } }
+
+/* The day's highest load as a dashed line, and runs whose phases are out of balance in orange. */
+.tl-ref { position: absolute; inset-inline: 0; top: 2px; border-top: 1.5px dashed color-mix(in srgb, var(--brand-hi) 45%, transparent); pointer-events: none; }
+.tl-load[data-warn] { border-top-color: var(--warn); background: linear-gradient(180deg, color-mix(in srgb, var(--warn) 38%, transparent), color-mix(in srgb, var(--warn) 10%, transparent)); }
+.tl-load[data-warn] b { color: var(--warn); }
+.tl-key-warn { color: var(--warn); font-weight: 700; }
