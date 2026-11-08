@@ -1,19 +1,18 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Check, CheckCircle2, CloudOff, Download, FileSpreadsheet, FileText, FileUp, Gauge, Lock, MoreHorizontal, Printer, RefreshCw, Search, Trash2, Unlock, UserPlus, Users, X } from 'lucide-react'
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { Check, CheckCircle2, CloudOff, Download, FileSpreadsheet, FileText, FileUp, Gauge, Lock, Printer, RefreshCw, Trash2, Unlock, UserPlus, Users, X } from 'lucide-react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useEmployee } from '../../auth/AuthProvider'
 import { getActions, onActionsSent } from '../../data/actions'
 import { db } from '../../data/db'
-import { toLatinDigits } from '../../lib/phone'
 import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import { saveFile } from '../../lib/saveFile'
 import { useOnline } from '../../lib/useOnline'
 import { useConfirm } from '../../ui/Confirm'
 import { Dialog } from '../../ui/Dialog'
 import { Avatar, Button, Pill } from '../../ui/primitives'
-import { fold } from '../tasks/subscribers'
+import { ReadingsFlow, type Saver } from './Entry'
 import { exportWeek, readReadingsFile, type ReadFile } from './excel'
-import { areaKey, BIG_USE, cleanReading, isDone, parseCode, parseReading, sortRows, STATES, stateLabel, summarizeAreas, type AreaSummary, type ReadingBatch, type ReadingRow, type ReadingState } from './model'
+import { areaKey, isDone, parseCode, sortRows, stateLabel, summarizeAreas, type AreaSummary, type ReadingBatch, type ReadingRow } from './model'
 import {
   addFiles, assignArea, batchSaved, createBatch, deleteBatch, deleteFile, flushReadings, listBatches, listFiles, loadBatchRows, moveBoard, myReadingsSaved, refreshMyReadings, saveReading, setBatchStatus, weekSources, type WeekFile,
 } from './repo'
@@ -57,164 +56,15 @@ function SyncBanner() {
   return null
 }
 
-// ---------- The list: one big box per subscriber ----------
-type Saver = (row: ReadingRow, v: { reading: number | null; state: ReadingState | null; note: string | null }) => Promise<void>
-
-function ReadingList({ rows, onSave, showPhone = false }: { rows: ReadingRow[]; onSave: Saver; showPhone?: boolean }) {
-  const [onlyLeft, setOnlyLeft] = useState(true)
-  const [q, setQ] = useState('')
-  // Rows done while the list is open stay where they are (nothing jumps under the finger).
-  const [touched, setTouched] = useState<Set<string>>(() => new Set())
-  const done = rows.filter(isDone).length
-  const visible = useMemo(() => {
-    const words = fold(toLatinDigits(q)).split(' ').filter(Boolean)
-    return sortRows(rows).filter((r) => {
-      if (onlyLeft && isDone(r) && !touched.has(r.id)) return false
-      if (!words.length) return true
-      const hay = fold(`${r.subscriber} ${r.board} ${r.code} ${r.fak ?? ''}`)
-      return words.every((w) => hay.includes(w))
-    })
-  }, [rows, onlyLeft, q, touched])
-  const listRef = useRef<HTMLDivElement>(null)
-  const save: Saver = async (row, v) => {
-    setTouched((t) => new Set(t).add(row.id))
-    await onSave(row, v)
-  }
-  const pct = rows.length ? Math.round((done / rows.length) * 100) : 0
-
-  let lastBoard = ''
-  let lastArea = ''
-  const manyAreas = new Set(rows.map((r) => r.area)).size > 1
-  return (
-    <>
-      <section className="card rd-head">
-        <div className="rd-count">
-          <b className="num">{rows.length - done}</b>
-          <span>{rows.length - done === 0 ? 'خلصت كل القراءات 👏' : `باقي من ${rows.length}`}</span>
-        </div>
-        <div className="rd-bar" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="المنجز"><i style={{ width: `${pct}%` }} /></div>
-        <div className="rd-tools">
-          <div className="rd-seg" role="group" aria-label="العرض">
-            <button type="button" aria-pressed={onlyLeft} onClick={() => { setOnlyLeft(true); setTouched(new Set()) }}>الباقي</button>
-            <button type="button" aria-pressed={!onlyLeft} onClick={() => setOnlyLeft(false)}>الكل <span className="num">{rows.length}</span></button>
-          </div>
-          <label className="rd-search"><Search size={16} /><input type="search" placeholder="ابحث بالاسم أو الطبلون" value={q} onChange={(e) => setQ(e.target.value)} /></label>
-        </div>
-      </section>
-
-      <div className="rd-list" ref={listRef}>
-        {visible.length === 0 && <p className="card card-empty">{q ? 'ما في نتائج للبحث.' : 'ما في قراءات باقية هون.'}</p>}
-        {visible.map((r) => {
-          const area = r.area !== lastArea ? r.area : null
-          const board = r.board !== lastBoard || area ? r.board : null
-          lastArea = r.area
-          lastBoard = r.board
-          return (
-            <Fragment key={r.id}>
-              {area && manyAreas && <h2 className="rd-area">{area}</h2>}
-              {board && <h3 className="rd-board">طبلون {board}<span className="num">{rows.filter((x) => x.board === board && isDone(x)).length}/{rows.filter((x) => x.board === board).length}</span></h3>}
-              <ReadingLine row={r} onSave={save} listRef={listRef} showPhone={showPhone} />
-            </Fragment>
-          )
-        })}
-      </div>
-    </>
-  )
-}
-
-function focusNext(listRef: React.RefObject<HTMLDivElement | null>, from: HTMLInputElement) {
-  const boxes = [...(listRef.current?.querySelectorAll<HTMLInputElement>('input.rd-input') ?? [])]
-  const i = boxes.indexOf(from)
-  const next = boxes.slice(i + 1).find((b) => !b.value) ?? boxes[i + 1]
-  if (next) { next.focus({ preventScroll: true }); next.scrollIntoView({ block: 'center', behavior: 'smooth' }) }
-  else from.blur()
-}
-
-function ReadingLine({ row, onSave, listRef, showPhone }: { row: ReadingRow; onSave: Saver; listRef: React.RefObject<HTMLDivElement | null>; showPhone: boolean }) {
-  const shown = row.reading === null ? '' : String(row.reading)
-  const [draft, setDraft] = useState(shown)
-  const [open, setOpen] = useState(false)
-  const [note, setNote] = useState(row.note ?? '')
-  const [error, setError] = useState<string | null>(null)
-  useEffect(() => { setDraft(row.reading === null ? '' : String(row.reading)) }, [row.reading])
-  const value = parseReading(draft)
-  const use = value !== null && row.prev !== null ? Math.round((value - row.prev) * 10) / 10 : null
-  const seq = parseCode(row.code).seq
-
-  async function commit(): Promise<boolean> {
-    const v = parseReading(draft)
-    if (v === row.reading) { setError(null); return true }
-    if (v !== null && row.prev !== null && v < row.prev) { setError(`أقل من السابقة (${fmt(row.prev)})`); return false }
-    setError(null)
-    await onSave(row, { reading: v, state: v === null ? row.state : null, note: row.note })
-    return true
-  }
-  async function onKey(e: KeyboardEvent<HTMLInputElement>) {
-    if (e.key !== 'Enter') return
-    e.preventDefault()
-    const box = e.currentTarget
-    if (await commit()) focusNext(listRef, box)
-  }
-  async function pick(state: ReadingState | null) {
-    setDraft('')
-    setError(null)
-    await onSave(row, { reading: null, state, note: state === 'other' ? note : null })
-    if (state !== 'other') setOpen(false)
-  }
-
-  return (
-    <div className={`rd-row${isDone(row) ? ' done' : ''}${error ? ' bad' : ''}`}>
-      <div className="rd-who">
-        <b>{row.subscriber || '—'}</b>
-        <small>
-          {seq !== null && <span className="num">#{seq}</span>}
-          {row.fak && <span className="num">({row.fak})</span>}
-          {showPhone && row.phone && <span className="num ltr">{row.phone}</span>}
-          <span>السابقة <b className="num">{fmt(row.prev)}</b></span>
-        </small>
-      </div>
-      <div className="rd-entry">
-        {row.state ? (
-          <button type="button" className="rd-state" onClick={() => setOpen((o) => !o)}>{stateLabel(row.state)}</button>
-        ) : (
-          <input
-            className="rd-input num"
-            inputMode="decimal"
-            enterKeyHint="next"
-            autoComplete="off"
-            aria-label={`قراءة ${row.subscriber}`}
-            placeholder="القراءة"
-            value={draft}
-            onChange={(e) => { setDraft(cleanReading(e.target.value)); setError(null) }}
-            onKeyDown={(e) => void onKey(e)}
-            onBlur={() => void commit()}
-          />
-        )}
-        <button type="button" className="rd-more" aria-label="حالة أخرى" aria-expanded={open} onClick={() => setOpen((o) => !o)}><MoreHorizontal size={18} /></button>
-      </div>
-      {(error || use !== null) && (
-        <p className={`rd-use${error ? ' err' : use !== null && use > BIG_USE ? ' warn' : ''}`}>
-          {error ?? (use !== null && use > BIG_USE ? `استهلاك كبير: ${use} · تأكد من القراءة` : `الاستهلاك ${use}`)}
-        </p>
-      )}
-      {open && (
-        <div className="rd-states">
-          {STATES.map((s) => (
-            <button key={s.value} type="button" aria-pressed={row.state === s.value} onClick={() => void pick(s.value)}>{s.label}</button>
-          ))}
-          {row.state && <button type="button" onClick={() => void pick(null)}>رجوع للقراءة</button>}
-          {row.state === 'other' && (
-            <input className="input" placeholder="شو المشكلة؟" value={note} onChange={(e) => setNote(e.target.value)} onBlur={() => note !== (row.note ?? '') && void onSave(row, { reading: null, state: 'other', note })} />
-          )}
-        </div>
-      )}
-    </div>
-  )
+/** Rows typed here and not on the server yet. */
+function usePendingRows(): Set<string> {
+  return useLiveQuery(async () => new Set((await getActions()).filter((a) => a.table === 'reading_rows' && a.rowId).map((a) => a.rowId!)), []) ?? new Set<string>()
 }
 
 // ---------- The reader ----------
 function ReaderReadings() {
   const me = useEmployee()
+  const pending = usePendingRows()
   const online = useOnline()
   const [data, setData] = useState<{ batches: ReadingBatch[]; rows: ReadingRow[] } | null>(null)
   const [batchId, setBatchId] = useState<string | null>(null)
@@ -256,7 +106,7 @@ function ReaderReadings() {
       <SyncBanner />
       {!data ? <div className="loading-block" aria-busy="true" />
         : !batch ? <p className="card card-empty">ما في قراءات عليك هالأسبوع. لما يوزّع مسؤول القراءات المناطق بتظهر هون.</p>
-        : <ReadingList rows={rows} onSave={onSave} />}
+        : <ReadingsFlow rows={rows} onSave={onSave} pending={pending} title={data && data.batches.length > 1 ? batch.title : undefined} />}
     </div>
   )
 }
@@ -267,6 +117,7 @@ type Picked = { name: string; read: ReadFile | null; error?: string; dup?: boole
 
 function AdminReadings() {
   const me = useEmployee()
+  const pending = usePendingRows()
   const online = useOnline()
   const confirm = useConfirm()
   const [batches, setBatches] = useState<ReadingBatch[] | null>(null)
@@ -451,7 +302,7 @@ function AdminReadings() {
                   </label>
                   <button type="button" className="icon-btn" aria-label="إغلاق" onClick={() => setOpenArea(null)}><X size={18} /></button>
                 </div>
-                <ReadingList rows={rows.filter((r) => r.area === area.area)} onSave={onSave} showPhone />
+                <ReadingsFlow key={area.area} rows={rows.filter((r) => r.area === area.area)} onSave={onSave} pending={pending} showPhone embedded />
               </section>
             )}
           </>

@@ -114,7 +114,7 @@ export async function saveReading(row: ReadingRow, v: { reading: number | null; 
       await setMeta(key, saved)
     }
   }
-  await runOrQueue({ table: 'reading_rows', op: 'update', rowId: row.id, row: patch, label: `قراءة ${row.subscriber}` }, local, { background: true })
+  await runOrQueue({ table: 'reading_rows', op: 'update', rowId: row.id, row: patch, label: `قراءة ${row.subscriber}`, quiet: true }, local, { background: true })
   return patch
 }
 

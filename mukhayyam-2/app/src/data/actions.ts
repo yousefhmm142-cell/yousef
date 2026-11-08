@@ -15,6 +15,8 @@ export interface Action {
   rowId?: string
   /** What it was, for the message if the server refuses it. */
   label: string
+  /** Sent behind the scenes without the «وصل للخادم» message (the page shows its own state). */
+  quiet?: boolean
 }
 
 const KEY = 'actions:queue'
@@ -85,7 +87,7 @@ export function flushActions(): Promise<void> {
       const r = await send(a, LIMIT_MS * 2)
       if (r === 'offline') break
       if (r === 'refused') refused.push(a.label)
-      else sent++
+      else if (!a.quiet) sent++
       await locked(async () => setMeta(KEY, (await getActions()).filter((x) => x.id !== a.id)))
     }
     if (sent + refused.length > 0) {
