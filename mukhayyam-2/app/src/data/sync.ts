@@ -460,7 +460,6 @@ async function round(): Promise<void> {
     if (isManagerRole(who.role) || who.role !== 'technician') {
       if (hasPage(who, 'tasks')) await (await import('../features/tasks/repo')).refreshTasks()
       if (hasPage(who, 'attendance')) await (await import('../features/attendance/repo')).refreshAttendance()
-      if (hasPage(who, 'stock')) await (await import('../features/stock/repo')).refreshStock()
     }
     failures = 0
     setState({ phase: problem ? 'error' : 'idle', lastOkAt: new Date().toISOString(), problem })

@@ -1,5 +1,4 @@
-import { CheckCircle2, CircleAlert, MapPin, Phone, Play, Plus, WifiOff, X } from 'lucide-react'
-import { parseDecimal } from '../../lib/numbers'
+import { CheckCircle2, CircleAlert, MapPin, Phone, Play, WifiOff } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router'
 import { formatTime } from '../../lib/format'
@@ -10,7 +9,7 @@ import { Button, Logo, Pill } from '../../ui/primitives'
 import { useConfirm } from '../../ui/Confirm'
 import { SheetStateError } from '../sheets/workflow'
 import { durationText, priorityInfo } from './model'
-import { actOnTaskLink, openTaskLink, type LinkTask, type UsedMaterial } from './repo'
+import { actOnTaskLink, openTaskLink, type LinkTask } from './repo'
 
 type State = { kind: 'loading' } | { kind: 'missing' } | { kind: 'offline' } | { kind: 'ready'; task: LinkTask }
 
@@ -23,7 +22,6 @@ export function TaskLinkPage() {
   const online = useOnline()
   const [state, setState] = useState<State>({ kind: 'loading' })
   const [notes, setNotes] = useState('')
-  const [used, setUsed] = useState<UsedMaterial[]>([])
   const [busy, setBusy] = useState<'start' | 'done' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const confirm = useConfirm()
@@ -47,7 +45,7 @@ export function TaskLinkPage() {
     setBusy(action)
     setError(null)
     try {
-      const task = await actOnTaskLink(token, action, notes, action === 'done' ? used : [])
+      const task = await actOnTaskLink(token, action, notes)
       if (task) setState({ kind: 'ready', task })
     } catch (e) {
       const code = e instanceof SheetStateError ? e.message : ''
@@ -109,7 +107,6 @@ export function TaskLinkPage() {
           ) : (
             <p className="tlink-started num">بدأت الساعة {formatTime(new Date(state.task.started_at!))}</p>
           )}
-          {!!state.task.items?.length && <Materials items={state.task.items} used={used} onChange={setUsed} />}
           <label className="field">
             <span className="label">ملاحظة للمدير (اختياري)</span>
             <textarea className="textarea" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="مثلاً: تم التبديل، العداد القديم مع الفني" />
@@ -149,33 +146,5 @@ function TaskView({ task }: { task: LinkTask }) {
         <li className="muted"><span>المدة المتوقعة: {durationText(task.expected_minutes)} · {task.assignee}</span></li>
       </ul>
     </section>
-  )
-}
-
-/** What the technician took from the warehouse for this task (optional). */
-function Materials({ items, used, onChange }: { items: Array<{ id: number; name: string; unit: string }>; used: UsedMaterial[]; onChange(v: UsedMaterial[]): void }) {
-  return (
-    <div className="field tlink-materials">
-      <span className="label">المواد المستخدمة (اختياري)</span>
-      {used.map((m, i) => (
-        <div key={i} className="tlink-mat">
-          <select className="select" aria-label="الصنف" value={m.itemId} onChange={(e) => onChange(used.map((x, j) => (j === i ? { ...x, itemId: Number(e.target.value) } : x)))}>
-            {items.map((it) => <option key={it.id} value={it.id}>{it.name}</option>)}
-          </select>
-          <input
-            className="input num"
-            inputMode="decimal"
-            aria-label="الكمية"
-            placeholder={items.find((it) => it.id === m.itemId)?.unit ?? 'الكمية'}
-            value={m.qty || ''}
-            onChange={(e) => onChange(used.map((x, j) => (j === i ? { ...x, qty: parseDecimal(e.target.value) ?? 0 } : x)))}
-          />
-          <button type="button" className="icon-btn sm" aria-label="إزالة" onClick={() => onChange(used.filter((_, j) => j !== i))}><X size={15} /></button>
-        </div>
-      ))}
-      <button type="button" className="link-btn" onClick={() => onChange([...used, { itemId: items[0]!.id, qty: 1 }])}>
-        <Plus size={16} /> إضافة مادة
-      </button>
-    </div>
   )
 }

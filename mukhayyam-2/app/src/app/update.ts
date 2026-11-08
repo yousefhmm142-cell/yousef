@@ -1,4 +1,10 @@
-// Moving to a newer site the moment one is out.
+// Moving to a newer site, without ever pulling the page from under someone who is working.
+//
+// When the app is opened (or the page is refreshed) and a newer build is out, it moves to it at once:
+// nothing is typed yet. While the app is open, a newer build only shows a small bar
+// «في تحديث جديد» with a button; the page changes only when the person presses it (or refreshes).
+//
+// (Earlier behaviour, kept for reference:)
 //
 // The app is kept on the device so it opens fast and without internet. That copy used to be
 // replaced only once every tab was closed. Now, on every open and whenever the app comes back to
@@ -31,7 +37,7 @@ export async function checkNow(): Promise<'current' | 'updating' | 'offline'> {
   } catch {
     // Go on.
   }
-  await checkForUpdate()
+  await checkForUpdate(true)
   return 'updating'
 }
 
@@ -72,11 +78,27 @@ async function dropOldCopy() {
   }
 }
 
-/** Checks for a newer site; when there is one, shows the curtain and reloads into it. */
-export async function checkForUpdate() {
+/** The small bar that offers the new site; it never reloads by itself. */
+function offerUpdate() {
+  if (document.getElementById('m2-update-bar')) return
+  const bar = document.createElement('div')
+  bar.id = 'm2-update-bar'
+  bar.setAttribute('role', 'status')
+  bar.innerHTML = '<span>في تحديث جديد للنظام · حدّث لما تخلص شغلك</span><button type="button">تحديث الآن</button><button type="button" class="m2-ub-x" aria-label="لاحقاً">✕</button>'
+  bar.querySelector('button')!.addEventListener('click', () => {
+    try { sessionStorage.removeItem('m2-update-tried') } catch { /* go on */ }
+    void checkForUpdate(true)
+  })
+  bar.querySelector('.m2-ub-x')!.addEventListener('click', () => bar.remove())
+  document.body.appendChild(bar)
+}
+
+/** Checks for a newer site. `now`: move to it at once (on opening, or when asked); otherwise only offer it. */
+export async function checkForUpdate(now = false) {
   if (busy || import.meta.env.DEV || !navigator.onLine) return
   const latest = await latestBuild()
   if (!latest || latest === __BUILD_ID__) return
+  if (!now) return offerUpdate()
   // Never loop: one try per new build in this tab.
   try {
     if (sessionStorage.getItem('m2-update-tried') === latest) return
@@ -91,7 +113,8 @@ export async function checkForUpdate() {
 }
 
 export function startUpdateChecks() {
-  void checkForUpdate()
+  // Just opened (or refreshed): nothing typed yet, so the new site is taken straight away.
+  void checkForUpdate(true)
   document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && void checkForUpdate())
   window.addEventListener('online', () => void checkForUpdate())
   window.setInterval(() => document.visibilityState === 'visible' && void checkForUpdate(), 60_000)

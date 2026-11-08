@@ -19,7 +19,8 @@ export default defineConfig({
       },
     },
     VitePWA({
-      registerType: 'autoUpdate',
+      // The page is never reloaded by the worker: updates come from app/update.ts, on opening or when asked.
+      registerType: 'prompt',
       injectRegister: false,
       includeAssets: ['favicon.png', 'apple-touch-icon.png', 'logo.webp'],
       manifest: {
@@ -51,9 +52,9 @@ export default defineConfig({
             options: { cacheName: 'm2-excel', expiration: { maxEntries: 2 } },
           },
         ],
-        // A new worker takes over at once instead of waiting for every tab to close.
-        skipWaiting: true,
-        clientsClaim: true,
+        // An open page keeps its own copy (and its lazily loaded screens) until it is refreshed.
+        skipWaiting: false,
+        clientsClaim: false,
         navigateFallback: '/index.html',
         // The Android app file and the app-link proof are real files, never the app page.
         navigateFallbackDenylist: [/\.apk$/, /^\/\.well-known\//, /^\/version\.json$/],

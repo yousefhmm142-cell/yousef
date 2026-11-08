@@ -242,3 +242,16 @@
 /* A long message never makes the page wider than the phone. */
 .toasts { grid-template-columns: minmax(0, 1fr); padding-inline: 12px; }
 .toast { max-width: 100%; box-sizing: border-box; overflow-wrap: anywhere; }
+
+/* ---------- «في تحديث جديد» bar: offered, never forced ---------- */
+#m2-update-bar {
+  position: fixed; z-index: 9000; inset-inline: 12px; bottom: calc(12px + env(safe-area-inset-bottom));
+  margin-inline: auto; max-width: 520px; display: flex; align-items: center; gap: 10px;
+  padding: 10px 10px 10px 16px; border-radius: 16px; background: var(--surface, #fff); color: var(--ink, #1b1b1b);
+  border: 1.5px solid color-mix(in srgb, var(--brand, #8E1B2B) 35%, var(--line, #ddd)); box-shadow: 0 10px 30px #0002;
+  font-weight: 700; font-size: 14px;
+}
+#m2-update-bar span { flex: 1; min-width: 0; }
+#m2-update-bar button { flex: none; height: 38px; padding: 0 14px; border-radius: 12px; border: 0; background: var(--brand, #8E1B2B); color: #fff; font: inherit; font-weight: 800; cursor: pointer; }
+#m2-update-bar .m2-ub-x { width: 38px; padding: 0; background: var(--sunken, #eee); color: var(--ink, #1b1b1b); }
+@media (max-width: 760px) { #m2-update-bar { bottom: calc(84px + env(safe-area-inset-bottom)); } }

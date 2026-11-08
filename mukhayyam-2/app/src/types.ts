@@ -23,7 +23,7 @@ export interface Employee {
   waCode?: 970 | 972
   /** May use the two seals pages (the manager and the admin always may). */
   canSeals?: boolean
-  /** Pages the manager opened for this person to look at (generation, distribution, tasks, attendance, stock). */
+  /** Pages the manager opened for this person to look at (generation, distribution, tasks, attendance). */
   pages?: string[]
   /** The name of this technician's sheet in the seals usage file. */
   sealsSheet?: string | null
@@ -62,7 +62,6 @@ export const GRANTABLE_PAGES = [
   { key: 'tasks', label: 'المهام', to: '/tasks' },
   { key: 'seal-work', label: 'كشف أعمال الأختام', to: '/tasks/seal-work' },
   { key: 'attendance', label: 'الحضور', to: '/attendance' },
-  { key: 'stock', label: 'المخزن', to: '/stock' },
 ] as const
 export type PageKey = (typeof GRANTABLE_PAGES)[number]['key']
 

@@ -2,7 +2,6 @@ import { addDays, type ISODate } from '../../lib/dates'
 import { dayResult, gazaDate, weekTotals, type Leave, type Punch, type Schedule } from '../attendance/rules'
 import type { DistributionSheet, Zone } from '../distribution/model'
 import { expectedConsumption, type FuelType, type Generator, type SiteReport } from '../generation/model'
-import type { StockItem, StockMove } from '../stock/model'
 import type { Task, TaskType } from '../tasks/model'
 import type { Employee } from '../../types'
 
@@ -37,8 +36,6 @@ export interface ReportInput {
   fuelTypes: FuelType[]
   zones: Zone[]
   taskTypes: TaskType[]
-  items: StockItem[]
-  moves: StockMove[]
 }
 
 const sum = (xs: Array<number | null | undefined>) => xs.reduce<number>((a, x) => a + (x ?? 0), 0)
@@ -173,25 +170,6 @@ export function buildReport(a: ReportInput): Section[] {
     note: 'الإضافي بالدقائق.',
     columns: ['الموظف', 'الدوام', 'أيام الحضور', 'الغياب', 'الإجازات', 'دقائق الإضافي', 'ساعات العمل'],
     rows: attRows,
-  })
-
-  // ---------- Warehouse ----------
-  const stockRows = a.items
-    .filter((i) => i.isActive || a.moves.some((m) => m.itemId === i.id))
-    .map((i) => {
-      const mine = a.moves.filter((m) => m.itemId === i.id)
-      const signed = (m: StockMove) => (m.kind === 'in' ? m.qty : -m.qty)
-      const before = sum(mine.filter((m) => gazaDate(m.at) < a.from).map(signed))
-      const inside = mine.filter((m) => inRange(gazaDate(m.at), a))
-      const qIn = sum(inside.filter((m) => m.kind === 'in').map((m) => m.qty))
-      const qOut = sum(inside.filter((m) => m.kind === 'out').map((m) => m.qty))
-      return [i.name, i.unit, before, qIn, qOut, before + qIn - qOut, i.minQty] as Cell[]
-    })
-  sections.push({
-    key: 'stock',
-    title: 'المخزن',
-    columns: ['الصنف', 'الوحدة', 'رصيد البداية', 'الوارد', 'الصادر', 'رصيد النهاية', 'الحد الأدنى'],
-    rows: stockRows,
   })
 
   return sections

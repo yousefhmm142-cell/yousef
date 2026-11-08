@@ -15,7 +15,6 @@ import { useViewDay } from '../../lib/viewDay'
 import { refreshAttendance } from '../attendance/repo'
 import { gazaTime, toMinutes, weekStart } from '../attendance/rules'
 import { stamp } from '../sheets/ui'
-import { refreshStock } from '../stock/repo'
 import { refreshTasks } from '../tasks/repo'
 import { sealWorkAsTasks, useSealWork } from '../tasks/sealWork'
 import { buildReport, type Cell, type Section } from './build'
@@ -50,7 +49,6 @@ export function ReportsPage() {
   useEffect(() => {
     void refreshTasks()
     void refreshAttendance()
-    void refreshStock()
   }, [])
 
   const from = period === 'week' ? weekStart(anchor) : monthStart(anchor)
@@ -59,12 +57,11 @@ export function ReportsPage() {
   const isCurrent = today >= from && today <= to
 
   const data = useLiveQuery(async () => {
-    const [reports, sheets, tasks, punches, leaves, holidays, employees, schedules, generators, fuelTypes, zones, taskTypes, items, moves] = await Promise.all([
+    const [reports, sheets, tasks, punches, leaves, holidays, employees, schedules, generators, fuelTypes, zones, taskTypes] = await Promise.all([
       db.siteReports.toArray(), db.distributionSheets.toArray(), db.tasks.toArray(), db.punches.toArray(), db.leaves.toArray(), db.holidays.toArray(),
       db.employees.toArray(), db.schedules.toArray(), db.generators.toArray(), db.fuelTypes.toArray(), db.zones.toArray(), db.taskTypes.toArray(),
-      db.stockItems.toArray(), db.stockMoves.toArray(),
     ])
-    return { reports, sheets, tasks, punches, leaves, holidays, employees, schedules, generators, fuelTypes, zones, taskTypes, items, moves }
+    return { reports, sheets, tasks, punches, leaves, holidays, employees, schedules, generators, fuelTypes, zones, taskTypes }
   }, [])
 
   // Seal work counts as finished tasks of the technician.

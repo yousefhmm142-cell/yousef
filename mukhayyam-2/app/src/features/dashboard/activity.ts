@@ -1,7 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../data/db'
 import { dayName } from '../../lib/dates'
-import { balances } from '../stock/model'
 import { isOpen, isOverdue } from '../tasks/model'
 
 // The manager's home page: what happened lately (from what this device already holds, so it is
@@ -22,15 +21,13 @@ const SINCE_DAYS = 7
 export function useFeed(): FeedEvent[] | undefined {
   return useLiveQuery(async () => {
     const since = new Date(Date.now() - SINCE_DAYS * 86_400_000).toISOString()
-    const [people, reports, sheets, tasks, types, punches, moves, items] = await Promise.all([
+    const [people, reports, sheets, tasks, types, punches] = await Promise.all([
       db.employees.toArray(),
       db.siteReports.toArray(),
       db.distributionSheets.toArray(),
       db.tasks.toArray(),
       db.taskTypes.toArray(),
       db.punches.where('at').above(since).toArray(),
-      db.stockMoves.where('at').above(since).toArray(),
-      db.stockItems.toArray(),
     ])
     const name = (id: string | null | undefined) => people.find((p) => p.id === id)?.fullName ?? 'النظام'
     const out: FeedEvent[] = []
@@ -60,11 +57,6 @@ export function useFeed(): FeedEvent[] | undefined {
       add({ id: `p-${p.id}`, at: p.at, kind: 'attendance', who: name(p.employeeId), text: `${p.kind === 'in' ? 'سجّل حضوره' : 'سجّل انصرافه'}${p.method === 'manual' ? ' (يدوي)' : ''}`, tone: p.kind === 'in' ? 'ok' : undefined })
     }
 
-    const itemOf = (id: number) => items.find((i) => i.id === id)
-    for (const m of moves) {
-      const it = itemOf(m.itemId)
-      add({ id: `m-${m.id}`, at: m.at, kind: 'stock', who: name(m.createdBy), text: `${m.kind === 'in' ? 'أدخل إلى المخزن' : 'أخرج من المخزن'} ${m.qty} ${it?.unit ?? ''} ${it?.name ?? ''}`.replace(/\s+/g, ' ').trim() })
-    }
     return out.sort((a, b) => b.at.localeCompare(a.at)).slice(0, 40)
   }, [])
 }
@@ -80,12 +72,10 @@ export interface Attention {
 /** Things that need the manager now: approvals waiting, late tasks, stock running out, unsent work. */
 export function useAttention(now: Date): Attention[] | undefined {
   return useLiveQuery(async () => {
-    const [reports, sheets, tasks, moves, items] = await Promise.all([
+    const [reports, sheets, tasks] = await Promise.all([
       db.siteReports.where('status').equals('submitted').toArray(),
       db.distributionSheets.where('status').equals('submitted').toArray(),
       db.tasks.toArray(),
-      db.stockMoves.toArray(),
-      db.stockItems.toArray(),
     ])
     const list: Attention[] = []
     if (reports.length) list.push({ key: 'reports', to: '/generation', tone: 'warn', title: `${reports.length} ${reports.length === 1 ? 'تقرير توليد' : 'تقارير توليد'} بانتظار اعتمادك`, detail: reports.map((r) => dayName(r.reportDate)).join('، ') })
@@ -93,9 +83,6 @@ export function useAttention(now: Date): Attention[] | undefined {
     const open = tasks.filter(isOpen)
     const late = open.filter((t) => isOverdue(t, now))
     if (late.length) list.push({ key: 'late', to: '/tasks', tone: 'danger', title: `${late.length} مهمة تجاوزت وقتها`, detail: `من ${open.length} مفتوحة` })
-    const bal = balances(moves)
-    const low = items.filter((i) => i.isActive && i.minQty > 0 && (bal.get(i.id) ?? 0) <= i.minQty)
-    if (low.length) list.push({ key: 'stock', to: '/stock', tone: 'warn', title: `${low.length} ${low.length === 1 ? 'صنف' : 'أصناف'} في المخزن قاربت على النفاد`, detail: low.slice(0, 3).map((i) => i.name).join('، ') })
     return list
   }, [now.getMinutes()])
 }

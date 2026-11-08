@@ -25,7 +25,6 @@ const TaskLinkPage = page(() => import('../features/tasks/LinkPage'), 'TaskLinkP
 const TasksPage = page(() => import('../features/tasks/TasksPage'), 'TasksPage')
 const SealWorkPage = page(() => import('../features/tasks/SealWorkPage'), 'SealWorkPage')
 const AttendancePage = page(() => import('../features/attendance/AttendancePage'), 'AttendancePage')
-const StockPage = page(() => import('../features/stock/StockPage'), 'StockPage')
 const ReportsPage = page(() => import('../features/reports/ReportsPage'), 'ReportsPage')
 const SealIssuePage = page(() => import('../features/seals/IssuePage'), 'SealIssuePage')
 const SealLogPage = page(() => import('../features/seals/LogPage'), 'SealLogPage')
@@ -82,7 +81,6 @@ export const router = createBrowserRouter([
             path: 'attendance',
             element: <PageGate page="attendance"><Lazy><AttendancePage /></Lazy></PageGate>,
           },
-          { path: 'stock', element: <PageGate page="stock"><Lazy><StockPage /></Lazy></PageGate> },
           { path: 'seals', element: <SealsGate><Lazy><SealIssuePage /></Lazy></SealsGate> },
           { path: 'seals/recent', element: <SealsGate><Lazy><SealRecentPage /></Lazy></SealsGate> },
           { path: 'seals/log', element: <SealsGate><Lazy><SealLogPage /></Lazy></SealsGate> },
