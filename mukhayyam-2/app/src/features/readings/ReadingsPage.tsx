@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Check, CheckCircle2, ChevronDown, CloudOff, Download, FileUp, Gauge, Lock, MoreHorizontal, Printer, RefreshCw, Search, Trash2, Unlock } from 'lucide-react'
+import { Check, CheckCircle2, CloudOff, Download, FileSpreadsheet, FileText, FileUp, Gauge, Lock, MoreHorizontal, Printer, RefreshCw, Search, Trash2, Unlock, UserPlus, Users, X } from 'lucide-react'
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { useEmployee } from '../../auth/AuthProvider'
 import { getActions, onActionsSent } from '../../data/actions'
@@ -10,12 +10,12 @@ import { saveFile } from '../../lib/saveFile'
 import { useOnline } from '../../lib/useOnline'
 import { useConfirm } from '../../ui/Confirm'
 import { Dialog } from '../../ui/Dialog'
-import { Button, Pill } from '../../ui/primitives'
+import { Avatar, Button, Pill } from '../../ui/primitives'
 import { fold } from '../tasks/subscribers'
-import { exportReadings, readReadingsFile, type ReadFile } from './excel'
-import { BIG_USE, cleanReading, isDone, parseCode, parseReading, sortRows, STATES, stateLabel, summarizeAreas, type ReadingBatch, type ReadingRow, type ReadingState } from './model'
+import { exportWeek, readReadingsFile, type ReadFile } from './excel'
+import { areaKey, BIG_USE, cleanReading, isDone, parseCode, parseReading, sortRows, STATES, stateLabel, summarizeAreas, type AreaSummary, type ReadingBatch, type ReadingRow, type ReadingState } from './model'
 import {
-  assignArea, batchSaved, batchSource, createBatch, deleteBatch, flushReadings, listBatches, loadBatchRows, moveBoard, myReadingsSaved, refreshMyReadings, saveReading, setBatchStatus,
+  addFiles, assignArea, batchSaved, createBatch, deleteBatch, deleteFile, flushReadings, listBatches, listFiles, loadBatchRows, moveBoard, myReadingsSaved, refreshMyReadings, saveReading, setBatchStatus, weekSources, type WeekFile,
 } from './repo'
 
 const say = (text: string, tone: 'ok' | 'danger' = 'ok') => window.dispatchEvent(new CustomEvent('m2-toast', { detail: { text, tone } }))
@@ -262,6 +262,9 @@ function ReaderReadings() {
 }
 
 // ---------- The office ----------
+type Person = { id: string; fullName: string; pages?: string[] }
+type Picked = { name: string; read: ReadFile | null; error?: string; dup?: boolean }
+
 function AdminReadings() {
   const me = useEmployee()
   const online = useOnline()
@@ -269,18 +272,22 @@ function AdminReadings() {
   const [batches, setBatches] = useState<ReadingBatch[] | null>(null)
   const [batchId, setBatchId] = useState<string | null>(null)
   const [rows, setRows] = useState<ReadingRow[] | null>(null)
-  const [upload, setUpload] = useState<{ file: ReadFile; name: string } | null>(null)
+  const [files, setFiles] = useState<WeekFile[]>([])
+  const [showFiles, setShowFiles] = useState(false)
+  const [picked, setPicked] = useState<Picked[] | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [openArea, setOpenArea] = useState<string | null>(null)
+  const [assignFor, setAssignFor] = useState<AreaSummary | null>(null)
   const [printArea, setPrintArea] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
-  const people = useLiveQuery(async () => (await db.employees.toArray()).filter((e) => e.isActive && !e.deletedAt && (e.role === 'technician' || e.pages?.includes('readings'))).sort((a, b) => a.fullName.localeCompare(b.fullName, 'ar')), []) ?? []
+  const panelRef = useRef<HTMLElement>(null)
+  const people: Person[] = useLiveQuery(async () => (await db.employees.toArray()).filter((e) => e.isActive && !e.deletedAt && (e.role === 'technician' || e.pages?.includes('readings'))).sort((a, b) => a.fullName.localeCompare(b.fullName, 'ar')), []) ?? []
 
   const loadBatches = useCallback(async () => {
     try {
       const list = await listBatches()
       setBatches(list)
-      setBatchId((id) => id ?? list[0]?.id ?? null)
+      setBatchId((id) => (id && list.some((b) => b.id === id) ? id : list[0]?.id ?? null))
     } catch {
       setBatches((b) => b ?? [])
     }
@@ -289,26 +296,29 @@ function AdminReadings() {
     const saved = await batchSaved(id)
     if (saved) setRows(saved)
     try { setRows(await loadBatchRows(id)) } catch { if (!saved) setRows([]) }
+    try { setFiles(await listFiles(id)) } catch { /* offline: the list comes back with the internet */ }
   }, [])
   useEffect(() => { void loadBatches() }, [loadBatches, online])
-  useEffect(() => { setRows(null); if (batchId) void loadRows(batchId) }, [batchId, loadRows])
+  useEffect(() => { setRows(null); setFiles([]); if (batchId) void loadRows(batchId) }, [batchId, loadRows])
   useEffect(() => onActionsSent(() => batchId && loadRows(batchId)), [batchId, loadRows])
 
   const batch = batches?.find((b) => b.id === batchId) ?? null
   const areas = useMemo(() => (rows ? summarizeAreas(rows) : []), [rows])
   const done = rows?.filter(isDone).length ?? 0
+  const area = areas.find((a) => a.area === openArea) ?? null
 
-  async function pickFile(f: File | undefined) {
-    if (!f) return
+  async function pickFiles(list: FileList | null) {
+    if (!list?.length) return
     setBusy('read')
-    try {
-      setUpload({ file: await readReadingsFile(f), name: f.name })
-    } catch {
-      say('ما قدرت أقرأ الملف. لازم يكون ملف Excel الأسبوعي من الشركة (xlsx).', 'danger')
-    } finally {
-      setBusy(null)
-      if (fileRef.current) fileRef.current.value = ''
+    const names = new Set(files.map((f) => f.name))
+    const out: Picked[] = []
+    for (const f of [...list]) {
+      try { out.push({ name: f.name, read: await readReadingsFile(f), dup: names.has(f.name) }) }
+      catch { out.push({ name: f.name, read: null, error: 'ما انقرأ: لازم يكون كشف Excel من الشركة (xlsx)' }) }
     }
+    setPicked(out)
+    setBusy(null)
+    if (fileRef.current) fileRef.current.value = ''
   }
 
   async function run(key: string, job: () => Promise<unknown>, ok?: string) {
@@ -323,13 +333,13 @@ function AdminReadings() {
     }
   }
 
-  async function exportFile() {
+  async function exportAll() {
     if (!batch || !rows) return
     await run('export', async () => {
-      const src = await batchSource(batch.id)
-      const blob = await exportReadings(src.source, src.sheetName, src.col, rows)
-      await saveFile(blob, (src.fileName ?? 'القراءات.xlsx').replace(/\.xls[xm]?$/i, '') + ' - معبأ.xlsx', blob.type)
-    })
+      const sources = await weekSources(batch.id)
+      const out = await exportWeek(sources.map((s) => ({ name: s.name, source: s.source, col: s.col, sheet: s.sheet, rows: rows.filter((r) => (r.fileId ?? null) === s.id) })), batch.title)
+      await saveFile(out.data, out.name, out.mime)
+    }, 'نزل الملف')
   }
 
   const onSave: Saver = async (row, v) => {
@@ -338,17 +348,18 @@ function AdminReadings() {
   }
 
   const printRows = printArea ? sortRows((rows ?? []).filter((r) => r.area === printArea)) : []
+  const personOf = (id: string | null) => people.find((p) => p.id === id)
 
   return (
     <div className="report-page readings">
       <header className="ph">
         <div>
           <h1>القراءات</h1>
-          <p className="muted">ارفع ملف الأسبوع، وزّع المناطق على الفنيين أو الورق، وبالآخر صدّر الملف للشركة معبّأ.</p>
+          <p className="muted">ارفع كشوفات الأسبوع، وزّع المناطق على الفنيين أو الورق، وبالآخر صدّر الكشوفات للشركة معبّأة.</p>
         </div>
         <div className="ph-actions">
-          <input ref={fileRef} type="file" accept=".xlsx,.xlsm" hidden onChange={(e) => void pickFile(e.target.files?.[0])} />
-          <Button variant="primary" icon={<FileUp size={18} />} busy={busy === 'read'} disabled={!online} onClick={() => fileRef.current?.click()}>رفع ملف الأسبوع</Button>
+          <input ref={fileRef} type="file" accept=".xlsx,.xlsm" multiple hidden onChange={(e) => void pickFiles(e.target.files)} />
+          <Button variant="primary" icon={<FileUp size={18} />} busy={busy === 'read'} disabled={!online} onClick={() => fileRef.current?.click()}>رفع ملفات الأسبوع</Button>
         </div>
       </header>
       <SyncBanner />
@@ -365,82 +376,83 @@ function AdminReadings() {
       )}
 
       {!batches ? <div className="loading-block" aria-busy="true" />
-        : !batch ? <p className="card card-empty">ما في ولا أسبوع لسا. اضغط «رفع ملف الأسبوع» واختار ملف Excel اللي بتبعته الشركة.</p>
+        : !batch ? <p className="card card-empty">ما في ولا أسبوع لسا. اضغط «رفع ملفات الأسبوع» واختار كشوفات Excel اللي بتبعتها الشركة (بتقدر تختار كلهن مرة وحدة).</p>
         : (
           <>
             <section className="card rd-summary">
-              <div className="rd-count"><b className="num">{done}</b><span>من {rows?.length ?? '…'} قراءة</span></div>
+              <div className="rd-count"><b className="num">{done}</b><span>من {rows?.length ?? '…'} قراءة · <span className="num">{areas.length}</span> منطقة</span></div>
               <div className="rd-bar"><i style={{ width: `${rows?.length ? Math.round((done / rows.length) * 100) : 0}%` }} /></div>
               <div className="rd-actions">
                 <Pill tone={batch.status === 'approved' ? 'ok' : 'info'}>{batch.status === 'approved' ? 'معتمد' : 'مفتوح'}</Pill>
-                <Button icon={<Download size={17} />} busy={busy === 'export'} disabled={!online || !rows} onClick={() => void exportFile()}>تصدير ملف الشركة</Button>
+                <Button icon={<FileSpreadsheet size={17} />} aria-expanded={showFiles} onClick={() => setShowFiles((x) => !x)}>الكشوفات <span className="num">{files.length}</span></Button>
+                <Button icon={<Download size={17} />} busy={busy === 'export'} disabled={!online || !rows?.length} onClick={() => void exportAll()}>تصدير للشركة</Button>
                 {batch.status === 'open'
                   ? <Button icon={<Lock size={17} />} busy={busy === 'status'} disabled={!online} onClick={async () => { if (await confirm({ title: 'اعتماد قراءات الأسبوع؟', message: done < (rows?.length ?? 0) ? `في ${(rows?.length ?? 0) - done} مشترك بدون قراءة.` : 'بعد الاعتماد ما حدا من الفنيين بيقدر يعدّل.' })) void run('status', async () => { await setBatchStatus(batch.id, 'approved'); await loadBatches() }, 'انعتمد الأسبوع') }}>اعتماد</Button>
                   : <Button icon={<Unlock size={17} />} busy={busy === 'status'} disabled={!online} onClick={() => void run('status', async () => { await setBatchStatus(batch.id, 'open'); await loadBatches() }, 'انفتح الأسبوع للتعديل')}>إعادة فتح</Button>}
-                <Button variant="ghost" icon={<Trash2 size={17} />} disabled={!online || busy !== null} onClick={async () => { if (await confirm({ title: `حذف «${batch.title}»؟`, message: 'بتنحذف كل قراءاته. ما في رجوع.', danger: true, confirmLabel: 'حذف' })) void run('del', async () => { await deleteBatch(batch.id); setBatchId(null); setRows(null); await loadBatches() }, 'انحذف') }}>حذف</Button>
+                <Button variant="ghost" icon={<Trash2 size={17} />} disabled={!online || busy !== null} onClick={async () => { if (await confirm({ title: `حذف «${batch.title}»؟`, message: 'بتنحذف كل كشوفاته وقراءاته. ما في رجوع.', danger: true, confirmLabel: 'حذف' })) void run('del', async () => { await deleteBatch(batch.id); setBatchId(null); setRows(null); await loadBatches() }, 'انحذف') }}>حذف الأسبوع</Button>
               </div>
+              {showFiles && (
+                <ul className="rd-files">
+                  {files.length === 0 && <li className="muted">ما في كشوفات.</li>}
+                  {files.map((f) => (
+                    <li key={f.id}>
+                      <FileSpreadsheet size={16} /><span>{f.name}</span><small className="num">{f.rows} مشترك</small>
+                      <button type="button" className="icon-btn sm" aria-label={`حذف ${f.name}`} disabled={!online || busy !== null} onClick={async () => { if (await confirm({ title: `حذف كشف «${f.name}»؟`, message: `بتنحذف قراءات مشتركينه (${f.rows}).`, danger: true, confirmLabel: 'حذف' })) void run('delf', async () => { await deleteFile(f.id); await loadRows(batch.id) }, 'انحذف الكشف') }}><Trash2 size={15} /></button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </section>
 
             {!rows ? <div className="loading-block" aria-busy="true" /> : (
-              <div className="rd-areas">
+              <div className="rd-area-grid">
                 {areas.map((a) => {
                   const pct = Math.round((a.done / a.total) * 100)
-                  const value = a.mixed ? '' : a.mode === 'paper' ? 'paper' : a.mode === 'app' && a.assigneeId ? a.assigneeId : ''
-                  const isOpen = openArea === a.area
-                  const person = people.find((p) => p.id === a.assigneeId)
+                  const person = a.mode === 'app' ? personOf(a.assigneeId) : undefined
                   return (
-                    <section key={a.area} className={`card rd-area-card${isOpen ? ' open' : ''}`}>
-                      <div className="rd-area-h">
-                        <button type="button" className="rd-area-name" aria-expanded={isOpen} onClick={() => setOpenArea(isOpen ? null : a.area)}>
-                          <span className="ico-round brand"><Gauge size={16} /></span>
-                          <span><b>{a.area}</b><small>{a.boards.length} {a.boards.length === 1 ? 'طبلون' : 'طبالين'} · <span className="num">{a.total}</span> مشترك</small></span>
-                          <ChevronDown size={18} className="chev" />
-                        </button>
-                        <div className="rd-area-prog"><span className="num">{a.done}/{a.total}</span><div className="rd-bar sm"><i style={{ width: `${pct}%` }} /></div></div>
-                        <select
-                          className="select"
-                          aria-label={`مين يقرأ ${a.area}`}
-                          value={value}
-                          disabled={!online || batch.status === 'approved' || busy === `as-${a.area}`}
-                          onChange={(e) => {
-                            const v = e.target.value
-                            void run(`as-${a.area}`, async () => {
-                              await assignArea(batch.id, a.area, v === '' ? null : v === 'paper' ? 'paper' : 'app', v && v !== 'paper' ? v : null)
-                              await loadRows(batch.id)
-                            })
-                          }}
-                        >
-                          <option value="">{a.mixed ? 'مقسومة…' : 'لمين؟'}</option>
-                          <option value="paper">ورق (بتنعبى من المكتب)</option>
-                          {people.map((p) => <option key={p.id} value={p.id}>{p.fullName}{p.pages?.includes('readings') ? '' : ' (بدها صلاحية القراءات)'}</option>)}
-                        </select>
+                    <article key={a.area} className={`card rd-area-card${openArea === a.area ? ' open' : ''}${a.done === a.total ? ' full' : ''}`}>
+                      <button type="button" className="rd-area-top" onClick={() => { setOpenArea(a.area); setTimeout(() => panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60) }}>
+                        <span className="ico-round brand"><Gauge size={17} /></span>
+                        <span className="rd-area-t"><b>{a.area}</b><small>{a.boards.length} {a.boards.length === 1 ? 'طبلون' : 'طبالين'} · <span className="num">{a.total}</span> مشترك</small></span>
+                      </button>
+                      <div className="rd-area-p">
+                        <div className="rd-bar"><i style={{ width: `${pct}%` }} /></div>
+                        <span className="num">{a.done}/{a.total}</span>
                       </div>
-                      {person && !person.pages?.includes('readings') && <p className="rd-warn">{person.fullName} ما عنده صفحة «القراءات»: افتحها له من الإعدادات › الصلاحيات عشان يشوف المنطقة على جواله.</p>}
-                      {isOpen && (
-                        <div className="rd-area-body">
-                          <div className="rd-area-tools">
-                            <Button icon={<Printer size={16} />} onClick={() => { setPrintArea(a.area); setTimeout(() => window.print(), 50) }}>طباعة ورقة المنطقة</Button>
-                            <label className="rd-move">
-                              <span>نقل طبلون لمنطقة ثانية:</span>
-                              <select className="select" defaultValue="" disabled={!online} onChange={(e) => {
-                                const board = e.target.value
-                                e.target.value = ''
-                                if (!board) return
-                                const to = window.prompt(`طبلون ${board} لأي منطقة؟`, a.area)?.trim()
-                                if (to && to !== a.area) void run('move', async () => { await moveBoard(batch.id, board, to); await loadRows(batch.id) }, `انتقل طبلون ${board} لمنطقة ${to}`)
-                              }}>
-                                <option value="">اختار الطبلون</option>
-                                {a.boards.map((b) => <option key={b} value={b}>{b}</option>)}
-                              </select>
-                            </label>
-                          </div>
-                          <ReadingList rows={rows.filter((r) => r.area === a.area)} onSave={onSave} showPhone />
-                        </div>
-                      )}
-                    </section>
+                      <button type="button" className={`rd-who-btn${a.mixed ? ' mixed' : a.mode === 'paper' ? ' paper' : person ? ' tech' : ' none'}`} disabled={batch.status === 'approved'} onClick={() => setAssignFor(a)}>
+                        {a.mixed ? <><Users size={18} /><span>مقسومة · اختار من جديد</span></>
+                          : a.mode === 'paper' ? <><FileText size={18} /><span>ورق · بتنعبى من المكتب</span></>
+                          : person ? <><Avatar name={person.fullName} size={30} /><span><b>{person.fullName}</b>{!person.pages?.includes('readings') && <small>بدها صلاحية «القراءات»</small>}</span></>
+                          : <><UserPlus size={18} /><span>اختار مين يقرأها</span></>}
+                      </button>
+                    </article>
                   )
                 })}
               </div>
+            )}
+
+            {area && rows && (
+              <section className="card rd-panel" ref={panelRef} aria-label={`قراءات ${area.area}`}>
+                <div className="rd-panel-h">
+                  <h2>{area.area}</h2>
+                  <Button icon={<Printer size={16} />} onClick={() => { setPrintArea(area.area); setTimeout(() => window.print(), 50) }}>طباعة ورقة المنطقة</Button>
+                  <label className="rd-move">
+                    <span>نقل طبلون لمنطقة ثانية:</span>
+                    <select className="select" defaultValue="" disabled={!online} onChange={(e) => {
+                      const board = e.target.value
+                      e.target.value = ''
+                      if (!board) return
+                      const to = window.prompt(`طبلون ${board} لأي منطقة؟`, area.area)?.trim()
+                      if (to && to !== area.area) void run('move', async () => { await moveBoard(batch.id, board, to); await loadRows(batch.id) }, `انتقل طبلون ${board} لمنطقة ${to}`)
+                    }}>
+                      <option value="">اختار الطبلون</option>
+                      {area.boards.map((b) => <option key={b} value={b}>{b}</option>)}
+                    </select>
+                  </label>
+                  <button type="button" className="icon-btn" aria-label="إغلاق" onClick={() => setOpenArea(null)}><X size={18} /></button>
+                </div>
+                <ReadingList rows={rows.filter((r) => r.area === area.area)} onSave={onSave} showPhone />
+              </section>
             )}
           </>
         )}
@@ -468,56 +480,113 @@ function AdminReadings() {
         </div>
       )}
 
-      {upload && (
+      {assignFor && batch && (
+        <AssignDialog
+          area={assignFor}
+          people={people}
+          countOf={(id) => areas.filter((x) => x.mode === 'app' && x.assigneeId === id && !x.mixed).length}
+          onClose={() => setAssignFor(null)}
+          onPick={(mode, id) => {
+            const a = assignFor
+            setAssignFor(null)
+            void run(`as-${a.area}`, async () => { await assignArea(batch.id, a.area, mode, id); await loadRows(batch.id) },
+              mode === 'paper' ? `${a.area}: ورق` : mode === 'app' ? `${a.area} صارت مع ${personOf(id)?.fullName ?? ''}` : `${a.area}: بدون تخصيص`)
+          }}
+        />
+      )}
+
+      {picked && (
         <UploadDialog
-          upload={upload}
-          onClose={() => setUpload(null)}
-          onSave={async (title) => {
+          picked={picked}
+          openWeek={batch && batch.status === 'open' ? batch : null}
+          busy={busy === 'save'}
+          onClose={() => setPicked(null)}
+          onSave={async (target, title) => {
+            const good = picked.filter((p) => p.read && !p.dup) as Array<{ name: string; read: ReadFile }>
             setBusy('save')
             try {
-              const id = await createBatch(upload.file, upload.name, title, me.id)
-              setUpload(null)
+              const id = target === 'new' ? await createBatch(title, me.id) : target
+              // A board area already in the week keeps the week's spelling.
+              const known = new Map<string, string>()
+              for (const a of id === batch?.id ? areas : []) known.set(areaKey(a.area), a.area)
+              const areaFor = (x: string) => { const k = areaKey(x); if (!known.has(k)) known.set(k, x); return known.get(k)! }
+              const n = await addFiles(id, good.map((g) => ({ read: g.read, name: g.name })), me.id, areaFor)
+              setPicked(null)
               await loadBatches()
               setBatchId(id)
-              say(`انحفظ الأسبوع: ${upload.file.rows.length} مشترك`)
+              await loadRows(id)
+              say(`انضاف ${good.length} ${good.length === 1 ? 'كشف' : 'كشوفات'} · ${n} مشترك`)
             } catch {
               say('ما انحفظ. تأكد من الإنترنت وجرّب مرة ثانية.', 'danger')
             } finally {
               setBusy(null)
             }
           }}
-          busy={busy === 'save'}
         />
       )}
     </div>
   )
 }
 
-function UploadDialog({ upload, onClose, onSave, busy }: { upload: { file: ReadFile; name: string }; onClose(): void; onSave(title: string): void; busy: boolean }) {
-  const f = upload.file
+/** Who reads this area: big tiles, one tap. */
+function AssignDialog({ area, people, countOf, onClose, onPick }: { area: AreaSummary; people: Person[]; countOf(id: string): number; onClose(): void; onPick(mode: 'app' | 'paper' | null, id: string | null): void }) {
+  const current = area.mixed ? null : area.mode === 'paper' ? 'paper' : area.mode === 'app' ? area.assigneeId : null
+  return (
+    <Dialog open onClose={onClose} title={`مين يقرأ «${area.area}»؟`} subtitle={`${area.boards.length} ${area.boards.length === 1 ? 'طبلون' : 'طبالين'} · ${area.total} مشترك`} className="rd-assign">
+      <div className="rd-pick">
+        <button type="button" className="paper" aria-pressed={current === 'paper'} onClick={() => onPick('paper', null)}>
+          <span className="rd-pick-ico"><FileText size={22} /></span>
+          <span><b>ورق</b><small>بتنطبع وبتنعبى من المكتب</small></span>
+        </button>
+        {people.map((p) => {
+          const n = countOf(p.id)
+          const ok = p.pages?.includes('readings')
+          return (
+            <button key={p.id} type="button" aria-pressed={current === p.id} onClick={() => onPick('app', p.id)}>
+              <Avatar name={p.fullName} size={42} />
+              <span><b>{p.fullName}</b><small>{ok ? (n ? `معه ${n} ${n === 1 ? 'منطقة' : 'مناطق'}` : 'فاضي') : 'ما عنده صفحة القراءات بعد'}</small></span>
+              {current === p.id && <Check size={20} className="rd-pick-on" />}
+            </button>
+          )
+        })}
+      </div>
+      {people.some((p) => !p.pages?.includes('readings')) && <p className="rd-pick-note">اللي «ما عنده صفحة القراءات» افتحها له من الإعدادات › الصلاحيات عشان تظهر المنطقة على جواله.</p>}
+      {current && <button type="button" className="link-btn rd-pick-clear" onClick={() => onPick(null, null)}>شيل التخصيص</button>}
+    </Dialog>
+  )
+}
+
+function UploadDialog({ picked, openWeek, busy, onClose, onSave }: { picked: Picked[]; openWeek: ReadingBatch | null; busy: boolean; onClose(): void; onSave(target: string, title: string): void }) {
   const today = new Date().toLocaleDateString('ar-EG-u-nu-latn', { day: 'numeric', month: 'long' })
-  const [title, setTitle] = useState(`${f.title.replace(/\s+/g, ' ').trim() || 'القراءات'} · أسبوع ${today}`)
-  const areas = useMemo(() => {
-    const m = new Map<string, Set<string>>()
-    for (const r of f.rows) m.set(r.area, (m.get(r.area) ?? new Set()).add(r.board))
-    return [...m].map(([area, boards]) => ({ area, boards: [...boards], count: f.rows.filter((r) => r.area === area).length }))
-  }, [f])
+  const [target, setTarget] = useState<string>(openWeek ? openWeek.id : 'new')
+  const [title, setTitle] = useState(`أسبوع ${today}`)
+  const good = picked.filter((p) => p.read && !p.dup)
+  const total = good.reduce((s, p) => s + p.read!.rows.length, 0)
   return (
     <Dialog
       open
       onClose={onClose}
-      title="ملف القراءات الجديد"
-      subtitle={upload.name}
-      footer={<><Button variant="ghost" onClick={onClose}>إلغاء</Button><Button variant="primary" icon={<Check size={18} />} busy={busy} disabled={!title.trim()} onClick={() => onSave(title.trim())}>حفظ الأسبوع</Button></>}
+      title={picked.length === 1 ? 'كشف جديد' : `${picked.length} كشوفات جديدة`}
+      subtitle={`${good.length} جاهز · ${total} مشترك`}
+      footer={<><Button variant="ghost" onClick={onClose}>إلغاء</Button><Button variant="primary" icon={<Check size={18} />} busy={busy} disabled={!good.length || (target === 'new' && !title.trim())} onClick={() => onSave(target, title.trim())}>حفظ</Button></>}
     >
       <div className="rd-upload">
-        <label className="field"><span className="label">اسم الأسبوع</span><input className="input" value={title} onChange={(e) => setTitle(e.target.value)} /></label>
-        <p className="rd-upload-n"><b className="num">{f.rows.length}</b> مشترك · <b className="num">{areas.length}</b> منطقة · <b className="num">{new Set(f.rows.map((r) => r.board)).size}</b> طبلون</p>
-        {f.skipped.length > 0 && <p className="rd-warn">في {f.skipped.length} سطر ما قدرت أقرأ رقمه (السطور: {f.skipped.slice(0, 8).join('، ')}{f.skipped.length > 8 ? '…' : ''}). باقي الملف تمام.</p>}
-        <ul className="rd-upload-areas">
-          {areas.map((a) => <li key={a.area}><b>{a.area}</b><span className="num">{a.count}</span><small>{a.boards.join('، ')}</small></li>)}
+        {openWeek && (
+          <div className="rd-seg wide" role="group" aria-label="وين ينحفظوا">
+            <button type="button" aria-pressed={target === openWeek.id} onClick={() => setTarget(openWeek.id)}>إضافة لـ«{openWeek.title}»</button>
+            <button type="button" aria-pressed={target === 'new'} onClick={() => setTarget('new')}>أسبوع جديد</button>
+          </div>
+        )}
+        {target === 'new' && <label className="field"><span className="label">اسم الأسبوع</span><input className="input" value={title} onChange={(e) => setTitle(e.target.value)} /></label>}
+        <ul className="rd-upload-files">
+          {picked.map((p) => (
+            <li key={p.name} className={p.error ? 'bad' : p.dup ? 'dup' : ''}>
+              <FileSpreadsheet size={18} />
+              <span><b>{p.name}</b><small>{p.error ?? (p.dup ? 'موجود بهالأسبوع من قبل · ما رح ينضاف مرة ثانية' : `${p.read!.rows.length} مشترك · ${[...new Set(p.read!.rows.map((r) => r.area))].join('، ')}${p.read!.skipped.length ? ` · ${p.read!.skipped.length} سطر ما انقرأ` : ''}`)}</small></span>
+            </li>
+          ))}
         </ul>
-        <p className="muted">الطبالين اللي أسماؤها متشابهة صارت منطقة وحدة (مثلاً «المقبرة» و«شمال المقبرة»). بتقدر تنقل أي طبلون لمنطقة ثانية بعد الحفظ.</p>
+        <p className="muted">الطبالين اللي أسماؤها متشابهة بتصير منطقة وحدة (مثلاً «المقبرة» و«شمال المقبرة»)، حتى لو كانوا بكشوفات مختلفة.</p>
       </div>
     </Dialog>
   )

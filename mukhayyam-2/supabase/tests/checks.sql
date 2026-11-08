@@ -533,4 +533,15 @@ select test.ok((select reading = 125.4 and source = 'app' from public.reading_ro
 select test.fails($$update public.reading_rows set prev = 1 where id = '00000000-0000-0000-0000-0000000000f2'$$, '%not_allowed%', 'the reader cannot change the previous reading');
 reset role;
 
+select test.login('رامي أبو عجوة'); set role authenticated;
+insert into public.reading_files (id, batch_id, file_name, source_b64) values ('00000000-0000-0000-0000-0000000000f3', '00000000-0000-0000-0000-0000000000f1', 'كشف 1.xlsx', 'AA==');
+update public.reading_rows set file_id = '00000000-0000-0000-0000-0000000000f3', sheet = 'القراءات' where id = '00000000-0000-0000-0000-0000000000f2';
+reset role; select test.login('قصي الشافعي'); set role authenticated;
+select test.ok((select count(*) from public.reading_files) = 0, 'a reader does not see the uploaded files');
+select test.fails($$update public.reading_rows set sheet = 'x' where id = '00000000-0000-0000-0000-0000000000f2'$$, '%not_allowed%', 'the reader cannot move his row to another sheet');
+reset role; select test.login('رامي أبو عجوة'); set role authenticated;
+delete from public.reading_files where id = '00000000-0000-0000-0000-0000000000f3';
+select test.ok((select count(*) from public.reading_rows where id = '00000000-0000-0000-0000-0000000000f2') = 0, 'removing a file removes its subscribers');
+reset role;
+
 \echo 'ALL CHECKS PASSED'

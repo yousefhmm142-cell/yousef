@@ -30,6 +30,8 @@ export interface ReadingRow {
   state: ReadingState | null
   note: string | null
   enteredAt: string | null
+  fileId?: string | null
+  sheet?: string | null
 }
 
 export interface ReadingBatch {
@@ -96,6 +98,7 @@ const num = (v: unknown): number | null => {
 }
 
 export interface ParsedRow {
+  sheet?: string
   ord: number
   sheetRow: number
   code: string

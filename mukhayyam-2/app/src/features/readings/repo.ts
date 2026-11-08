@@ -7,7 +7,7 @@ import type { ReadingBatch, ReadingRow, ReadingState } from './model'
 // Readings live on the server. Each phone keeps its own list (and what was typed) on the device,
 // so a reader works the whole week without internet, closes the app, opens it again, and finds it all.
 
-const COLS = 'id, batch_id, ord, sheet_row, code, area, board, fak, subscriber, phone, prev, mode, assignee_id, reading, state, note, entered_at'
+const COLS = 'id, batch_id, ord, sheet_row, code, area, board, fak, subscriber, phone, prev, mode, assignee_id, reading, state, note, entered_at, file_id, sheet'
 type Raw = Record<string, unknown>
 const n = (v: unknown) => (v === null || v === undefined ? null : Number(v))
 
@@ -29,6 +29,8 @@ const rowFrom = (r: Raw): ReadingRow => ({
   state: (r.state as ReadingState | null) ?? null,
   note: (r.note as string | null) ?? null,
   enteredAt: (r.entered_at as string | null) ?? null,
+  fileId: (r.file_id as string | null) ?? null,
+  sheet: (r.sheet as string | null) ?? null,
 })
 const batchFrom = (b: Raw): ReadingBatch => ({
   id: b.id as string,
@@ -137,20 +139,61 @@ export async function loadBatchRows(id: string): Promise<ReadingRow[]> {
   return withWaiting(rows.map((r) => ({ ...r })))
 }
 
-export async function createBatch(file: ReadFile, fileName: string, title: string, me: string): Promise<string> {
-  const sb = server()
+export async function createBatch(title: string, me: string): Promise<string> {
   const id = crypto.randomUUID()
-  const { error } = await sb.from('reading_batches').insert({ id, title, file_name: fileName, source_b64: file.base64, sheet_name: file.sheetName, current_col: file.currentCol, created_by: me })
+  const { error } = await server().from('reading_batches').insert({ id, title, created_by: me })
   if (error) throw new Error(error.code === '42501' ? 'not_allowed' : 'failed')
-  const rows = file.rows.map((r) => ({ batch_id: id, ord: r.ord, sheet_row: r.sheetRow, code: r.code, area: r.area, board: r.board, fak: r.fak, subscriber: r.subscriber, phone: r.phone, prev: r.prev }))
-  for (let i = 0; i < rows.length; i += 500) {
-    const res = await sb.from('reading_rows').insert(rows.slice(i, i + 500))
-    if (res.error) {
-      await sb.from('reading_batches').delete().eq('id', id)
-      throw new Error('failed')
-    }
-  }
   return id
+}
+
+export interface WeekFile { id: string; name: string; rows: number; createdAt: string }
+
+export async function listFiles(batchId: string): Promise<WeekFile[]> {
+  const { data, error } = await server().from('reading_files').select('id, file_name, rows_count, created_at').eq('batch_id', batchId).order('created_at')
+  if (error) throw new Error('failed')
+  return (data ?? []).map((f) => ({ id: f.id as string, name: f.file_name as string, rows: f.rows_count as number, createdAt: f.created_at as string }))
+}
+
+/**
+ * Adds files to a week. A board area already in the week (written a bit differently) keeps the
+ * week's spelling, so «مقبرة» in one file and «المقبرة» in another stay one area.
+ */
+export async function addFiles(batchId: string, files: Array<{ read: ReadFile; name: string }>, me: string, areaFor: (area: string) => string): Promise<number> {
+  const sb = server()
+  const { data: last } = await sb.from('reading_rows').select('ord').eq('batch_id', batchId).order('ord', { ascending: false }).limit(1)
+  let ord = ((last?.[0]?.ord as number | undefined) ?? 0)
+  let added = 0
+  for (const f of files) {
+    const fileId = crypto.randomUUID()
+    const { error } = await sb.from('reading_files').insert({ id: fileId, batch_id: batchId, file_name: f.name, source_b64: f.read.base64, current_col: f.read.currentCol, rows_count: f.read.rows.length, created_by: me })
+    if (error) throw new Error('failed')
+    const rows = f.read.rows.map((r) => ({ batch_id: batchId, file_id: fileId, sheet: r.sheet ?? null, ord: ++ord, sheet_row: r.sheetRow, code: r.code, area: areaFor(r.area), board: r.board, fak: r.fak, subscriber: r.subscriber, phone: r.phone, prev: r.prev }))
+    for (let i = 0; i < rows.length; i += 500) {
+      const res = await sb.from('reading_rows').insert(rows.slice(i, i + 500))
+      if (res.error) {
+        await sb.from('reading_files').delete().eq('id', fileId)
+        throw new Error('failed')
+      }
+    }
+    added += rows.length
+  }
+  return added
+}
+
+export async function deleteFile(id: string) {
+  const { error } = await server().from('reading_files').delete().eq('id', id)
+  if (error) throw new Error('failed')
+}
+
+/** The original files of the week (and, for a week from before files, the one file kept on the week). */
+export async function weekSources(batchId: string): Promise<Array<{ id: string | null; name: string; source: string; col: number; sheet: string | null }>> {
+  const sb = server()
+  const { data, error } = await sb.from('reading_files').select('id, file_name, source_b64, current_col').eq('batch_id', batchId).order('created_at')
+  if (error) throw new Error('failed')
+  const out = (data ?? []).map((f) => ({ id: f.id as string | null, name: f.file_name as string, source: f.source_b64 as string, col: (f.current_col as number) ?? 4, sheet: null as string | null }))
+  const old = await sb.from('reading_batches').select('source_b64, sheet_name, current_col, file_name').eq('id', batchId).single()
+  if (old.data?.source_b64) out.unshift({ id: null, name: (old.data.file_name as string) ?? 'القراءات.xlsx', source: old.data.source_b64 as string, col: (old.data.current_col as number) ?? 4, sheet: (old.data.sheet_name as string | null) ?? null })
+  return out
 }
 
 /** Who reads an area this week: a reader in the app, or on paper (typed in later by the office). */
@@ -173,10 +216,4 @@ export async function setBatchStatus(id: string, status: 'open' | 'approved') {
 export async function deleteBatch(id: string) {
   const { error } = await server().from('reading_batches').delete().eq('id', id)
   if (error) throw new Error('failed')
-}
-
-export async function batchSource(id: string): Promise<{ source: string; sheetName: string | null; col: number; fileName: string | null }> {
-  const { data, error } = await server().from('reading_batches').select('source_b64, sheet_name, current_col, file_name').eq('id', id).single()
-  if (error || !data?.source_b64) throw new Error('failed')
-  return { source: data.source_b64 as string, sheetName: (data.sheet_name as string | null) ?? null, col: (data.current_col as number | null) ?? 4, fileName: (data.file_name as string | null) ?? null }
 }
