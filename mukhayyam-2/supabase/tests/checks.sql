@@ -544,4 +544,18 @@ delete from public.reading_files where id = '00000000-0000-0000-0000-0000000000f
 select test.ok((select count(*) from public.reading_rows where id = '00000000-0000-0000-0000-0000000000f2') = 0, 'removing a file removes its subscribers');
 reset role;
 
+-- ---------- SMS from the company's subscription ----------
+select test.login('مشغّل الموقع'); set role authenticated;
+select test.fails($$select public.sms_send(array['0599000001'], 'x')$$, '%not_allowed%', 'only a manager sends from the company subscription');
+select test.fails($$select public.sms_set_login('a', 'b', 'c')$$, '%not_allowed%', 'only a manager saves the SMS login');
+reset role; select test.login('رامي أبو عجوة'); set role authenticated;
+select test.ok((select (public.sms_info()->>'ready')::boolean = false), 'no SMS login yet');
+select test.ok((select (public.sms_send(array['0599000001', '123'], 'مهمة 1', null)->>'sent')::int = 0), 'without a login nothing is sent');
+select test.ok((select count(*) from public.outgoing_messages where provider = 'hotsms' and status = 'failed') = 1, 'the failed send is logged (a bad number is not)');
+select test.fails($$select public.sms_send(array['0599000001','0599000002','0599000003','0599000004','0599000005','0599000006'], 'x')$$, '%bad_count%', 'at most five numbers per call');
+select public.sms_set_login('user', 'pass', '');
+select test.ok((select (public.sms_info()->>'ready')::boolean and public.sms_info()->>'sender' = 'AF Camp2'), 'the login is saved, with the default sender');
+select test.fails($$select user_pass from m2_ops.sms_config$$, '%permission denied%', 'the app cannot read the SMS password');
+reset role;
+
 \echo 'ALL CHECKS PASSED'

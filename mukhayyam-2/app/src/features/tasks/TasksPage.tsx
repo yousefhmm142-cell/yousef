@@ -26,7 +26,8 @@ import { useToast } from '../../ui/Toast'
 import { useZones } from '../distribution/repo'
 import { useConfirm } from '../../ui/Confirm'
 import { SheetStateError } from '../sheets/workflow'
-import { smsUrl, taskLink, taskMessage, whatsappUrl } from './message'
+import { smsUrl, taskLink, taskMessage, taskSms, whatsappUrl } from './message'
+import { sendCompanySms, smsError } from '../sms/repo'
 import {
   durationText,
   elapsedMinutes,
@@ -46,7 +47,8 @@ const errorText: Record<string, string> = {
   offline: 'المهام تحتاج إنترنت لأنها تُرسل برسالة. اتصل وحاول مرة أخرى.',
   reason_needed: 'اكتب سبب الإلغاء.',
 }
-const errText = (e: unknown) => errorText[e instanceof SheetStateError ? e.message : ''] ?? 'تعذّر الحفظ. حاول مرة أخرى.'
+class SmsError extends Error {}
+const errText = (e: unknown) => (e instanceof SmsError ? e.message : errorText[e instanceof SheetStateError ? e.message : ''] ?? 'تعذّر الحفظ. حاول مرة أخرى.')
 
 type View = 'waiting' | 'open' | 'late' | 'today' | 'all'
 
@@ -56,9 +58,20 @@ function useTechnicians(): Employee[] {
   )
 }
 
-/** Sends an order: opens WhatsApp (new tab) or the SMS app with the text ready, then marks it sent. */
-async function sendOrder(task: Task, channel: Channel, tech: Employee & { phone: string }, text: string) {
+/**
+ * Sends an order. WhatsApp: the full text with the «finished» link. SMS: one short message (no link);
+ * the manager's go out from the company's subscription when there is internet, anyone else's (مهند)
+ * from his own phone's SMS app, as before.
+ */
+async function sendOrder(task: Task, channel: Channel, tech: Employee & { phone: string }, names: { type: string; zone?: string | null }, company: boolean): Promise<'company' | 'phone'> {
   const phone = tech.phone
+  if (channel === 'sms' && company && navigator.onLine) {
+    const r = await sendCompanySms([phone], taskSms(task, names), task.id)
+    if (!r.sent) throw new SmsError(`ما انبعتت الرسالة: ${smsError(r.failed[0]?.code ?? '')}`)
+    await refreshTasks()
+    return 'company'
+  }
+  const text = channel === 'sms' ? taskSms(task, names) : taskMessage(task, names, taskLink(task.linkToken))
   // Without internet WhatsApp's web link cannot open, but the WhatsApp app itself can (it sends when online); SMS needs no internet.
   const web = whatsappUrl(phone, text, tech.waCode ?? 972)
   const url = channel === 'whatsapp' ? (navigator.onLine ? web : web.replace(/^https:\/\/wa\.me\/(\d+)\?text=/, 'whatsapp://send?phone=$1&text=')) : smsUrl(phone, text)
@@ -72,6 +85,7 @@ async function sendOrder(task: Task, channel: Channel, tech: Employee & { phone:
   }
   if (win) win.location.href = url
   else window.location.href = url
+  return 'phone'
 }
 
 export function TasksPage() {
@@ -510,6 +524,7 @@ function GiveDialog({ task, technicians, typeName, zoneName, onClose }: {
   onClose(): void
 }) {
   const toast = useToast()
+  const me = useEmployee()
   const [assigneeId, setAssigneeId] = useState<string | null>(null)
   const [priority, setPriority] = useState<TaskPriority>(task.priority)
   const [expected, setExpected] = useState(task.expectedMinutes)
@@ -526,9 +541,8 @@ function GiveDialog({ task, technicians, typeName, zoneName, onClose }: {
     setError(null)
     try {
       const next = await assignTask(task, tech.id, priority, expected)
-      const text = taskMessage(next, { type: typeName(next.typeId), zone: zoneName(next.zoneId) }, taskLink(next.linkToken))
-      await sendOrder(next, channel, { ...tech, phone: tech.phone! }, text)
-      toast(`أُرسلت المهمة ${next.number} إلى ${tech.fullName}`)
+      const via = await sendOrder(next, channel, { ...tech, phone: tech.phone! }, { type: typeName(next.typeId), zone: zoneName(next.zoneId) }, isManagerRole(me.role))
+      toast(`أُرسلت المهمة ${next.number} إلى ${tech.fullName}${via === 'company' ? ' · SMS من اشتراك الشركة' : ''}`)
       onClose()
     } catch (e) {
       setError(errText(e))
@@ -656,9 +670,8 @@ function NewTaskDialog({ technicians, onClose, typeName, zoneName }: {
         { typeId, assigneeId: tech.id, details: [extraTypes.map((x) => activeTypes.find((t) => t.id === x)?.name ?? '').filter(Boolean).join(' + '), details.trim()].filter(Boolean).join(' · '), subscriberName, subscriberPhone: subscriberPhone || null, zoneId: null, location: [place, location.trim()].filter(Boolean).join(' · '), priority, expectedMinutes: expected },
         me.id,
       )
-      const text = taskMessage(task, { type: typeName(task.typeId), zone: zoneName(task.zoneId) }, taskLink(task.linkToken))
-      await sendOrder(task, channel, { ...tech, phone: tech.phone! }, text)
-      toast(`أُرسلت المهمة ${task.number} إلى ${tech.fullName}`)
+      const via = await sendOrder(task, channel, { ...tech, phone: tech.phone! }, { type: typeName(task.typeId), zone: zoneName(task.zoneId) }, isManagerRole(me.role))
+      toast(`أُرسلت المهمة ${task.number} إلى ${tech.fullName}${via === 'company' ? ' · SMS من اشتراك الشركة' : ''}`)
       onClose()
     } catch (e) {
       setError(errText(e))
@@ -673,7 +686,7 @@ function NewTaskDialog({ technicians, onClose, typeName, zoneName }: {
       big={tech?.fullName ?? 'اختر الفني'}
       rows={[['المطلوب', [typeId, ...extraTypes].map((x) => activeTypes.find((t) => t.id === x)?.name ?? '').filter(Boolean).join(' + ')], ['المشترك', subscriberName.trim()], ['الجوال', subscriberPhone ? <bdi dir="ltr">{formatPhone(subscriberPhone)}</bdi> : ''], ['المكان', [place, location.trim()].filter(Boolean).join(' · ')]]}
       more={[['الأولوية', priorityInfo[priority].label], ['المدة المتوقعة', durationText(expected)]]}
-      note={<span>بتنبعت للفني فوراً على واتساب أو SMS مع رابط «أنهيت».</span>}
+      note={<span>واتساب: الرسالة كاملة مع رابط «أنهيت». SMS: رسالة وحدة قصيرة بدون رابط.</span>}
     />
   )
 
@@ -768,6 +781,7 @@ function TaskDialog({ task, tech, typeName, zoneName, now, onClose }: {
   onClose(): void
 }) {
   const toast = useToast()
+  const me = useEmployee()
   const [busy, setBusy] = useState<string | null>(null)
   const [reason, setReason] = useState('')
   const [cancelling, setCancelling] = useState(false)
@@ -780,7 +794,8 @@ function TaskDialog({ task, tech, typeName, zoneName, now, onClose }: {
     if (!tech?.phone) return toast('لا يوجد رقم جوال لهذا الفني', 'danger')
     setBusy(channel)
     try {
-      await sendOrder(task, channel, { ...tech, phone: tech.phone! }, text)
+      const via = await sendOrder(task, channel, { ...tech, phone: tech.phone! }, { type: typeName, zone: zoneName }, isManagerRole(me.role))
+      if (via === 'company') toast(`انبعتت SMS لـ ${tech.fullName} من اشتراك الشركة`)
     } catch (e) {
       toast(errText(e), 'danger')
     } finally {

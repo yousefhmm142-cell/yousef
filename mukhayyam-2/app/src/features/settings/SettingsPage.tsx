@@ -16,6 +16,7 @@ import { BackupCard } from './BackupCard'
 import { FuelTypesCard } from './StockAndFuelCards'
 import { TeamCard } from './TeamCard'
 import { PermissionsPage } from './PermissionsPage'
+import { SmsPage } from '../sms/SmsPage'
 
 const soon = ['حدود التنبيهات والدوامات', 'سجل كل التغييرات']
 
@@ -24,7 +25,7 @@ export function SettingsPage() {
   const generators = useGenerators()
   const [editing, setEditing] = useState<Generator | 'new' | null>(null)
   const [params, setParams] = useSearchParams()
-  const tab = params.get('tab') === 'permissions' ? 'permissions' : 'general'
+  const tab = params.get('tab') === 'permissions' ? 'permissions' : params.get('tab') === 'sms' ? 'sms' : 'general'
 
   return (
     <div className="settings">
@@ -35,14 +36,14 @@ export function SettingsPage() {
         </div>
       </header>
 
-      <Segmented<'general' | 'permissions'>
+      <Segmented<'general' | 'permissions' | 'sms'>
         label="أقسام الإعدادات"
         value={tab}
-        options={[{ value: 'general', label: 'الإعدادات' }, { value: 'permissions', label: 'الصلاحيات' }]}
+        options={[{ value: 'general', label: 'الإعدادات' }, { value: 'permissions', label: 'الصلاحيات' }, { value: 'sms', label: 'الرسائل' }]}
         onChange={(v) => setParams(v === 'general' ? {} : { tab: v }, { replace: true })}
       />
 
-      {tab === 'permissions' ? <PermissionsPage /> : <>
+      {tab === 'permissions' ? <PermissionsPage /> : tab === 'sms' ? <SmsPage /> : <>
       <TeamCard />
 
       <section className="card">

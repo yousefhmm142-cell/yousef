@@ -18,6 +18,24 @@ export function taskMessage(t: Task, names: { type: string; zone?: string | null
   return lines.join('\n')
 }
 
+/**
+ * The order as one short SMS (70 Arabic letters = one message, no link): number, job, subscriber,
+ * phone and place, dropping the least needed parts until it fits.
+ */
+export function taskSms(t: Task, names: { type: string; zone?: string | null }): string {
+  const flag = t.priority === 'emergency' ? 'طارئ ' : t.priority === 'urgent' ? 'مستعجل ' : ''
+  const head = `${flag}مهمة ${t.number}: ${names.type}`
+  const who = t.subscriberName.trim().split(/\s+/).slice(0, 2).join(' ')
+  const where = [names.zone, t.location.trim()].filter(Boolean).join(' ')
+  const parts = [head, who, t.subscriberPhone ?? '', where, t.details.trim()].filter(Boolean)
+  const fit = (xs: string[]) => xs.join(' · ')
+  // Drop the details, then the place, then cut what is left.
+  for (const keep of [parts, parts.filter((p) => p !== t.details.trim()), [head, who, t.subscriberPhone ?? ''].filter(Boolean), [head, t.subscriberPhone ?? ''].filter(Boolean)]) {
+    if (fit(keep).length <= 70) return fit(keep)
+  }
+  return fit([head, t.subscriberPhone ?? ''].filter(Boolean)).slice(0, 70)
+}
+
 /** WhatsApp only opens the chat with the country code the person registered with (972 for most here). */
 export const whatsappUrl = (phone: string, text: string, code: WaCode = 972) => `https://wa.me/${international(phone, code)}?text=${encodeURIComponent(text)}`
 

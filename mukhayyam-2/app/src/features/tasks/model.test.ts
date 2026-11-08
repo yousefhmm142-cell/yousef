@@ -38,3 +38,18 @@ describe('task clock', () => {
     expect(durationText(120)).toBe('2 س')
   })
 })
+
+import { taskSms } from './message'
+describe('short SMS', () => {
+  const base = { id: 'x', number: 38, typeId: 1, assigneeId: 'a', createdBy: null, details: 'إعادة شبك + تركيب ساعة فحص', subscriberName: 'مروان عبد الفتاح حمدان', subscriberPhone: '0599450333', zoneId: null, location: 'أبو عمار · طبلون 15', priority: 'normal' as const, expectedMinutes: 30, status: 'new' as const, sentAt: null, seenAt: null, startedAt: null, completedAt: null, cancelledAt: null, completionNotes: '', cancelReason: '', linkToken: 't', createdAt: '' }
+  it('fits one message (70 letters) with no link', () => {
+    const t = taskSms(base, { type: 'فصل ووصل' })
+    expect(t.length).toBeLessThanOrEqual(70)
+    expect(t).toContain('مهمة 38: فصل ووصل')
+    expect(t).toContain('0599450333')
+    expect(t).not.toContain('http')
+  })
+  it('keeps the place when there is room', () => {
+    expect(taskSms({ ...base, details: '', subscriberName: 'سامي', location: 'المقبرة' }, { type: 'فحص' })).toBe('مهمة 38: فحص · سامي · 0599450333 · المقبرة')
+  })
+})
