@@ -1,8 +1,10 @@
 /* =========================================================
    Field tasks: the manager's board and the technician's link page
    ========================================================= */
-.tasks { max-width: 1180px; margin: 0 auto; display: grid; gap: 16px; }
+.tasks { width: 100%; max-width: 1180px; min-width: 0; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.tasks > * { min-width: 0; }
 .tasks .ph { margin-bottom: 0; }
+.tasks > .ph-actions { margin-inline-start: 0; }
 .ph-action { margin-inline-start: auto; }
 .kpi[data-tone='danger'] .kpi-value { color: var(--danger); }
 .kpi[data-tone='danger'] .kpi-ico { background: var(--danger-soft); color: var(--danger); }
