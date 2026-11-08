@@ -14,6 +14,28 @@ const END = 26 * 60
 const SPAN = END - START
 const TICKS = Array.from({ length: 20 }, (_, i) => 7 + i)
 const tickLabel = (h: number) => { const x = h % 24; return `${x % 12 === 0 ? 12 : x % 12}${x < 12 ? 'ص' : 'م'}` }
+/** A smooth line through the points (Catmull-Rom as curves), so the load reads as a wave, not steps. */
+function smooth(pts: Array<[number, number]>): string {
+  if (pts.length < 2) return ''
+  let d = `M${pts[0]![0]},${pts[0]![1]}`
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] ?? pts[i]!, p1 = pts[i]!, p2 = pts[i + 1]!, p3 = pts[i + 2] ?? p2
+    // Kept between the two points, so the wave never bulges past the run's start or end.
+    const lo = Math.min(p1[0], p2[0]), hi = Math.max(p1[0], p2[0]), ylo = Math.min(p1[1], p2[1]), yhi = Math.max(p1[1], p2[1])
+    const cx = (v: number) => Math.min(hi, Math.max(lo, v)), cy = (v: number) => Math.min(yhi, Math.max(ylo, v))
+    const c1x = cx(p1[0] + (p2[0] - p0[0]) / 6), c1y = cy(p1[1] + (p2[1] - p0[1]) / 6), c2x = cx(p2[0] - (p3[0] - p1[0]) / 6), c2y = cy(p2[1] - (p3[1] - p1[1]) / 6)
+    d += ` C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`
+  }
+  return d
+}
+/** The readings of a run in the order they were taken: the three phases' mean first, then each extra reading. */
+function runSamples(r: ZoneRun): number[] {
+  if (!r.loads.every((l) => l !== null)) return []
+  const first = (r.loads[0]! + r.loads[1]! + r.loads[2]!) / 3
+  return [first, ...(r.extra ?? []).filter((x): x is number => x !== null)]
+}
+const BASE_Y = 50, TOP_Y = 4
+
 /** A run's pieces on that window (after-midnight hours come at the end); outside it they are left off. */
 function windowSegments(r: Pick<ZoneRun, 'start' | 'end'>): Array<[number, number]> {
   const out: Array<[number, number]> = []
@@ -96,10 +118,7 @@ function Timeline({ sheet, zoneNames, imbalanceWarn }: { sheet: DistributionShee
   // The load chart: each run's block rises with its average load (scaled to the day's highest, per unit).
   // Heights from zero to the day's highest load (per unit): the difference you see is the real one.
   const top: Record<string, number> = {}
-  for (const z of sheet.zones) for (const r of z.runs) {
-    const v = readingsAverage(r.loads, r.extra)
-    if (v !== null) top[r.loadUnit] = Math.max(top[r.loadUnit] ?? 0, v)
-  }
+  for (const z of sheet.zones) for (const r of z.runs) for (const v of runSamples(r)) top[r.loadUnit] = Math.max(top[r.loadUnit] ?? 0, v)
   const height = (v: number, u: string) => Math.max(10, (v / (top[u] || v)) * 100)
   const peak = Object.entries(top).map(([u, v]) => `${formatAmount(v)}${u}`).join(' · ')
   return (
@@ -107,7 +126,7 @@ function Timeline({ sheet, zoneNames, imbalanceWarn }: { sheet: DistributionShee
       <div className="card-h">
         <span className="ico-round"><Clock size={16} /></span>
         <h2>التغذية والأحمال خلال اليوم</h2>
-        <span className="meta">من 7 الصبح لـ 2 بعد نص الليل · ارتفاع الشكل = متوسط الحمل من الصفر{peak && <> · الخط المتقطع = أعلى حمل اليوم <b className="num">{peak}</b></>} · <span className="tl-key-warn">⚠ فازات مش متوازنة</span></span>
+        <span className="meta">من 7 الصبح لـ 2 بعد نص الليل · ارتفاع الشكل = متوسط الحمل من الصفر{peak && <> · الخط المتقطع = أعلى حمل اليوم <b className="num">{peak}</b></>} · <span className="tl-key-ok">● حمل طبيعي</span> · <span className="tl-key-warn">● فازات مش متوازنة</span></span>
       </div>
       <div className="tl" role="img" aria-label="أوقات تغذية المناطق وأحمالها خلال اليوم">
         <div className="tl-row tl-axis" aria-hidden="true">
@@ -126,6 +145,35 @@ function Timeline({ sheet, zoneNames, imbalanceWarn }: { sheet: DistributionShee
             </div>
             <div className="tl-track" data-off={!z.supplied || undefined}>
               {z.supplied && peak && <i className="tl-ref" aria-hidden="true" />}
+              {z.supplied && (
+                <svg className="tl-wave" viewBox={`0 0 ${SPAN} 64`} preserveAspectRatio="none" aria-hidden="true">
+                  <defs>
+                    <linearGradient id={`g-ok-${z.id}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="var(--ok)" stopOpacity=".38" /><stop offset="1" stopColor="var(--ok)" stopOpacity=".04" /></linearGradient>
+                    <linearGradient id={`g-warn-${z.id}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#E0A800" stopOpacity=".45" /><stop offset="1" stopColor="#E0A800" stopOpacity=".05" /></linearGradient>
+                  </defs>
+                  {z.runs.flatMap((r) => {
+                    const samples = runSamples(r)
+                    if (!samples.length) return []
+                    const gap = phaseImbalancePct(r.loads)
+                    const warn = gap !== null && gap >= imbalanceWarn
+                    const y = (v: number) => BASE_Y - (v / (top[r.loadUnit] || v)) * (BASE_Y - TOP_Y)
+                    return windowSegments(r).map(([a, b], k) => {
+                      // Right to left: the bar reads from 7 in the morning on the right.
+                      const X = (t: number) => SPAN - t
+                      const ramp = Math.min(25, (b - a) / 5)
+                      const inner = samples.length === 1 ? [samples[0]!, samples[0]!] : samples
+                      const pts: Array<[number, number]> = [[X(a), BASE_Y], ...inner.map((v, n): [number, number] => [X(a + ramp + ((b - a - 2 * ramp) * n) / (inner.length - 1)), y(v)]), [X(b), BASE_Y]]
+                      const line = smooth(pts)
+                      return (
+                        <g key={`${r.id}-${k}`} className={warn ? 'w-warn' : 'w-ok'}>
+                          <path d={`${line} Z`} fill={`url(#g-${warn ? 'warn' : 'ok'}-${z.id})`} />
+                          <path d={line} fill="none" vectorEffect="non-scaling-stroke" />
+                        </g>
+                      )
+                    })
+                  })}
+                </svg>
+              )}
               {z.supplied &&
                 z.runs.flatMap((r, i) => {
                   const avg = readingsAverage(r.loads, r.extra)
@@ -140,7 +188,7 @@ function Timeline({ sheet, zoneNames, imbalanceWarn }: { sheet: DistributionShee
                       style={{ insetInlineStart: `${(a / SPAN) * 100}%`, width: `${((b - a) / SPAN) * 100}%` }}
                       title={`التشغيلة ${RUN_NAMES[i]}: ${clock12(r.start)} ← ${clock12(r.end)}${avg !== null ? ` · متوسط الحمل ${formatAmount(avg)} ${r.loadUnit} · ${phases}` : ''}${warn ? ` · الفازات مش متوازنة (فرق ${Math.round(gap!)}%)` : ''}`}
                     >
-                      {avg !== null && <span className="tl-load" data-warn={warn || undefined} style={{ height: `${h}%` }}>{k === 0 && <b className="num">{warn && '⚠ '}{formatAmount(avg)}<small>{r.loadUnit}</small></b>}</span>}
+                      {avg !== null && k === 0 && <b className="tl-val num" data-warn={warn || undefined} style={{ bottom: `${Math.max(16, 16 + (h / 100) * 46 - 20)}px` }}>{warn && '⚠ '}{formatAmount(avg)}<small>{r.loadUnit}</small></b>}
                       <span className="tl-seg" />
                     </span>
                   ))

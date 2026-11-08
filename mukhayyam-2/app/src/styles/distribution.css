@@ -155,3 +155,17 @@
 .tl-load[data-warn] { border-top-color: var(--warn); background: linear-gradient(180deg, color-mix(in srgb, var(--warn) 38%, transparent), color-mix(in srgb, var(--warn) 10%, transparent)); }
 .tl-load[data-warn] b { color: var(--warn); }
 .tl-key-warn { color: var(--warn); font-weight: 700; }
+
+/* The load as a wave over each run: green when normal, yellow when the phases are out of balance. */
+.tl-wave { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.tl-wave .w-ok path:last-child { stroke: var(--ok); stroke-width: 2.2px; stroke-linejoin: round; }
+.tl-wave .w-warn path:last-child { stroke: #D49B00; stroke-width: 2.2px; stroke-linejoin: round; }
+.tl-val { position: absolute; left: 50%; transform: translate(-50%, -2px); font-size: 11.5px; font-weight: 800; white-space: nowrap; color: #17643f;
+  background: color-mix(in srgb, var(--surface) 82%, transparent); padding: 0 5px; border-radius: 6px; line-height: 1.35; }
+.tl-val small { font-size: 9.5px; margin-inline-start: 1px; }
+.tl-val[data-warn] { color: #9a6b00; }
+:root[data-theme='dark'] .tl-val { color: #8ff0bd; background: #0e1014cc; }
+:root[data-theme='dark'] .tl-val[data-warn] { color: #ffd166; }
+.tl-key-ok { color: var(--ok); font-weight: 700; }
+.tl-key-warn { color: #B88600; }
+@media (max-width: 560px) { .tl-val { font-size: 10px; } .tl-val small { display: none; } }
