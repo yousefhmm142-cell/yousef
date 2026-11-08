@@ -509,4 +509,19 @@ update public.tasks set status = 'done' where subscriber_name = 'متصل تجر
 select test.ok((select status = 'done' and completed_at is not null and started_at is not null from public.tasks where subscriber_name = 'متصل تجريبي'), 'the office marks a sent task done for the technician');
 reset role;
 
+-- ---------- Weekly meter readings ----------
+select test.login('رامي أبو عجوة'); set role authenticated;
+insert into public.reading_batches (id, title) values ('00000000-0000-0000-0000-0000000000f1', 'أسبوع تجريبي');
+insert into public.reading_rows (id, batch_id, ord, sheet_row, code, area, board, subscriber, prev, mode) values
+  ('00000000-0000-0000-0000-0000000000f2', '00000000-0000-0000-0000-0000000000f1', 1, 5, 'شقاقي 28_39', 'شقاقي', '28', 'مشترك أ', 120.7, 'paper');
+update public.reading_rows set reading = 120.7 where id = '00000000-0000-0000-0000-0000000000f2';
+select test.ok((select reading = 120.7 and source = 'paper' and entered_at is not null from public.reading_rows where id = '00000000-0000-0000-0000-0000000000f2'), 'a reading equal to the previous one is accepted, marked paper');
+select test.fails($$update public.reading_rows set reading = 120.6 where id = '00000000-0000-0000-0000-0000000000f2'$$, '%check%', 'a reading below the previous one is refused');
+update public.reading_rows set reading = 122.3 where id = '00000000-0000-0000-0000-0000000000f2';
+select test.ok((select count(*) from public.reading_changes where row_id = '00000000-0000-0000-0000-0000000000f2') = 1, 'a correction is kept with the old and new value');
+reset role; select test.login('مشغّل الموقع'); set role authenticated;
+select test.ok((select count(*) from public.reading_rows) = 0, 'someone else sees no readings');
+select test.ok(test.affected($$update public.reading_rows set reading = 999$$) = 0, 'and changes none');
+reset role;
+
 \echo 'ALL CHECKS PASSED'
