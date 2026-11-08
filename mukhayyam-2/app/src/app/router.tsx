@@ -15,7 +15,7 @@ import { SiteHistoryPage } from '../features/sheets/SiteHistoryPage'
 import { NotFound, RouteError } from '../pages/states'
 import { isSiteRole, SITE_ROLES, type Role } from '../types'
 import { AppShell } from './AppShell'
-import { RequireAuth, RoleGate, SealsGate, PageGate } from './guards'
+import { RequireAuth, RoleGate, SealsGate, PageGate, ReadingsGate } from './guards'
 
 // Screens most phones never open load only when first opened, so the app starts faster.
 const page = <T,>(load: () => Promise<T>, name: keyof T) =>
@@ -29,6 +29,7 @@ const ReportsPage = page(() => import('../features/reports/ReportsPage'), 'Repor
 const SealIssuePage = page(() => import('../features/seals/IssuePage'), 'SealIssuePage')
 const SealLogPage = page(() => import('../features/seals/LogPage'), 'SealLogPage')
 const SealRecentPage = page(() => import('../features/seals/RecentPage'), 'SealRecentPage')
+const ReadingsPage = page(() => import('../features/readings/ReadingsPage'), 'ReadingsPage')
 const AttendanceScanPage = page(() => import('../features/attendance/ScanPage'), 'AttendanceScanPage')
 
 const managers: Role[] = ['admin', 'manager']
@@ -81,6 +82,7 @@ export const router = createBrowserRouter([
             path: 'attendance',
             element: <PageGate page="attendance"><Lazy><AttendancePage /></Lazy></PageGate>,
           },
+          { path: 'readings', element: <ReadingsGate><Lazy><ReadingsPage /></Lazy></ReadingsGate> },
           { path: 'seals', element: <SealsGate><Lazy><SealIssuePage /></Lazy></SealsGate> },
           { path: 'seals/recent', element: <SealsGate><Lazy><SealRecentPage /></Lazy></SealsGate> },
           { path: 'seals/log', element: <SealsGate><Lazy><SealLogPage /></Lazy></SealsGate> },

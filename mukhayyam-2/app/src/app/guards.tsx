@@ -26,6 +26,12 @@ export function SealsGate({ children }: { children: ReactNode }) {
   return usesSeals(employee) ? children : <NoAccess />
 }
 
+/** «القراءات»: managers, the readings office, and the readers (they work there, it is not just to look). */
+export function ReadingsGate({ children }: { children: ReactNode }) {
+  const employee = useEmployee()
+  return hasPage(employee, 'readings') || hasPage(employee, 'readings-admin') ? children : <NoAccess />
+}
+
 /** A manager page that the manager may have opened for this person: the roles in `roles`, or the page itself. */
 export function PageGate({ page, roles, children }: { page: PageKey; roles?: Role[]; children: ReactNode }) {
   const employee = useEmployee()

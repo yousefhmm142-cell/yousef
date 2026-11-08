@@ -50,9 +50,16 @@ async function send(a: Action, ms = LIMIT_MS): Promise<Outcome> {
  * Sends now when there is internet; otherwise (or when the line drops on the way) the change is made
  * on this device with `local` and kept to send later. Throws only when the server refuses it.
  */
-export async function runOrQueue(a: Omit<Action, 'id'>, local: () => Promise<void>): Promise<'sent' | 'queued'> {
+export async function runOrQueue(a: Omit<Action, 'id'>, local: () => Promise<void>, opts: { background?: boolean } = {}): Promise<'sent' | 'queued'> {
   const action: Action = { ...a, id: crypto.randomUUID() }
   const waiting = (await getActions()).length > 0
+  // background: kept here at once and sent behind the scenes (typing many readings never waits on the line).
+  if (opts.background) {
+    await local()
+    await locked(async () => setMeta(KEY, [...(await getActions()), action]))
+    if (!isDemo && navigator.onLine) void flushActions()
+    return 'queued'
+  }
   if (!isDemo && navigator.onLine && !waiting) {
     const r = await send(action)
     if (r === 'done') return 'sent'

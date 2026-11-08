@@ -524,4 +524,13 @@ select test.ok((select count(*) from public.reading_rows) = 0, 'someone else see
 select test.ok(test.affected($$update public.reading_rows set reading = 999$$) = 0, 'and changes none');
 reset role;
 
+select test.login('رامي أبو عجوة'); set role authenticated;
+update public.reading_rows set mode = 'app', assignee_id = (select id from public.employees where full_name = 'قصي الشافعي'), reading = null where id = '00000000-0000-0000-0000-0000000000f2';
+reset role; select test.login('قصي الشافعي'); set role authenticated;
+select test.ok((select count(*) from public.reading_batches) = 1, 'the reader sees the week he has subscribers in');
+update public.reading_rows set reading = 125.4 where id = '00000000-0000-0000-0000-0000000000f2';
+select test.ok((select reading = 125.4 and source = 'app' from public.reading_rows where id = '00000000-0000-0000-0000-0000000000f2'), 'the reader enters his reading');
+select test.fails($$update public.reading_rows set prev = 1 where id = '00000000-0000-0000-0000-0000000000f2'$$, '%not_allowed%', 'the reader cannot change the previous reading');
+reset role;
+
 \echo 'ALL CHECKS PASSED'

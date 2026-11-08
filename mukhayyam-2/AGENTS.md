@@ -37,7 +37,7 @@
 - **المناطق الزمنية:** كل شيء بتوقيت `Asia/Gaza`. اليوم = `todayISO()`؛ أسبوع العمل يبدأ **السبت** (`weekStart` في `features/attendance/rules.ts`).
 
 ### مجلدات الواجهة (`app/src`)
-`app/` (الشِل، الراوتر، الحُرّاس `guards.tsx`، `modules.ts`، `update.ts` آلية التحديث) · `features/<وحدة>/` (generation, distribution, tasks, attendance, stock, seals, reports, settings, sheets=مشترك) · `data/` (`db.ts`, `sync.ts`, `supabase.ts`, `demo.ts`) · `ui/` (Confirm, Toast, status, Dialog…) · `lib/` (dates, numbers, saveFile, sheetPdf, appearance…) · `styles/` (ملف CSS لكل وحدة؛ انتبه لترتيب التتالي).
+`app/` (الشِل، الراوتر، الحُرّاس `guards.tsx`، `modules.ts`، `update.ts` آلية التحديث) · `features/<وحدة>/` (generation, distribution, tasks, attendance, readings, seals, reports, settings, sheets=مشترك؛ stock بلا صفحة) · `data/` (`db.ts`, `sync.ts`, `supabase.ts`, `demo.ts`) · `ui/` (Confirm, Toast, status, Dialog…) · `lib/` (dates, numbers, saveFile, sheetPdf, appearance…) · `styles/` (ملف CSS لكل وحدة؛ انتبه لترتيب التتالي).
 
 ## 3) الأجزاء الدقيقة (اقرأها قبل لمسها)
 
@@ -86,8 +86,14 @@
 ### 3.7 تواقيع الكشوفات
 `features/sheets/signers.tsx`: `useSigners()` و`<SignFooter/>` في **كل** كشف مطبوع: «توقيع مدير الموقع: <اسم>» و«اعتماد مدير المكتب: <اسم>» **ثابتين** مهما كان من عبّأ البيانات. مصدر الاسم: المسمى الوظيفي («مدير الموقع» / «مدير المكتب»)، ثم الدور (`generation_operator` الأول / `manager` الأول). المطلوب من المدير ضبط المسميات من الإعدادات.
 
-### 3.8 التحديث التلقائي
-`/version.json` لكل بناء (`__BUILD_ID__`)، `app/update.ts` يفحص كل 60 ث ويعرض شاشة بالشعار ثم يعيد التحميل. زر «تحقق من تحديث» في «حسابي».
+### 3.8 التحديث (ممنوع إعادة التحميل التلقائي والصفحة مفتوحة)
+`/version.json` لكل بناء (`__BUILD_ID__`). عند فتح التطبيق أو تحديث الصفحة: ينتقل للنسخة الجديدة فوراً. وهو مفتوح: يظهر شريط صغير «في تحديث جديد للنظام» بزر «تحديث الآن» فقط، **لا يعيد التحميل من نفسه أبداً** (طلب المستخدم بعد شكوى محاسن). `vite.config.ts`: `registerType: 'prompt'`، `skipWaiting/clientsClaim: false`. زر «تحقق من تحديث» في «حسابي».
+
+### 3.11 القراءات الأسبوعية (`features/readings`، التحديث 28 و29)
+- مسؤول القراءات (صلاحية `readings-admin`، حالياً محمد الشافعي) يرفع ملف Excel الأسبوعي من الشركة؛ الملف الأصلي يُحفظ (`source_b64`) والتصدير يعبّي عمود «القراءة الحالية» (`current_col`) في نفس السطر (`sheet_row`) بدون لمس أي شيء آخر.
+- رمز `#`: «1_شرقية 31» أو «5_شرقية 33 (164697)» أو المطبوع «(164679) شقاقي ٢٨_39». المنطقة = اسم الطبلون بدون الرقم وبدون شمال/جنوب… (المقبرة + شمال المقبرة = منطقة وحدة)، ويقدر المسؤول ينقل طبلون لمنطقة ثانية.
+- كل منطقة: لفني (`mode=app`، يحتاج صلاحية `readings`) أو ورق (المكتب يعبّيها). القارئ يشتغل بدون نت بالكامل: القائمة والقراءات محفوظة على الجهاز (`readings:mine:<id>`)، كل قراءة تدخل طابور `data/actions` بخيار `background` (ما بتستنى الشبكة) وتظهر «جاري المزامنة». الكيبورد `inputMode=decimal`، أرقام ونقطة فقط، والقراءة لا تقل عن السابقة. لا يظهر رقم الجوال للقارئ.
+- المخزن انشال من الواجهة بطلب المستخدم (الجداول باقية في القاعدة).
 
 ### 3.9 المظهر
 `lib/appearance.ts` + `public/theme.js` + `styles/tokens.css`: حجم النص (`data-size`) والخط (`data-font`). الوضع الليلي بزر في الشِل (مخفي بالطباعة).

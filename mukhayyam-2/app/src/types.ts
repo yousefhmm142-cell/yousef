@@ -62,6 +62,8 @@ export const GRANTABLE_PAGES = [
   { key: 'tasks', label: 'المهام', to: '/tasks' },
   { key: 'seal-work', label: 'كشف أعمال الأختام', to: '/tasks/seal-work' },
   { key: 'attendance', label: 'الحضور', to: '/attendance' },
+  { key: 'readings', label: 'القراءات', to: '/readings' },
+  { key: 'readings-admin', label: 'مسؤول القراءات', to: '/readings' },
 ] as const
 export type PageKey = (typeof GRANTABLE_PAGES)[number]['key']
 

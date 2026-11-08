@@ -1,4 +1,4 @@
-import { FileBarChart, History, House, LayoutGrid, ListChecks, ScanLine, ScrollText, Settings, Stamp, Users, Zap, type LucideIcon } from 'lucide-react'
+import { FileBarChart, Gauge, History, House, LayoutGrid, ListChecks, ScanLine, ScrollText, Settings, Stamp, Users, Zap, type LucideIcon } from 'lucide-react'
 import { GRANTABLE_PAGES, type Employee } from '../types'
 
 export interface NavItem {
@@ -14,20 +14,26 @@ const managerItems: NavItem[] = [
   { to: '/distribution', label: 'التوزيع', icon: LayoutGrid },
   { to: '/tasks', label: 'المهام', icon: ListChecks },
   { to: '/attendance', label: 'الحضور', icon: Users },
+  { to: '/readings', label: 'القراءات', icon: Gauge },
   { to: '/seals', label: 'الأختام', icon: Stamp },
   { to: '/tasks/seal-work', label: 'كشف أعمال الأختام', icon: ScrollText },
   { to: '/reports', label: 'التقارير', icon: FileBarChart },
 ]
 
 /** Field roles open straight on their one job; managers get the full set. */
-const grantedIcon = { generation: Zap, distribution: LayoutGrid, tasks: ListChecks, 'seal-work': ScrollText, attendance: Users } as const
+const grantedIcon = { generation: Zap, distribution: LayoutGrid, tasks: ListChecks, 'seal-work': ScrollText, attendance: Users, readings: Gauge, 'readings-admin': Gauge } as const
 
 /** The menu of the role, plus the pages the manager opened for this person to look at. */
 export function navFor(e: Pick<Employee, 'role' | 'canSeals' | 'pages'>): NavItem[] {
   const base = baseNav(e)
   if (e.role === 'admin' || e.role === 'manager' || !e.pages?.length) return base
   const have = new Set(base.map((i) => i.to))
-  const extra = GRANTABLE_PAGES.filter((p) => e.pages!.includes(p.key) && !have.has(p.to)).map((p): NavItem => ({ to: p.to, label: p.label, icon: grantedIcon[p.key] }))
+  const extra: NavItem[] = []
+  for (const p of GRANTABLE_PAGES) {
+    if (!e.pages!.includes(p.key) || have.has(p.to)) continue
+    have.add(p.to)
+    extra.push({ to: p.to, label: p.key === 'readings-admin' ? 'القراءات' : p.label, icon: grantedIcon[p.key] })
+  }
   return [...base, ...extra]
 }
 

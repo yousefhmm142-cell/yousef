@@ -108,7 +108,7 @@ function PersonCard({ e, busy, run }: { e: Employee; busy: string | null; run(ke
                 aria-pressed={on}
                 disabled={busy === `${e.id}${p.key}`}
                 onClick={() =>
-                  void run(`${e.id}${p.key}`, () => setPages(e.id, on ? pages.filter((k) => k !== p.key) : [...pages, p.key]), on ? `أُغلقت ${p.label} عن ${e.fullName}` : `فُتحت ${p.label} لـ ${e.fullName} للاطلاع`)
+                  void run(`${e.id}${p.key}`, () => setPages(e.id, on ? pages.filter((k) => k !== p.key) : [...pages, p.key]), on ? `أُغلقت ${p.label} عن ${e.fullName}` : `فُتحت ${p.label} لـ ${e.fullName}${p.key.startsWith('readings') ? '' : ' للاطلاع'}`)
                 }
               >
                 {p.label}
