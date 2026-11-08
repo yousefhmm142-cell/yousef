@@ -165,3 +165,5 @@
 .sync-notice svg { flex: none; }
 .sync-notice .spin { animation: m2spin 1s linear infinite; }
 @media (max-width: 900px) { .sync-notice { top: 70px; } }
+
+@media (max-width: 900px) { .tabbar { overflow: hidden; } .tab-icon { width: 100%; max-width: 46px; } }

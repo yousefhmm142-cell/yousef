@@ -238,3 +238,7 @@
   .dialog-titles h2 { font-size: 18px; }
   .foot-hint { display: none; }
 }
+
+/* A long message never makes the page wider than the phone. */
+.toasts { grid-template-columns: minmax(0, 1fr); padding-inline: 12px; }
+.toast { max-width: 100%; box-sizing: border-box; overflow-wrap: anywhere; }

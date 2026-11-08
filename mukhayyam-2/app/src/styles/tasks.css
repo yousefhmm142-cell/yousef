@@ -165,3 +165,30 @@
   display: grid; place-items: center; align-content: center; gap: 2px; font: inherit; font-weight: 800; font-size: 14px; cursor: pointer; }
 .done-btn:hover, .done-btn:focus-visible { background: var(--ok); color: #fff; outline: none; }
 @media (max-width: 560px) { .done-btn { width: 58px; font-size: 13px; } }
+
+/* ---------- Tasks on a phone: actions first, no statistics, every card at full width ---------- */
+.done-more { display: none; }
+@media (max-width: 700px) {
+  .tasks .desk-only { display: none !important; }
+  .tasks .task-kpis { display: none; }
+  .tasks .ph { gap: 12px; }
+  .tasks .ph-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; width: 100%; }
+  .tasks .ph-actions .btn { min-width: 0; padding-inline: 12px; white-space: normal; text-align: center; line-height: 1.3; }
+  .tasks .ph-actions > * { width: 100%; justify-content: center; }
+  .tasks .ph-actions .ph-action { grid-column: 1 / -1; order: -1; min-height: 56px; font-size: 17px; }
+  .prep-card { margin-top: 4px; }
+  .prep-row { flex-direction: column; align-items: stretch; gap: 10px; }
+  .prep-row .task-no { align-self: flex-start; }
+  .prep-row .btn { width: 100%; justify-content: center; }
+  .task-li { flex-direction: column; gap: 0; }
+  .task-li > .task-row { border-end-start-radius: 0; border-end-end-radius: 0; }
+  .task-li > .done-btn { width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; padding: 12px; font-size: 15px;
+    border-start-start-radius: 0; border-start-end-radius: 0; border-top: 0; }
+  .done-more { display: inline; font-weight: 700; font-size: 13px; opacity: .85; }
+  .task-filters { flex-wrap: nowrap; flex-direction: column; align-items: stretch; }
+  .tasks, .tasks > * { min-width: 0; max-width: 100%; }
+  .task-filters .chips { width: 100%; max-width: calc(100vw - 32px); min-width: 0; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .task-filters .chips::-webkit-scrollbar { display: none; }
+  .task-filters .chip { flex: none; }
+}
+@media (max-width: 700px) { .task-filters .segmented button { white-space: nowrap; font-size: 13.5px; padding-inline: 10px; } }

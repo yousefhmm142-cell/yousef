@@ -147,13 +147,13 @@ export function TasksPage() {
           <p className="muted">اكتب الأوردر، يصل للفني على واتساب أو SMS، وتعرف متى أنهاه.</p>
         </div>
         <div className="ph-actions">
-          <Button variant="secondary" size="lg" icon={<Printer size={18} />} onClick={() => window.print()}>
+          <Button variant="secondary" size="lg" icon={<Printer size={18} />} onClick={() => window.print()} className="desk-only">
             طباعة كشف اليوم
           </Button>
           {hasPage(employee, 'seal-work') && <Button variant="secondary" size="lg" icon={<ScrollText size={18} />} onClick={() => navigate('/tasks/seal-work')}>
             كشف أعمال الأختام
           </Button>}
-          {isManagerRole(employee.role) && <SubscribersButton />}
+          {isManagerRole(employee.role) && <span className="desk-only"><SubscribersButton /></span>}
           <Button variant="secondary" size="lg" icon={<Plus size={18} />} onClick={() => setCreating(true)}>
             مهمة جديدة
           </Button>
@@ -163,7 +163,7 @@ export function TasksPage() {
         </div>
       </header>
 
-      <div className="kpis">
+      <div className="kpis task-kpis">
         <div className="kpi hero">
           <div className="kpi-label"><span className="kpi-ico"><ListChecks size={16} /></span>المفتوحة</div>
           <div className="kpi-value num">{open.length}<small>مهمة</small></div>
@@ -267,7 +267,7 @@ export function TasksPage() {
                 </button>
                 {t.assigneeId && isOpen(t) && (
                   <button type="button" className="done-btn" aria-label={`تم إنجاز المهمة ${t.number || ''}`} title="الفني خلّصها: علّمها منجزة" onClick={() => void doneFor(t)}>
-                    <CheckCheck size={20} /><span>تم</span>
+                    <CheckCheck size={20} /><span>تم</span><small className="done-more">الفني خلّصها</small>
                   </button>
                 )}
               </li>
