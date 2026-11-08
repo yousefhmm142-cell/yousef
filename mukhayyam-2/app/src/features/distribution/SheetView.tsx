@@ -8,9 +8,24 @@ import { RUN_NAMES, runSegments, sheetTotals, type DistributionSheet, type ZoneR
 import { useZones } from './repo'
 import { clock12 } from '../../lib/format'
 
-const DAY_MIN = 24 * 60
-const TICKS = [0, 3, 6, 9, 12, 15, 18, 21]
-const tickLabel = (h: number) => `${h % 12 === 0 ? 12 : h % 12} ${h < 12 ? 'ص' : 'م'}`
+// The day on the bar runs from 7 in the morning to 2 after midnight, an hour per mark.
+const START = 7 * 60
+const END = 26 * 60
+const SPAN = END - START
+const TICKS = Array.from({ length: 20 }, (_, i) => 7 + i)
+const tickLabel = (h: number) => { const x = h % 24; return `${x % 12 === 0 ? 12 : x % 12}${x < 12 ? 'ص' : 'م'}` }
+/** A run's pieces on that window (after-midnight hours come at the end); outside it they are left off. */
+function windowSegments(r: Pick<ZoneRun, 'start' | 'end'>): Array<[number, number]> {
+  const out: Array<[number, number]> = []
+  for (let [a, b] of runSegments(r)) {
+    if (b <= START) { a += 1440; b += 1440 }
+    const x = Math.max(a, START), y = Math.min(b, END)
+    if (y > x) out.push([x - START, y - START])
+  }
+  // A run past midnight is one piece on this bar, not two.
+  out.sort((p, q) => p[0] - q[0])
+  return out.reduce<Array<[number, number]>>((m, seg) => { const last = m[m.length - 1]; if (last && seg[0] <= last[1]) last[1] = Math.max(last[1], seg[1]); else m.push([...seg]); return m }, [])
+}
 
 export function useSheetContext(sheet: DistributionSheet | null | undefined) {
   const zones = useZones()
@@ -78,19 +93,28 @@ export function SheetView({ sheet, ctx }: { sheet: DistributionSheet; ctx: Ctx }
 
 /** One bar per zone across the 24 hours: when each zone actually had power. */
 function Timeline({ sheet, zoneNames }: { sheet: DistributionSheet; zoneNames: Map<number, string> }) {
+  // The load chart: each run's block rises with its average load (scaled to the day's highest, per unit).
+  // Heights from the day's lowest to its highest load (per unit), so the difference between runs shows.
+  const top: Record<string, number> = {}
+  const low: Record<string, number> = {}
+  for (const z of sheet.zones) for (const r of z.runs) {
+    const v = readingsAverage(r.loads, r.extra)
+    if (v !== null) { top[r.loadUnit] = Math.max(top[r.loadUnit] ?? 0, v); low[r.loadUnit] = Math.min(low[r.loadUnit] ?? Infinity, v) }
+  }
+  const height = (v: number, u: string) => { const a = low[u]!, b = top[u]!; return b > a ? 30 + 70 * ((v - a) / (b - a)) : 70 }
   return (
     <section className="card">
       <div className="card-h">
         <span className="ico-round"><Clock size={16} /></span>
-        <h2>التغذية خلال اليوم</h2>
-        <span className="meta">من منتصف الليل إلى منتصف الليل</span>
+        <h2>التغذية والأحمال خلال اليوم</h2>
+        <span className="meta">من 7 الصبح لـ 2 بعد نص الليل · ارتفاع الشكل = متوسط الحمل</span>
       </div>
-      <div className="tl" role="img" aria-label="أوقات تغذية المناطق خلال اليوم">
+      <div className="tl" role="img" aria-label="أوقات تغذية المناطق وأحمالها خلال اليوم">
         <div className="tl-row tl-axis" aria-hidden="true">
           <span />
           <div className="tl-ticks">
-            {TICKS.map((h) => (
-              <i key={h} style={{ insetInlineStart: `${(h / 24) * 100}%` }}>{tickLabel(h)}</i>
+            {TICKS.map((h, k) => (
+              <i key={h} data-odd={k % 2 === 1 || undefined} data-third={k % 3 !== 0 || undefined} style={{ insetInlineStart: `${((h * 60 - START) / SPAN) * 100}%` }}>{tickLabel(h)}</i>
             ))}
           </div>
         </div>
@@ -102,16 +126,21 @@ function Timeline({ sheet, zoneNames }: { sheet: DistributionSheet; zoneNames: M
             </div>
             <div className="tl-track" data-off={!z.supplied || undefined}>
               {z.supplied &&
-                z.runs.flatMap((r, i) =>
-                  runSegments(r).map(([a, b], k) => (
+                z.runs.flatMap((r, i) => {
+                  const avg = readingsAverage(r.loads, r.extra)
+                  const h = avg !== null ? height(avg, r.loadUnit) : 0
+                  return windowSegments(r).map(([a, b], k) => (
                     <span
                       key={`${r.id}-${k}`}
-                      className="tl-seg"
-                      style={{ insetInlineStart: `${(a / DAY_MIN) * 100}%`, width: `${((b - a) / DAY_MIN) * 100}%` }}
-                      title={`التشغيلة ${RUN_NAMES[i]}: ${clock12(r.start)} ← ${clock12(r.end)}`}
-                    />
-                  )),
-                )}
+                      className="tl-run"
+                      style={{ insetInlineStart: `${(a / SPAN) * 100}%`, width: `${((b - a) / SPAN) * 100}%` }}
+                      title={`التشغيلة ${RUN_NAMES[i]}: ${clock12(r.start)} ← ${clock12(r.end)}${avg !== null ? ` · متوسط الحمل ${formatAmount(avg)} ${r.loadUnit}` : ''}`}
+                    >
+                      {avg !== null && <span className="tl-load" style={{ height: `${h}%` }}>{k === 0 && <b className="num">{formatAmount(avg)}<small>{r.loadUnit}</small></b>}</span>}
+                      <span className="tl-seg" />
+                    </span>
+                  ))
+                })}
             </div>
           </div>
         ))}
