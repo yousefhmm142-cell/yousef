@@ -34,7 +34,10 @@ export function navFor(e: Pick<Employee, 'role' | 'canSeals' | 'pages'>): NavIte
     have.add(p.to)
     extra.push({ to: p.to, label: p.key === 'readings-admin' ? 'القراءات' : p.label, icon: grantedIcon[p.key] })
   }
-  return [...base, ...extra]
+  // An office person works in the pages given to him: they come first (tasks before attendance).
+  // The tasks office (مهند) opens on the tasks: «/» leads there, so its own attendance tab (a placeholder) goes.
+  if (e.role === 'staff' && !e.canSeals && e.pages.includes('tasks')) return extra
+  return e.role === 'staff' ? [...extra, ...base] : [...base, ...extra]
 }
 
 function baseNav({ role, canSeals }: Pick<Employee, 'role' | 'canSeals'>): NavItem[] {

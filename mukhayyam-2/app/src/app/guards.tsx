@@ -35,7 +35,8 @@ export function ReadingsGate({ children }: { children: ReactNode }) {
 /** A manager page that the manager may have opened for this person: the roles in `roles`, or the page itself. */
 export function PageGate({ page, roles, children }: { page: PageKey; roles?: Role[]; children: ReactNode }) {
   const employee = useEmployee()
-  const view = !roles?.includes(employee.role) && employee.role !== 'admin' && employee.role !== 'manager'
+  // Tasks are run by whoever has the page (the database lets him), so that page is not «view only».
+  const view = !roles?.includes(employee.role) && employee.role !== 'admin' && employee.role !== 'manager' && page !== 'tasks' && page !== 'seal-work'
   if (!(roles?.includes(employee.role) || hasPage(employee, page))) return <NoAccess />
   return view ? (
     <>

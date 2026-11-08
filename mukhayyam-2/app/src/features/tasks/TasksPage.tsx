@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { AlarmClock, CheckCheck, Copy, Hammer, ListChecks, MapPin, MessageCircle, MessageSquareText, Phone, PhoneIncoming, Plus, Printer, ScrollText, TimerReset, UserRound, XCircle } from 'lucide-react'
+import { AlarmClock, CheckCheck, Copy, ListChecks, MapPin, MessageCircle, MessageSquareText, Phone, PhoneIncoming, Plus, Printer, ScrollText, TimerReset, UserRound, XCircle } from 'lucide-react'
 import { taskMatrix } from '../reports/build'
 import { TaskPrintSheet } from './TaskPrintSheet'
 import { sealWorkAsTasks, useSealWork } from './sealWork'
@@ -48,12 +48,7 @@ const errorText: Record<string, string> = {
 }
 const errText = (e: unknown) => errorText[e instanceof SheetStateError ? e.message : ''] ?? 'تعذّر الحفظ. حاول مرة أخرى.'
 
-type View = 'open' | 'today' | 'all'
-const views = [
-  { value: 'open', label: 'المفتوحة' },
-  { value: 'today', label: 'أُنجزت اليوم' },
-  { value: 'all', label: 'آخر 30 يوماً' },
-] as const
+type View = 'waiting' | 'open' | 'late' | 'today' | 'all'
 
 function useTechnicians(): Employee[] {
   return (
@@ -88,7 +83,7 @@ export function TasksPage() {
   const zones = useZones()
   const technicians = useTechnicians()
   const now = useNow(30_000)
-  const [view, setView] = useState<View>('open')
+  const [picked, setView] = useState<View | null>(null)
   const [who, setWho] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
   const [preparing, setPreparing] = useState(false)
@@ -109,10 +104,10 @@ export function TasksPage() {
   const open = all.filter((t) => isOpen(t) && !!t.assigneeId)
   const doneToday = all.filter((t) => t.status === 'done' && t.completedAt && toISODate(new Date(t.completedAt)) === today)
   const late = open.filter((t) => isOverdue(t, now))
-  const working = open.filter((t) => t.status === 'in_progress' || t.status === 'seen')
-  const avgToday = doneToday.length ? Math.round(doneToday.reduce((n, t) => n + elapsedMinutes(t, now), 0) / doneToday.length) : null
 
-  const shown = (view === 'open' ? open : view === 'today' ? doneToday : all.filter((t) => !!t.assigneeId)).filter((t) => !who || t.assigneeId === who)
+  // Calls waiting for a technician come first when there are any.
+  const view: View = picked ?? (prepared.length ? 'waiting' : 'open')
+  const shown = (view === 'late' ? late : view === 'today' ? doneToday : view === 'all' ? all.filter((t) => !!t.assigneeId) : open).filter((t) => !who || t.assigneeId === who)
   const typeName = (id: number) => types?.find((t) => t.id === id)?.name ?? 'مهمة'
   const zoneName = (id: number | null) => (id ? zones?.find((z) => z.id === id)?.name ?? null : null)
   const person = (id: string | null) => (id ? technicians.find((e) => e.id === id) : undefined)
@@ -142,49 +137,41 @@ export function TasksPage() {
       <header className="ph">
         <div>
           <h1>المهام الميدانية</h1>
-          <p className="muted">اكتب الأوردر، يصل للفني على واتساب أو SMS، وتعرف متى أنهاه.</p>
-        </div>
-        <div className="ph-actions">
-          <Button variant="secondary" size="lg" icon={<Printer size={18} />} onClick={() => window.print()} className="desk-only">
-            طباعة كشف اليوم
-          </Button>
-          {hasPage(employee, 'seal-work') && <Button variant="secondary" size="lg" icon={<ScrollText size={18} />} onClick={() => navigate('/tasks/seal-work')}>
-            كشف أعمال الأختام
-          </Button>}
-          {isManagerRole(employee.role) && <span className="desk-only"><SubscribersButton /></span>}
-          <Button variant="secondary" size="lg" icon={<Plus size={18} />} onClick={() => setCreating(true)}>
-            مهمة جديدة
-          </Button>
-          <Button variant="primary" size="lg" icon={<PhoneIncoming size={18} />} onClick={() => setPreparing(true)} className="ph-action">
-            تجهيز مهمة
-          </Button>
+          <p className="muted task-sub">اكتب الأوردر، يصل للفني على واتساب أو SMS، وتعرف متى أنهاه.</p>
         </div>
       </header>
 
-      <div className="kpis task-kpis">
-        <div className="kpi hero">
-          <div className="kpi-label"><span className="kpi-ico"><ListChecks size={16} /></span>المفتوحة</div>
-          <div className="kpi-value num">{open.length}<small>مهمة</small></div>
-          <div className="kpi-sub">{working.length} عند الفنيين الآن</div>
-        </div>
-        <div className="kpi glass" data-tone={late.length ? 'danger' : undefined}>
-          <div className="kpi-label"><span className="kpi-ico"><AlarmClock size={16} /></span>تجاوزت وقتها</div>
-          <div className="kpi-value num">{late.length}</div>
-          <div className="kpi-sub">تجاوزت المدة التي حددتها</div>
-        </div>
-        <div className="kpi glass">
-          <div className="kpi-label"><span className="kpi-ico"><CheckCheck size={16} /></span>أُنجزت اليوم</div>
-          <div className="kpi-value num">{doneToday.length + sealDone.tasks.length}</div>
-          <div className="kpi-sub">{avgToday !== null ? `متوسط المدة ${durationText(avgToday)}` : 'لا شيء بعد'}</div>
-        </div>
-        <div className="kpi glass">
-          <div className="kpi-label"><span className="kpi-ico"><Hammer size={16} /></span>الفنيون</div>
-          <div className="kpi-value num">{technicians.length}</div>
-          <div className="kpi-sub">{technicians.filter((t) => !t.phone).length ? `${technicians.filter((t) => !t.phone).length} بدون رقم جوال` : 'كلهم برقم جوال'}</div>
-        </div>
+      <div className="task-board" role="tablist" aria-label="حالة المهام">
+        {([
+          ['waiting', 'بانتظار فني', prepared.length, PhoneIncoming, prepared.length ? 'brand' : ''],
+          ['open', 'عند الفنيين', open.length, ListChecks, ''],
+          ['late', 'تجاوزت وقتها', late.length, AlarmClock, late.length ? 'danger' : ''],
+          ['today', 'خلصت اليوم', doneToday.length + sealDone.tasks.length, CheckCheck, 'ok'],
+        ] as const).map(([k, label, n, Icon, tone]) => (
+          <button key={k} type="button" role="tab" aria-selected={view === k} className="tb-tile" data-tone={tone || undefined} onClick={() => setView(k)}>
+            <span className="tb-top"><Icon size={17} />{label}</span>
+            <b className="num">{n}</b>
+          </button>
+        ))}
       </div>
 
-      <section className="card prep-card">
+      <div className="ph-actions task-actions">
+        <Button variant="secondary" size="lg" icon={<Printer size={18} />} onClick={() => window.print()} className="desk-only">
+          طباعة كشف اليوم
+        </Button>
+        {hasPage(employee, 'seal-work') && <Button variant="secondary" size="lg" icon={<ScrollText size={18} />} onClick={() => navigate('/tasks/seal-work')} className={isManagerRole(employee.role) ? undefined : 'desk-only'}>
+          كشف أعمال الأختام
+        </Button>}
+        {isManagerRole(employee.role) && <span className="desk-only"><SubscribersButton /></span>}
+        <Button variant="secondary" size="lg" icon={<Plus size={18} />} onClick={() => setCreating(true)}>
+          مهمة جديدة
+        </Button>
+        <Button variant="primary" size="lg" icon={<PhoneIncoming size={18} />} onClick={() => setPreparing(true)} className="ph-action">
+          تجهيز مهمة
+        </Button>
+      </div>
+
+      {view === 'waiting' && <section className="card prep-card">
         <div className="card-h">
           <span className="ico-round brand"><PhoneIncoming size={16} /></span>
           <h2>مهام مجهّزة بانتظار فني</h2>
@@ -211,10 +198,9 @@ export function TasksPage() {
             ))}
           </ul>
         )}
-      </section>
+      </section>}
 
-      <div className="task-filters">
-        <Segmented<View> label="عرض المهام" value={view} options={views} onChange={setView} />
+      {view !== 'waiting' && <div className="task-filters">
         <div className="chips">
           <Chip pressed={!who} onClick={() => setWho(null)}>الكل</Chip>
           {technicians.map((t) => (
@@ -223,14 +209,15 @@ export function TasksPage() {
               {open.some((x) => x.assigneeId === t.id) && <span className="chip-count num">{open.filter((x) => x.assigneeId === t.id).length}</span>}
             </Chip>
           ))}
+          <Chip pressed={view === 'all'} onClick={() => setView(view === 'all' ? 'open' : 'all')}>آخر 30 يوم</Chip>
         </div>
-      </div>
+      </div>}
 
-      {!tasks ? (
+      {view === 'waiting' ? null : !tasks ? (
         <div className="loading-block" aria-busy="true" />
       ) : shown.length === 0 ? (
         <div className="empty card">
-          <h3>{view === 'open' ? 'لا مهام مفتوحة' : view === 'today' ? 'لم تُنجز مهام اليوم بعد' : 'لا مهام'}</h3>
+          <h3>{view === 'open' ? 'لا مهام عند الفنيين' : view === 'late' ? 'ولا مهمة متأخرة 👌' : view === 'today' ? 'لم تُنجز مهام اليوم بعد' : 'لا مهام'}</h3>
           <p>اضغط «مهمة جديدة»، اختر الفني ونوع العمل، وأرسلها بضغطة.</p>
         </div>
       ) : (

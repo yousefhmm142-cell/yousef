@@ -32,6 +32,8 @@ export function Home() {
   const employee = useEmployee()
   // The accountant's job is the seals: open straight on them.
   if (employee.canSeals && (employee.role === 'staff' || employee.role === 'technician')) return <Navigate to="/seals" replace />
+  // Someone who runs the tasks from the office (مهند) opens straight on them.
+  if (employee.role === 'staff' && employee.pages?.includes('tasks')) return <Navigate to="/tasks" replace />
   switch (employee.role) {
     case 'admin':
     case 'manager':
