@@ -53,3 +53,11 @@ describe('short SMS', () => {
     expect(taskSms({ ...base, details: '', subscriberName: 'سامي', location: 'المقبرة' }, { type: 'فحص' })).toBe('مهمة 38: فحص · سامي · 0599450333 · المقبرة')
   })
 })
+
+import { taskSmsFull } from './message'
+describe('full SMS from the office phone', () => {
+  it('keeps the whole name and every detail, without a link', () => {
+    const t = { id: 'x', number: 38, typeId: 1, assigneeId: 'a', createdBy: null, details: 'إعادة شبك + تركيب ساعة فحص', subscriberName: 'مروان عبد الفتاح حمدان', subscriberPhone: '0599450333', zoneId: null, location: 'أبو عمار · طبلون 15', priority: 'normal' as const, expectedMinutes: 30, status: 'new' as const, sentAt: null, seenAt: null, startedAt: null, completedAt: null, cancelledAt: null, completionNotes: '', cancelReason: '', linkToken: 't', createdAt: '' }
+    expect(taskSmsFull(t, { type: 'فصل ووصل' })).toBe('مهمة 38: فصل ووصل\nإعادة شبك + تركيب ساعة فحص\nالمشترك: مروان عبد الفتاح حمدان 0599450333\nالمكان: أبو عمار · طبلون 15')
+  })
+})

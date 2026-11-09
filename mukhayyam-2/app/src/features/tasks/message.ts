@@ -36,6 +36,21 @@ export function taskSms(t: Task, names: { type: string; zone?: string | null }):
   return fit([head, t.subscriberPhone ?? ''].filter(Boolean)).slice(0, 70)
 }
 
+/**
+ * The order as a full SMS from the office phone (مهند): the whole subscriber name and every detail,
+ * even if it takes two messages; still no link.
+ */
+export function taskSmsFull(t: Task, names: { type: string; zone?: string | null }): string {
+  const flag = t.priority === 'emergency' ? 'طارئ: ' : t.priority === 'urgent' ? 'مستعجل: ' : ''
+  const lines = [`${flag}مهمة ${t.number}: ${names.type}`]
+  if (t.details.trim()) lines.push(t.details.trim())
+  const who = [t.subscriberName.trim(), t.subscriberPhone].filter(Boolean).join(' ')
+  if (who) lines.push(`المشترك: ${who}`)
+  const where = [names.zone, t.location.trim()].filter(Boolean).join(' · ')
+  if (where) lines.push(`المكان: ${where}`)
+  return lines.join('\n')
+}
+
 /** WhatsApp only opens the chat with the country code the person registered with (972 for most here). */
 export const whatsappUrl = (phone: string, text: string, code: WaCode = 972) => `https://wa.me/${international(phone, code)}?text=${encodeURIComponent(text)}`
 

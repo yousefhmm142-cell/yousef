@@ -27,7 +27,7 @@ import { useToast } from '../../ui/Toast'
 import { useZones } from '../distribution/repo'
 import { useConfirm } from '../../ui/Confirm'
 import { SheetStateError } from '../sheets/workflow'
-import { smsUrl, taskLink, taskMessage, taskSms, whatsappUrl } from './message'
+import { smsUrl, taskLink, taskMessage, taskSms, taskSmsFull, whatsappUrl } from './message'
 import { sendCompanySms, smsError } from '../sms/repo'
 import {
   durationText,
@@ -72,7 +72,8 @@ async function sendOrder(task: Task, channel: Channel, tech: Employee & { phone:
     await refreshTasks()
     return 'company'
   }
-  const text = channel === 'sms' ? taskSms(task, names) : taskMessage(task, names, taskLink(task.linkToken))
+  // From a phone (مهند): the full order, even if it takes two messages, so the whole name shows.
+  const text = channel === 'sms' ? taskSmsFull(task, names) : taskMessage(task, names, taskLink(task.linkToken))
   // Without internet WhatsApp's web link cannot open, but the WhatsApp app itself can (it sends when online); SMS needs no internet.
   const web = whatsappUrl(phone, text, tech.waCode ?? 972)
   const url = channel === 'whatsapp' ? (navigator.onLine ? web : web.replace(/^https:\/\/wa\.me\/(\d+)\?text=/, 'whatsapp://send?phone=$1&text=')) : smsUrl(phone, text)
@@ -691,7 +692,7 @@ function NewTaskDialog({ technicians, onClose, typeName, zoneName }: {
       big={tech?.fullName ?? 'اختر الفني'}
       rows={[['المطلوب', [typeId, ...extraTypes].map((x) => activeTypes.find((t) => t.id === x)?.name ?? '').filter(Boolean).join(' + ')], ['المشترك', subscriberName.trim()], ['الجوال', subscriberPhone ? <bdi dir="ltr">{formatPhone(subscriberPhone)}</bdi> : ''], ['المكان', [place, location.trim()].filter(Boolean).join(' · ')]]}
       more={[['الأولوية', priorityInfo[priority].label], ['المدة المتوقعة', durationText(expected)]]}
-      note={<span>واتساب: الرسالة كاملة مع رابط «أنهيت». SMS: رسالة وحدة قصيرة بدون رابط.</span>}
+      note={<span>واتساب: الرسالة كاملة مع رابط «أنهيت». SMS: بدون رابط (من الاشتراك رسالة وحدة قصيرة، ومن جوالك كاملة).</span>}
     />
   )
 
