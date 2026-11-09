@@ -207,7 +207,8 @@ async function pushSheet(spec: KindSpec, doc: SheetDoc, me: Employee): Promise<v
   const remote: RemoteHead = await run(
     sb.from(spec.header).select('id, status').eq(spec.dateCol, date).maybeSingle<{ id: string; status: SheetStatus }>(),
   )
-  const filler = spec.fillers.includes(me.role)
+  // By role, or because the manager gave this person the page (then they fill and send it too).
+  const filler = spec.fillers.includes(me.role) || hasPage(me, spec.page)
 
   let current = doc
   if (remote && remote.id !== doc.id) {
