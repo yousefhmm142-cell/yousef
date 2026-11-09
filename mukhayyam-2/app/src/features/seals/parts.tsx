@@ -1,3 +1,4 @@
+import { SealHistoryButton } from './SealHistory'
 import { NavLink } from 'react-router'
 import { clock12 } from '../../lib/format'
 import { Pill } from '../../ui/primitives'
@@ -12,6 +13,7 @@ export function SealsTabs({ canIssue = true }: { canIssue?: boolean }) {
       <NavLink to="/seals" end>صرف الأختام</NavLink>
       <NavLink to="/seals/recent">آخر ما صُرف</NavLink>
       <NavLink to="/seals/log">سجل الأختام والبحث</NavLink>
+      <SealHistoryButton />
     </nav>
   )
 }

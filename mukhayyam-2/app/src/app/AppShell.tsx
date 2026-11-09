@@ -1,15 +1,16 @@
 import { Ellipsis, Settings, UserRound } from 'lucide-react'
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router'
 import { useEmployee } from '../auth/AuthProvider'
 import { isManagerRole, titleOf } from '../types'
 import { Avatar, Logo } from '../ui/primitives'
 import { StatusBadge, SyncNotice, ThemeToggle } from '../ui/status'
+import { ManagerActivityProvider } from '../features/dashboard/ActivityLive'
 import { navFor, type NavItem } from './nav'
 
 const MAX_TABS = 5
 const accountTab: NavItem = { to: '/account', label: 'حسابي', icon: UserRound }
-/** Managers keep these two links icon-only, including hover and the active page. */
+/** Managers keep the long reports behind one disclosure; staff keep their page names. */
 const compactLinks = new Set(['/reports', '/tasks/seal-work'])
 const moreTab: NavItem = { to: '/more', label: 'المزيد', icon: Ellipsis }
 
@@ -21,11 +22,28 @@ export function AppShell() {
   const tabs = items.length < MAX_TABS ? [...items, accountTab] : [...items.slice(0, MAX_TABS - 1), moreTab]
 
   const hasSettings = items.some((i) => i.to === '/settings')
-  const barItems = items.filter((i) => i.to !== '/settings')
+  const moreItems = compact ? items.filter((i) => compactLinks.has(i.to)) : []
+  const barItems = items.filter((i) => i.to !== '/settings' && !(compact && compactLinks.has(i.to)))
+  const moreRef = useRef<HTMLDetailsElement>(null)
 
   // The arch follows the current section's link, as wide as its word.
   const navRef = useRef<HTMLElement>(null)
   const { pathname } = useLocation()
+  useEffect(() => {
+    if (moreRef.current) moreRef.current.open = false
+  }, [pathname])
+  useEffect(() => {
+    const close = (e: PointerEvent | KeyboardEvent) => {
+      const d = moreRef.current
+      if (!d?.open) return
+      if (e instanceof KeyboardEvent) {
+        if (e.key === 'Escape') { d.open = false; d.querySelector('summary')?.focus() }
+      } else if (!d.contains(e.target as Node)) d.open = false
+    }
+    document.addEventListener('pointerdown', close)
+    document.addEventListener('keydown', close)
+    return () => { document.removeEventListener('pointerdown', close); document.removeEventListener('keydown', close) }
+  }, [])
   const [arch, setArch] = useState<{ x: number; w: number } | null>(null)
   useLayoutEffect(() => {
     const nav = navRef.current
@@ -42,7 +60,7 @@ export function AppShell() {
   }, [pathname, barItems.length])
 
   return (
-    <div className="shell">
+    <ManagerActivityProvider enabled={compact}><div className="shell">
       <a href="#main" className="skip">تخطَّ إلى المحتوى</a>
       <div className="topbar-row">
       <header className="topbar glass">
@@ -64,6 +82,19 @@ export function AppShell() {
               </NavLink>
             ))}
           </nav>
+        )}
+
+        {moreItems.length > 0 && (
+          <details ref={moreRef} className="nav-more">
+            <summary className={`topnav-link nav-more-toggle${moreItems.some((i) => pathname === i.to) ? ' active' : ''}`} aria-label="التقارير وكشف أعمال الأختام" title="التقارير والكشوفات">
+              <Ellipsis size={21} aria-hidden="true" />
+            </summary>
+            <nav className="nav-more-list" aria-label="التقارير والكشوفات">
+              {moreItems.map(({ to, label, icon: Icon }) => (
+                <NavLink key={to} to={to}><Icon size={18} aria-hidden="true" /><span>{label}</span></NavLink>
+              ))}
+            </nav>
+          </details>
         )}
 
         <div className="topbar-end">
@@ -106,6 +137,6 @@ export function AppShell() {
           ))}
         </nav>
       )}
-    </div>
+    </div></ManagerActivityProvider>
   )
 }

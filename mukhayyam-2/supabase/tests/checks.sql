@@ -558,4 +558,40 @@ select test.ok((select (public.sms_info()->>'ready')::boolean and public.sms_inf
 select test.fails($$select user_pass from m2_ops.sms_config$$, '%permission denied%', 'the app cannot read the SMS password');
 reset role;
 
+-- ---------- Immutable operation references and scoped live activity ----------
+reset role; select test.login('رامي أبو عجوة'); set role authenticated;
+select public.seal_add_roll(990001,990005,public.seal_today(),'activity test');
+select test.ok((select count(*)=1 from public.seal_activity('seal_rolls', (select id::text from public.seal_rolls where from_no=990001), null,null) where text like '%أضاف رول%' and who='رامي أبو عجوة'), 'new seal rolls have an actor and immutable operation reference');
+select test.ok((select count(*)>0 from public.recent_activity(200) where kind='seal' and text like '%990001%'), 'seal work appears in the manager activity feed');
+select public.seal_issue((select id from public.employees where full_name='قصي الشافعي'),public.seal_today(),array[990001],null);
+select test.ok((select count(*)=0 from public.recent_activity(200) where text like 'صرف الختم 990001%'), 'issuing one batch does not duplicate its notification for every seal');
+select public.seal_record(990001,'used',public.seal_today(),'تفتيش (مشترك افتراضي)');
+select test.ok((select count(*)=1 from public.recent_activity(200) where text like 'سجّل استخدام الختم 990001%'), 'recorded seal work is a live activity');
+select public.seal_record(990001,'issued',null,'');
+select public.seal_unissue(array[990001]);
+select test.ok((select count(*)=1 from public.recent_activity(200) where text like 'أعاد للمخزن الختم 990001%'), 'returning a seal remains visible in activity');
+select test.ok((select bool_and(not (to_jsonb(a) ? 'old_row') and not (to_jsonb(a) ? 'new_row')) from public.recent_activity(200) a), 'activity RPC never exposes private row snapshots');
+select test.fails($$select * from public.seal_activity('employees',null,null,null)$$,'%not_allowed%','seal history cannot expose employee history');
+select test.ok((select count(*)=0 from public.seal_activity('seal_rolls','nonexistent',null,null)), 'record history is scoped to the requested record');
+reset role;
+select test.ok((select count(*)=1 from public.audit_log where table_name='seal_rolls' and new_row->>'from_no'='990001'), 'adding a roll does not audit each blank seal');
+update public.employees set can_seals=true where full_name='موظف إداري';
+select test.login('موظف إداري'); set role authenticated;
+select public.seal_add_roll(991001,991005,public.seal_today(),'accountant operation');
+select test.ok((select count(*)=1 from public.seal_activity(null,null,public.current_employee_id(),null) where text like '%991001%' and who='موظف إداري'), 'an accountant can retrieve their attributed operations');
+select test.fails($$select * from public.recent_activity(10)$$,'%not_allowed%','accountants cannot retrieve the manager system feed');
+select test.ok((select count(*)=0 from public.seal_activity(null,null,null,0)), 'history pagination respects its reference cursor');
+reset role;
+update public.seal_rolls set note='changed' where from_no=991001;
+select test.ok((select count(*)=2 from public.audit_log where table_name='seal_rolls' and coalesce(new_row,old_row)->>'from_no'='991001'), 'an edit keeps the original insert reference');
+delete from public.seal_rolls where from_no=991001;
+select test.login('رامي أبو عجوة'); set role authenticated;
+select test.ok((select count(*)=3 from public.seal_activity(null,null,null,null) where table_name='seal_rolls' and text like '%991001%'), 'history survives deletion of the seal roll');
+reset role; select test.login('مشغّل الموقع'); set role authenticated;
+select test.fails($$select * from public.seal_activity()$$,'%not_allowed%','staff without seals permission cannot read seal history');
+reset role; set role anon;
+select test.fails($$select * from public.recent_activity()$$,'%permission denied%','visitors cannot read the activity feed');
+select test.fails($$select * from public.seal_activity()$$,'%permission denied%','visitors cannot read seal history');
+reset role;
+
 \echo 'ALL CHECKS PASSED'

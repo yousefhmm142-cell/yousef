@@ -238,3 +238,18 @@
   .tb-tile b { font-size: 26px; }
   .tb-tile { padding: 10px 14px; }
 }
+
+/* A separate technician archive; its paper contains only the selected person's filtered work. */
+.archive-filters { display:flex;align-items:end;gap:12px;flex-wrap:wrap;padding:20px; }
+.archive-filters label { display:grid;gap:7px;font-size:12px;flex:1 1 160px;min-width:0; }
+.archive-filters .archive-search { flex:2 1 250px; }
+.archive-results { overflow:hidden; }
+.archive-table { width:100%;border-collapse:collapse;text-align:start;font-size:13px; }
+.archive-table th,.archive-table td { padding:13px 16px;border-bottom:1px solid var(--line);text-align:start;overflow-wrap:anywhere; }
+.archive-table th { color:var(--muted);background:var(--surface-2);white-space:nowrap; }
+.archive-table td:first-child { white-space:nowrap; }
+@media(max-width:600px) { .archive-filters{padding:14px;} .archive-filters label{flex-basis:40%;} .archive-filters .archive-search{flex-basis:100%;} .archive-table{min-width:700px;} }
+@media print { .archive-print .archive-table{min-width:0;font-size:11px;} .archive-print th,.archive-print td{padding:7px;border:1px solid #aaa;} .archive-print .table-wrap{overflow:visible;} }
+.archive-table{table-layout:fixed;}.archive-table th:first-child{width:110px;}.archive-table td{vertical-align:top;line-height:1.8;}.archive-table .num{unicode-bidi:plaintext;}
+@media print{.archive-print .archive-table th:first-child{width:88px;}}
+.archive-filters .input,.archive-filters .select{min-width:0;width:100%;}.archive-results .table-wrap{overflow-x:auto;}

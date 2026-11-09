@@ -1,3 +1,4 @@
+import { SealHistoryButton } from './SealHistory'
 import { Printer } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { isDemo } from '../../config'
@@ -118,6 +119,7 @@ function BatchCard({ data, batch, onPrint, onEdit, onAssign, onDeleted }: { data
         <span className="grow" />
         <Button variant="ghost" icon={<Printer size={15} />} onClick={onPrint}>ورقة الصرف</Button>
         <Button variant="ghost" icon={<Pencil size={15} />} onClick={onEdit}>تعديل</Button>
+        <SealHistoryButton table="seal_batches" record={batch.id} label="السجل" />
         <Button
           variant="ghost"
           icon={<Trash2 size={15} />}

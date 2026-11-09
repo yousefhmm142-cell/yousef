@@ -2,6 +2,14 @@
 .seals { max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .seals .ph { margin-bottom: 0; }
 
+/* The same burgundy edge as the header, including the forms opened above the page. */
+.seals .roll-card, .seals .batch-card, .seals .group-card, .seals .kpi, .seals .unnamed, .seals .tech-nav,
+.seal-dialog .dialog-panel { border: 1.5px solid var(--brand); border-color: color-mix(in srgb, var(--brand-hi) 62%, var(--line)); }
+.seals .roll-card:hover, .seals .batch-card:hover, .seals .group-card:hover,
+.seal-dialog .dialog-panel { border-color: var(--brand-hi); box-shadow: var(--shadow), 0 0 0 1px #b1263824, 0 0 20px -12px var(--brand-hi); }
+.seals .seal-pill:not([data-bad]), .seal-dialog :is(.aside-box, .seal-input, .input, .select) { border-color: var(--brand); border-color: color-mix(in srgb, var(--brand-hi) 45%, var(--line)); }
+.seals button.seal-pill:hover, .seal-dialog :is(.seal-input, .input, .select):focus { border-color: var(--brand-hi); }
+
 .seals-tabs {
   display: inline-flex; gap: 4px; padding: 5px; border-radius: 999px; justify-self: start;
   background: var(--sunken); border: 1.5px solid var(--line);
@@ -203,3 +211,6 @@ table.seal-table tbody tr:hover { background: color-mix(in srgb, var(--brand) 5%
 .unnamed ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .unnamed li { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .unnamed li .muted { flex: 1; min-width: 0; }
+.seals .roll-actions {flex-wrap:wrap;}
+.seal-history-tools{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}.seal-history-tools label{white-space:nowrap;font-size:13px;}.seal-history-tools .input{flex:1;min-width:190px;}
+.seal-history-list{list-style:none;margin:20px 0;padding:0;display:grid;gap:10px;}.seal-history-list li{padding:16px;border:1px solid var(--brand);border-radius:15px;background:var(--surface-2);overflow-wrap:anywhere;}.seal-history-list li>div{display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap;}.seal-history-list time,.seal-history-list small{font-size:11px;color:var(--muted);}.seal-history-list p{font-size:13px;line-height:1.8;margin:10px 0;}

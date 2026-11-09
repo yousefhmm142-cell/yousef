@@ -11,6 +11,7 @@ import { SubscriberField } from '../tasks/SubscriberField'
 import { addRoll, addToBatch, assignBatch, importRoll, importTechnician, importUsage, issueBatch, recordSeal, refreshSeals, returnToStock, sealErrorText, updateBatch, updateRoll, useTechnicians } from './repo'
 import { parseIssueWorkbook, parseUsageWorkbook, planImport, rollPayload, usagePayload, type ImportPlan } from './import'
 import { composeDetails, latinDigits, ordinalWord, parseSealNumbers, sealStatusInfo, splitDetails, WORK_CHOICES, type Seal, type SealBatch, type SealData, type SealRoll, continueAfterSeparator, rollPrefix, withoutPendingStart } from './model'
+import { SealHistoryButton } from './SealHistory'
 import { dayLabel, SealPill } from './parts'
 
 // ---------- A new roll ----------
@@ -41,6 +42,7 @@ export function NewRollDialog({ onClose }: { onClose(): void }) {
 
   return (
     <Dialog
+      className="seal-dialog"
       open
       onClose={onClose}
       title="رول أختام جديد"
@@ -153,6 +155,7 @@ export function IssueDialog({ data, onClose, onDone, preset }: { data: SealData;
 
   return (
     <Dialog
+      className="seal-dialog"
       open
       onClose={onClose}
       title="تجهيز دفعة أختام"
@@ -272,6 +275,7 @@ export function AssignDialog({ batch, data, onClose }: { batch: SealBatch; data:
 
   return (
     <Dialog
+      className="seal-dialog"
       open
       onClose={onClose}
       title={`لمن الدفعة ${batch.label?.trim() || ordinalWord(batch.batchNo)}؟`}
@@ -401,6 +405,7 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
 
   return (
     <Dialog
+      className="seal-dialog"
       open
       onClose={onClose}
       title={seal ? `الختم ${seal.sealNo}` : 'تسجيل استخدام ختم'}
@@ -410,6 +415,7 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
       footer={
         <>
           <FootHint />
+          {seal && <SealHistoryButton table="seals" record={String(seal.sealNo)} label="سجل الختم" />}
           {seal && recorded && <Button variant="ghost" disabled={busy} onClick={() => void undo('undo')}>إلغاء التسجيل</Button>}
           {seal && seal.status !== 'in_stock' && <Button variant="ghost" disabled={busy} onClick={() => void undo('stock')}>إرجاع للمخزن</Button>}
           <Button variant="ghost" onClick={onClose}>إغلاق</Button>
@@ -549,6 +555,7 @@ export function ImportDialog({ onClose }: { onClose(): void }) {
 
   return (
     <Dialog
+      className="seal-dialog"
       open
       onClose={onClose}
       title="استيراد ملفات Excel القديمة"
@@ -664,6 +671,7 @@ export function EditBatchDialog({ batch, data, onClose }: { batch: SealBatch; da
 
   return (
     <Dialog
+      className="seal-dialog"
       open
       onClose={onClose}
       title={`تعديل الدفعة ${ordinalWord(batch.batchNo)}`}
@@ -774,6 +782,7 @@ export function EditRollDialog({ roll, onClose }: { roll: SealRoll; onClose(): v
 
   return (
     <Dialog
+      className="seal-dialog"
       open
       onClose={onClose}
       title={`تعديل الرول ${roll.fromNo} - ${roll.toNo}`}

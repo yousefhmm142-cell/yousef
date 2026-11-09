@@ -1,4 +1,17 @@
-import { AlertTriangle, Boxes, CheckCircle2, ClipboardList, FileBarChart, Radio, ScanLine, ChevronLeft } from 'lucide-react'
+import {
+  AlertTriangle,
+  Boxes,
+  CheckCircle2,
+  ClipboardList,
+  FileBarChart,
+  Radio,
+  ScanLine,
+  ChevronLeft,
+  Stamp,
+  BookOpen,
+  Settings,
+  Search,
+} from 'lucide-react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { Link } from 'react-router'
@@ -12,7 +25,7 @@ import { formatTime } from '../../lib/format'
 import { useNow } from '../../lib/useNow'
 import { roleLabel, type Role } from '../../types'
 import { Avatar } from '../../ui/primitives'
-import { useAttention, useFeed, type EventKind, type FeedEvent } from './activity'
+import { useAttention, useFeed, useActivityConnection, type EventKind, type FeedEvent } from './activity'
 
 const kindIcon: Record<EventKind, typeof Radio> = {
   report: FileBarChart,
@@ -20,6 +33,9 @@ const kindIcon: Record<EventKind, typeof Radio> = {
   task: ClipboardList,
   attendance: ScanLine,
   stock: Boxes,
+  seal: Stamp,
+  reading: BookOpen,
+  settings: Settings,
 }
 
 /** «قبل 5 د»، «قبل ساعتين»، وإلا اليوم/أمس مع الوقت. */
@@ -98,11 +114,22 @@ function EventRow({ e, now }: { e: FeedEvent; now: Date }) {
   const Icon = kindIcon[e.kind]
   return (
     <li data-tone={e.tone}>
-      <span className="feed-ico" aria-hidden="true"><Icon size={15} /></span>
-      <span className="feed-text">
-        <b>{e.who}</b> {e.text}
+      <span className="feed-ico" aria-hidden="true">
+        <Icon size={15} />
       </span>
-      <time className="num" dateTime={e.at}>{ago(e.at, now)}</time>
+      <span className="feed-text">
+        <b>{e.who}</b>
+        <span>{e.text}</span>
+        {e.reference && <small className="feed-ref">{e.reference}</small>}
+      </span>
+      {e.route && (
+        <Link to={e.route} className="feed-open" aria-label={`فتح ${e.text}`}>
+          <ChevronLeft size={16} />
+        </Link>
+      )}
+      <time className="num" dateTime={e.at}>
+        {ago(e.at, now)}
+      </time>
     </li>
   )
 }
@@ -111,25 +138,77 @@ function EventRow({ e, now }: { e: FeedEvent; now: Date }) {
 export function ActivityCard() {
   const now = useNow(60_000)
   const feed = useFeed()
+  const connected = useActivityConnection()
   const [all, setAll] = useState(false)
+  const [kind, setKind] = useState<EventKind | ''>('')
+  const [search, setSearch] = useState('')
+  const shown = feed?.filter(
+    (e) => (!kind || e.kind === kind) && `${e.who} ${e.text} ${e.reference ?? ''}`.includes(search.trim()),
+  )
   return (
-    <section className="card feed">
-      <div className="card-h">
-        <span className="ico-round brand"><ClipboardList size={16} /></span>
-        <h2>آخر الحركات</h2>
+    <section className="card feed feed-live">
+      <div className="feed-heading">
+        <span className="ico-round brand">
+          <Radio size={21} />
+        </span>
+        <div>
+          <small>نبض المكتب</small>
+          <h2>آخر الحركات</h2>
+        </div>
+        <span className="feed-connection" data-live={connected || undefined}>
+          <i />
+          {connected ? 'متابعة مباشرة' : 'آخر نسخة محفوظة'}
+        </span>
       </div>
-      {!feed ? (
-        <div className="skeleton-list" aria-busy="true">{Array.from({ length: 4 }, (_, i) => <span key={i} />)}</div>
-      ) : feed.length === 0 ? (
-        <p className="card-empty">لا حركات في آخر 7 أيام.</p>
+      <div className="feed-tools">
+        <label className="feed-search">
+          <Search size={16} />
+          <input
+            aria-label="بحث بالحركات"
+            placeholder="ابحث عن شخص أو مرجع…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </label>
+        <select
+          className="select"
+          aria-label="نوع الحركة"
+          value={kind}
+          onChange={(e) => setKind(e.target.value as EventKind | '')}
+        >
+          <option value="">كل الحركات</option>
+          <option value="seal">الأختام</option>
+          <option value="task">المهام</option>
+          <option value="attendance">الحضور</option>
+          <option value="report">التوليد</option>
+          <option value="sheet">التوزيع</option>
+          <option value="reading">القراءات</option>
+          <option value="settings">الإعدادات</option>
+        </select>
+      </div>
+      {!shown ? (
+        <div className="skeleton-list" aria-busy="true">
+          {Array.from({ length: 4 }, (_, i) => (
+            <span key={i} />
+          ))}
+        </div>
+      ) : !shown.length ? (
+        <p className="card-empty">لا حركات تطابق البحث.</p>
       ) : (
         <>
           <ul className="feed-list">
-            {(all ? feed : feed.slice(0, 10)).map((e) => <EventRow key={e.id} e={e} now={now} />)}
+            {(all ? shown : shown.slice(0, 8)).map((e) => (
+              <EventRow key={e.id} e={e} now={now} />
+            ))}
           </ul>
-          {feed.length > 10 && (
-            <button type="button" className="link-btn feed-more" onClick={() => setAll((v) => !v)}>{all ? 'عرض أقل' : `عرض الكل (${feed.length})`}</button>
-          )}
+          <div className="feed-bottom">
+            <span className="muted num">{shown.length} حركة في السجل الأخير</span>
+            {shown.length > 8 && (
+              <button type="button" className="link-btn" onClick={() => setAll((v) => !v)}>
+                {all ? 'عرض أقل' : 'عرض المزيد'}
+              </button>
+            )}
+          </div>
         </>
       )}
     </section>

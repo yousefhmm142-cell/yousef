@@ -1,3 +1,4 @@
+import { createContext, useContext } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../data/db'
 import { dayName } from '../../lib/dates'
@@ -6,19 +7,25 @@ import { isOpen, isOverdue } from '../tasks/model'
 // The manager's home page: what happened lately (from what this device already holds, so it is
 // instant and works offline) and what needs attention now.
 
-export type EventKind = 'report' | 'sheet' | 'task' | 'attendance' | 'stock'
+export type EventKind = 'report' | 'sheet' | 'task' | 'attendance' | 'stock' | 'seal' | 'reading' | 'settings'
 export interface FeedEvent {
   id: string
   at: string
   kind: EventKind
   who: string
   text: string
+  reference?: string
+  route?: string
   tone?: 'ok' | 'warn' | 'danger'
 }
 
 const SINCE_DAYS = 7
 
-export function useFeed(): FeedEvent[] | undefined {
+export const ActivityContext = createContext<{ feed?: FeedEvent[]; connected: boolean }>({ connected: false })
+export const useFeed = () => useContext(ActivityContext).feed
+export const useActivityConnection = () => useContext(ActivityContext).connected
+
+export function useCachedFeed(): FeedEvent[] | undefined {
   return useLiveQuery(async () => {
     const since = new Date(Date.now() - SINCE_DAYS * 86_400_000).toISOString()
     const [people, reports, sheets, tasks, types, punches] = await Promise.all([

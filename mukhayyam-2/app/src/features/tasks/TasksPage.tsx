@@ -9,7 +9,8 @@ import { fold, importSubscribers, readSubscribersFile, searchSubscribers, useSub
 import type { TaskType } from './model'
 import { ReportTable } from '../reports/ReportsPage'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
+import { TaskArchive } from './TaskArchive'
 import { useEmployee } from '../../auth/AuthProvider'
 import { db } from '../../data/db'
 import { toISODate, todayISO } from '../../lib/dates'
@@ -92,6 +93,7 @@ export function TasksPage() {
   useDocumentTitle('المهام الميدانية')
   const employee = useEmployee()
   const navigate = useNavigate()
+  const [params, setParams] = useSearchParams()
   const tasks = useTasks()
   const types = useTaskTypes()
   const zones = useZones()
@@ -146,6 +148,8 @@ export function TasksPage() {
   const sealToday = useSealWork(today, today, sealNames)
   const sealDone = useMemo(() => sealWorkAsTasks(sealToday, types ?? []), [sealToday, types])
 
+  if (params.get('view') === 'archive') return <div className="tasks"><TaskArchive onClose={() => setParams({})} /></div>
+
   return (
     <div className="tasks">
       <header className="ph">
@@ -170,6 +174,7 @@ export function TasksPage() {
       </div>
 
       <div className="ph-actions task-actions">
+        <Button variant="secondary" size="lg" icon={<ListChecks size={18} />} onClick={() => setParams({ view: 'archive' })}>أرشيف الفنيين</Button>
         <Button variant="secondary" size="lg" icon={<Printer size={18} />} onClick={() => window.print()} className="desk-only">
           طباعة كشف اليوم
         </Button>
@@ -586,12 +591,12 @@ function GiveDialog({ task, technicians, typeName, zoneName, onClose }: {
         <>
           <FootHint />
           <Button variant="ghost" onClick={() => setCancelling((c) => !c)}>إلغاء الطلب</Button>
-          <Button variant="secondary" icon={<MessageSquareText size={17} />} busy={busy === 'sms'} disabled={!!busy} onClick={() => void give('sms')}>SMS</Button>
-          <Button variant="primary" icon={<MessageCircle size={17} />} busy={busy === 'whatsapp'} disabled={!!busy} onClick={() => void give('whatsapp')}>إرسال واتساب</Button>
+          <Button variant="primary" icon={<MessageSquareText size={17} />} busy={busy === 'sms'} disabled={!!busy} onClick={() => void give('sms')}>SMS</Button>
+          <Button variant="secondary" icon={<MessageCircle size={17} />} busy={busy === 'whatsapp'} disabled={!!busy} onClick={() => void give('whatsapp')}>إرسال واتساب</Button>
         </>
       }
     >
-      <div className="form-grid" onKeyDown={saveOnCtrlEnter(() => void give('whatsapp'))}>
+      <div className="form-grid" onKeyDown={saveOnCtrlEnter(() => void give('sms'))}>
         <div className="prep-summary">
           <b>{typeName(task.typeId)}{task.details && ` · ${task.details}`}</b>
           <span>{[task.subscriberName, task.subscriberPhone && formatPhone(task.subscriberPhone), zoneName(task.zoneId), task.location].filter(Boolean).join(' · ') || 'بدون تفاصيل المشترك'}</span>
@@ -702,12 +707,12 @@ function NewTaskDialog({ technicians, onClose, typeName, zoneName }: {
         <>
           <FootHint />
           <Button variant="ghost" onClick={onClose}>إلغاء</Button>
-          <Button variant="secondary" icon={<MessageSquareText size={17} />} busy={busy === 'sms'} disabled={!!busy} onClick={() => void save('sms')}>SMS</Button>
-          <Button variant="primary" icon={<MessageCircle size={17} />} busy={busy === 'whatsapp'} disabled={!!busy} onClick={() => void save('whatsapp')}>إرسال واتساب</Button>
+          <Button variant="primary" icon={<MessageSquareText size={17} />} busy={busy === 'sms'} disabled={!!busy} onClick={() => void save('sms')}>SMS</Button>
+          <Button variant="secondary" icon={<MessageCircle size={17} />} busy={busy === 'whatsapp'} disabled={!!busy} onClick={() => void save('whatsapp')}>إرسال واتساب</Button>
         </>
       }
     >
-      <div className="form-grid" onKeyDown={saveOnCtrlEnter(() => void save('whatsapp'))}>
+      <div className="form-grid" onKeyDown={saveOnCtrlEnter(() => void save('sms'))}>
         <div className="field">
           <span className="label">الفني</span>
           <div className="chips">
@@ -858,10 +863,10 @@ function TaskDialog({ task, tech, typeName, zoneName, now, onClose }: {
 
         {open && (
           <div className="task-actions">
-            <Button variant={task.status === 'new' ? 'primary' : 'secondary'} icon={<MessageCircle size={17} />} busy={busy === 'whatsapp'} onClick={() => void send('whatsapp')}>
+            <Button variant="primary" icon={<MessageSquareText size={17} />} busy={busy === 'sms'} onClick={() => void send('sms')}>SMS</Button>
+            <Button variant="secondary" icon={<MessageCircle size={17} />} busy={busy === 'whatsapp'} onClick={() => void send('whatsapp')}>
               {task.status === 'new' ? 'إرسال واتساب' : 'إعادة على واتساب'}
             </Button>
-            <Button variant="secondary" icon={<MessageSquareText size={17} />} busy={busy === 'sms'} onClick={() => void send('sms')}>SMS</Button>
             <Button
               variant="ghost"
               icon={<Copy size={16} />}

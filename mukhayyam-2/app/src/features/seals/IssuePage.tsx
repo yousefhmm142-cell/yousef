@@ -1,3 +1,4 @@
+import { SealHistoryButton } from './SealHistory'
 import { FileSpreadsheet, Pencil, Plus, Stamp, Trash2, Upload } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useEmployee } from '../../auth/AuthProvider'
@@ -140,6 +141,7 @@ function RollActions({ rollId, canDelete, disabled, onIssue, onEdit }: { rollId:
     <div className="roll-actions">
       <Button variant="primary" disabled={disabled} onClick={onIssue}>تجهيز دفعة</Button>
       <Button variant="ghost" icon={<Pencil size={15} />} onClick={onEdit}>تعديل</Button>
+      <SealHistoryButton table="seal_rolls" record={rollId} label="السجل" />
       {canDelete && (
         <Button
           variant="ghost"
