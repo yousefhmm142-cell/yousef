@@ -2,7 +2,7 @@ import type { ISODate } from '../../lib/dates'
 import type { SheetStatus } from '../sheets/workflow'
 import { fromTime, num, text, toTime, type ChildRows } from '../sheets/remote'
 import type { MaintenanceType, PressureUnit, SiteReport } from './model'
-import type { LoadUnit } from '../sheets/loads'
+import { hasBandValues, readBandValues, type LoadUnit } from '../sheets/loads'
 
 // The device keeps a report as one document; the server keeps it in five tables
 // (supabase/migrations). These two functions translate between the shapes, nothing else.
@@ -53,6 +53,7 @@ interface LogRow {
   load_l1: number | null
   load_l2: number | null
   load_l3: number | null
+  band_loads?: unknown
   temperature_c: number | null
   oil_pressure: number | null
   oil_pressure_unit: PressureUnit
@@ -112,6 +113,7 @@ export function reportToRows(r: SiteReport): { header: Record<string, unknown>; 
           load_l1: g.loads[0],
           load_l2: g.loads[1],
           load_l3: g.loads[2],
+          band_loads: hasBandValues(g.bandLoads) ? g.bandLoads : null,
           temperature_c: g.temperatureC,
           oil_pressure: g.oilPressure,
           oil_pressure_unit: g.oilPressureUnit,
@@ -184,6 +186,7 @@ export function reportFromRow(row: ReportRow): SiteReport {
         runHours: num(g.run_hours),
         loadUnit: g.load_unit,
         loads: [num(g.load_l1), num(g.load_l2), num(g.load_l3)],
+        bandLoads: readBandValues(g.band_loads),
         temperatureC: num(g.temperature_c),
         oilPressure: num(g.oil_pressure),
         oilPressureUnit: g.oil_pressure_unit,

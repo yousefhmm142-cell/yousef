@@ -4,7 +4,8 @@ import { GeneratorDialog } from './GeneratorDialog'
 import { formatAmount } from '../../lib/numbers'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../data/db'
-import { AverageLine } from '../sheets/ui'
+import { BandGrid } from '../sheets/BandGrid'
+import { valuesDayAverage } from '../sheets/loads'
 import { CalcField, Chip, NumberField, Segmented, TextField, TimeField } from '../../ui/form'
 import {
   crossesMidnight,
@@ -247,26 +248,6 @@ export function RunsStep({ report, generators, update }: { report: SiteReport; g
                   <b className="num">{log.runHours === null ? '—' : `${formatAmount(log.runHours)} ساعة`}</b>
                 </div>
 
-                <div className="group">
-                  <div className="group-head">
-                    <span>الأحمال</span>
-                    <Segmented label="وحدة الأحمال" value={log.loadUnit} options={loadUnits} onChange={(v) => set((l) => (l.loadUnit = v))} />
-                  </div>
-                  <div className="fgrid three">
-                    {(['L1', 'L2', 'L3'] as const).map((phase, k) => (
-                      <NumberField
-                        key={phase}
-                        label={phase}
-                        unit={log.loadUnit}
-                        max={log.loadUnit === 'A' ? 5000 : 2000}
-                        value={log.loads[k] ?? null}
-                        onChange={(v) => set((l) => (l.loads[k] = v))}
-                      />
-                    ))}
-                  </div>
-                  <AverageLine loads={log.loads} unit={log.loadUnit} />
-                </div>
-
                 <div className="fgrid gauges">
                   <div className="group">
                     <div className="group-head"><span>الحرارة</span></div>
@@ -290,6 +271,53 @@ export function RunsStep({ report, generators, update }: { report: SiteReport; g
                 <NoteToggle value={log.notes} onChange={(v) => set((l) => (l.notes = v))} />
               </>
             )}
+          </section>
+        )
+      })}
+    </>
+  )
+}
+
+// ---------- Step 4: loads, hour by hour (the paper's table) ----------
+export function LoadsStep({ report, generators, update }: { report: SiteReport; generators: Generator[]; update: Update }) {
+  const ran = report.generators.filter((g) => g.didRun)
+  return (
+    <>
+      <div className="fcard loads-intro">
+        <b>الأحمال حسب الساعة</b>
+        <span>اكتب حمل كل مولد بكل ساعة، زي جدول الورق. Enter بينقلك للخانة اللي بعدها، والأسهم للتنقل، والفاضي بيصير شحطة (—).</span>
+      </div>
+      {ran.length === 0 && (
+        <div className="fcard empty-step">
+          <b>ما في مولد اشتغل اليوم</b>
+          <span>ما في أحمال تتعبّى. كمّل للإرسال.</span>
+        </div>
+      )}
+      {ran.map((log) => {
+        const index = report.generators.indexOf(log)
+        const gen = generators.find((g) => g.id === log.generatorId)
+        const set = (change: (l: typeof log) => void) => update((r) => change(r.generators[index]!))
+        const day = valuesDayAverage(log.bandLoads)
+        return (
+          <section key={log.id} className="fcard gloads">
+            <header className="gen-head zloads-head">
+              <div>
+                <h3 className="fcard-title">{gen?.name ?? 'مولد'}</h3>
+                <small className="muted">{gen?.brand}{gen?.capacityKva ? ` · ${formatAmount(gen.capacityKva)} kVA` : ''}</small>
+              </div>
+              <Segmented label="وحدة الأحمال" value={log.loadUnit} options={loadUnits} onChange={(v) => set((l) => (l.loadUnit = v))} />
+            </header>
+            <BandGrid
+              name={gen?.name ?? 'مولد'}
+              rows={1}
+              max={log.loadUnit === 'A' ? 5000 : 2000}
+              values={log.bandLoads.map((v) => [v])}
+              onChange={(b, _r, v) => set((l) => void (l.bandLoads[b] = v))}
+            />
+            <div className="avg-line" aria-live="polite">
+              <span>متوسط الساعات المكتوبة</span>
+              <b className="num">{day === null ? '—' : `${formatAmount(day)} ${log.loadUnit === 'A' ? 'أمبير' : 'كيلوواط'}`}</b>
+            </div>
           </section>
         )
       })}

@@ -2,7 +2,7 @@ import { describeDay } from '../../lib/dates'
 import { SignFooter } from '../sheets/signers'
 import { formatAmount } from '../../lib/numbers'
 import { maintenanceLabel, type FuelType, type Generator, type SiteReport } from './model'
-import { loadAverage } from '../sheets/loads'
+import { BANDS, hasBandValues, loadAverage, valuesDayAverage } from '../sheets/loads'
 import { clock12 } from '../../lib/format'
 
 const runHeaders = ['التشغيلة الأولى', 'التشغيلة الثانية', 'التشغيلة الثالثة']
@@ -16,7 +16,7 @@ export function PrintSheet({ report, generators, fuelTypes }: {
   const { weekday, date } = describeDay(report.reportDate)
   const gen = (id: number | null) => generators.find((g) => g.id === id)
   const loads = (l: SiteReport['generators'][number]) =>
-    loadAverage(l.loads) === null ? '' : `${formatAmount(loadAverage(l.loads))} ${l.loadUnit}`
+    loadAverage(l.loads) !== null ? `${formatAmount(loadAverage(l.loads))} ${l.loadUnit}` : hasBandValues(l.bandLoads) ? `${formatAmount(valuesDayAverage(l.bandLoads))} ${l.loadUnit}` : ''
 
   return (
     <div className="print-sheet" aria-hidden="true">
@@ -74,6 +74,28 @@ export function PrintSheet({ report, generators, fuelTypes }: {
           ))}
         </tbody>
       </table>
+
+      {report.generators.some((l) => l.didRun && hasBandValues(l.bandLoads)) && (
+        <>
+          <h2>الأحمال</h2>
+          <table className="ps-hr">
+            <thead>
+              <tr>
+                <th className="narrow">المولد</th>
+                {BANDS.map((b, i) => <th key={i}>{b.label}<small dir="ltr">{b.range}</small></th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {report.generators.filter((l) => l.didRun).map((l) => (
+                <tr key={l.id}>
+                  <td>{gen(l.generatorId)?.name}<small>{l.loadUnit === 'A' ? 'أمبير' : 'كيلوواط'}</small></td>
+                  {l.bandLoads.map((v, i) => <td key={i} className="num">{v === null ? '—' : formatAmount(v)}</td>)}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
 
       <h2>الصيانات</h2>
       <table>

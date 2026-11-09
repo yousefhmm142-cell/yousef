@@ -1,6 +1,6 @@
 import type { ISODate } from '../../lib/dates'
 import { sum } from '../../lib/numbers'
-import { emptyLoads, type LoadUnit, type Loads } from '../sheets/loads'
+import { bandsInSpan, emptyBandReadings, emptyLoads, hasBandReadings, loadsComplete, phaseImbalancePct, readingsAverage, type BandReadings, type LoadUnit, type Loads } from '../sheets/loads'
 import { blankMeta, newId, type SheetMeta } from '../sheets/workflow'
 
 // The device keeps one day's sheet as a single document; the server stores it in
@@ -33,6 +33,8 @@ export interface ZoneEntry {
   supplied: boolean
   supplyHours: number | null
   runs: ZoneRun[]
+  /** The paper's loads table: three readings in every hour band (9 · 12 · 3 · 6 · 9 · 12). */
+  bands: BandReadings
 }
 
 export interface DistributionSheet extends SheetMeta {
@@ -50,7 +52,7 @@ export function emptyZoneRun(runNo: number, loadUnit: LoadUnit = 'A'): ZoneRun {
 
 function emptyEntry(zone: Zone, previous: DistributionSheet | null): ZoneEntry {
   const unit = previous?.zones.find((z) => z.zoneId === zone.id)?.runs[0]?.loadUnit ?? 'A'
-  return { id: newId(), zoneId: zone.id, supplied: true, supplyHours: null, runs: [emptyZoneRun(1, unit)] }
+  return { id: newId(), zoneId: zone.id, supplied: true, supplyHours: null, runs: [emptyZoneRun(1, unit)], bands: emptyBandReadings() }
 }
 
 /** A blank sheet with every active zone listed. Only the load unit carries over, never figures. */
@@ -67,7 +69,11 @@ export function newSheet(sheetDate: ISODate, zones: Zone[], createdBy: string, p
 /** Adds zones made active after this draft was started; nothing typed is removed. */
 export function reconcileSheet(sheet: DistributionSheet, zones: Zone[]): DistributionSheet {
   const missing = zones.filter((z) => z.isActive && !sheet.zones.some((e) => e.zoneId === z.id))
-  return missing.length ? { ...sheet, zones: [...sheet.zones, ...missing.map((z) => emptyEntry(z, null))] } : sheet
+  // A draft started before the hourly table existed gets an empty one.
+  const old = sheet.zones.some((e) => !e.bands)
+  if (!missing.length && !old) return sheet
+  const kept = old ? sheet.zones.map((e) => (e.bands ? e : { ...e, bands: emptyBandReadings() })) : sheet.zones
+  return { ...sheet, zones: [...kept, ...missing.map((z) => emptyEntry(z, null))] }
 }
 
 export function sheetTotals(sheet: DistributionSheet) {
@@ -98,8 +104,10 @@ export function missingInZone(entry: ZoneEntry): string[] {
   const out: string[] = []
   entry.runs.forEach((r, i) => {
     if (!r.start || !r.end) out.push(`وقت التشغيلة ${RUN_NAMES[i]}`)
-    if (r.loads.some((l) => l === null)) out.push(`أحمال التشغيلة ${RUN_NAMES[i]}`)
   })
+  // The loads are the hourly table (an empty hour is a dash); only a table with nothing in it is flagged.
+  const anyLoad = hasBandReadings(entry.bands) || entry.runs.some((r) => r.loads.some((l) => l !== null))
+  if (!anyLoad) out.push('الأحمال حسب الساعة')
   return out
 }
 
@@ -117,4 +125,33 @@ export function runSegments(run: Pick<ZoneRun, 'start' | 'end'>): Array<[number,
   const b = minutes(run.end)
   if (a === b) return []
   return b > a ? [[a, b]] : [[a, 24 * 60], [0, b]]
+}
+
+/** What a run carried: the hour bands it overlaps (a table filled by hour), or its own readings (a sheet from before). */
+export interface RunLoad {
+  /** One figure per band touched (the mean of its three readings): the points of the wave. */
+  samples: number[]
+  avg: number | null
+  /** The widest gap between the strongest and weakest phase, as a percentage, in any band touched. */
+  gapPct: number | null
+}
+
+export function runLoad(entry: ZoneEntry, run: Pick<ZoneRun, 'start' | 'end' | 'loads' | 'extra'>): RunLoad {
+  if (hasBandReadings(entry.bands)) {
+    const ids = [...new Set(runSegments(run).flatMap(([a, b]) => bandsInSpan(a, b)))].sort((x, y) => x - y)
+    const full = ids.map((i) => entry.bands[i]!).filter((l): l is [number, number, number] => !!l && loadsComplete(l))
+    const samples = full.map((l) => (l[0] + l[1] + l[2]) / 3)
+    const gaps = full.map(phaseImbalancePct).filter((g): g is number => g !== null)
+    return {
+      samples,
+      avg: samples.length ? Math.round((samples.reduce((a, b) => a + b, 0) / samples.length) * 10) / 10 : null,
+      gapPct: gaps.length ? Math.max(...gaps) : null,
+    }
+  }
+  const first = loadsComplete(run.loads) ? (run.loads[0] + run.loads[1] + run.loads[2]) / 3 : null
+  return {
+    samples: first === null ? [] : [first, ...(run.extra ?? []).filter((x): x is number => x !== null)],
+    avg: readingsAverage(run.loads, run.extra),
+    gapPct: phaseImbalancePct(run.loads),
+  }
 }

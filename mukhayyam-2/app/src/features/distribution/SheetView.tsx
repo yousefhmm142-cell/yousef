@@ -1,10 +1,10 @@
 import { ArrowLeft, Clock, LayoutGrid, NotebookPen, Sun, TriangleAlert, Zap } from 'lucide-react'
 import { formatAmount } from '../../lib/numbers'
 import { useAlertSettings, useEmployeeNames } from '../generation/repo'
-import { readingsAverage, phaseImbalancePct } from '../sheets/loads'
+import { BANDS, bandAverage, bandsDayAverage, hasBandReadings, phaseImbalancePct } from '../sheets/loads'
 import { AlertsCard, Signatures } from '../sheets/ui'
 import { computeZoneAlerts } from './alerts'
-import { RUN_NAMES, runSegments, sheetTotals, type DistributionSheet, type ZoneRun } from './model'
+import { RUN_NAMES, runLoad, runSegments, sheetTotals, type DistributionSheet, type ZoneEntry, type ZoneRun } from './model'
 import { useZones } from './repo'
 import { clock12 } from '../../lib/format'
 
@@ -27,12 +27,6 @@ function smooth(pts: Array<[number, number]>): string {
     d += ` C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`
   }
   return d
-}
-/** The readings of a run in the order they were taken: the three phases' mean first, then each extra reading. */
-function runSamples(r: ZoneRun): number[] {
-  if (!r.loads.every((l) => l !== null)) return []
-  const first = (r.loads[0]! + r.loads[1]! + r.loads[2]!) / 3
-  return [first, ...(r.extra ?? []).filter((x): x is number => x !== null)]
 }
 const BASE_Y = 50, TOP_Y = 4
 
@@ -103,6 +97,7 @@ export function SheetView({ sheet, ctx }: { sheet: DistributionSheet; ctx: Ctx }
       <AlertsCard alerts={alerts} />
       <Timeline sheet={sheet} zoneNames={zoneNames} imbalanceWarn={ctx.settings.imbalanceWarnPct} />
       <Matrix sheet={sheet} zoneNames={zoneNames} imbalanceWarn={ctx.settings.imbalanceWarnPct} />
+      <HourlyLoads sheet={sheet} zoneNames={zoneNames} imbalanceWarn={ctx.settings.imbalanceWarnPct} />
 
       <section className="card">
         <div className="card-h"><span className="ico-round"><NotebookPen size={16} /></span><h2>الملاحظات</h2></div>
@@ -118,7 +113,7 @@ function Timeline({ sheet, zoneNames, imbalanceWarn }: { sheet: DistributionShee
   // The load chart: each run's block rises with its average load (scaled to the day's highest, per unit).
   // Heights from zero to the day's highest load (per unit): the difference you see is the real one.
   const top: Record<string, number> = {}
-  for (const z of sheet.zones) for (const r of z.runs) for (const v of runSamples(r)) top[r.loadUnit] = Math.max(top[r.loadUnit] ?? 0, v)
+  for (const z of sheet.zones) for (const r of z.runs) for (const v of runLoad(z, r).samples) top[r.loadUnit] = Math.max(top[r.loadUnit] ?? 0, v)
   const height = (v: number, u: string) => Math.max(10, (v / (top[u] || v)) * 100)
   const peak = Object.entries(top).map(([u, v]) => `${formatAmount(v)}${u}`).join(' · ')
   return (
@@ -152,9 +147,10 @@ function Timeline({ sheet, zoneNames, imbalanceWarn }: { sheet: DistributionShee
                     <linearGradient id={`g-warn-${z.id}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#E0A800" stopOpacity=".45" /><stop offset="1" stopColor="#E0A800" stopOpacity=".05" /></linearGradient>
                   </defs>
                   {z.runs.flatMap((r) => {
-                    const samples = runSamples(r)
+                    const rl = runLoad(z, r)
+                    const samples = rl.samples
                     if (!samples.length) return []
-                    const gap = phaseImbalancePct(r.loads)
+                    const gap = rl.gapPct
                     const warn = gap !== null && gap >= imbalanceWarn
                     const y = (v: number) => BASE_Y - (v / (top[r.loadUnit] || v)) * (BASE_Y - TOP_Y)
                     return windowSegments(r).map(([a, b], k) => {
@@ -176,17 +172,18 @@ function Timeline({ sheet, zoneNames, imbalanceWarn }: { sheet: DistributionShee
               )}
               {z.supplied &&
                 z.runs.flatMap((r, i) => {
-                  const avg = readingsAverage(r.loads, r.extra)
+                  const rl = runLoad(z, r)
+                  const avg = rl.avg
                   const h = avg !== null ? height(avg, r.loadUnit) : 0
-                  const gap = phaseImbalancePct(r.loads)
+                  const gap = rl.gapPct
                   const warn = gap !== null && gap >= imbalanceWarn
-                  const phases = r.loads.map((l, j) => `L${j + 1} ${formatAmount(l)}`).join(' · ')
+                  const phases = hasBandReadings(z.bands) ? '' : r.loads.map((l, j) => `L${j + 1} ${formatAmount(l)}`).join(' · ')
                   return windowSegments(r).map(([a, b], k) => (
                     <span
                       key={`${r.id}-${k}`}
                       className="tl-run"
                       style={{ insetInlineStart: `${(a / SPAN) * 100}%`, width: `${((b - a) / SPAN) * 100}%` }}
-                      title={`التشغيلة ${RUN_NAMES[i]}: ${clock12(r.start)} ← ${clock12(r.end)}${avg !== null ? ` · متوسط الحمل ${formatAmount(avg)} ${r.loadUnit} · ${phases}` : ''}${warn ? ` · الفازات مش متوازنة (فرق ${Math.round(gap!)}%)` : ''}`}
+                      title={`التشغيلة ${RUN_NAMES[i]}: ${clock12(r.start)} ← ${clock12(r.end)}${avg !== null ? ` · متوسط الحمل ${formatAmount(avg)} ${r.loadUnit}${phases ? ` · ${phases}` : ''}` : ''}${warn ? ` · الفازات مش متوازنة (فرق ${Math.round(gap!)}%)` : ''}`}
                     >
                       {avg !== null && k === 0 && <b className="tl-val num" data-warn={warn || undefined} style={{ bottom: `${Math.max(16, 16 + (h / 100) * 46 - 20)}px` }}>{warn && '⚠ '}{formatAmount(avg)}<small>{r.loadUnit}</small></b>}
                       <span className="tl-seg" />
@@ -201,16 +198,18 @@ function Timeline({ sheet, zoneNames, imbalanceWarn }: { sheet: DistributionShee
   )
 }
 
-function RunCell({ run, imbalanceWarn }: { run: ZoneRun | undefined; imbalanceWarn: number }) {
+function RunCell({ entry, run, imbalanceWarn }: { entry: ZoneEntry; run: ZoneRun | undefined; imbalanceWarn: number }) {
   if (!run || (!run.start && !run.end && run.loads.every((l) => l === null))) return <span className="muted">—</span>
   const gap = phaseImbalancePct(run.loads)
+  // With the hourly table the loads are read there; the run keeps its times only.
+  const legacy = !hasBandReadings(entry.bands) && run.loads.some((l) => l !== null)
   return (
     <div className="zr">
       <span className="run num">{clock12(run.start) || '—'}<ArrowLeft size={13} aria-label="إلى" />{clock12(run.end) || '—'}</span>
-      <span className={`zr-loads num ${gap !== null && gap >= imbalanceWarn ? 'warn' : ''}`}>
+      {legacy && <span className={`zr-loads num ${gap !== null && gap >= imbalanceWarn ? 'warn' : ''}`}>
         <span className="zr-all">{[...run.loads, ...(run.extra ?? [])].filter((l, i) => i < 3 || l !== null).map((l) => formatAmount(l)).join(' · ')}</span>
-        {readingsAverage(run.loads, run.extra) !== null && <span className="zr-avg">المتوسط {formatAmount(readingsAverage(run.loads, run.extra))} <small>{run.loadUnit}</small></span>}
-      </span>
+        {runLoad(entry, run).avg !== null && <span className="zr-avg">المتوسط {formatAmount(runLoad(entry, run).avg)} <small>{run.loadUnit}</small></span>}
+      </span>}
     </div>
   )
 }
@@ -239,11 +238,63 @@ function Matrix({ sheet, zoneNames, imbalanceWarn }: { sheet: DistributionSheet;
                   <td colSpan={columns} className="muted">لم تُغذَّ في هذا اليوم</td>
                 ) : (
                   Array.from({ length: columns }, (_, i) => (
-                    <td key={i}><RunCell run={z.runs[i]} imbalanceWarn={imbalanceWarn} /></td>
+                    <td key={i}><RunCell entry={z} run={z.runs[i]} imbalanceWarn={imbalanceWarn} /></td>
                   ))
                 )}
               </tr>
             ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  )
+}
+
+/** The paper's table by hour: every zone, the three readings of each hour and their mean, then the mean of the day. */
+function HourlyLoads({ sheet, zoneNames, imbalanceWarn }: { sheet: DistributionSheet; zoneNames: Map<number, string>; imbalanceWarn: number }) {
+  const rows = sheet.zones.filter((z) => z.supplied && hasBandReadings(z.bands))
+  if (!rows.length) return null
+  const all = bandsDayAverage(rows.flatMap((z) => z.bands.map((b) => b).filter((b) => bandAverage(b) !== null)))
+  return (
+    <section className="card">
+      <div className="card-h">
+        <span className="ico-round"><LayoutGrid size={16} /></span>
+        <h2>الأحمال حسب الساعة</h2>
+        <span className="meta">كل خانة: القراءات الثلاثة ثم المتوسط{all !== null && <> · متوسط كل المناطق <b className="num">{formatAmount(all)}</b></>}</span>
+      </div>
+      <div className="tw">
+        <table className="tbl hourly">
+          <thead>
+            <tr>
+              <th>المنطقة</th>
+              {BANDS.map((b, i) => <th key={i}><b className="num">{b.label}</b><small className="num" dir="ltr">{b.range}</small></th>)}
+              <th>متوسط اليوم</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((z) => {
+              const unit = z.runs[0]?.loadUnit ?? 'A'
+              return (
+                <tr key={z.id}>
+                  <td><b>{zoneNames.get(z.zoneId)}</b><small className="muted"> {unit === 'A' ? 'أمبير' : 'كيلوواط'}</small></td>
+                  {z.bands.map((b, i) => {
+                    const avg = bandAverage(b)
+                    const gap = phaseImbalancePct(b)
+                    return (
+                      <td key={i} className="hr-cell">
+                        {b.every((x) => x === null) ? <span className="muted">—</span> : (
+                          <>
+                            <span className="hr-reads num">{b.map((x) => (x === null ? '—' : formatAmount(x))).join(' · ')}</span>
+                            {avg !== null && <b className={`hr-avg num${gap !== null && gap >= imbalanceWarn ? ' warn' : ''}`}>{gap !== null && gap >= imbalanceWarn && '⚠ '}{formatAmount(avg)}</b>}
+                          </>
+                        )}
+                      </td>
+                    )
+                  })}
+                  <td className="n em">{bandsDayAverage(z.bands) === null ? '—' : formatAmount(bandsDayAverage(z.bands))}</td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>

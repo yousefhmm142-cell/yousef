@@ -1,8 +1,8 @@
 import { db } from '../../data/db'
 import { addDays, todayISO } from '../../lib/dates'
-import type { Loads } from '../sheets/loads'
+import { bandsInSpan, emptyBandReadings, type Loads } from '../sheets/loads'
 import { newId } from '../sheets/workflow'
-import { newSheet, type DistributionSheet, type Zone } from './model'
+import { newSheet, runSegments, type DistributionSheet, type Zone } from './model'
 
 // Demo mode only: the six zones from the paper form and three weeks of believable sheets.
 
@@ -54,7 +54,12 @@ function buildHistory(today: string, managerId: string, supervisorId: string): D
         loads: yesterday && entry.zoneId === 3 && i === 1 ? ([140, 95, 132] as Loads) : amps(plan.amps),
         extra: [],
       }))
-      return { ...entry, supplyHours: plan.hours, runs }
+      // The paper's hourly table: the bands each run touches get three readings.
+      const bands = emptyBandReadings()
+      runs.forEach((run) => {
+        for (const [a, b] of runSegments(run)) for (const i of bandsInSpan(a, b)) bands[i] = [...run.loads] as Loads
+      })
+      return { ...entry, supplyHours: plan.hours, runs, bands }
     })
     if (back === 9) {
       const z6 = s.zones.find((z) => z.zoneId === 6)!

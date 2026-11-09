@@ -8,15 +8,15 @@ import { dayName, describeDay, isISODate, todayISO, type ISODate } from '../../l
 import { formatAmount } from '../../lib/numbers'
 import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import { useOnline } from '../../lib/useOnline'
-import { advanceOnEnter, CalcField, Chip, NumberField, Segmented, TimeField } from '../../ui/form'
+import { advanceOnEnter, CalcField, Chip, Segmented, TimeField } from '../../ui/form'
 import { Button } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
 import { MissingList } from '../generation/EntrySteps'
 import { OfflineSendNote } from '../generation/EntryPage'
-import { LOAD_UNIT_OPTIONS, PHASES } from '../sheets/loads'
+import { BandGrid } from '../sheets/BandGrid'
+import { bandAverage, bandsDayAverage, LOAD_UNIT_OPTIONS } from '../sheets/loads'
 import { BackButton, DayJump, DoPreviousFirst, SaveBadge, SentHeader, UnsentBanner } from '../sheets/ui'
 import { useDraft } from '../sheets/useDraft'
-import { AverageLine } from '../sheets/ui'
 import { useConfirm } from '../../ui/Confirm'
 import { isEditableStatus, statusInfo } from '../sheets/workflow'
 import { isManagerRole } from '../../types'
@@ -274,15 +274,6 @@ function ZoneStep({ entry, index, count, name, update }: { entry: ZoneEntry; ind
         {entry.supplied && (
           <div className="zone-top">
             <CalcField label="عدد الساعات" unit="ساعة" value={entry.supplyHours} hint="يُحسب لحاله من أوقات التشغيلات" />
-            <div className="field">
-              <span className="label">وحدة الأحمال لكل التشغيلات</span>
-              <Segmented
-                label="وحدة الأحمال"
-                value={entry.runs[0]?.loadUnit ?? 'A'}
-                options={LOAD_UNIT_OPTIONS}
-                onChange={(v) => set((z) => z.runs.forEach((r) => (r.loadUnit = v)))}
-              />
-            </div>
           </div>
         )}
       </section>
@@ -314,36 +305,6 @@ function ZoneStep({ entry, index, count, name, update }: { entry: ZoneEntry; ind
               <TimeField label={`نهاية التشغيلة ${RUN_NAMES[j]}`} value={run.end} onChange={(v) => set((z) => (z.runs[j]!.end = v))} />
             </div>
             {crossesMidnight(run) && <span className="next-day">حتى اليوم التالي</span>}
-            <div className="group">
-              <div className="fgrid three">
-                {PHASES.map((phase, k) => (
-                  <NumberField
-                    key={phase}
-                    label={phase}
-                    unit={run.loadUnit}
-                    max={run.loadUnit === 'A' ? 2000 : 1000}
-                    value={run.loads[k] ?? null}
-                    onChange={(v) => set((z) => (z.runs[j]!.loads[k] = v))}
-                  />
-                ))}
-                {(run.extra ?? []).map((x, k) => (
-                  <div key={`x${k}`} className="extra-load">
-                    <NumberField
-                      label={`قراءة ${k + 4}`}
-                      unit={run.loadUnit}
-                      max={run.loadUnit === 'A' ? 2000 : 1000}
-                      value={x}
-                      onChange={(v) => set((z) => (z.runs[j]!.extra[k] = v))}
-                    />
-                    <button type="button" className="icon-btn sm" aria-label={`حذف القراءة ${k + 4}`} onClick={() => set((z) => void z.runs[j]!.extra.splice(k, 1))}><X size={14} /></button>
-                  </div>
-                ))}
-              </div>
-              <button type="button" className="btn dashed sm add-load" onClick={() => set((z) => { const r = z.runs[j]!; r.extra = [...(r.extra ?? []), null] })}>
-                <Plus size={16} /> قراءة حمل إضافية
-              </button>
-              <AverageLine loads={run.loads} unit={run.loadUnit} extra={run.extra ?? []} />
-            </div>
           </section>
         ))}
 
@@ -356,7 +317,39 @@ function ZoneStep({ entry, index, count, name, update }: { entry: ZoneEntry; ind
           <Plus size={18} /> التشغيلة {RUN_NAMES[entry.runs.length]}
         </button>
       )}
+
+      {entry.supplied && <ZoneLoads entry={entry} name={name} set={set} />}
     </>
+  )
+}
+
+/** The paper's table for this zone: three readings in each hour band, with the mean of every hour and of the day. */
+function ZoneLoads({ entry, name, set }: { entry: ZoneEntry; name: string; set: (change: (z: ZoneEntry) => void) => void }) {
+  const unit = entry.runs[0]?.loadUnit ?? 'A'
+  const day = bandsDayAverage(entry.bands)
+  return (
+    <section className="fcard zloads">
+      <header className="gen-head zloads-head">
+        <div>
+          <h3 className="fcard-title">الأحمال حسب الساعة</h3>
+          <small className="muted">Enter = اللي بعده · الأسهم للتنقل · الفاضي = شحطة</small>
+        </div>
+        <Segmented label="وحدة الأحمال" value={unit} options={LOAD_UNIT_OPTIONS} onChange={(v) => set((z) => z.runs.forEach((r) => (r.loadUnit = v)))} />
+      </header>
+      <BandGrid
+        name={name}
+        rows={3}
+        unit={unit === 'A' ? 'أمبير' : 'كيلوواط'}
+        max={unit === 'A' ? 2000 : 1000}
+        values={entry.bands.map((b) => b)}
+        average={entry.bands.map(bandAverage)}
+        onChange={(b, r, v) => set((z) => void (z.bands[b]![r] = v))}
+      />
+      <div className="avg-line" aria-live="polite">
+        <span>متوسط اليوم <small>(من الساعات اللي اكتملت قراءاتها الثلاثة)</small></span>
+        <b className="num">{day === null ? '—' : `${formatAmount(day)} ${unit === 'A' ? 'أمبير' : 'كيلوواط'}`}</b>
+      </div>
+    </section>
   )
 }
 

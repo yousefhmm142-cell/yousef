@@ -86,6 +86,7 @@ describe('generation report <-> server rows', () => {
       runHours: 8.5,
       loadUnit: 'kW',
       loads: [120, 118.5, 122],
+      bandLoads: [180, 180, null, 200.5, 200, 190],
       temperatureC: 88,
       oilPressure: 45,
       oilPressureUnit: 'psi',
@@ -119,6 +120,7 @@ describe('distribution sheet <-> server rows', () => {
       ...s.zones[0]!,
       supplyHours: 14,
       runs: Array.from({ length: 6 }, (_, i) => ({ ...emptyZoneRun(i + 1, i % 2 ? 'kW' : 'A'), start: '06:00', end: '08:00', loads: [100 + i, 95, 98.5] as [number, number, number] })),
+      bands: [[45, 135, 150], [30.5, 31, 29], [null, null, null], [10, null, 12], [null, null, null], [1, 2, 3]],
     }
     s.zones[1] = { ...s.zones[1]!, supplied: false, supplyHours: null, runs: [] }
     s.notes = 'صيانة المحوّل'

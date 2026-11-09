@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { defaultAlertSettings } from '../generation/model'
 import { loadAverage, phaseImbalancePct } from '../sheets/loads'
 import { computeZoneAlerts } from './alerts'
-import { applyAutoHours, hoursFromZoneRuns, missingInZone, newSheet, reconcileSheet, runSegments, sheetTotals, type Zone } from './model'
+import { applyAutoHours, hoursFromZoneRuns, missingInZone, newSheet, reconcileSheet, runLoad, runSegments, sheetTotals, type Zone } from './model'
 
 const zones: Zone[] = [
   { id: 1, name: 'المخيم القديم', isActive: true, sortOrder: 1 },
@@ -37,11 +37,38 @@ describe('a new sheet', () => {
 })
 
 describe('what is missing', () => {
-  it('asks for times and loads of a supplied zone only (the hours come from the times)', () => {
+  it('asks for times and the hourly loads of a supplied zone only (the hours come from the times)', () => {
     const s = newSheet('2026-10-30', zones, 'e1', null, '')
-    expect(missingInZone(s.zones[0]!)).toEqual(['وقت التشغيلة الأولى', 'أحمال التشغيلة الأولى'])
+    expect(missingInZone(s.zones[0]!)).toEqual(['وقت التشغيلة الأولى', 'الأحمال حسب الساعة'])
+    s.zones[0]!.bands[1] = [100, 110, 105]
+    expect(missingInZone(s.zones[0]!)).toEqual(['وقت التشغيلة الأولى'])
     s.zones[0]!.supplied = false
     expect(missingInZone(s.zones[0]!)).toEqual([])
+  })
+})
+
+describe('loads by hour', () => {
+  it('a run carries the hours it overlaps: samples, mean and the worst phase gap', () => {
+    const s = newSheet('2026-10-30', zones, 'e1', null, '')
+    const z = s.zones[0]!
+    z.bands[0] = [100, 100, 100]
+    z.bands[1] = [150, 90, 120]
+    z.bands[2] = [200, 200, 200]
+    const r = runLoad(z, { start: '08:00', end: '11:00', loads: [null, null, null], extra: [] })
+    expect(r.samples).toEqual([100, 120])
+    expect(r.avg).toBe(110)
+    expect(Math.round(r.gapPct!)).toBe(40)
+    expect(runLoad(z, { start: '', end: '', loads: [null, null, null], extra: [] }).samples).toEqual([])
+  })
+  it('a sheet from before (no hourly table) still reads the run\'s own readings', () => {
+    const s = newSheet('2026-10-30', zones, 'e1', null, '')
+    const z = s.zones[0]!
+    expect(runLoad(z, { start: '08:00', end: '11:00', loads: [100, 110, 120], extra: [] }).avg).toBe(110)
+  })
+  it('an older draft without the table gets an empty one', () => {
+    const s = newSheet('2026-10-30', zones, 'e1', null, '')
+    const old = { ...s, zones: s.zones.map(({ bands: _b, ...z }) => z) } as unknown as typeof s
+    expect(reconcileSheet(old, zones).zones[0]!.bands).toHaveLength(6)
   })
 })
 

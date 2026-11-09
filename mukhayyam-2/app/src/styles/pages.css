@@ -258,3 +258,12 @@ a.dash-kpi:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
 @media(max-width:480px){.feed-tools{flex-wrap:wrap;}.feed-search{flex-basis:100%;padding:5px 0;}.feed-tools .select{width:100%;}.feed-heading{padding:18px 14px;}.feed-live .feed-list{padding:0 14px;}}
 @media(prefers-reduced-motion:reduce){.activity-notice{animation:none;}}
 @media print{.activity-notices{display:none!important;}}
+
+/* ---------- The hourly loads table (screen) ---------- */
+.tbl.hourly th { text-align: center; }
+.tbl.hourly th b { display: block; font-size: 16px; color: var(--brand); }
+.tbl.hourly th small { display: block; font-weight: 600; color: var(--muted); font-size: 11.5px; }
+.tbl.hourly td.hr-cell { text-align: center; min-width: 78px; }
+.hr-reads { display: block; color: var(--muted); font-size: 12.5px; }
+.hr-avg { display: block; font-size: 15px; font-weight: 800; }
+.hr-avg.warn { color: #B58400; }

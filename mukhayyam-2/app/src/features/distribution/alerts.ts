@@ -1,5 +1,5 @@
 import { formatAmount } from '../../lib/numbers'
-import { loadsComplete, phaseImbalancePct } from '../sheets/loads'
+import { BANDS, hasBandReadings, loadsComplete, phaseImbalancePct } from '../sheets/loads'
 import type { AlertLevel } from '../generation/alerts'
 import type { AlertSettings } from '../generation/model'
 import { RUN_NAMES, type DistributionSheet } from './model'
@@ -23,6 +23,20 @@ export function computeZoneAlerts(
     const zone = zoneNames.get(entry.zoneId) ?? 'منطقة'
     if (!entry.supplied) {
       alerts.push({ id: `unsupplied:${entry.zoneId}`, level: 'warn', title: `${zone}: لم تُغذَّ في هذا اليوم`, detail: 'سجّلها المشرف بدون تشغيلات.' })
+      continue
+    }
+    // Loads typed by hour: each hour is checked on its own.
+    if (hasBandReadings(entry.bands)) {
+      entry.bands.forEach((loads, b) => {
+        const gap = phaseImbalancePct(loads)
+        if (gap === null || !loadsComplete(loads) || gap < settings.imbalanceWarnPct) return
+        alerts.push({
+          id: `imbalance:${entry.zoneId}:b${b}`,
+          level: gap >= settings.imbalanceDangerPct ? 'danger' : 'warn',
+          title: `${zone}، الساعة ${BANDS[b]!.range}: عدم توازن بين الفازات`,
+          detail: `أعلى فاز ${formatAmount(Math.max(...loads))} وأقلّه ${formatAmount(Math.min(...loads))} (فرق ${Math.round(gap)}%)`,
+        })
+      })
       continue
     }
     entry.runs.forEach((run, i) => {

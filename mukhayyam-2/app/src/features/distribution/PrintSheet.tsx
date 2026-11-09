@@ -3,11 +3,11 @@ import { SignFooter } from '../sheets/signers'
 import { formatAmount } from '../../lib/numbers'
 import { RUN_NAMES, type DistributionSheet, type ZoneEntry } from './model'
 import { clock12 } from '../../lib/format'
-import { readingsAverage } from '../sheets/loads'
+import { BANDS, bandAverage, bandsDayAverage, hasBandReadings, readingsAverage } from '../sheets/loads'
 
 const loadsText = (z: ZoneEntry, i: number) => {
   const r = z.runs[i]
-  if (!r) return ''
+  if (!r || hasBandReadings(z.bands)) return ''
   const all = [...r.loads, ...(r.extra ?? [])].filter((l, k) => k < 3 || l !== null)
   if (all.every((l) => l === null)) return ''
   const avg = readingsAverage(r.loads, r.extra)
@@ -26,6 +26,8 @@ const timeText = (z: ZoneEntry, i: number) => {
 /** The sheet laid out like the paper form (landscape, runs 1–3 then 4–6), shown only when printing. */
 export function PrintSheet({ sheet, zoneNames }: { sheet: DistributionSheet; zoneNames: Map<number, string> }) {
   const { weekday, date } = describeDay(sheet.sheetDate)
+  // With the hourly table the runs keep their times only; the loads are in the table under them.
+  const hourly = sheet.zones.some((z) => z.supplied && hasBandReadings(z.bands))
   const block = (from: number, withHours: boolean) => (
     <table>
       <thead>
@@ -34,7 +36,7 @@ export function PrintSheet({ sheet, zoneNames }: { sheet: DistributionSheet; zon
           <th>المنطقة</th>
           {[from, from + 1, from + 2].map((i) => [
             <th key={`t${i}`}>التشغيلة {RUN_NAMES[i]}</th>,
-            <th key={`l${i}`}>الأحمال</th>,
+            !hourly && <th key={`l${i}`}>الأحمال</th>,
           ])}
         </tr>
       </thead>
@@ -45,7 +47,7 @@ export function PrintSheet({ sheet, zoneNames }: { sheet: DistributionSheet; zon
             <td>{zoneNames.get(z.zoneId)}</td>
             {[from, from + 1, from + 2].map((i) => [
               <td key={`t${i}`} className="num">{z.supplied ? timeText(z, i) : withHours && i === from ? 'لم تُغذَّ' : ''}</td>,
-              <td key={`l${i}`} className="num">{z.supplied ? loadsText(z, i) : ''}</td>,
+              !hourly && <td key={`l${i}`} className="num">{z.supplied ? loadsText(z, i) : ''}</td>,
             ])}
           </tr>
         ))}
@@ -69,6 +71,38 @@ export function PrintSheet({ sheet, zoneNames }: { sheet: DistributionSheet; zon
       {block(0, true)}
       <div className="ps-gap" />
       {block(3, false)}
+      {hourly && (
+        <>
+          <h2 className="ps-sub">الأحمال حسب الساعة</h2>
+          <table className="ps-hr">
+            <thead>
+              <tr>
+                <th className="narrow">المنطقة</th>
+                {BANDS.map((b, i) => <th key={i}>{b.label}<small dir="ltr">{b.range}</small></th>)}
+                <th className="narrow">متوسط اليوم</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sheet.zones.filter((z) => z.supplied).map((z) => (
+                <tr key={z.id}>
+                  <td>{zoneNames.get(z.zoneId)}<small>{(z.runs[0]?.loadUnit ?? 'A') === 'A' ? 'أمبير' : 'كيلوواط'}</small></td>
+                  {z.bands.map((b, i) => (
+                    <td key={i} className="num">
+                      {b.every((x) => x === null) ? '—' : (
+                        <>
+                          <span className="ps-readings">{b.map((x) => (x === null ? '—' : formatAmount(x))).join(' / ')}</span>
+                          {bandAverage(b) !== null && <b className="ps-avg">{formatAmount(bandAverage(b))}</b>}
+                        </>
+                      )}
+                    </td>
+                  ))}
+                  <td className="num"><b>{bandsDayAverage(z.bands) === null ? '—' : formatAmount(bandsDayAverage(z.bands))}</b></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
       {sheet.notes && <div className="ps-notes small">{sheet.notes}</div>}
       <SignFooter approval={{ submittedAt: sheet.submittedAt, approvedAt: sheet.approvedAt }} />
     </div>

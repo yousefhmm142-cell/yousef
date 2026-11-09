@@ -253,3 +253,18 @@
 .archive-table{table-layout:fixed;}.archive-table th:first-child{width:110px;}.archive-table td{vertical-align:top;line-height:1.8;}.archive-table .num{unicode-bidi:plaintext;}
 @media print{.archive-print .archive-table th:first-child{width:88px;}}
 .archive-filters .input,.archive-filters .select{min-width:0;width:100%;}.archive-results .table-wrap{overflow-x:auto;}
+
+/* ---------- Day stepper: yesterday and earlier, one tap at a time ---------- */
+.task-daybar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.tdb-step { width: 48px; height: 48px; flex: none; border-radius: 16px; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); display: grid; place-items: center; cursor: pointer; box-shadow: var(--shadow); transition: transform .12s, border-color .2s; }
+.tdb-step:hover:not(:disabled) { border-color: var(--brand); transform: translateY(-1px); }
+.tdb-step:disabled { opacity: .35; cursor: default; box-shadow: none; }
+.tdb-day { position: relative; flex: 1; min-width: 0; height: 48px; display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 16px; border: 1.5px solid var(--line); background: var(--surface); box-shadow: var(--shadow); cursor: pointer; color: var(--ink); }
+.tdb-day > span { display: grid; text-align: center; line-height: 1.25; }
+.tdb-day b { font-size: 16px; font-weight: 800; }
+.tdb-day small { color: var(--muted); font-size: 12.5px; }
+.tdb-day input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.tdb-today { height: 48px; padding: 0 16px; border-radius: 16px; border: 0; background: var(--brand); color: #fff; font: inherit; font-weight: 800; cursor: pointer; }
+.task-daysum { margin: 0 0 10px; color: var(--muted); font-weight: 700; }
+.task-daysum b { color: var(--ink); }
+@media (max-width: 700px) { .tdb-today { width: 100%; order: 5; height: 44px; } }

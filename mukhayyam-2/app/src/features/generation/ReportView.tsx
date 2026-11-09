@@ -1,4 +1,4 @@
-import { loadAverage } from '../sheets/loads'
+import { BANDS, hasBandValues, loadAverage, valuesDayAverage } from '../sheets/loads'
 import { ArrowLeft, Clock, Droplet, Gauge, NotebookPen, TriangleAlert, Wrench, Zap } from 'lucide-react'
 import { formatAmount } from '../../lib/numbers'
 import { Pill, type Tone } from '../../ui/primitives'
@@ -108,6 +108,7 @@ export function ReportView({ report, ctx }: { report: SiteReport; ctx: ReturnTyp
       {alerts.length > 0 && <AlertsCard alerts={alerts} />}
       <FuelTable report={report} fuelTypes={fuelTypes} />
       <GeneratorsTable report={report} generators={generators} settings={settings} />
+      <HourlyLoads report={report} generators={generators} />
 
       <div className="two">
         <section className="card">
@@ -203,6 +204,12 @@ function GeneratorsTable({ report, generators, settings }: { report: SiteReport;
                       </td>
                       <td className="n em">{formatAmount(log.runHours)}</td>
                       <td>
+                        {hasBandValues(log.bandLoads) && log.loads.every((l) => l === null) ? (
+                          <div className="phases">
+                            <b className="num avg" title="المتوسط الحسابي للساعات المكتوبة">متوسط {formatAmount(valuesDayAverage(log.bandLoads))}</b>
+                            <small className="muted">{log.loadUnit === 'A' ? 'أمبير' : 'كيلوواط'} · التفاصيل بجدول الساعات</small>
+                          </div>
+                        ) : (
                         <div className="phases">
                           {log.loads.map((v, k) => (
                             <span key={k} className="phase">
@@ -214,6 +221,7 @@ function GeneratorsTable({ report, generators, settings }: { report: SiteReport;
                           <small className="muted">{log.loadUnit === 'A' ? 'أمبير' : 'كيلوواط'}</small>
                           {loadAverage(log.loads) !== null && <b className="num avg" title="المتوسط الحسابي">متوسط {formatAmount(loadAverage(log.loads))}</b>}
                         </div>
+                        )}
                       </td>
                       <td>
                         {log.temperatureC === null ? '—' : (
@@ -234,6 +242,37 @@ function GeneratorsTable({ report, generators, settings }: { report: SiteReport;
                 </tr>
               )
             })}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  )
+}
+
+/** The paper's loads table: a row for every generator that ran, a column for each hour (an empty hour is a dash). */
+function HourlyLoads({ report, generators }: { report: SiteReport; generators: Generator[] }) {
+  const rows = report.generators.filter((g) => g.didRun && hasBandValues(g.bandLoads))
+  if (!rows.length) return null
+  return (
+    <section className="card">
+      <div className="card-h"><span className="ico-round"><Gauge size={16} /></span><h2>الأحمال حسب الساعة</h2><span className="meta">الفاضي = شحطة</span></div>
+      <div className="tw">
+        <table className="tbl hourly">
+          <thead>
+            <tr>
+              <th>المولد</th>
+              {BANDS.map((b, i) => <th key={i}><b className="num">{b.label}</b><small className="num" dir="ltr">{b.range}</small></th>)}
+              <th>المتوسط</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((log) => (
+              <tr key={log.id}>
+                <td><b>{generators.find((g) => g.id === log.generatorId)?.name ?? 'مولد'}</b><small className="muted"> {log.loadUnit === 'A' ? 'أمبير' : 'كيلوواط'}</small></td>
+                {log.bandLoads.map((v, i) => <td key={i} className="n">{v === null ? <span className="muted">—</span> : formatAmount(v)}</td>)}
+                <td className="n em">{formatAmount(valuesDayAverage(log.bandLoads))}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

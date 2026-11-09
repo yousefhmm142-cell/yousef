@@ -1,5 +1,5 @@
 import type { ISODate } from '../../lib/dates'
-import type { LoadUnit } from '../sheets/loads'
+import { hasBandReadings, readBandReadings, type LoadUnit } from '../sheets/loads'
 import { fromTime, num, text, toTime, type ChildRows } from '../sheets/remote'
 import type { SheetStatus } from '../sheets/workflow'
 import type { DistributionSheet } from './model'
@@ -33,6 +33,7 @@ interface EntryRow {
   zone_id: number
   supplied: boolean
   supply_hours: number | null
+  band_loads?: unknown
 }
 
 interface ZoneRunRow {
@@ -61,6 +62,7 @@ export function sheetToRows(s: DistributionSheet): { header: Record<string, unkn
           zone_id: z.zoneId,
           supplied: z.supplied,
           supply_hours: z.supplyHours,
+          band_loads: hasBandReadings(z.bands) ? z.bands : null,
         })),
       },
       {
@@ -107,6 +109,7 @@ export function sheetFromRow(row: SheetRow): DistributionSheet {
         zoneId: z.zone_id,
         supplied: z.supplied,
         supplyHours: num(z.supply_hours),
+        bands: readBandReadings(z.band_loads),
         runs: [...z.zone_runs]
           .sort((a, b) => a.run_no - b.run_no)
           .map((r) => ({

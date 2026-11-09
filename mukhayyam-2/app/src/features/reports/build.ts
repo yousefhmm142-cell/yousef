@@ -1,6 +1,7 @@
 import { addDays, type ISODate } from '../../lib/dates'
 import { dayResult, gazaDate, weekTotals, type Leave, type Punch, type Schedule } from '../attendance/rules'
 import type { DistributionSheet, Zone } from '../distribution/model'
+import { hasBandReadings } from '../sheets/loads'
 import { expectedConsumption, type FuelType, type Generator, type SiteReport } from '../generation/model'
 import type { Task, TaskType } from '../tasks/model'
 import type { Employee } from '../../types'
@@ -119,7 +120,8 @@ export function buildReport(a: ReportInput): Section[] {
       const entries = sheets.map((s) => s.zones.find((e) => e.zoneId === z.id)).filter((e) => !!e)
       const supplied = entries.filter((e) => e.supplied)
       const runs = supplied.flatMap((e) => e.runs.filter((r) => r.start || r.end))
-      const amps = runs.filter((r) => r.loadUnit === 'A').flatMap((r) => r.loads).filter((l): l is number => l !== null)
+      // Loads typed by hour (the new table) count; days from before use the readings of each run.
+      const amps = supplied.flatMap((e) => (hasBandReadings(e.bands) ? (e.runs[0]?.loadUnit ?? 'A') === 'A' ? e.bands.flat() : [] : e.runs.filter((r) => r.loadUnit === 'A').flatMap((r) => r.loads))).filter((l): l is number => l !== null)
       const hours = r1(sum(supplied.map((e) => e.supplyHours)))
       return [z.name, supplied.length, entries.length - supplied.length, hours, supplied.length ? r1(hours / supplied.length) : null, runs.length, amps.length ? Math.round(sum(amps) / amps.length) : null] as Cell[]
     })

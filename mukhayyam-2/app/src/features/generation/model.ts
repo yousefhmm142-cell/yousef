@@ -1,6 +1,6 @@
 import type { ISODate } from '../../lib/dates'
 import { sum } from '../../lib/numbers'
-import type { LoadUnit, Loads } from '../sheets/loads'
+import { emptyBandValues, hasBandValues, type BandValues, type LoadUnit, type Loads } from '../sheets/loads'
 import { blankMeta, newId, type SheetMeta } from '../sheets/workflow'
 
 export { isEditableStatus, newId, statusInfo, type SheetStatus } from '../sheets/workflow'
@@ -111,7 +111,10 @@ export interface GeneratorLog {
   runs: GeneratorRun[]
   runHours: number | null
   loadUnit: LoadUnit
+  /** Older reports: the three phases once for the day. */
   loads: Loads
+  /** The paper's loads table: one reading in every hour band (9 · 12 · 3 · 6 · 9 · 12); an empty hour is a dash. */
+  bandLoads: BandValues
   temperatureC: number | null
   oilPressure: number | null
   oilPressureUnit: PressureUnit
@@ -201,6 +204,7 @@ export function newReport(
         runHours: null,
         loadUnit: prevLog(g.id)?.loadUnit ?? 'A',
         loads: [null, null, null],
+        bandLoads: emptyBandValues(),
         temperatureC: null,
         oilPressure: null,
         oilPressureUnit: prevLog(g.id)?.oilPressureUnit ?? 'bar',
@@ -218,9 +222,12 @@ export function newReport(
 export function reconcileReport(r: SiteReport, fuelTypes: FuelType[], generators: Generator[]): SiteReport {
   const missingFuel = fuelTypes.filter((f) => f.isActive && !r.fuel.some((l) => l.fuelTypeId === f.id))
   const missingGen = generators.filter((g) => g.isActive && !r.generators.some((l) => l.generatorId === g.id))
-  if (!missingFuel.length && !missingGen.length) return r
+  // A draft started before the hourly table existed gets an empty one.
+  const old = r.generators.some((l) => !l.bandLoads)
+  if (!missingFuel.length && !missingGen.length && !old) return r
   const blank = newReport(r.reportDate, missingFuel, missingGen, r.createdBy, null, r.updatedAt)
-  return { ...r, fuel: [...r.fuel, ...blank.fuel], generators: [...r.generators, ...blank.generators] }
+  const kept = old ? r.generators.map((l) => (l.bandLoads ? l : { ...l, bandLoads: emptyBandValues() })) : r.generators
+  return { ...r, fuel: [...r.fuel, ...blank.fuel], generators: [...kept, ...blank.generators] }
 }
 
 export function reportTotals(r: SiteReport) {
@@ -248,7 +255,6 @@ export function missingItems(r: SiteReport, fuelName: (id: number) => string, ge
     if (!g.didRun) continue
     const name = generatorName(g.generatorId)
     if (g.runs.length === 0 || g.runs.some((run) => !run.start || !run.end)) out.push(`${name}: أوقات التشغيل`)
-    if (g.loads.some((l) => l === null)) out.push(`${name}: الأحمال`)
   }
   for (const m of r.maintenance) {
     if (m.generatorId === null) out.push('صيانة بدون اسم المولد')
@@ -258,6 +264,17 @@ export function missingItems(r: SiteReport, fuelName: (id: number) => string, ge
 
 /** Generator readings in bar, whatever unit the operator used. */
 export const toBar = (value: number, unit: PressureUnit) => (unit === 'psi' ? value / 14.5038 : value)
+
+/**
+ * The loads a generator carried, for the alerts: its three phases when they were typed (older reports),
+ * otherwise its highest hourly reading on all three phases (the table has one figure per hour).
+ */
+export function logLoads(log: Pick<GeneratorLog, 'loads' | 'bandLoads'>): { loads: Loads; byPhase: boolean } | null {
+  if (log.loads.every((l) => l !== null)) return { loads: log.loads, byPhase: true }
+  if (!hasBandValues(log.bandLoads)) return null
+  const peak = Math.max(...log.bandLoads.filter((x): x is number => x !== null))
+  return { loads: [peak, peak, peak], byPhase: false }
+}
 
 /** Apparent power drawn, from three phase currents (A) or three phase powers (kW, power factor 0.8). */
 export function loadKva(loads: Loads, unit: LoadUnit, phaseVoltage: number): number | null {

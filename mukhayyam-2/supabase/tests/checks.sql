@@ -76,6 +76,11 @@ insert into public.site_report_fuel (report_id, fuel_type_id, opening_balance, r
 select test.ok(test.affected($$update public.site_report_fuel set notes = 'وصلت 10:15 ص'$$) = 1, 'operator edits a draft line');
 select test.fails($$insert into public.site_report_fuel (report_id, fuel_type_id, closing_balance) values ((select v from test.ids where k = 'report'), 2, -5)$$,
                   '%check constraint%', 'negative fuel figures are refused');
+reset role; insert into public.generators (name, brand) values ('مولد الأحمال', 'Cat'); set role authenticated;
+insert into public.generator_day_logs (report_id, generator_id, did_run, band_loads)
+  values ((select v from test.ids where k = 'report'), (select id from public.generators where name = 'مولد الأحمال'), true, '[180,180,null,200,200,190]'::jsonb);
+select test.ok((select band_loads->>0 = '180' and band_loads->>2 is null from public.generator_day_logs), 'a generator keeps one reading per hourly band (empty = dash)');
+select test.fails($$update public.generator_day_logs set band_loads = '[1,2]'::jsonb$$, '%check constraint%', 'a generator band table must have six bands');
 update public.site_reports set status = 'submitted' where report_date = '2026-10-29';
 select test.ok((select submitted_at is not null and submitted_by = public.current_employee_id() from public.site_reports where report_date = '2026-10-29'), 'sending stamps server time and sender');
 select test.ok(test.affected($$update public.site_report_fuel set notes = 'تعديل بعد الإرسال'$$) = 0, 'operator cannot edit lines after sending');
@@ -109,6 +114,9 @@ insert into public.zone_runs (entry_id, run_no, start_time, end_time, load_l1, l
   select id, 1, '20:00', '01:00', 120, 110, 118 from public.zone_day_entries;
 select test.ok((select count(*) from public.zone_runs) = 1, 'supervisor records a run that crosses midnight');
 select test.fails($$insert into public.zone_runs (entry_id, run_no) select id, 7 from public.zone_day_entries$$, '%check constraint%', 'a seventh run is refused');
+update public.zone_day_entries set band_loads = '[[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3],[null,null,null]]'::jsonb;
+select test.ok((select jsonb_array_length(band_loads) = 6 from public.zone_day_entries), 'a zone keeps its six hourly bands');
+select test.fails($$update public.zone_day_entries set band_loads = '[[1,2,3]]'::jsonb$$, '%check constraint%', 'a band table must have six bands');
 reset role; select test.login('مشغّل الموقع'); set role authenticated;
 select test.ok((select count(*) from public.distribution_sheets) = 1, 'the site employee also sees the distribution sheet');
 select test.ok(test.affected($$update public.zone_runs set load_l1 = 121$$) = 1, 'any site employee can fix a draft sheet');

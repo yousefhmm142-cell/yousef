@@ -1,5 +1,5 @@
 import { average, formatAmount } from '../../lib/numbers'
-import { expectedConsumption, loadKva, reportTotals, toBar, type AlertSettings, type Generator, type SiteReport } from './model'
+import { expectedConsumption, loadKva, logLoads, reportTotals, toBar, type AlertSettings, type Generator, type SiteReport } from './model'
 
 // Alerts only read the figures the site staff typed; they never change them.
 
@@ -133,16 +133,17 @@ export function computeAlerts(report: SiteReport, ctx: AlertContext): Alert[] {
         `${formatAmount(log.oilPressure)} ${log.oilPressureUnit}، والحد الأدنى المقبول ${s.oilWarnBar} bar`)
     }
 
-    const kva = loadKva(log.loads, log.loadUnit, s.phaseVoltage)
+    const carried = logLoads(log)
+    const kva = carried ? loadKva(carried.loads, log.loadUnit, s.phaseVoltage) : null
     if (kva !== null && gen?.capacityKva) {
       const loadPct = (kva / gen.capacityKva) * 100
       add('load', String(log.generatorId), level(loadPct, s.loadWarnPct, s.loadDangerPct),
         `${name}: الحمل ${round(loadPct)}% من قدرته`, `نحو ${formatAmount(round(kva))} kVA من ${formatAmount(gen.capacityKva)} kVA`)
     }
 
-    if (log.loads.every((l): l is number => l !== null)) {
-      const max = Math.max(...log.loads)
-      const min = Math.min(...log.loads)
+    if (carried?.byPhase && carried.loads.every((l): l is number => l !== null)) {
+      const max = Math.max(...carried.loads)
+      const min = Math.min(...carried.loads)
       if (max > 0) {
         const gap = ((max - min) / max) * 100
         add('imbalance', String(log.generatorId), level(gap, s.imbalanceWarnPct, s.imbalanceDangerPct),

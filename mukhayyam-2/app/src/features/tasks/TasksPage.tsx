@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { AlarmClock, CheckCheck, Copy, ListChecks, MapPin, MessageCircle, MessageSquareText, Phone, PhoneIncoming, Plus, Printer, ScrollText, UserRound, XCircle } from 'lucide-react'
+import { AlarmClock, CalendarDays, CheckCheck, ChevronLeft, ChevronRight, Copy, ListChecks, MapPin, MessageCircle, MessageSquareText, Phone, PhoneIncoming, Plus, Printer, ScrollText, UserRound, XCircle } from 'lucide-react'
 import { taskMatrix } from '../reports/build'
 import { TaskPrintSheet } from './TaskPrintSheet'
 import { sealWorkAsTasks, useSealWork } from './sealWork'
@@ -13,7 +13,7 @@ import { useNavigate, useSearchParams } from 'react-router'
 import { TaskArchive } from './TaskArchive'
 import { useEmployee } from '../../auth/AuthProvider'
 import { db } from '../../data/db'
-import { toISODate, todayISO } from '../../lib/dates'
+import { addDays, dayName, describeDay, toISODate, todayISO, type ISODate } from '../../lib/dates'
 import { formatTime } from '../../lib/format'
 import { formatPhone, isValidPhone, normalizePhone } from '../../lib/phone'
 import { useDocumentTitle } from '../../lib/useDocumentTitle'
@@ -101,6 +101,8 @@ export function TasksPage() {
   const now = useNow(30_000)
   const [picked, setView] = useState<View | null>(null)
   const [who, setWho] = useState<string | null>(null)
+  // null = today (the live board); a past day shows what happened that day.
+  const [pastDay, setPastDay] = useState<ISODate | null>(null)
   const [creating, setCreating] = useState(false)
   const [preparing, setPreparing] = useState(false)
   const [giving, setGiving] = useState<string | null>(null)
@@ -123,7 +125,16 @@ export function TasksPage() {
 
   // Calls waiting for a technician come first when there are any.
   const view: View = picked ?? (prepared.length ? 'waiting' : 'open')
-  const shown = (view === 'late' ? late : view === 'today' ? doneToday : view === 'all' ? all.filter((t) => !!t.assigneeId) : open).filter((t) => !who || t.assigneeId === who)
+  // A past day: every task created, finished or cancelled that day (open ones first, then newest).
+  const dayOf = (iso: string | null | undefined) => (iso ? toISODate(new Date(iso)) : null)
+  const dayTasks = pastDay
+    ? all.filter((t) => dayOf(t.createdAt) === pastDay || dayOf(t.completedAt) === pastDay || dayOf(t.cancelledAt) === pastDay).sort((a, b) => Number(isOpen(b)) - Number(isOpen(a)) || b.number - a.number)
+    : []
+  const shown = (pastDay ? dayTasks : view === 'late' ? late : view === 'today' ? doneToday : view === 'all' ? all.filter((t) => !!t.assigneeId) : open).filter((t) => !who || t.assigneeId === who)
+  const stepDay = (by: number) => {
+    const next = addDays(pastDay ?? today, by)
+    setPastDay(next >= today ? null : next)
+  }
   const typeName = (id: number) => types?.find((t) => t.id === id)?.name ?? 'مهمة'
   const zoneName = (id: number | null) => (id ? zones?.find((z) => z.id === id)?.name ?? null : null)
   const person = (id: string | null) => (id ? technicians.find((e) => e.id === id) : undefined)
@@ -159,7 +170,18 @@ export function TasksPage() {
         </div>
       </header>
 
-      <div className="task-board" role="tablist" aria-label="حالة المهام">
+      <div className="task-daybar" role="group" aria-label="اليوم">
+        <button type="button" className="tdb-step" aria-label="اليوم اللي قبله" onClick={() => stepDay(-1)}><ChevronRight size={22} /></button>
+        <label className="tdb-day">
+          <CalendarDays size={18} />
+          <span><b>{dayName(pastDay ?? today, today)}</b><small className="num">{describeDay(pastDay ?? today).weekday} {describeDay(pastDay ?? today).date}</small></span>
+          <input type="date" value={pastDay ?? today} max={today} onChange={(e) => e.target.value && setPastDay(e.target.value >= today ? null : e.target.value)} aria-label="اختيار يوم" />
+        </label>
+        <button type="button" className="tdb-step" aria-label="اليوم اللي بعده" disabled={!pastDay} onClick={() => stepDay(1)}><ChevronLeft size={22} /></button>
+        {pastDay && <button type="button" className="tdb-today" onClick={() => setPastDay(null)}>رجوع لليوم</button>}
+      </div>
+
+      {!pastDay && <div className="task-board" role="tablist" aria-label="حالة المهام">
         {([
           ['waiting', 'بانتظار فني', prepared.length, PhoneIncoming, prepared.length ? 'brand' : ''],
           ['open', 'عند الفنيين', open.length, ListChecks, ''],
@@ -171,7 +193,7 @@ export function TasksPage() {
             <b className="num">{n}</b>
           </button>
         ))}
-      </div>
+      </div>}
 
       <div className="ph-actions task-actions">
         <Button variant="secondary" size="lg" icon={<ListChecks size={18} />} onClick={() => setParams({ view: 'archive' })}>أرشيف الفنيين</Button>
@@ -190,7 +212,7 @@ export function TasksPage() {
         </Button>
       </div>
 
-      {view === 'waiting' && <section className="card prep-card">
+      {!pastDay && view === 'waiting' && <section className="card prep-card">
         <div className="card-h">
           <span className="ico-round brand"><PhoneIncoming size={16} /></span>
           <h2>مهام مجهّزة بانتظار فني</h2>
@@ -219,7 +241,7 @@ export function TasksPage() {
         )}
       </section>}
 
-      {view !== 'waiting' && <div className="task-filters">
+      {(pastDay || view !== 'waiting') && <div className="task-filters">
         <div className="chips">
           <Chip pressed={!who} onClick={() => setWho(null)}>الكل</Chip>
           {technicians.map((t) => (
@@ -228,16 +250,18 @@ export function TasksPage() {
               {open.some((x) => x.assigneeId === t.id) && <span className="chip-count num">{open.filter((x) => x.assigneeId === t.id).length}</span>}
             </Chip>
           ))}
-          <Chip pressed={view === 'all'} onClick={() => setView(view === 'all' ? 'open' : 'all')}>آخر 30 يوم</Chip>
+          {!pastDay && <Chip pressed={view === 'all'} onClick={() => setView(view === 'all' ? 'open' : 'all')}>آخر 30 يوم</Chip>}
         </div>
       </div>}
 
-      {view === 'waiting' ? null : !tasks ? (
+      {pastDay && tasks && <p className="task-daysum"><b className="num">{dayTasks.length}</b> {dayTasks.length === 1 ? 'مهمة' : 'مهام'} · <b className="num">{dayTasks.filter((t) => t.status === 'done').length}</b> أُنجزت{dayTasks.some((t) => t.status === 'cancelled') && <> · <b className="num">{dayTasks.filter((t) => t.status === 'cancelled').length}</b> أُلغيت</>}</p>}
+
+      {!pastDay && view === 'waiting' ? null : !tasks ? (
         <div className="loading-block" aria-busy="true" />
       ) : shown.length === 0 ? (
         <div className="empty card">
-          <h3>{view === 'open' ? 'لا مهام عند الفنيين' : view === 'late' ? 'ولا مهمة متأخرة 👌' : view === 'today' ? 'لم تُنجز مهام اليوم بعد' : 'لا مهام'}</h3>
-          <p>اضغط «مهمة جديدة»، اختر الفني ونوع العمل، وأرسلها بضغطة.</p>
+          <h3>{pastDay ? 'ما في مهام باليوم هاد' : view === 'open' ? 'لا مهام عند الفنيين' : view === 'late' ? 'ولا مهمة متأخرة 👌' : view === 'today' ? 'لم تُنجز مهام اليوم بعد' : 'لا مهام'}</h3>
+          {!pastDay && <p>اضغط «مهمة جديدة»، اختر الفني ونوع العمل، وأرسلها بضغطة.</p>}
         </div>
       ) : (
         <ul className="task-list">
