@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { AlarmClock, CheckCheck, Copy, ListChecks, MapPin, MessageCircle, MessageSquareText, Phone, PhoneIncoming, Plus, Printer, ScrollText, TimerReset, UserRound, XCircle } from 'lucide-react'
+import { AlarmClock, CheckCheck, Copy, ListChecks, MapPin, MessageCircle, MessageSquareText, Phone, PhoneIncoming, Plus, Printer, ScrollText, UserRound, XCircle } from 'lucide-react'
 import { taskMatrix } from '../reports/build'
 import { TaskPrintSheet } from './TaskPrintSheet'
 import { sealWorkAsTasks, useSealWork } from './sealWork'
@@ -46,7 +46,6 @@ import { assignTask, cancelTask, markDone, createTask, recordSent, refreshTasks,
 
 const errorText: Record<string, string> = {
   offline: 'المهام تحتاج إنترنت لأنها تُرسل برسالة. اتصل وحاول مرة أخرى.',
-  reason_needed: 'اكتب سبب الإلغاء.',
 }
 class SmsError extends Error {}
 const errText = (e: unknown) => (e instanceof SmsError ? e.message : errorText[e instanceof SheetStateError ? e.message : ''] ?? 'تعذّر الحفظ. حاول مرة أخرى.')
@@ -536,8 +535,7 @@ function GiveDialog({ task, technicians, typeName, zoneName, onClose }: {
   const [expected, setExpected] = useState(task.expectedMinutes)
   const [busy, setBusy] = useState<Channel | 'cancel' | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [cancelling, setCancelling] = useState(false)
-  const [reason, setReason] = useState('')
+  const confirm = useConfirm()
   const tech = technicians.find((t) => t.id === assigneeId)
 
   async function give(channel: Channel) {
@@ -557,9 +555,12 @@ function GiveDialog({ task, technicians, typeName, zoneName, onClose }: {
   }
 
   async function cancel() {
+    if (busy) return
+    const yes = await confirm({ title: `إلغاء المهمة ${task.number}؟`, confirmLabel: 'أوكي', danger: true })
+    if (!yes) return
     setBusy('cancel')
     try {
-      await cancelTask(task, reason)
+      await cancelTask(task)
       toast(`أُلغيت المهمة ${task.number}`)
       onClose()
     } catch (e) {
@@ -591,7 +592,7 @@ function GiveDialog({ task, technicians, typeName, zoneName, onClose }: {
       footer={
         <>
           <FootHint />
-          <Button variant="ghost" onClick={() => setCancelling((c) => !c)}>إلغاء الطلب</Button>
+          <Button variant="ghost" busy={busy === 'cancel'} disabled={!!busy} onClick={() => void cancel()}>إلغاء الطلب</Button>
           <Button variant="primary" icon={<MessageSquareText size={17} />} busy={busy === 'sms'} disabled={!!busy} onClick={() => void give('sms')}>SMS</Button>
           <Button variant="secondary" icon={<MessageCircle size={17} />} busy={busy === 'whatsapp'} disabled={!!busy} onClick={() => void give('whatsapp')}>إرسال واتساب</Button>
         </>
@@ -619,13 +620,6 @@ function GiveDialog({ task, technicians, typeName, zoneName, onClose }: {
             {EXPECTED_OPTIONS.map((m) => <Chip key={m} pressed={expected === m} onClick={() => setExpected(m)}>{durationText(m)}</Chip>)}
           </div>
         </div>
-        {cancelling && (
-          <div className="field">
-            <span className="label">سبب إلغاء الطلب</span>
-            <input className="input" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="مثل: المشترك حلّها لحاله" />
-            <Button variant="danger" busy={busy === 'cancel'} disabled={!reason.trim()} onClick={() => void cancel()}>تأكيد الإلغاء</Button>
-          </div>
-        )}
         {error && <p className="field-error" role="alert">{error}</p>}
       </div>
     </Dialog>
@@ -789,8 +783,6 @@ function TaskDialog({ task, tech, typeName, zoneName, now, onClose }: {
   const toast = useToast()
   const me = useEmployee()
   const [busy, setBusy] = useState<string | null>(null)
-  const [reason, setReason] = useState('')
-  const [cancelling, setCancelling] = useState(false)
   const confirm = useConfirm()
   const link = taskLink(task.linkToken)
   const text = taskMessage(task, { type: typeName, zone: zoneName }, link)
@@ -810,11 +802,12 @@ function TaskDialog({ task, tech, typeName, zoneName, now, onClose }: {
   }
 
   async function cancel() {
-    const yes = await confirm({ title: `إلغاء المهمة ${task.number}؟`, message: 'تُلغى المهمة ويصل الإلغاء للفني، ويُحفظ السبب الذي كتبته.', confirmLabel: 'إلغاء المهمة', danger: true })
+    if (busy) return
+    const yes = await confirm({ title: `إلغاء المهمة ${task.number}؟`, confirmLabel: 'أوكي', danger: true })
     if (!yes) return
     setBusy('cancel')
     try {
-      await cancelTask(task, reason)
+      await cancelTask(task)
       toast(`أُلغيت المهمة ${task.number}`)
       onClose()
     } catch (e) {
@@ -880,16 +873,7 @@ function TaskDialog({ task, tech, typeName, zoneName, now, onClose }: {
 
         {open && (
           <div className="task-cancel">
-            {!cancelling ? (
-              <Button variant="ghost" icon={<XCircle size={16} />} onClick={() => setCancelling(true)}>إلغاء المهمة</Button>
-            ) : (
-              <>
-                <input className="input" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="سبب الإلغاء" aria-label="سبب الإلغاء" autoFocus />
-                <Button variant="danger" icon={<TimerReset size={16} />} busy={busy === 'cancel'} disabled={!reason.trim()} onClick={() => void cancel()}>
-                  إلغاء المهمة
-                </Button>
-              </>
-            )}
+            <Button variant="ghost" icon={<XCircle size={16} />} busy={busy === 'cancel'} disabled={!!busy} onClick={() => void cancel()}>إلغاء المهمة</Button>
           </div>
         )}
       </div>

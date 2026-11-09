@@ -152,9 +152,11 @@ select test.fails($$insert into public.attendance_punches (employee_id, kind, me
 reset role; select test.login('رامي أبو عجوة'); set role authenticated;
 select test.fails($$update public.tasks set assignee_id = (select id from public.employees where full_name = 'مجد عاشور')$$, '%cannot be reassigned%', 'a finished task cannot be reassigned');
 insert into public.tasks (task_type_id, assignee_id, expected_minutes) values (6, (select id from public.employees where full_name = 'مجد عاشور'), 30);
-select test.fails($$update public.tasks set status = 'cancelled' where status = 'new'$$, '%needs a reason%', 'cancelling needs a reason');
+update public.tasks set status = 'cancelled' where status = 'new';
+select test.ok((select count(*) from public.tasks where status = 'cancelled' and cancelled_at is not null and cancel_reason is null) = 1, 'the manager cancels without a reason');
+insert into public.tasks (task_type_id, assignee_id, expected_minutes) values (6, (select id from public.employees where full_name = 'مجد عاشور'), 30);
 update public.tasks set status = 'cancelled', cancel_reason = 'المشترك غير موجود' where status = 'new';
-select test.ok((select count(*) from public.tasks where status = 'cancelled' and cancelled_at is not null) = 1, 'the manager cancels with a reason');
+select test.ok((select count(*) from public.tasks where status = 'cancelled' and cancelled_at is not null and cancel_reason = 'المشترك غير موجود') = 1, 'optional reasons from older clients are preserved');
 select test.ok((select count(*) from public.attendance_points) = 1, 'the manager can print the attendance sheet');
 
 -- Task links: the technician has no login; the link in the message is enough for one task only.
@@ -592,6 +594,29 @@ select test.fails($$select * from public.seal_activity()$$,'%not_allowed%','staf
 reset role; set role anon;
 select test.fails($$select * from public.recent_activity()$$,'%permission denied%','visitors cannot read the activity feed');
 select test.fails($$select * from public.seal_activity()$$,'%permission denied%','visitors cannot read seal history');
+reset role;
+
+-- ---------- Confirmation-only cancellation, with the same access rules and history ----------
+reset role; select test.login('موظف إداري'); set role authenticated;
+with t as (
+ insert into public.tasks (task_type_id,assignee_id,expected_minutes,subscriber_name)
+ values (2,null,30,'فحص إلغاء طلب مجهّز') returning id)
+insert into test.ids select 'cancel_prepared',id from t;
+update public.tasks set status='cancelled',cancel_reason='   ' where id=(select v from test.ids where k='cancel_prepared');
+select test.ok((select status='cancelled' and cancelled_at is not null and cancel_reason is null from public.tasks where id=(select v from test.ids where k='cancel_prepared')), 'the task office cancels an unassigned request without inventing a reason');
+select test.ok((select count(*)=1 from public.task_events where task_id=(select v from test.ids where k='cancel_prepared') and event='cancelled' and actor_id=public.current_employee_id()), 'a reasonless cancellation retains its actor and event');
+update public.tasks set status='cancelled' where id=(select v from test.ids where k='cancel_prepared');
+select test.ok((select count(*)=1 from public.task_events where task_id=(select v from test.ids where k='cancel_prepared') and event='cancelled'), 'replaying a cancellation does not duplicate the event');
+with t as (
+ insert into public.tasks (task_type_id,assignee_id,expected_minutes)
+ values (2,(select id from public.employees where full_name='قصي الشافعي'),30) returning id)
+insert into test.ids select 'cancel_assigned',id from t;
+reset role; select test.login('قصي الشافعي'); set role authenticated;
+select test.fails($$update public.tasks set status='cancelled' where id=(select v from test.ids where k='cancel_assigned')$$,'%Invalid task step%','removing the reason requirement does not let a technician cancel their task');
+reset role; select test.login('موظف إداري'); set role authenticated;
+update public.tasks set status='cancelled' where id=(select v from test.ids where k='cancel_assigned');
+select test.ok((select status='cancelled' and cancelled_at is not null and cancel_reason is null from public.tasks where id=(select v from test.ids where k='cancel_assigned')), 'the task office also cancels an assigned task without a reason');
+select test.fails($$update public.tasks set status='cancelled' where status='done'$$,'%can send or cancel%','a completed task still cannot be cancelled');
 reset role;
 
 \echo 'ALL CHECKS PASSED'

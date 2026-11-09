@@ -199,16 +199,15 @@ export async function recordSent(task: Task, channel: Channel, toPhone: string, 
   if (how === 'sent') await reload(task.id)
 }
 
-export async function cancelTask(task: Task, reason: string): Promise<void> {
-  const text = reason.trim()
-  if (!text) throw new SheetStateError('reason_needed')
+/** Cancellation needs only the confirmation in the task dialog, including when queued offline. */
+export async function cancelTask(task: Task): Promise<void> {
   if (isDemo) {
-    await db.tasks.update(task.id, { status: 'cancelled', cancelReason: text, cancelledAt: serverNow().toISOString() })
+    await db.tasks.update(task.id, { status: 'cancelled', cancelReason: '', cancelledAt: serverNow().toISOString() })
     return
   }
   const how = await queued(() => runOrQueue(
-    { table: 'tasks', op: 'update', rowId: task.id, row: { status: 'cancelled', cancel_reason: text }, label: `إلغاء مهمة ${task.number || ''}`.trim() },
-    () => db.tasks.update(task.id, { status: 'cancelled', cancelReason: text, cancelledAt: serverNow().toISOString() }).then(() => undefined),
+    { table: 'tasks', op: 'update', rowId: task.id, row: { status: 'cancelled', cancel_reason: null }, label: `إلغاء مهمة ${task.number || ''}`.trim() },
+    () => db.tasks.update(task.id, { status: 'cancelled', cancelReason: '', cancelledAt: serverNow().toISOString() }).then(() => undefined),
   ))
   if (how === 'sent') await reload(task.id)
 }
