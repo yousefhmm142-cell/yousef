@@ -427,6 +427,22 @@ reset role; select test.login('مشغّل الموقع'); set role authenticated
 select test.ok((select count(*) from public.tasks) = 0 and not public.has_page('tasks'), 'someone without the page sees no tasks');
 reset role;
 
+-- ---------- A page given to someone: they also fill and send that form ----------
+reset role; select test.login('مسؤول النظام'); set role authenticated;
+select public.admin_set_pages((select id from public.employees where full_name = 'موظف إداري'), array['generation']);
+reset role; select test.login('موظف إداري'); set role authenticated;
+insert into public.site_reports (report_date) values ('2026-11-01');
+select test.ok((select count(*) from public.site_reports where report_date = '2026-11-01') = 1, 'whoever has the generation page fills a report');
+update public.site_reports set status = 'submitted' where report_date = '2026-11-01';
+select test.ok((select status = 'submitted' from public.site_reports where report_date = '2026-11-01'), 'and sends it');
+select test.fails($$update public.site_reports set status = 'approved' where report_date = '2026-11-01'$$, '%', 'but cannot approve it');
+select test.fails($$insert into public.distribution_sheets (sheet_date) values ('2026-11-01')$$, '%row-level security%', 'the generation page does not open the distribution sheet');
+reset role; select test.login('مسؤول النظام'); set role authenticated;
+select public.admin_set_pages((select id from public.employees where full_name = 'موظف إداري'), array['attendance']);
+reset role; select test.login('موظف إداري'); set role authenticated;
+select test.fails($$insert into public.site_reports (report_date) values ('2026-11-02')$$, '%row-level security%', 'take the page away and they cannot fill it');
+reset role;
+
 -- ---------- Deleting a person (branch manager only) ----------
 reset role; select test.login('مشغّل الموقع'); set role authenticated;
 select test.fails($$select public.admin_delete_employee((select id from public.employees where full_name = 'موظف إداري'))$$, '%not_allowed%', 'the site cannot delete people');

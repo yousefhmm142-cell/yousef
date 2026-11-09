@@ -13,9 +13,9 @@ import { Home } from '../pages/Home'
 import { LoginRoute } from '../pages/Login'
 import { SiteHistoryPage } from '../features/sheets/SiteHistoryPage'
 import { NotFound, RouteError } from '../pages/states'
-import { isSiteRole, SITE_ROLES, type Role } from '../types'
+import { hasPage, isManagerRole, isSiteRole, SITE_ROLES, type Role } from '../types'
 import { AppShell } from './AppShell'
-import { RequireAuth, RoleGate, SealsGate, PageGate, ReadingsGate } from './guards'
+import { FillGate, RequireAuth, RoleGate, SealsGate, PageGate, ReadingsGate } from './guards'
 
 // Screens most phones never open load only when first opened, so the app starts faster.
 const page = <T,>(load: () => Promise<T>, name: keyof T) =>
@@ -39,13 +39,14 @@ const site = SITE_ROLES
 /** The site sees its earlier reports; managers open on the latest report. */
 function GenerationIndex() {
   const employee = useEmployee()
-  return isSiteRole(employee.role) ? <HistoryPage /> : <ReportPage />
+  // Whoever was given the page fills it like the site; managers open on the latest report.
+  return isSiteRole(employee.role) || (!isManagerRole(employee.role) && hasPage(employee, 'generation')) ? <HistoryPage /> : <ReportPage />
 }
 
 /** The site sees its earlier sheets; managers open on the latest sheet. */
 function DistributionIndex() {
   const employee = useEmployee()
-  return isSiteRole(employee.role) ? <DistributionHistoryPage /> : <SheetPage />
+  return isSiteRole(employee.role) || (!isManagerRole(employee.role) && hasPage(employee, 'distribution')) ? <DistributionHistoryPage /> : <SheetPage />
 }
 
 function Lazy({ children }: { children: ReactNode }) {
@@ -68,13 +69,13 @@ export const router = createBrowserRouter([
           { index: true, element: <Home /> },
           { path: 'generation', element: <PageGate page="generation" roles={site}><GenerationIndex /></PageGate> },
           { path: 'generation/:date', element: <PageGate page="generation" roles={site}><ReportPage /></PageGate> },
-          { path: 'entry/:date', element: <RoleGate roles={[...managers, ...site]}><EntryPage /></RoleGate> },
+          { path: 'entry/:date', element: <FillGate page="generation"><EntryPage /></FillGate> },
           { path: 'distribution', element: <PageGate page="distribution" roles={site}><DistributionIndex /></PageGate> },
           { path: 'distribution/:date', element: <PageGate page="distribution" roles={site}><SheetPage /></PageGate> },
-          { path: 'sheet', element: <RoleGate roles={[...managers, ...site]}><DistributionEntryPage /></RoleGate> },
-          { path: 'sheet/:date', element: <RoleGate roles={[...managers, ...site]}><DistributionEntryPage /></RoleGate> },
+          { path: 'sheet', element: <FillGate page="distribution"><DistributionEntryPage /></FillGate> },
+          { path: 'sheet/:date', element: <FillGate page="distribution"><DistributionEntryPage /></FillGate> },
           // Older links.
-          { path: 'distribution/entry/:date', element: <RoleGate roles={[...managers, ...site]}><DistributionEntryPage /></RoleGate> },
+          { path: 'distribution/entry/:date', element: <FillGate page="distribution"><DistributionEntryPage /></FillGate> },
           { path: 'history', element: <RoleGate roles={site}><SiteHistoryPage /></RoleGate> },
           { path: 'tasks', element: <PageGate page="tasks"><Lazy><TasksPage /></Lazy></PageGate> },
           { path: 'tasks/seal-work', element: <PageGate page="seal-work"><Lazy><SealWorkPage /></Lazy></PageGate> },
