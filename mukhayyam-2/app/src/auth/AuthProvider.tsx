@@ -1,3 +1,4 @@
+import { setIssueOwner } from '../lib/clientErrors'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { isDemo } from '../config'
 import { getSupabase } from '../data/supabase'
@@ -39,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let alive = true
     backend
       .restore()
-      .then((employee) => alive && setState(employee ? { status: 'signed_in', employee } : { status: 'signed_out' }))
+      .then((employee) => { if(alive) { setIssueOwner(employee?.id ?? null); setState(employee ? { status: 'signed_in', employee } : { status: 'signed_out' }) } })
       .catch(() => alive && setState({ status: 'signed_out' }))
     return () => {
       alive = false
@@ -49,6 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Real mode: keep this device in step with the server while someone is signed in.
   const signedIn = state.status === 'signed_in' ? state.employee : null
   useEffect(() => {
+    setIssueOwner(signedIn?.id ?? null)
     if (!signedIn) return
     startSync(signedIn)
     startPresence(signedIn)
@@ -61,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback(
     async (phone: string, pin: string, onVerified?: () => Promise<void>) => {
       const employee = await backend.signIn(phone, pin)
+      setIssueOwner(employee.id)
       try {
         localStorage.setItem(LAST_PHONE, phone)
       } catch {
@@ -79,6 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await flushBeforeSignOut().catch(() => undefined)
     stopSync()
     await backend.signOut()
+    setIssueOwner(null)
     setState({ status: 'signed_out', byUser: true })
   }, [backend])
 

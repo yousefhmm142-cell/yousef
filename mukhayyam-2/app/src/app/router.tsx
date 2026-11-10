@@ -24,6 +24,8 @@ const SettingsPage = page(() => import('../features/settings/SettingsPage'), 'Se
 const TaskLinkPage = page(() => import('../features/tasks/LinkPage'), 'TaskLinkPage')
 const TasksPage = page(() => import('../features/tasks/TasksPage'), 'TasksPage')
 const SealWorkPage = page(() => import('../features/tasks/SealWorkPage'), 'SealWorkPage')
+const MyTasksPage = page(() => import('../features/tasks/MyTasksPage'), 'MyTasksPage')
+const MyAttendancePage = page(() => import('../features/attendance/MyAttendancePage'), 'MyAttendancePage')
 const AttendancePage = page(() => import('../features/attendance/AttendancePage'), 'AttendancePage')
 const ReportsPage = page(() => import('../features/reports/ReportsPage'), 'ReportsPage')
 const SealIssuePage = page(() => import('../features/seals/IssuePage'), 'SealIssuePage')
@@ -48,6 +50,8 @@ function DistributionIndex() {
   const employee = useEmployee()
   return isSiteRole(employee.role) || (!isManagerRole(employee.role) && hasPage(employee, 'distribution')) ? <DistributionHistoryPage /> : <SheetPage />
 }
+
+function AttendanceIndex() { const me=useEmployee(); return isManagerRole(me.role)||hasPage(me,'attendance') ? <PageGate page="attendance"><Lazy><AttendancePage /></Lazy></PageGate> : <Lazy><MyAttendancePage /></Lazy> }
 
 function Lazy({ children }: { children: ReactNode }) {
   return <Suspense fallback={<div className="loading-block" aria-busy="true" />}>{children}</Suspense>
@@ -81,7 +85,7 @@ export const router = createBrowserRouter([
           { path: 'tasks/seal-work', element: <PageGate page="seal-work"><Lazy><SealWorkPage /></Lazy></PageGate> },
           {
             path: 'attendance',
-            element: <PageGate page="attendance"><Lazy><AttendancePage /></Lazy></PageGate>,
+            element: <AttendanceIndex />,
           },
           { path: 'readings', element: <ReadingsGate><Lazy><ReadingsPage /></Lazy></ReadingsGate> },
           { path: 'seals', element: <SealsGate><Lazy><SealIssuePage /></Lazy></SealsGate> },
@@ -90,6 +94,8 @@ export const router = createBrowserRouter([
           { path: 'reports', element: <RoleGate roles={managers}><Lazy><ReportsPage /></Lazy></RoleGate> },
           { path: 'settings', element: <RoleGate roles={managers}><Lazy><SettingsPage /></Lazy></RoleGate> },
           { path: 'permissions', element: <Navigate to="/settings?tab=permissions" replace /> },
+          { path: 'my-tasks', element: <RoleGate roles={['technician']}><Lazy><MyTasksPage /></Lazy></RoleGate> },
+          { path: 'my-attendance', element: <Lazy><MyAttendancePage /></Lazy> },
           { path: 'account', element: <Account /> },
           { path: 'more', element: <More /> },
           { path: '*', element: <NotFound /> },

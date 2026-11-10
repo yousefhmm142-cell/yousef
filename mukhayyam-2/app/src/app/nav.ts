@@ -44,6 +44,7 @@ function baseNav({ role, canSeals }: Pick<Employee, 'role' | 'canSeals'>): NavIt
   // Someone given the seals permission (the accountant) opens straight on the two seals pages.
   if (canSeals && (role === 'staff' || role === 'technician')) {
     return [
+      ...(role === 'technician' ? [{to:'/',label:'مهامي',icon:ListChecks},{to:'/my-attendance',label:'حضوري',icon:ScanLine}] : []),
       { to: '/seals', label: 'صرف الأختام', icon: Stamp },
       { to: '/seals/recent', label: 'آخر ما صُرف', icon: History },
       { to: '/seals/log', label: 'سجل الأختام', icon: ScrollText },

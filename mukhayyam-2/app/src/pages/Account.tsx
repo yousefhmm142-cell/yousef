@@ -33,6 +33,7 @@ export function Account() {
 
   return (
     <div className="account">
+      {!isManagerRole(employee.role) && <div className="chips"><Link className="btn" to="/my-attendance">سجل حضوري</Link>{employee.role === 'technician' && <Link className="btn" to="/my-tasks">مهامي</Link>}</div>}
       <section className="profile glass">
         <Avatar name={employee.fullName} size={72} />
         <div>

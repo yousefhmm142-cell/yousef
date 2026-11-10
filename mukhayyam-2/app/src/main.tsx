@@ -17,6 +17,8 @@ import './styles/readings.css'
 import './styles/seals.css'
 import './styles/print.css'
 
+import { AppErrorBoundary } from './ui/AppErrorBoundary'
+import { startErrorCapture } from './lib/clientErrors'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { RouterProvider } from 'react-router/dom'
@@ -62,18 +64,19 @@ registerSW({
 })
 
 // A newer site is taken on the next open or refresh, with «جاري تحديث الموقع…» while it loads.
+startErrorCapture()
 startUpdateChecks()
 startSealQueue()
 startActions()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <AuthProvider>
+    <AppErrorBoundary><AuthProvider>
       <ToastProvider>
         <ConfirmProvider>
           <RouterProvider router={router} />
         </ConfirmProvider>
       </ToastProvider>
-    </AuthProvider>
+    </AuthProvider></AppErrorBoundary>
   </StrictMode>,
 )

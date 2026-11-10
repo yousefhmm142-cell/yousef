@@ -85,10 +85,10 @@ export function useTaskTypes(): TaskType[] | undefined {
 }
 
 /** Brings the open tasks and the last 120 days from the server (enough for monthly reports). */
-export async function refreshTasks(): Promise<void> {
-  if (isDemo) return
+export async function refreshTasks(): Promise<boolean> {
+  if (isDemo) return true
   const sb = getSupabase()
-  if (!sb || !navigator.onLine) return
+  if (!sb || !navigator.onLine) return false
   // What was written without internet goes up first; anything still waiting stays on screen.
   await flushActions()
   const waiting = new Set((await getActions()).filter((a) => a.table === 'tasks').map((a) => String(a.row?.id ?? a.rowId)))
@@ -99,7 +99,7 @@ export async function refreshTasks(): Promise<void> {
     .or(`status.not.in.(done,cancelled),created_at.gte.${since}`)
     .order('number', { ascending: false })
     .limit(1000)
-  if (error || !data) return
+  if (error || !data) return false
   const rows = (data as TaskRow[]).map(taskFromRow)
   await db.transaction('rw', db.tasks, async () => {
     const keep = new Set(rows.map((r) => r.id))
@@ -107,6 +107,7 @@ export async function refreshTasks(): Promise<void> {
     await db.tasks.bulkDelete(old.filter((t) => !keep.has(t.id) && !waiting.has(t.id)).map((t) => t.id))
     await db.tasks.bulkPut(rows.filter((r) => !waiting.has(r.id)))
   })
+  return true
 }
 
 // ---------- Manager's actions ----------

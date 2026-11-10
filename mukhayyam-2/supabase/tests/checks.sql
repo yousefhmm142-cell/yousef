@@ -643,4 +643,29 @@ select test.ok((select status='cancelled' and cancelled_at is not null and cance
 select test.fails($$update public.tasks set status='cancelled' where status='done'$$,'%can send or cancel%','a completed task still cannot be cancelled');
 reset role;
 
+-- ---------- Bounded private client diagnostics ----------
+reset role; set role anon;
+select test.fails($$select public.report_client_issue(gen_random_uuid(),'render','Error','/tasks','','test')$$,'%permission denied%','visitors cannot upload client diagnostics');
+select test.fails($$select * from public.recent_client_issues()$$,'%permission denied%','visitors cannot see client diagnostics');
+reset role; select test.login('موظف إداري');set role authenticated;
+select public.report_client_issue('00000000-0000-0000-0000-00000000ce01','render','TypeError','/tasks','/assets/index-test.js:1:2','test');
+select public.report_client_issue('00000000-0000-0000-0000-00000000ce01','render','TypeError','/tasks','/assets/index-test.js:1:2','test');
+select test.fails($$select * from public.client_issues$$,'%permission denied%','staff cannot read raw diagnostic rows');
+select test.fails($$select * from public.recent_client_issues()$$,'%not_allowed%','staff cannot read other employees diagnostics');
+select test.fails($$select public.report_client_issue(gen_random_uuid(),'render','Error','/t/private?token=x','','test')$$,'%check%','diagnostic routes cannot contain query parameters');
+select test.fails($$select public.report_client_issue(gen_random_uuid(),'render','Error','/tasks','private text','test')$$,'%invalid_diagnostic%','arbitrary private error text is rejected');
+reset role;select test.login('رامي أبو عجوة');set role authenticated;
+select test.ok((select count(*)=1 from public.recent_client_issues() where id='00000000-0000-0000-0000-00000000ce01' and who='موظف إداري'),'manager sees a deduplicated error with its real actor');
+reset role;
+select test.ok((select count(*)=1 from public.client_issues),'retries create only one diagnostic record');
+insert into public.client_issues(id,employee_id,at,kind,code,route,location,build) values(gen_random_uuid(),(select id from public.employees where full_name='موظف إداري'),now()-interval '31 days','render','Error','/tasks','','test');
+select test.login('موظف إداري');set role authenticated;
+select public.report_client_issue(gen_random_uuid(),'promise','Error','/account','','test');
+reset role;
+select test.ok(not exists(select 1 from public.client_issues where at<now()-interval '30 days'),'older diagnostics are pruned on the next report');
+select test.login('موظف إداري');set role authenticated;
+select public.report_client_issue(gen_random_uuid(),'error','Error','/tasks','','test') from generate_series(1,8);
+select test.fails($$select public.report_client_issue(gen_random_uuid(),'error','Error','/tasks','','test')$$,'%rate_limit%','diagnostic flood is limited to ten per employee per hour');
+reset role;
+
 \echo 'ALL CHECKS PASSED'

@@ -23,7 +23,9 @@ import { isEditableStatus, statusInfo, type SheetStatus } from '../features/shee
 import { dayName, todayISO, type ISODate } from '../lib/dates'
 import { gazaDate } from '../features/attendance/rules'
 import { ActivityCard, AttentionCard, KpiStrip, PresenceCard } from '../features/dashboard/DashboardCards'
-import { ModuleSoon } from './ModuleSoon'
+import { lazy, Suspense } from 'react'
+const MyTasksPage=lazy(()=>import('../features/tasks/MyTasksPage').then(m=>({default:m.MyTasksPage})))
+const MyAttendancePage=lazy(()=>import('../features/attendance/MyAttendancePage').then(m=>({default:m.MyAttendancePage})))
 import { isOpen, isOverdue } from '../features/tasks/model'
 import { usePendingCount } from '../data/sync'
 
@@ -31,7 +33,7 @@ import { usePendingCount } from '../data/sync'
 export function Home() {
   const employee = useEmployee()
   // The accountant's job is the seals: open straight on them.
-  if (employee.canSeals && (employee.role === 'staff' || employee.role === 'technician')) return <Navigate to="/seals" replace />
+  if (employee.canSeals && employee.role === 'staff') return <Navigate to="/seals" replace />
   // Someone who runs the tasks from the office (مهند) opens straight on them.
   if (employee.role === 'staff' && employee.pages?.includes('tasks')) return <Navigate to="/tasks" replace />
   switch (employee.role) {
@@ -42,9 +44,9 @@ export function Home() {
     case 'distribution_supervisor':
       return <EntryPage />
     case 'technician':
-      return <ModuleSoon module="my-tasks" />
+      return <Suspense fallback={<div className="loading-block" aria-busy="true" />}><MyTasksPage /></Suspense>
     case 'staff':
-      return <ModuleSoon module="my-attendance" />
+      return <Suspense fallback={<div className="loading-block" aria-busy="true" />}><MyAttendancePage /></Suspense>
   }
 }
 

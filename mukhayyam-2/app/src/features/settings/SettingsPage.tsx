@@ -1,3 +1,4 @@
+import { ClientIssues } from './ClientIssues'
 import { Clock, LayoutGrid, Pencil, Plus, Zap } from 'lucide-react'
 import { useState } from 'react'
 import { useSearchParams } from 'react-router'
@@ -44,6 +45,7 @@ export function SettingsPage() {
       />
 
       {tab === 'permissions' ? <PermissionsPage /> : tab === 'sms' ? <SmsPage /> : <>
+      <ClientIssues />
       <TeamCard />
 
       <section className="card">

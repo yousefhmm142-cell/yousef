@@ -1,6 +1,7 @@
 import { Compass, Lock, RefreshCw, TriangleAlert } from 'lucide-react'
-import type { ReactNode } from 'react'
-import { Link, isRouteErrorResponse, useRouteError } from 'react-router'
+import { captureIssue } from '../lib/clientErrors'
+import { useEffect,useState,type ReactNode } from 'react'
+import { Link, useRouteError } from 'react-router'
 import { useDocumentTitle } from '../lib/useDocumentTitle'
 import { Button } from '../ui/primitives'
 
@@ -41,7 +42,8 @@ export function NoAccess() {
 /** Shown when a screen crashes, instead of a blank page. */
 export function RouteError() {
   const error = useRouteError()
-  const detail = isRouteErrorResponse(error) ? `${error.status} ${error.statusText}` : error instanceof Error ? error.message : ''
+  const [reference,setReference]=useState('')
+  useEffect(()=>{setReference(captureIssue('render',error))},[error])
   return (
     <div className="state-page">
       <StateView
@@ -54,7 +56,7 @@ export function RouteError() {
           </Button>
         }
       />
-      {detail && <code className="error-detail ltr">{detail}</code>}
+      {reference && <p className="num">مرجع العطل: {reference.slice(0,8)}</p>}
     </div>
   )
 }
