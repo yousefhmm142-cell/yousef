@@ -1,3 +1,6 @@
+import { PulseLine } from '../ui/fx/PulseLine'
+import { DayStrip } from '../features/dashboard/DayStrip'
+import { TechniciansToday } from '../features/dashboard/TechniciansToday'
 import { Skeleton } from '../ui/fx/Skeleton'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { ArrowLeft, Clock, CloudUpload, Database, Wifi, WifiOff } from 'lucide-react'
@@ -80,9 +83,11 @@ function ManagerHome() {
         </div>
       </header>
 
+      <PulseLine />
       <KpiStrip />
+      <DayStrip />
 
-      <AttentionCard />
+      <div id="today-attention"><AttentionCard /></div>
 
       <section className="mod-grid" aria-label="الوحدات">
         {managerModules.map(({ key, to }) => {
@@ -109,6 +114,7 @@ function ManagerHome() {
         <PresenceCard />
       </div>
 
+      <TechniciansToday />
       <div className="home-row">
         <TeamCard />
         <SystemCard />
