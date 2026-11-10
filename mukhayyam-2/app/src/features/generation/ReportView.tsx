@@ -1,3 +1,4 @@
+import { EmptyArt } from '../../ui/fx/EmptyArt'
 import { Gauge as LoadGauge } from '../../ui/fx/Gauge'
 import { FuelTank } from '../../ui/fx/FuelTank'
 import { HeatLegend, heatStyle, Peak } from '../../ui/fx/HeatLegend'
@@ -122,7 +123,7 @@ export function ReportView({ report, ctx }: { report: SiteReport; ctx: ReturnTyp
         <section className="card">
           <div className="card-h"><span className="ico-round"><Wrench size={16} /></span><h2>الصيانات</h2></div>
           {report.maintenance.length === 0 ? (
-            <p className="card-empty">لا صيانات في هذا اليوم.</p>
+            <p className="card-empty"><EmptyArt kind="clipboard" />لا صيانات في هذا اليوم.</p>
           ) : (
             <ul className="maint-list">
               {report.maintenance.map((m) => (
@@ -142,7 +143,7 @@ export function ReportView({ report, ctx }: { report: SiteReport; ctx: ReturnTyp
         </section>
         <section className="card">
           <div className="card-h"><span className="ico-round"><NotebookPen size={16} /></span><h2>الملاحظات</h2></div>
-          <p className={report.generalNotes ? 'note' : 'card-empty'}>{report.generalNotes || 'لا ملاحظات.'}</p>
+          <p className={report.generalNotes ? 'note' : 'card-empty'}>{!report.generalNotes && <EmptyArt kind="clipboard" />}{report.generalNotes || 'لا ملاحظات.'}</p>
         </section>
       </div>
 

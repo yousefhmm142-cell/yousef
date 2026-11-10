@@ -1,3 +1,4 @@
+import { EmptyArt } from '../../ui/fx/EmptyArt'
 import { HeatLegend, heatStyle, Peak } from '../../ui/fx/HeatLegend'
 import { CountUp } from '../../ui/fx/CountUp'
 import { ArrowLeft, Clock, LayoutGrid, NotebookPen, Sun, TriangleAlert, Zap } from 'lucide-react'
@@ -103,7 +104,7 @@ export function SheetView({ sheet, ctx }: { sheet: DistributionSheet; ctx: Ctx }
 
       <section className="card">
         <div className="card-h"><span className="ico-round"><NotebookPen size={16} /></span><h2>الملاحظات</h2></div>
-        <p className={sheet.notes ? 'note' : 'card-empty'}>{sheet.notes || 'لا ملاحظات.'}</p>
+        <p className={sheet.notes ? 'note' : 'card-empty'}>{!sheet.notes && <EmptyArt kind="clipboard" />}{sheet.notes || 'لا ملاحظات.'}</p>
       </section>
       <Signatures sheet={sheet} names={names} sender="مشرف التوزيع" />
     </div>

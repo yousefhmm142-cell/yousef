@@ -1,3 +1,4 @@
+import { PullToRefresh } from '../ui/fx/PullToRefresh'
 import { Ellipsis, Settings, UserRound } from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router'
@@ -132,9 +133,9 @@ export function AppShell() {
 
       <SyncNotice />
 
-      <main className="page" id="main">
-        <Outlet />
-      </main>
+      <PullToRefresh><main className="page" id="main">
+        <div key={pathname} className="page-enter"><Outlet /></div>
+      </main></PullToRefresh>
 
       {tabs.length > 1 && (
         <nav className="tabbar glass" aria-label="الأقسام" ref={tabRef}>

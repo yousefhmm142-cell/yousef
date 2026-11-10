@@ -88,3 +88,19 @@
 @keyframes fx-ring { from { opacity: 0; } to { opacity: 1; } }
 @media (max-width: 900px) { .fx-pulse { padding: 10px 14px; gap: 12px; }.fx-pulse b { font-size: 13px; }.fx-tech-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; padding: 10px; } }
 @media (prefers-reduced-motion: reduce) { .fx-pulse-trace,.fx-tech-ring { animation: none; } }
+
+.page-enter { min-width: 0; animation: fx-page-enter 220ms var(--ease) both; }
+.page-enter > :first-child > :nth-child(-n+6) { animation: fx-page-enter 320ms var(--ease) both; }
+.page-enter > :first-child > :nth-child(2) { animation-delay: 40ms; }.page-enter > :first-child > :nth-child(3) { animation-delay: 80ms; }.page-enter > :first-child > :nth-child(4) { animation-delay: 120ms; }.page-enter > :first-child > :nth-child(5) { animation-delay: 160ms; }.page-enter > :first-child > :nth-child(6) { animation-delay: 200ms; }
+@keyframes fx-page-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.fx-empty-art { display: block; width: 110px; height: 110px; margin: 10px auto 16px; opacity: .85; flex: none; }
+.fx-empty-art path { animation: fx-art-reveal 600ms var(--ease) both; }
+@keyframes fx-art-reveal { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+.fx-pull { position: fixed; z-index: 38; top: 70px; left: 50%; padding: 10px 16px; border-radius: 24px; display: flex; align-items: center; gap: 10px; color: var(--brand); background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-lg); pointer-events: none; transition: opacity 160ms var(--ease); }
+.fx-pull small { font-size: 12px; white-space: nowrap; }.fx-pull-icon { position: relative; display: block; height: 24px; color: var(--muted); }.fx-pull-icon > span { position: absolute; inset: 0; transform-origin: bottom; color: var(--brand); overflow: hidden; }.fx-pull[data-refreshing] .fx-pull-icon { animation: fx-pull-spin 1s linear infinite; color: var(--brand); }
+@keyframes fx-pull-spin { to { transform: rotate(360deg); } }
+@media (max-width: 900px) { body { overscroll-behavior-y: contain; } }
+@media (min-width: 901px) { .fx-pull { display: none; } }
+:root[data-theme='dark'] .fx-day-dot:not([data-kind='task']) { color: var(--surface); }
+@media (prefers-reduced-motion: reduce) { .page-enter, .page-enter > :first-child > :nth-child(-n+6), .fx-empty-art path, .fx-pull[data-refreshing] .fx-pull-icon { animation: none; }.fx-pull { transition: none; } }
+@media print { .page-enter, .page-enter > :first-child > :nth-child(-n+6) { animation: none !important; transform: none !important; opacity: 1 !important; } }

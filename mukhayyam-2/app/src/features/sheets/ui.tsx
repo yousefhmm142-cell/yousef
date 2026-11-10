@@ -1,3 +1,4 @@
+import { EmptyArt } from '../../ui/fx/EmptyArt'
 import { Skeleton } from '../../ui/fx/Skeleton'
 import { CalendarDays, Check, ChevronLeft, ChevronRight, CircleCheck, ClipboardList, Clock, MessageCircle, Printer, Send, TriangleAlert, Undo2, WifiOff, type LucideIcon } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
@@ -359,8 +360,7 @@ export function NoSheet({ date, drafting, noun, source, listHref }: {
   const gazaHour = Number(new Intl.DateTimeFormat('en-US', { hour: 'numeric', hourCycle: 'h23', timeZone: 'Asia/Gaza' }).format(now))
   const late = date < addDays(today, -1) || (date === addDays(today, -1) && gazaHour >= 10)
   return (
-    <div className="empty card">
-      <span className="halo"><Clock size={30} /></span>
+    <div className="empty card"><EmptyArt kind="clipboard" />
       <h3>{drafting ? `${noun} قيد التعبئة` : `لم يصل ${noun} هذا اليوم`}</h3>
       <p>
         {drafting
@@ -461,7 +461,7 @@ export function SheetHistory({ title, items, todayMissing, todayLabel, todayHref
       {!items ? (
         <Skeleton kind="list" />
       ) : items.length === 0 ? (
-        <div className="empty card"><h3>لا شيء بعد</h3><p>{emptyText}</p></div>
+        <div className="empty card"><EmptyArt kind="clipboard" /><h3>لا شيء بعد</h3><p>{emptyText}</p></div>
       ) : (
         <ul className="history-list">
           {items.map((it) => (

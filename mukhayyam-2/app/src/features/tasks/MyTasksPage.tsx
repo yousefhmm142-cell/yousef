@@ -1,3 +1,4 @@
+import { EmptyArt } from '../../ui/fx/EmptyArt'
 import { useEffect, useState } from 'react'
 import { useEmployee } from '../../auth/AuthProvider'
 import { db } from '../../data/db'
@@ -114,7 +115,7 @@ export function MyTasksPage() {
       {!tasks ? (
         <p role="status">جاري تحميل مهامك…</p>
       ) : !mine.length ? (
-        <section className="card personal-empty">{past ? 'ما في مهام سابقة.' : 'ما عندك مهام مفتوحة.'}</section>
+        <section className="card personal-empty"><EmptyArt kind="tech" />{past ? 'ما في مهام سابقة.' : 'ما عندك مهام مفتوحة.'}</section>
       ) : (
         mine.map((t) => (
           <article key={t.id} className="card personal-task">

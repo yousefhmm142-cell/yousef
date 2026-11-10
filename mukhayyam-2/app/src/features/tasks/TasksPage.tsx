@@ -1,3 +1,4 @@
+import { EmptyArt } from '../../ui/fx/EmptyArt'
 import { CountUp } from '../../ui/fx/CountUp'
 import { Skeleton } from '../../ui/fx/Skeleton'
 import { useLiveQuery } from 'dexie-react-hooks'
@@ -261,7 +262,7 @@ export function TasksPage() {
       {!pastDay && view === 'waiting' ? null : !tasks ? (
         <Skeleton kind="list" />
       ) : shown.length === 0 ? (
-        <div className="empty card">
+        <div className="empty card"><EmptyArt kind="tech" />
           <h3>{pastDay ? 'ما في مهام باليوم هاد' : view === 'open' ? 'لا مهام عند الفنيين' : view === 'late' ? 'ولا مهمة متأخرة 👌' : view === 'today' ? 'لم تُنجز مهام اليوم بعد' : 'لا مهام'}</h3>
           {!pastDay && <p>اضغط «مهمة جديدة»، اختر الفني ونوع العمل، وأرسلها بضغطة.</p>}
         </div>

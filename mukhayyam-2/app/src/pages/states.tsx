@@ -1,4 +1,5 @@
-import { Compass, Lock, RefreshCw, TriangleAlert } from 'lucide-react'
+import { EmptyArt } from '../ui/fx/EmptyArt'
+import { RefreshCw, TriangleAlert } from 'lucide-react'
 import { captureIssue } from '../lib/clientErrors'
 import { useEffect,useState,type ReactNode } from 'react'
 import { Link, useRouteError } from 'react-router'
@@ -9,7 +10,7 @@ function StateView({ icon, title, text, action }: { icon: ReactNode; title: stri
   useDocumentTitle(title)
   return (
     <div className="empty state-view">
-      <span className="halo" aria-hidden="true">{icon}</span>
+      <span className="state-illustration" aria-hidden="true">{icon}</span>
       <h3>{title}</h3>
       <p>{text}</p>
       {action}
@@ -20,7 +21,7 @@ function StateView({ icon, title, text, action }: { icon: ReactNode; title: stri
 export function NotFound() {
   return (
     <StateView
-      icon={<Compass size={30} />}
+      icon={<EmptyArt kind="pole" />}
       title="الصفحة غير موجودة"
       text="ربما تغيّر الرابط. ارجع للرئيسية وتابع من هناك."
       action={<Link to="/" className="btn primary">الرئيسية</Link>}
@@ -31,7 +32,7 @@ export function NotFound() {
 export function NoAccess() {
   return (
     <StateView
-      icon={<Lock size={28} />}
+      icon={<EmptyArt kind="lock" />}
       title="هذه الصفحة ليست ضمن صلاحياتك"
       text="إن كنت تحتاجها، اطلب من مسؤول النظام تعديل دورك."
       action={<Link to="/" className="btn">الرئيسية</Link>}

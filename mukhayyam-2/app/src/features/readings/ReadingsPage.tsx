@@ -1,3 +1,4 @@
+import { EmptyArt } from '../../ui/fx/EmptyArt'
 import { Skeleton } from '../../ui/fx/Skeleton'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Check, CheckCircle2, CloudOff, Download, FileSpreadsheet, FileText, FileUp, Gauge, Lock, Printer, RefreshCw, Trash2, Unlock, UserPlus, Users, X } from 'lucide-react'
@@ -106,7 +107,7 @@ function ReaderReadings() {
       </header>
       <SyncBanner />
       {!data ? <Skeleton kind="list" />
-        : !batch ? <p className="card card-empty">ما في قراءات عليك هالأسبوع. لما يوزّع مسؤول القراءات المناطق بتظهر هون.</p>
+        : !batch ? <p className="card card-empty"><EmptyArt kind="bulb" />ما في قراءات عليك هالأسبوع. لما يوزّع مسؤول القراءات المناطق بتظهر هون.</p>
         : <ReadingsFlow rows={rows} onSave={onSave} pending={pending} title={data && data.batches.length > 1 ? batch.title : undefined} />}
     </div>
   )
