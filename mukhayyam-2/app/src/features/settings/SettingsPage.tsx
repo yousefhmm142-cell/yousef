@@ -1,3 +1,4 @@
+import { Skeleton } from '../../ui/fx/Skeleton'
 import { ClientIssues } from './ClientIssues'
 import { Clock, LayoutGrid, Pencil, Plus, Zap } from 'lucide-react'
 import { useState } from 'react'
@@ -57,7 +58,7 @@ export function SettingsPage() {
           </Button>
         </div>
         {!generators ? (
-          <div className="loading-block" aria-busy="true" />
+          <Skeleton kind="list" />
         ) : generators.length === 0 ? (
           <p className="card-empty">لا مولدات بعد. أضف أول مولد ليظهر في تقرير اليوم.</p>
         ) : (
@@ -124,7 +125,7 @@ function ZonesCard() {
         </Button>
       </div>
       {!zones ? (
-        <div className="loading-block" aria-busy="true" />
+        <Skeleton kind="list" />
       ) : zones.length === 0 ? (
         <p className="card-empty">لا مناطق بعد.</p>
       ) : (

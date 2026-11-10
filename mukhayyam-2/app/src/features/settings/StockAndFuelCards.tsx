@@ -1,3 +1,4 @@
+import { Skeleton } from '../../ui/fx/Skeleton'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Boxes, Droplet, Pencil, Plus } from 'lucide-react'
 import { useState } from 'react'
@@ -35,7 +36,7 @@ export function StockItemsCard() {
         <Button variant="primary" icon={<Plus size={17} />} onClick={() => setEditing('new')} className="card-h-action">إضافة صنف</Button>
       </div>
       {!items ? (
-        <div className="loading-block" aria-busy="true" />
+        <Skeleton kind="list" />
       ) : items.length === 0 ? (
         <p className="card-empty">لا أصناف بعد.</p>
       ) : (
@@ -117,7 +118,7 @@ export function FuelTypesCard() {
         <Button variant="primary" icon={<Plus size={17} />} onClick={() => setEditing('new')} className="card-h-action">إضافة نوع</Button>
       </div>
       {!fuels ? (
-        <div className="loading-block" aria-busy="true" />
+        <Skeleton kind="list" />
       ) : (
         <ul className="gen-list">
           {fuels.map((f) => (

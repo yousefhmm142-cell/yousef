@@ -1,3 +1,4 @@
+import { Skeleton } from '../../ui/fx/Skeleton'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { SignFooter } from '../sheets/signers'
 import { ChevronLeft, ChevronRight, Printer } from 'lucide-react'
@@ -116,7 +117,7 @@ export function SealWorkPage() {
       ) : failed ? (
         <p className="card card-empty">تعذّر تحميل الكشف. تأكد من الإنترنت وحاول مرة أخرى.</p>
       ) : !lines ? (
-        <div className="loading-block" aria-busy="true" />
+        <Skeleton kind="table" />
       ) : lines.length === 0 ? (
         <p className="card card-empty">{technician || subscriber.trim() ? 'لا نتائج حسب الفرز اللي اخترته.' : 'لا أختام مستخدمة في هذه الفترة.'}</p>
       ) : (

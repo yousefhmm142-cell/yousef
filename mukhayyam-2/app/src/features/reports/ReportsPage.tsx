@@ -1,3 +1,4 @@
+import { Skeleton } from '../../ui/fx/Skeleton'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { SignFooter } from '../sheets/signers'
 import { ChevronLeft, ChevronRight, FileSpreadsheet, Printer, ScrollText } from 'lucide-react'
@@ -113,7 +114,7 @@ export function ReportsPage() {
       </div>
 
       {!sections ? (
-        <div className="loading-block" aria-busy="true" />
+        <Skeleton kind="table" />
       ) : (
         sections.map((s) => <SectionCard key={s.key} section={s} />)
       )}

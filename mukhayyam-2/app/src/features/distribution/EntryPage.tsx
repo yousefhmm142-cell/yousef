@@ -1,3 +1,4 @@
+import { Skeleton } from '../../ui/fx/Skeleton'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { ArrowLeft, ArrowRight, Check, CircleAlert, Pencil, Moon, Plus, Send, X } from 'lucide-react'
 import { useState } from 'react'
@@ -54,7 +55,7 @@ export function DistributionEntryPage() {
   if (date > today) {
     return <div className="empty"><h3>لا يمكن تعبئة يوم لم يأتِ بعد</h3><Link to="/sheet" className="btn">كشف اليوم</Link></div>
   }
-  if (stored === undefined || !zones || previous === undefined || missingBefore === undefined) return <div className="loading-block" aria-busy="true" />
+  if (stored === undefined || !zones || previous === undefined || missingBefore === undefined) return <Skeleton kind="list" />
   // A sent sheet is closed for the site, but the manager can still correct it.
   if (stored && !isEditableStatus(stored.status) && !isManagerRole(employee.role)) return <SentSheet sheet={stored} />
   if (!isManagerRole(employee.role) && missingBefore && (!stored || stored.status === 'draft')) {
@@ -361,7 +362,7 @@ function SentSheet({ sheet }: { sheet: DistributionSheet }) {
     <div className="entry wide">
       <SentHeader sheet={sheet} date={sheet.sheetDate} noun="الكشف" />
       {sheet.sheetDate === todayISO() && <UnsentBanner sheets={unsent ?? []} hrefFor={(d) => `/sheet/${d}`} title="كشوف لم تُرسل بعد" />}
-      {ctx.ready ? <SheetView sheet={sheet} ctx={ctx} /> : <div className="loading-block" aria-busy="true" />}
+      {ctx.ready ? <SheetView sheet={sheet} ctx={ctx} /> : <Skeleton kind="list" />}
     </div>
   )
 }

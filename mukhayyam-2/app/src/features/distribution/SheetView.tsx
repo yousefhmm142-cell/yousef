@@ -1,3 +1,4 @@
+import { CountUp } from '../../ui/fx/CountUp'
 import { ArrowLeft, Clock, LayoutGrid, NotebookPen, Sun, TriangleAlert, Zap } from 'lucide-react'
 import { formatAmount } from '../../lib/numbers'
 import { useAlertSettings, useEmployeeNames } from '../generation/repo'
@@ -69,7 +70,7 @@ export function SheetView({ sheet, ctx }: { sheet: DistributionSheet; ctx: Ctx }
       <div className="kpis">
         <div className="kpi hero">
           <div className="kpi-label"><span className="kpi-ico"><Zap size={16} /></span>مجموع ساعات التغذية</div>
-          <div className="kpi-value num">{formatAmount(totals.totalHours)}<small>ساعة</small></div>
+          <div className="kpi-value num"><CountUp value={totals.totalHours} /><small>ساعة</small></div>
           <div className="kpi-sub">{average !== null ? `متوسط ${formatAmount(Math.round(average * 10) / 10)} ساعة لكل منطقة` : 'لم تُعبّأ الساعات'}</div>
         </div>
         <div className="kpi glass">
@@ -87,7 +88,7 @@ export function SheetView({ sheet, ctx }: { sheet: DistributionSheet; ctx: Ctx }
         </div>
         <div className="kpi glass">
           <div className="kpi-label"><span className="kpi-ico"><TriangleAlert size={16} /></span>التنبيهات</div>
-          <div className="kpi-value num">{alerts.length}</div>
+          <div className="kpi-value num"><CountUp value={alerts.length} /></div>
           <div className="kpi-sub">
             {alerts.length === 0 ? 'كل الأحمال متوازنة' : [alerts.length - warn && `${alerts.length - warn} خطر`, warn && `${warn} تحذير`].filter(Boolean).join(' · ')}
           </div>

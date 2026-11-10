@@ -1,3 +1,4 @@
+import { Skeleton } from '../../ui/fx/Skeleton'
 import { CalendarDays, Check, ChevronLeft, ChevronRight, CircleCheck, ClipboardList, Clock, MessageCircle, Printer, Send, TriangleAlert, Undo2, WifiOff, type LucideIcon } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router'
@@ -458,7 +459,7 @@ export function SheetHistory({ title, items, todayMissing, todayLabel, todayHref
         </Link>
       )}
       {!items ? (
-        <div className="loading-block" aria-busy="true" />
+        <Skeleton kind="list" />
       ) : items.length === 0 ? (
         <div className="empty card"><h3>لا شيء بعد</h3><p>{emptyText}</p></div>
       ) : (

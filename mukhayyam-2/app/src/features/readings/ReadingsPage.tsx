@@ -1,3 +1,4 @@
+import { Skeleton } from '../../ui/fx/Skeleton'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Check, CheckCircle2, CloudOff, Download, FileSpreadsheet, FileText, FileUp, Gauge, Lock, Printer, RefreshCw, Trash2, Unlock, UserPlus, Users, X } from 'lucide-react'
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -104,7 +105,7 @@ function ReaderReadings() {
         )}
       </header>
       <SyncBanner />
-      {!data ? <div className="loading-block" aria-busy="true" />
+      {!data ? <Skeleton kind="list" />
         : !batch ? <p className="card card-empty">ما في قراءات عليك هالأسبوع. لما يوزّع مسؤول القراءات المناطق بتظهر هون.</p>
         : <ReadingsFlow rows={rows} onSave={onSave} pending={pending} title={data && data.batches.length > 1 ? batch.title : undefined} />}
     </div>
@@ -226,7 +227,7 @@ function AdminReadings() {
         </div>
       )}
 
-      {!batches ? <div className="loading-block" aria-busy="true" />
+      {!batches ? <Skeleton kind="list" />
         : !batch ? <p className="card card-empty">ما في ولا أسبوع لسا. اضغط «رفع ملفات الأسبوع» واختار كشوفات Excel اللي بتبعتها الشركة (بتقدر تختار كلهن مرة وحدة).</p>
         : (
           <>
@@ -255,7 +256,7 @@ function AdminReadings() {
               )}
             </section>
 
-            {!rows ? <div className="loading-block" aria-busy="true" /> : (
+            {!rows ? <Skeleton kind="list" /> : (
               <div className="rd-area-grid">
                 {areas.map((a) => {
                   const pct = Math.round((a.done / a.total) * 100)

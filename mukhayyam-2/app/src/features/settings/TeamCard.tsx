@@ -1,3 +1,4 @@
+import { Skeleton } from '../../ui/fx/Skeleton'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Copy, KeyRound, MessageCircle, Pencil, Plus, RotateCcw, Trash2, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -70,7 +71,7 @@ export function TeamCard() {
         </Button>
       </div>
       {!people ? (
-        <div className="loading-block" aria-busy="true" />
+        <Skeleton kind="list" />
       ) : (
         <ul className="gen-list team-admin">
           {people.map((e) => (

@@ -1,3 +1,4 @@
+import { Skeleton } from '../../ui/fx/Skeleton'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { ArrowLeft, ArrowRight, Check, CircleAlert, Pencil, Droplet, Gauge, Plus, Send, WifiOff, Wrench, Zap } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -48,7 +49,7 @@ export function EntryPage() {
     return <div className="empty"><h3>لا يمكن تعبئة يوم لم يأتِ بعد</h3><Link to="/" className="btn">تقرير اليوم</Link></div>
   }
   if (stored === undefined || !fuelTypes || !generators || previous === undefined || missingBefore === undefined) {
-    return <div className="loading-block" aria-busy="true" />
+    return <Skeleton kind="list" />
   }
   // A sent report is closed for the site, but the manager can still correct it.
   if (stored && !isEditableStatus(stored.status) && !isManagerRole(employee.role)) return <SentReport report={stored} />
@@ -260,7 +261,7 @@ function SentReport({ report }: { report: SiteReport }) {
     <div className="entry">
       <SentHeader sheet={report} date={report.reportDate} noun="التقرير" />
       {report.reportDate === todayISO() && <UnsentBanner sheets={unsent ?? []} hrefFor={(d) => `/entry/${d}`} title="تقارير لم تُرسل بعد" />}
-      {ctx.ready ? <ReportView report={report} ctx={ctx} /> : <div className="loading-block" aria-busy="true" />}
+      {ctx.ready ? <ReportView report={report} ctx={ctx} /> : <Skeleton kind="list" />}
     </div>
   )
 }

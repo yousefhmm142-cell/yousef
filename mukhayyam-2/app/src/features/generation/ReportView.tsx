@@ -1,3 +1,4 @@
+import { CountUp } from '../../ui/fx/CountUp'
 import { BANDS, hasBandValues, loadAverage, valuesDayAverage } from '../sheets/loads'
 import { ArrowLeft, Clock, Droplet, Gauge, NotebookPen, TriangleAlert, Wrench, Zap } from 'lucide-react'
 import { formatAmount } from '../../lib/numbers'
@@ -65,14 +66,14 @@ export function ReportView({ report, ctx }: { report: SiteReport; ctx: ReturnTyp
       <div className="kpis">
         <div className="kpi hero">
           <div className="kpi-label"><span className="kpi-ico"><Droplet size={16} /></span>الرصيد المتبقي</div>
-          <div className="kpi-value num">{formatAmount(totals.remaining)}<small>لتر</small></div>
+          <div className="kpi-value num"><CountUp value={totals.remaining} /><small>لتر</small></div>
           <div className="kpi-sub">
             {outlook.days !== null ? `يكفي نحو ${formatAmount(Math.floor(outlook.days * 10) / 10)} يوم بالمعدل الحالي` : 'لم يُعبّأ الرصيد المتبقي'}
           </div>
         </div>
         <div className="kpi glass">
           <div className="kpi-label"><span className="kpi-ico"><Gauge size={16} /></span>الاستهلاك</div>
-          <div className="kpi-value num">{formatAmount(use.today)}<small>لتر</small></div>
+          <div className="kpi-value num"><CountUp value={use.today} /><small>لتر</small></div>
           <div className="kpi-sub">
             {use.changePct === null ? (
               'لا يوجد متوسط للمقارنة بعد'
@@ -93,12 +94,12 @@ export function ReportView({ report, ctx }: { report: SiteReport; ctx: ReturnTyp
         </div>
         <div className="kpi glass">
           <div className="kpi-label"><span className="kpi-ico"><Clock size={16} /></span>ساعات التشغيل</div>
-          <div className="kpi-value num">{formatAmount(totals.runHours)}<small>ساعة</small></div>
+          <div className="kpi-value num"><CountUp value={totals.runHours} /><small>ساعة</small></div>
           <div className="kpi-sub num">{totals.generatorsRan} من {report.generators.length} مولدات عملت</div>
         </div>
         <div className="kpi glass">
           <div className="kpi-label"><span className="kpi-ico"><TriangleAlert size={16} /></span>التنبيهات</div>
-          <div className="kpi-value num">{alerts.length}</div>
+          <div className="kpi-value num"><CountUp value={alerts.length} /></div>
           <div className="kpi-sub">
             {alerts.length === 0 ? 'كل القراءات ضمن الحدود' : [dangerCount && `${dangerCount} خطر`, warnCount && `${warnCount} تحذير`].filter(Boolean).join(' · ')}
           </div>

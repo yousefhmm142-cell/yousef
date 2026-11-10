@@ -1,3 +1,4 @@
+import { CountUp } from '../../ui/fx/CountUp'
 import {
   AlertTriangle,
   Boxes,
@@ -245,7 +246,7 @@ export function KpiStrip() {
       {tiles.map((t) => {
         const inner = (
           <>
-            <b className="num dash-kpi-n">{t.n}</b>
+            <b className="num dash-kpi-n">{typeof t.n === 'number' ? <CountUp value={t.n} /> : <><CountUp value={data.here} />/{data.total}</>}</b>
             <span className="dash-kpi-l">{t.label}</span>
             <small>{t.note}</small>
           </>

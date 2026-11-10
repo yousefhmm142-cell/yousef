@@ -1,3 +1,4 @@
+import { Skeleton } from '../../ui/fx/Skeleton'
 import { CheckCircle2, CircleAlert, LogIn, LogOut, MapPinOff, UserRound, WifiOff } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'react-router'
@@ -136,7 +137,7 @@ export function AttendanceScanPage() {
         <span>مخيم 2 · الحضور</span>
       </header>
 
-      {state.kind === 'working' && <div className="loading-block" aria-busy="true" />}
+      {state.kind === 'working' && <Skeleton kind="list" />}
 
       {state.kind === 'done' && <Done result={state.result} onRecord={() => void punch(false)} onNotMe={() => { saveDevice(null); void chooseName() }} />}
 

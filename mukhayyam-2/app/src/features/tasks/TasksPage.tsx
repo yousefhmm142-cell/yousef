@@ -1,3 +1,5 @@
+import { CountUp } from '../../ui/fx/CountUp'
+import { Skeleton } from '../../ui/fx/Skeleton'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { AlarmClock, CalendarDays, CheckCheck, ChevronLeft, ChevronRight, Copy, ListChecks, MapPin, MessageCircle, MessageSquareText, Phone, PhoneIncoming, Plus, Printer, ScrollText, UserRound, XCircle } from 'lucide-react'
 import { taskMatrix } from '../reports/build'
@@ -190,7 +192,7 @@ export function TasksPage() {
         ] as const).map(([k, label, n, Icon, tone]) => (
           <button key={k} type="button" role="tab" aria-selected={view === k} className="tb-tile" data-tone={tone || undefined} onClick={() => setView(k)}>
             <span className="tb-top"><Icon size={17} />{label}</span>
-            <b className="num">{n}</b>
+            <b className="num"><CountUp value={n} /></b>
           </button>
         ))}
       </div>}
@@ -257,7 +259,7 @@ export function TasksPage() {
       {pastDay && tasks && <p className="task-daysum"><b className="num">{dayTasks.length}</b> {dayTasks.length === 1 ? 'مهمة' : 'مهام'} · <b className="num">{dayTasks.filter((t) => t.status === 'done').length}</b> أُنجزت{dayTasks.some((t) => t.status === 'cancelled') && <> · <b className="num">{dayTasks.filter((t) => t.status === 'cancelled').length}</b> أُلغيت</>}</p>}
 
       {!pastDay && view === 'waiting' ? null : !tasks ? (
-        <div className="loading-block" aria-busy="true" />
+        <Skeleton kind="list" />
       ) : shown.length === 0 ? (
         <div className="empty card">
           <h3>{pastDay ? 'ما في مهام باليوم هاد' : view === 'open' ? 'لا مهام عند الفنيين' : view === 'late' ? 'ولا مهمة متأخرة 👌' : view === 'today' ? 'لم تُنجز مهام اليوم بعد' : 'لا مهام'}</h3>

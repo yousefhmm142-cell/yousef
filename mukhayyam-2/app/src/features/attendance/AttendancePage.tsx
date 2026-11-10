@@ -1,3 +1,5 @@
+import { CountUp } from '../../ui/fx/CountUp'
+import { Skeleton } from '../../ui/fx/Skeleton'
 import { ChevronLeft, ChevronRight, Clock3, MapPin, MessageCircle, Printer, QrCode, RefreshCw, Smartphone, Trash2, UserCheck, UserX, Users } from 'lucide-react'
 import { SignFooter } from '../sheets/signers'
 import qrcode from 'qrcode-generator'
@@ -147,7 +149,7 @@ export function AttendancePage() {
         <Segmented<Tab> label="القسم" value={tab} options={tabs} onChange={(t) => setParams(t === 'today' ? {} : { tab: t }, { replace: true })} />
       </header>
       {!data.ready ? (
-        <div className="loading-block" aria-busy="true" />
+        <Skeleton kind="cards" />
       ) : tab === 'today' ? (
         <TodayBoard data={data} onOpen={(employee) => setOpen({ employee, date: data.today })} />
       ) : tab === 'week' ? (
@@ -180,22 +182,22 @@ function TodayBoard({ data, onOpen }: { data: Data; onOpen(e: Employee): void })
       <div className="kpis">
         <div className="kpi hero">
           <div className="kpi-label"><span className="kpi-ico"><UserCheck size={16} /></span>حضروا اليوم</div>
-          <div className="kpi-value num">{present}<small>من {rows.length}</small></div>
+          <div className="kpi-value num"><CountUp value={present} /><small>من {rows.length}</small></div>
           <div className="kpi-sub">{weekday} · <span className="num">{date}</span></div>
         </div>
         <div className="kpi glass">
           <div className="kpi-label"><span className="kpi-ico"><Clock3 size={16} /></span>في الدوام الآن</div>
-          <div className="kpi-value num">{working}</div>
+          <div className="kpi-value num"><CountUp value={working} /></div>
           <div className="kpi-sub">حضروا ولم ينصرفوا بعد</div>
         </div>
         <div className="kpi glass" data-tone={missing ? 'danger' : undefined}>
           <div className="kpi-label"><span className="kpi-ico"><UserX size={16} /></span>لم يحضروا</div>
-          <div className="kpi-value num">{missing}</div>
+          <div className="kpi-value num"><CountUp value={missing} /></div>
           <div className="kpi-sub">{onLeave ? `منهم ${onLeave} بإذن أو إجازة · ` : ''}يصير «غائب» بعد الساعة 10:00 ص</div>
         </div>
         <div className="kpi glass">
           <div className="kpi-label"><span className="kpi-ico"><Users size={16} /></span>انصرفوا</div>
-          <div className="kpi-value num">{left}</div>
+          <div className="kpi-value num"><CountUp value={left} /></div>
           <div className="kpi-sub">سجّلوا الانصراف</div>
         </div>
       </div>

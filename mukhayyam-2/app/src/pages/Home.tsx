@@ -1,3 +1,4 @@
+import { Skeleton } from '../ui/fx/Skeleton'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { ArrowLeft, Clock, CloudUpload, Database, Wifi, WifiOff } from 'lucide-react'
 import { Link, Navigate } from 'react-router'
@@ -44,9 +45,9 @@ export function Home() {
     case 'distribution_supervisor':
       return <EntryPage />
     case 'technician':
-      return <Suspense fallback={<div className="loading-block" aria-busy="true" />}><MyTasksPage /></Suspense>
+      return <Suspense fallback={<Skeleton kind="list" />}><MyTasksPage /></Suspense>
     case 'staff':
-      return <Suspense fallback={<div className="loading-block" aria-busy="true" />}><MyAttendancePage /></Suspense>
+      return <Suspense fallback={<Skeleton kind="list" />}><MyAttendancePage /></Suspense>
   }
 }
 

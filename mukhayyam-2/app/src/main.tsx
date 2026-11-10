@@ -16,6 +16,7 @@ import './styles/stock.css'
 import './styles/readings.css'
 import './styles/seals.css'
 import './styles/print.css'
+import './styles/fx.css'
 
 import { AppErrorBoundary } from './ui/AppErrorBoundary'
 import { startErrorCapture } from './lib/clientErrors'

@@ -1,3 +1,4 @@
+import { Skeleton } from '../../ui/fx/Skeleton'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Eye, ShieldCheck, Stamp, Tag } from 'lucide-react'
 import { useState } from 'react'
@@ -50,7 +51,7 @@ export function PermissionsPage() {
       </section>
 
       {!people ? (
-        <div className="loading-block" aria-busy="true" />
+        <Skeleton kind="list" />
       ) : (
         <ul className="perm-cards">
           {people.map((e) => (

@@ -1,3 +1,4 @@
+import { Skeleton } from '../../ui/fx/Skeleton'
 import { LayoutGrid, PencilLine } from 'lucide-react'
 import { useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
@@ -56,7 +57,7 @@ function SheetForDay({ date }: { date: ISODate }) {
       </header>
 
       {sheet === undefined || !ctx.ready ? (
-        <div className="loading-block" aria-busy="true" />
+        <Skeleton kind="cards" />
       ) : !sheet ? (
         <NoSheet date={date} drafting={false} noun="الكشف" source="مشرف التوزيع" listHref="/distribution" />
       ) : (

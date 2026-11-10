@@ -1,3 +1,4 @@
+import { Skeleton } from '../../ui/fx/Skeleton'
 import { CheckCircle2, CircleAlert, MapPin, Phone, Play, WifiOff } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router'
@@ -62,7 +63,7 @@ export function TaskLinkPage() {
         <span>مخيم 2</span>
       </header>
 
-      {state.kind === 'loading' && <div className="loading-block" aria-busy="true" />}
+      {state.kind === 'loading' && <Skeleton kind="list" />}
 
       {state.kind === 'offline' && (
         <div className="empty card">

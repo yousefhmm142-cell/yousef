@@ -1,0 +1,32 @@
+/* Visual information only; all colours follow the established identity. */
+.fx-count { font-variant-numeric: tabular-nums; }
+.fx-skeleton { display: grid; gap: 12px; min-width: 0; padding: 12px 0; }
+.fx-skeleton-row { position: relative; overflow: hidden; background: var(--sunken); border-radius: var(--r); padding: 20px; display: flex; align-items: center; gap: 14px; min-height: 76px; }
+.fx-skeleton-row::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, var(--glass-strong), transparent); animation: fx-shimmer 1.4s linear infinite; transform: translateX(-100%); }
+.fx-skeleton-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--line); flex: none; }
+.fx-skeleton-lines { flex: 1; min-width: 0; display: grid; gap: 10px; }
+.fx-skeleton-lines i { height: 12px; border-radius: 6px; background: var(--line); }
+.fx-skeleton-lines i:last-child { width: 60%; }
+.fx-skeleton-cards { grid-template-columns: repeat(4, minmax(0,1fr)); }
+.fx-skeleton-cards .fx-skeleton-row { min-height: 140px; }
+.fx-skeleton-table { gap: 2px; }
+.fx-skeleton-table .fx-skeleton-row { min-height: 46px; padding: 16px; }
+.fx-skeleton-table .fx-skeleton-lines { display: flex; }
+.fx-skeleton-table .fx-skeleton-lines i { flex: 1; width: auto; }
+[data-paused] *, [data-paused]::after, [data-paused] *::after { animation-play-state: paused !important; }
+@keyframes fx-shimmer { to { transform: translateX(100%); } }
+@keyframes fx-tab-pop { 40% { transform: scale(1.18) translateY(-2px); } }
+@media (max-width: 900px) {
+ .tabbar.glass, :root[data-theme='dark'] .tabbar.glass { background: var(--surface); backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%); border-top: 1px solid var(--glass-edge); box-shadow: 0 -10px 30px -20px var(--ink); }
+ .tabbar .tab { position: relative; z-index: 1; }
+ .tabbar .tab.active .tab-icon { background: transparent; }
+ .tab.active .tab-icon svg { animation: fx-tab-pop 320ms var(--ease); }
+ .fx-tab-indicator { position: absolute; top: 9px; left: 0; height: 30px; border-radius: 999px; background: var(--brand-soft); transition: transform 320ms var(--ease); pointer-events: none; }
+ .fx-skeleton-cards { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (prefers-reduced-motion: reduce) { .fx-skeleton-row::after, .tab.active .tab-icon svg { animation: none; } .fx-tab-indicator { transition: none; } }
+@media print { .fx-skeleton, .fx-tab-indicator { display: none !important; } }
+/* Keep the loading-to-list footprint within narrow phones. */
+.tasks .task-list { min-width: 0; grid-template-columns: minmax(0, 1fr); }
+.tasks .task-li { min-width: 0; }
+@media (max-width: 900px) { .tasks .task-filters .chips { max-width: 100%; } }

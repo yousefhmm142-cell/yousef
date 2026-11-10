@@ -1,3 +1,4 @@
+import { Skeleton } from '../ui/fx/Skeleton'
 import { lazy, Suspense, type ComponentType, type ReactNode } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router'
 import { useEmployee } from '../auth/AuthProvider'
@@ -54,7 +55,7 @@ function DistributionIndex() {
 function AttendanceIndex() { const me=useEmployee(); return isManagerRole(me.role)||hasPage(me,'attendance') ? <PageGate page="attendance"><Lazy><AttendancePage /></Lazy></PageGate> : <Lazy><MyAttendancePage /></Lazy> }
 
 function Lazy({ children }: { children: ReactNode }) {
-  return <Suspense fallback={<div className="loading-block" aria-busy="true" />}>{children}</Suspense>
+  return <Suspense fallback={<Skeleton kind="list" />}>{children}</Suspense>
 }
 
 export const router = createBrowserRouter([

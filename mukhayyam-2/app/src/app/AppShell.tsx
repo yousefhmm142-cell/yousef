@@ -44,6 +44,17 @@ export function AppShell() {
     document.addEventListener('keydown', close)
     return () => { document.removeEventListener('pointerdown', close); document.removeEventListener('keydown', close) }
   }, [])
+  const tabRef = useRef<HTMLElement>(null)
+  const [indicator, setIndicator] = useState<{ x: number; w: number } | null>(null)
+  useLayoutEffect(() => {
+    const nav = tabRef.current
+    if (!nav) return
+    const place = () => { const el = nav.querySelector<HTMLElement>('.tab.active .tab-icon'); if (el) { const a = el.getBoundingClientRect(); const b = nav.getBoundingClientRect(); setIndicator({ x: a.left - b.left, w: a.width }) } }
+    place()
+    const ro = new ResizeObserver(place); ro.observe(nav)
+    void document.fonts?.ready.then(place)
+    return () => ro.disconnect()
+  }, [pathname, tabs.length])
   const [arch, setArch] = useState<{ x: number; w: number } | null>(null)
   useLayoutEffect(() => {
     const nav = navRef.current
@@ -126,7 +137,8 @@ export function AppShell() {
       </main>
 
       {tabs.length > 1 && (
-        <nav className="tabbar glass" aria-label="الأقسام">
+        <nav className="tabbar glass" aria-label="الأقسام" ref={tabRef}>
+          {indicator && <span className="fx-tab-indicator" aria-hidden="true" style={{ width: indicator.w, transform: `translateX(${indicator.x}px)` }} />}
           {tabs.map(({ to, label, icon: Icon }) => (
             <NavLink key={to} to={to} end={to === '/' || to === '/tasks'} className="tab">
               <span className="tab-icon">

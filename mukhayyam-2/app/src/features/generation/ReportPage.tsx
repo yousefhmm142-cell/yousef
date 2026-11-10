@@ -1,3 +1,4 @@
+import { Skeleton } from '../../ui/fx/Skeleton'
 import { PencilLine, Zap } from 'lucide-react'
 import { useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
@@ -56,7 +57,7 @@ function ReportForDay({ date }: { date: ISODate }) {
       </header>
 
       {report === undefined || !ctx.ready ? (
-        <div className="loading-block" aria-busy="true" />
+        <Skeleton kind="cards" />
       ) : !report ? (
         <NoSheet date={date} drafting={false} noun="التقرير" source="موقع التوليد" listHref="/generation" />
       ) : (
