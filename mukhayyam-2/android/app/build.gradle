@@ -1,0 +1,47 @@
+// The Android app of Mukhayyam 2: a full-screen window on the site (an Android WebView), with no libraries.
+// Everything the app shows comes from the site, so new versions of the site reach the app by themselves;
+// this shell only needs rebuilding if the site address changes.
+plugins { id 'com.android.application' }
+
+android {
+  namespace 'ps.abuzaed.mukhayyam2'
+  compileSdk 36
+  defaultConfig {
+    applicationId 'ps.abuzaed.mukhayyam2'
+    minSdk 24
+    targetSdk 34
+    versionCode 3
+    versionName '2.0'
+  }
+  signingConfigs {
+    release {
+      // The signing key lives outside the repository (see android/README.md).
+      storeFile file(System.getenv('M2_KEYSTORE') ?: 'missing.keystore')
+      storePassword System.getenv('M2_KEYSTORE_PASSWORD')
+      keyAlias 'mukhayyam2'
+      keyPassword System.getenv('M2_KEYSTORE_PASSWORD')
+      // Old signature too, so phones from Android 5 and 6 accept the file (they know nothing of the new ones).
+      enableV1Signing true
+      enableV2Signing true
+      enableV3Signing true
+    }
+  }
+  buildTypes {
+    release {
+      minifyEnabled false
+      signingConfig signingConfigs.release
+    }
+  }
+  testOptions { unitTests { includeAndroidResources = true } }
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
+  }
+}
+
+dependencies {
+  // The app itself has no libraries at all: only what Android ships.
+  testImplementation 'junit:junit:4.13.2'
+  testImplementation 'org.robolectric:robolectric:4.14.1'
+  testImplementation 'androidx.test:core:1.6.1'
+}

@@ -1,0 +1,65 @@
+# A small local copy of Supabase for testing the app before touching the real project:
+# the Supabase database image, its sign-in service (GoTrue) and its data API (PostgREST).
+# Everything here is for this computer only; the keys below are not secret and never used online.
+#
+#   docker compose -f supabase/local/docker-compose.yml up -d
+#   node supabase/local/gateway.mjs          # http://localhost:54321, like https://<project>.supabase.co
+#   supabase/local/apply.sh                  # loads supabase/setup.sql the way the SQL Editor does
+#
+# App settings for this copy (app/.env.local):
+#   VITE_SUPABASE_URL=http://localhost:54321
+#   VITE_SUPABASE_ANON_KEY=<ANON_KEY in gateway.mjs>
+
+x-jwt: &jwt mukhayyam2-local-only-jwt-secret-0123456789
+
+services:
+  db:
+    image: supabase/postgres:17.11.0.013
+    command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf", "-c", "log_min_messages=fatal"]
+    environment:
+      POSTGRES_PASSWORD: local-only-password
+      PGPASSWORD: local-only-password
+      POSTGRES_DB: postgres
+      JWT_SECRET: *jwt
+      JWT_EXP: 3600
+    ports: ["127.0.0.1:54322:5432"]
+    volumes:
+      - ./roles.sql:/docker-entrypoint-initdb.d/init-scripts/99-roles.sql:ro
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-h", "localhost"]
+      interval: 2s
+      retries: 60
+
+  auth:
+    image: supabase/gotrue:v2.197.0
+    depends_on: { db: { condition: service_healthy } }
+    restart: on-failure
+    ports: ["127.0.0.1:54329:9999"]
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      API_EXTERNAL_URL: http://localhost:54321
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:local-only-password@db:5432/postgres
+      GOTRUE_SITE_URL: http://localhost:4173
+      GOTRUE_DISABLE_SIGNUP: "true"
+      GOTRUE_JWT_ADMIN_ROLES: service_role
+      GOTRUE_JWT_AUD: authenticated
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_JWT_SECRET: *jwt
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
+      GOTRUE_MAILER_AUTOCONFIRM: "true"
+      GOTRUE_EXTERNAL_PHONE_ENABLED: "false"
+
+  rest:
+    image: postgrest/postgrest:v14.18
+    depends_on: { db: { condition: service_healthy } }
+    restart: on-failure
+    ports: ["127.0.0.1:54330:3000"]
+    environment:
+      PGRST_DB_URI: postgres://authenticator:local-only-password@db:5432/postgres
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: *jwt
+      PGRST_DB_USE_LEGACY_GUCS: "false"

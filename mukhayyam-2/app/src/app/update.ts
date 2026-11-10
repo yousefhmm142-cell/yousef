@@ -1,0 +1,121 @@
+// Moving to a newer site, without ever pulling the page from under someone who is working.
+//
+// When the app is opened (or the page is refreshed) and a newer build is out, it moves to it at once:
+// nothing is typed yet. While the app is open, a newer build only shows a small bar
+// «في تحديث جديد» with a button; the page changes only when the person presses it (or refreshes).
+//
+// (Earlier behaviour, kept for reference:)
+//
+// The app is kept on the device so it opens fast and without internet. That copy used to be
+// replaced only once every tab was closed. Now, on every open and whenever the app comes back to
+// the screen, it asks the server which build is current (/version.json, never cached). If it is
+// not this one, a full-screen «جاري تحديث الموقع…» appears, the new copy is taken, and the page
+// reloads into it. Nothing is shown when there is no new build. Work typed into forms is already
+// saved on the device, so nothing is lost.
+
+declare const __BUILD_ID__: string
+
+let busy = false
+
+const stamp = new Intl.DateTimeFormat('ar-EG-u-nu-latn', { day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Gaza' })
+
+/** When this copy of the site was built, e.g. «2 نوفمبر، 11:47 ص»: it moves with every update. */
+export const buildLabel = () => {
+  const id = typeof __BUILD_ID__ === 'string' ? __BUILD_ID__ : ''
+  const d = new Date(id)
+  return Number.isNaN(d.getTime()) ? 'نسخة التطوير' : stamp.format(d)
+}
+
+/** The button on the account page: look now; reload into the new site if there is one. */
+export async function checkNow(): Promise<'current' | 'updating' | 'offline'> {
+  if (!navigator.onLine) return 'offline'
+  const latest = await latestBuild()
+  if (!latest) return 'offline'
+  if (latest === __BUILD_ID__) return 'current'
+  try {
+    sessionStorage.removeItem('m2-update-tried')
+  } catch {
+    // Go on.
+  }
+  await checkForUpdate(true)
+  return 'updating'
+}
+
+function showCurtain() {
+  if (document.getElementById('m2-updating')) return
+  const el = document.createElement('div')
+  el.id = 'm2-updating'
+  el.setAttribute('role', 'status')
+  el.setAttribute('aria-live', 'polite')
+  el.innerHTML = '<img src="/logo.webp" alt="" class="m2-upd-logo" /><span class="m2-upd-spin" aria-hidden="true"></span><b>جاري تحديث الموقع…</b><small>ثوانٍ وتفتح النسخة الجديدة</small>'
+  document.body.appendChild(el)
+}
+
+async function latestBuild(): Promise<string | null> {
+  try {
+    const res = await fetch(`/version.json?t=${Date.now()}`, { cache: 'no-store' })
+    if (!res.ok) return null
+    const body = (await res.json()) as { id?: string }
+    return body.id ?? null
+  } catch {
+    return null
+  }
+}
+
+async function dropOldCopy() {
+  // The worker that served the old copy, and the copy itself; the page then loads fresh from the server.
+  try {
+    const regs = (await navigator.serviceWorker?.getRegistrations()) ?? []
+    await Promise.all(regs.map((r) => r.unregister()))
+  } catch {
+    // Reload anyway.
+  }
+  try {
+    const names = await caches.keys()
+    await Promise.all(names.filter((n) => !n.includes('excel')).map((n) => caches.delete(n)))
+  } catch {
+    // Reload anyway.
+  }
+}
+
+/** The small bar that offers the new site; it never reloads by itself. */
+function offerUpdate() {
+  if (document.getElementById('m2-update-bar')) return
+  const bar = document.createElement('div')
+  bar.id = 'm2-update-bar'
+  bar.setAttribute('role', 'status')
+  bar.innerHTML = '<span>في تحديث جديد للنظام · حدّث لما تخلص شغلك</span><button type="button">تحديث الآن</button><button type="button" class="m2-ub-x" aria-label="لاحقاً">✕</button>'
+  bar.querySelector('button')!.addEventListener('click', () => {
+    try { sessionStorage.removeItem('m2-update-tried') } catch { /* go on */ }
+    void checkForUpdate(true)
+  })
+  bar.querySelector('.m2-ub-x')!.addEventListener('click', () => bar.remove())
+  document.body.appendChild(bar)
+}
+
+/** Checks for a newer site. `now`: move to it at once (on opening, or when asked); otherwise only offer it. */
+export async function checkForUpdate(now = false) {
+  if (busy || import.meta.env.DEV || !navigator.onLine) return
+  const latest = await latestBuild()
+  if (!latest || latest === __BUILD_ID__) return
+  if (!now) return offerUpdate()
+  // Never loop: one try per new build in this tab.
+  try {
+    if (sessionStorage.getItem('m2-update-tried') === latest) return
+    sessionStorage.setItem('m2-update-tried', latest)
+  } catch {
+    // Go on.
+  }
+  busy = true
+  showCurtain()
+  await dropOldCopy()
+  window.location.reload()
+}
+
+export function startUpdateChecks() {
+  // Just opened (or refreshed): nothing typed yet, so the new site is taken straight away.
+  void checkForUpdate(true)
+  document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && void checkForUpdate())
+  window.addEventListener('online', () => void checkForUpdate())
+  window.setInterval(() => document.visibilityState === 'visible' && void checkForUpdate(), 60_000)
+}

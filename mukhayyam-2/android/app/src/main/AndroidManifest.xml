@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <uses-permission android:name="android.permission.INTERNET" />
+
+  <application
+    android:allowBackup="true"
+    android:icon="@mipmap/ic_launcher"
+    android:roundIcon="@mipmap/ic_launcher"
+    android:label="@string/app_name"
+    android:supportsRtl="true"
+    android:usesCleartextTraffic="false"
+    android:theme="@style/Theme.Mukhayyam2">
+
+    <!-- A full-screen window on the site; every screen comes from the site itself. -->
+    <activity
+      android:name=".MainActivity"
+      android:label="@string/app_name"
+      android:icon="@mipmap/ic_launcher"
+      android:exported="true"
+      android:launchMode="singleTask"
+      android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|keyboard|uiMode|density"
+      android:windowSoftInputMode="adjustResize">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+      <!-- Links of the site (a technician's order, an attendance QR) open here. -->
+      <intent-filter android:autoVerify="true">
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data android:scheme="https" android:host="mukhayyam2.pages.dev" />
+      </intent-filter>
+    </activity>
+  </application>
+</manifest>

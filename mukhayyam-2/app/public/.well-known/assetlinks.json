@@ -1,0 +1,10 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "ps.abuzaed.mukhayyam2",
+      "sha256_cert_fingerprints": ["A9:23:C9:A1:88:D0:82:40:8B:08:EE:05:56:D7:1D:60:0B:D6:F3:95:1C:71:B6:4C:C2:0E:95:9A:F5:74:ED:01"]
+    }
+  }
+]
