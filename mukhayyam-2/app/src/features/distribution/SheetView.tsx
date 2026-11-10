@@ -1,3 +1,4 @@
+import { HeatLegend, heatStyle, Peak } from '../../ui/fx/HeatLegend'
 import { CountUp } from '../../ui/fx/CountUp'
 import { ArrowLeft, Clock, LayoutGrid, NotebookPen, Sun, TriangleAlert, Zap } from 'lucide-react'
 import { formatAmount } from '../../lib/numbers'
@@ -255,12 +256,13 @@ function Matrix({ sheet, zoneNames, imbalanceWarn }: { sheet: DistributionSheet;
 function HourlyLoads({ sheet, zoneNames, imbalanceWarn }: { sheet: DistributionSheet; zoneNames: Map<number, string>; imbalanceWarn: number }) {
   const rows = sheet.zones.filter((z) => z.supplied && hasBandReadings(z.bands))
   if (!rows.length) return null
+  const maxima = (unit: string) => Math.max(0, ...rows.filter(z => (z.runs[0]?.loadUnit ?? 'A') === unit).flatMap(z => z.bands.map(bandAverage).filter((v): v is number => v !== null)))
   const all = bandsDayAverage(rows.flatMap((z) => z.bands.map((b) => b).filter((b) => bandAverage(b) !== null)))
   return (
     <section className="card">
       <div className="card-h">
         <span className="ico-round"><LayoutGrid size={16} /></span>
-        <h2>الأحمال حسب الساعة</h2>
+        <h2>الأحمال حسب الساعة</h2><HeatLegend />
         <span className="meta">كل خانة: القراءات الثلاثة ثم المتوسط{all !== null && <> · متوسط كل المناطق <b className="num">{formatAmount(all)}</b></>}</span>
       </div>
       <div className="tw">
@@ -282,7 +284,8 @@ function HourlyLoads({ sheet, zoneNames, imbalanceWarn }: { sheet: DistributionS
                     const avg = bandAverage(b)
                     const gap = phaseImbalancePct(b)
                     return (
-                      <td key={i} className="hr-cell">
+                      <td key={i} className="hr-cell fx-heat" style={heatStyle(avg, maxima(unit))} data-peak={avg !== null && avg > 0 && avg === maxima(unit) || undefined} data-high={avg !== null && avg > maxima(unit) * .6 || undefined}>
+                        <Peak peak={avg !== null && avg > 0 && avg === maxima(unit)} />
                         {b.every((x) => x === null) ? <span className="muted">—</span> : (
                           <>
                             <span className="hr-reads num">{b.map((x) => (x === null ? '—' : formatAmount(x))).join(' · ')}</span>

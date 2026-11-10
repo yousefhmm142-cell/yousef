@@ -1,3 +1,6 @@
+import { Gauge as LoadGauge } from '../../ui/fx/Gauge'
+import { FuelTank } from '../../ui/fx/FuelTank'
+import { HeatLegend, heatStyle, Peak } from '../../ui/fx/HeatLegend'
 import { CountUp } from '../../ui/fx/CountUp'
 import { BANDS, hasBandValues, loadAverage, valuesDayAverage } from '../sheets/loads'
 import { ArrowLeft, Clock, Droplet, Gauge, NotebookPen, TriangleAlert, Wrench, Zap } from 'lucide-react'
@@ -6,6 +9,8 @@ import { Pill, type Tone } from '../../ui/primitives'
 import { AlertsCard, Signatures } from '../sheets/ui'
 import { computeAlerts, consumptionStats, fuelOutlook } from './alerts'
 import {
+  loadKva,
+  logLoads,
   maintenanceLabel,
   reportTotals,
   toBar,
@@ -64,7 +69,8 @@ export function ReportView({ report, ctx }: { report: SiteReport; ctx: ReturnTyp
   return (
     <div className="report">
       <div className="kpis">
-        <div className="kpi hero">
+        <div className="kpi hero fx-fuel-card">
+          <FuelTank days={outlook.days} warn={settings.fuelDaysWarn} danger={settings.fuelDaysDanger} />
           <div className="kpi-label"><span className="kpi-ico"><Droplet size={16} /></span>الرصيد المتبقي</div>
           <div className="kpi-value num"><CountUp value={totals.remaining} /><small>لتر</small></div>
           <div className="kpi-sub">
@@ -108,6 +114,7 @@ export function ReportView({ report, ctx }: { report: SiteReport; ctx: ReturnTyp
 
       {alerts.length > 0 && <AlertsCard alerts={alerts} />}
       <FuelTable report={report} fuelTypes={fuelTypes} />
+      <GeneratorGauges report={report} generators={generators} settings={settings} />
       <GeneratorsTable report={report} generators={generators} settings={settings} />
       <HourlyLoads report={report} generators={generators} />
 
@@ -254,9 +261,10 @@ function GeneratorsTable({ report, generators, settings }: { report: SiteReport;
 function HourlyLoads({ report, generators }: { report: SiteReport; generators: Generator[] }) {
   const rows = report.generators.filter((g) => g.didRun && hasBandValues(g.bandLoads))
   if (!rows.length) return null
+  const maxima = (unit: string) => Math.max(0, ...rows.filter(log => log.loadUnit === unit).flatMap(log => log.bandLoads.filter((v): v is number => v !== null)))
   return (
     <section className="card">
-      <div className="card-h"><span className="ico-round"><Gauge size={16} /></span><h2>الأحمال حسب الساعة</h2><span className="meta">الفاضي = شحطة</span></div>
+      <div className="card-h"><span className="ico-round"><Gauge size={16} /></span><h2>الأحمال حسب الساعة</h2><HeatLegend /><span className="meta">الفاضي = شحطة</span></div>
       <div className="tw">
         <table className="tbl hourly">
           <thead>
@@ -270,7 +278,7 @@ function HourlyLoads({ report, generators }: { report: SiteReport; generators: G
             {rows.map((log) => (
               <tr key={log.id}>
                 <td><b>{generators.find((g) => g.id === log.generatorId)?.name ?? 'مولد'}</b><small className="muted"> {log.loadUnit === 'A' ? 'أمبير' : 'كيلوواط'}</small></td>
-                {log.bandLoads.map((v, i) => <td key={i} className="n">{v === null ? <span className="muted">—</span> : formatAmount(v)}</td>)}
+                {log.bandLoads.map((v, i) => <td key={i} className="n fx-heat" style={heatStyle(v, maxima(log.loadUnit))} data-peak={v !== null && v > 0 && v === maxima(log.loadUnit) || undefined} data-high={v !== null && v > maxima(log.loadUnit) * .6 || undefined}><Peak peak={v !== null && v > 0 && v === maxima(log.loadUnit)} />{v === null ? <span className="muted">—</span> : formatAmount(v)}</td>)}
                 <td className="n em">{formatAmount(valuesDayAverage(log.bandLoads))}</td>
               </tr>
             ))}
@@ -279,4 +287,24 @@ function HourlyLoads({ report, generators }: { report: SiteReport; generators: G
       </div>
     </section>
   )
+}
+
+function GeneratorGauges({ report, generators, settings }: { report: SiteReport; generators: Generator[]; settings: AlertSettings }) {
+  const logs = report.generators.filter(log => log.didRun)
+  if (!logs.length) return null
+  return <section className="fx-generators fx-decoration" aria-label="المولدات الآن">
+    <h2>المولدات الآن <small className="muted">قراءات هذا التقرير</small></h2>
+    <div className="fx-generator-grid">{logs.map(log => {
+      const gen = generators.find(g => g.id === log.generatorId)
+      const carried = logLoads(log)
+      const kva = carried ? loadKva(carried.loads, log.loadUnit, settings.phaseVoltage) : null
+      const pct = kva !== null && gen?.capacityKva ? kva / gen.capacityKva * 100 : null
+      const oil = log.oilPressure === null ? null : toBar(log.oilPressure, log.oilPressureUnit)
+      return <article className="card fx-generator" key={log.id}>
+        <header><b>{gen?.name ?? 'مولد'}</b><small>{gen?.brand}</small></header>
+        <LoadGauge label="الحمل" value={pct} warn={settings.loadWarnPct} danger={settings.loadDangerPct} detail={pct === null ? 'ما في قراءة أو قدرة مسجّلة' : `نحو ${formatAmount(Math.round(kva!))} kVA من ${formatAmount(gen!.capacityKva)}`} />
+        <div className="fx-gauge-pair"><LoadGauge size="sm" label="الحرارة °C" value={log.temperatureC} max={Math.max(120, settings.tempDangerC)} warn={settings.tempWarnC} danger={settings.tempDangerC} /><LoadGauge size="sm" label="ضغط الزيت bar" value={oil} max={Math.max(6, settings.oilWarnBar * 2)} warn={settings.oilWarnBar} danger={settings.oilDangerBar} inverse /></div>
+      </article>
+    })}</div>
+  </section>
 }
