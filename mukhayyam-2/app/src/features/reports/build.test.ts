@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { shipmentSections, taskMatrix } from './build'
+import { compareSection, periodMetrics, shipmentSections, taskMatrix } from './build'
 import type { SiteReport } from '../generation/model'
 import type { Task } from '../tasks/model'
 import type { Employee } from '../../types'
@@ -45,5 +45,17 @@ describe('fuel shipments', () => {
     expect(s!.rows[0]![6]).toBe(13000)
     expect(s!.total![2]).toBe(3500)
     expect(by!.rows[0]).toEqual(['الوقود', 2, 3000, 6.33, 19000])
+  })
+})
+
+describe('period comparison', () => {
+  it('sets each figure against the period before', () => {
+    const r = (reportDate: string, consumption: number) => ({ reportDate, status: 'approved', fuel: [{ consumption, receivedQty: 0 }], generators: [{ didRun: true, runHours: 10 }] }) as unknown as SiteReport
+    const reports = [r('2026-11-02', 1000), r('2026-11-03', 1000), r('2026-11-09', 1500), r('2026-11-10', 1500)]
+    const now = periodMetrics({ from: '2026-11-08', to: '2026-11-14', reports, sheets: [], tasks: [] })
+    const before = periodMetrics({ from: '2026-11-01', to: '2026-11-07', reports, sheets: [], tasks: [] })
+    const s = compareSection(now, before, { now: 'هالأسبوع', before: 'قبله' })
+    expect(s.rows[0]).toEqual(['استهلاك السولار (لتر)', 3000, 2000, '\u200E+50%'])
+    expect(s.rows[4]).toEqual(['لتر لكل ساعة تشغيل', 150, 100, '\u200E+50%'])
   })
 })

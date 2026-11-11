@@ -249,3 +249,65 @@ export function shipmentSections(reports: SiteReport[], fuelTypes: FuelType[], a
     })
   return out
 }
+
+// ---------- Trends and the period before ----------
+
+export interface DayPoint { date: ISODate; value: number | null }
+
+/** Day by day over the period: diesel used (sent reports) and tasks finished. Null = no report that day. */
+export function dailySeries(a: Pick<ReportInput, 'from' | 'to' | 'today' | 'reports' | 'tasks'>) {
+  const days = daysOf(a.from, a.to)
+  const use = new Map(a.reports.filter((r) => r.status !== 'draft').map((r) => [r.reportDate, sum(r.fuel.map((f) => f.consumption))]))
+  const done = new Map<string, number>()
+  for (const t of a.tasks) if (t.status === 'done' && t.completedAt) done.set(gazaDate(t.completedAt), (done.get(gazaDate(t.completedAt)) ?? 0) + 1)
+  return {
+    consumption: days.map((date) => ({ date, value: use.get(date) ?? null })),
+    tasksDone: days.map((date) => ({ date, value: date > a.today ? null : done.get(date) ?? 0 })),
+  }
+}
+
+/** The headline figures of one period, to set against the period before. */
+export function periodMetrics(a: Pick<ReportInput, 'from' | 'to' | 'reports' | 'sheets' | 'tasks'>) {
+  const reports = a.reports.filter((r) => r.status !== 'draft' && r.reportDate >= a.from && r.reportDate <= a.to)
+  const sheets = a.sheets.filter((s) => s.status !== 'draft' && s.sheetDate >= a.from && s.sheetDate <= a.to)
+  const inP = (iso: string | null) => !!iso && gazaDate(iso) >= a.from && gazaDate(iso) <= a.to
+  const consumption = sum(reports.map((r) => sum(r.fuel.map((f) => f.consumption))))
+  const runHours = r1(sum(reports.flatMap((r) => r.generators.filter((g) => g.didRun).map((g) => g.runHours))))
+  return {
+    reportDays: reports.length,
+    consumption,
+    perDay: reports.length ? Math.round(consumption / reports.length) : null,
+    received: sum(reports.map((r) => sum(r.fuel.map((f) => f.receivedQty)))),
+    runHours,
+    litersPerHour: runHours ? r1(consumption / runHours) : null,
+    supplyHours: r1(sum(sheets.flatMap((s) => s.zones.filter((z) => z.supplied).map((z) => z.supplyHours)))),
+    tasksDone: a.tasks.filter((t) => t.status === 'done' && inP(t.completedAt)).length,
+    tasksNew: a.tasks.filter((t) => t.status !== 'cancelled' && inP(t.createdAt)).length,
+  }
+}
+
+const pct = (now: number | null, before: number | null): Cell =>
+  // The mark keeps the sign on the left in right-to-left text.
+  now === null || before === null || before === 0 ? null : `\u200E${now >= before ? '+' : '−'}${Math.abs(Math.round(((now - before) / before) * 100))}%`
+
+/** «هالفترة» against «اللي قبلها», figure by figure. */
+export function compareSection(now: ReturnType<typeof periodMetrics>, before: ReturnType<typeof periodMetrics>, labels: { now: string; before: string }): Section {
+  const line = (name: string, k: keyof typeof now): Cell[] => [name, now[k], before[k], pct(now[k], before[k])]
+  return {
+    key: 'compare',
+    title: 'مقارنة بالفترة اللي قبلها',
+    note: 'الفرق بالنسبة المئوية. أيام بدون تقرير ما بتنحسب.',
+    columns: ['البند', labels.now, labels.before, 'الفرق'],
+    rows: [
+      line('استهلاك السولار (لتر)', 'consumption'),
+      line('متوسط الاستهلاك باليوم (لتر)', 'perDay'),
+      line('السولار الوارد (لتر)', 'received'),
+      line('ساعات تشغيل المولدات', 'runHours'),
+      line('لتر لكل ساعة تشغيل', 'litersPerHour'),
+      line('ساعات تغذية المناطق', 'supplyHours'),
+      line('مهام انطلبت', 'tasksNew'),
+      line('مهام خلصت', 'tasksDone'),
+      line('أيام فيها تقرير توليد', 'reportDays'),
+    ],
+  }
+}

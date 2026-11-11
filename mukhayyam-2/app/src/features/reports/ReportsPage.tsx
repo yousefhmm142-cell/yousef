@@ -19,7 +19,8 @@ import { gazaTime, toMinutes, weekStart } from '../attendance/rules'
 import { stamp } from '../sheets/ui'
 import { refreshTasks } from '../tasks/repo'
 import { sealWorkAsTasks, useSealWork } from '../tasks/sealWork'
-import { buildReport, type Cell, type Section } from './build'
+import { buildReport, compareSection, dailySeries, daysOf, periodMetrics, type Cell, type Section } from './build'
+import { TrendChart } from './TrendChart'
 import { downloadExcel } from './excel'
 
 type Period = 'week' | 'month'
@@ -72,8 +73,22 @@ export function ReportsPage() {
   const sections = useMemo(() => {
     if (!data) return null
     const sw = sealWorkAsTasks(sealLines, data.taskTypes)
-    return buildReport({ ...data, tasks: [...data.tasks, ...sw.tasks], taskTypes: sw.types, from, to, today, nowMin: toMinutes(gazaTime(now.toISOString())) })
-  }, [data, sealLines, from, to, today, now])
+    const main = buildReport({ ...data, tasks: [...data.tasks, ...sw.tasks], taskTypes: sw.types, from, to, today, nowMin: toMinutes(gazaTime(now.toISOString())) })
+    // The same figures for the period just before, set side by side.
+    // A period still running is set against the same number of days at the start of the one before.
+    const prevFrom = period === 'week' ? addDays(from, -7) : monthStart(addDays(from, -1))
+    const running = today >= from && today < to
+    const upTo = running ? today : to
+    const elapsed = daysOf(from, upTo).length
+    const prevTo = running ? (addDays(prevFrom, elapsed - 1) < from ? addDays(prevFrom, elapsed - 1) : addDays(from, -1)) : addDays(from, -1)
+    const first = running ? ` (أول ${elapsed} ${elapsed === 1 ? 'يوم' : elapsed <= 10 ? 'أيام' : 'يوم'})` : ''
+    const cmp = compareSection(periodMetrics({ ...data, from, to: upTo }), periodMetrics({ ...data, from: prevFrom, to: prevTo }), {
+      now: (period === 'week' ? 'هالأسبوع' : 'هالشهر') + (running ? ' لهلأ' : ''),
+      before: (period === 'week' ? 'الأسبوع اللي قبله' : `شهر ${monthName(prevFrom)}`) + first,
+    })
+    return [cmp, ...main]
+  }, [data, sealLines, from, to, today, now, period])
+  const trends = useMemo(() => (data ? dailySeries({ from, to, today, reports: data.reports, tasks: data.tasks }) : null), [data, from, to, today])
 
   async function excel() {
     if (!sections) return
@@ -113,6 +128,13 @@ export function ReportsPage() {
           <Button variant="primary" icon={<FileSpreadsheet size={17} />} busy={busy} disabled={!sections} onClick={() => void excel()}>Excel</Button>
         </div>
       </div>
+
+      {trends && (
+        <div className="trends">
+          <TrendChart title="استهلاك السولار باليوم" unit="لتر" points={trends.consumption} empty="ما في تقارير توليد بهالفترة." />
+          <TrendChart title="المهام اللي خلصت باليوم" unit="مهمة" points={trends.tasksDone} empty="ما في مهام خلصت بهالفترة." />
+        </div>
+      )}
 
       {!sections ? (
         <Skeleton kind="table" />
