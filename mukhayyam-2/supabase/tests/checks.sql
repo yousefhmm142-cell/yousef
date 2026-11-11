@@ -74,6 +74,8 @@ select test.ok((select submitted_at is null and status = 'draft' from public.sit
 insert into public.site_report_fuel (report_id, fuel_type_id, opening_balance, received_qty, total_qty, closing_balance, consumption, shipment_no)
   values ((select v from test.ids where k = 'report'), 1, 2600, 2000, 4600, 3600, 1000, '14520');
 select test.ok(test.affected($$update public.site_report_fuel set notes = 'وصلت 10:15 ص'$$) = 1, 'operator edits a draft line');
+select test.ok(test.affected($$update public.site_report_fuel set supplier = 'شركة الوقود', unit_price = 6.5 where shipment_no = '14520'$$) = 1, 'operator records the supplier and price of received fuel');
+select test.fails($$update public.site_report_fuel set unit_price = -1 where shipment_no = '14520'$$, '%check constraint%', 'a negative fuel price is refused');
 select test.fails($$insert into public.site_report_fuel (report_id, fuel_type_id, closing_balance) values ((select v from test.ids where k = 'report'), 2, -5)$$,
                   '%check constraint%', 'negative fuel figures are refused');
 reset role; insert into public.generators (name, brand) values ('مولد الأحمال', 'Cat'); set role authenticated;
@@ -866,6 +868,15 @@ select test.ok(not exists(select 1 from m2_ops.alerts_due() where kind='late_tas
 select test.ok(m2_ops.alerts_run()=0,'a second run repeats nothing');
 update public.app_settings set alert_sms=false, alert_phones='{}', report_late_warn='10:00';
 update public.tasks set status='cancelled', cancel_reason='test' where id=(select v from test.ids where k='alert_late');
+-- ---------- Maintenance plan (update-41) ----------
+select test.login('رامي أبو عجوة'); set role authenticated;
+select public.maintenance_plan_set('{"oil_filter":{"hours":300},"battery":{"days":45}}');
+select test.ok((select maintenance_plan->'oil_filter'->>'hours' = '300' from public.app_settings),'the manager sets the maintenance plan');
+select test.fails($$select public.maintenance_plan_set('{"oil_filter":{"hours":-5}}')$$,'%bad_plan%','a negative interval is refused');
+select test.fails($$select public.maintenance_plan_set('{"rocket":{"days":5}}')$$,'%bad_plan%','an unknown maintenance kind is refused');
+reset role; select test.login('مشغّل الموقع'); set role authenticated;
+select test.fails($$select public.maintenance_plan_set('{}')$$,'%not_allowed%','only the manager edits the maintenance plan');
+reset role;
 do $$ declare original text;begin select definition into original from shared_sms_original;execute original;end $$;
 
 \echo 'ALL CHECKS PASSED'

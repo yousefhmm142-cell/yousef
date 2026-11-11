@@ -359,3 +359,22 @@
 .do-first { gap: 12px; }
 .do-first .btn { margin-top: 4px; }
 .fcard { scroll-margin-top: 90px; }
+
+/* Maintenance schedule */
+.mp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; padding: 14px 18px 18px; }
+.mp-gen { border: 1px solid var(--line-2); border-radius: 14px; padding: 12px 14px; }
+.mp-gen h3 { margin: 0 0 8px; font-size: 15px; }
+.mp-gen ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.mp-gen li { display: grid; gap: 4px; }
+.mp-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.mp-top b { font-size: 13.5px; }
+.mp-gen small { font-size: 12px; }
+.mp-bar { height: 6px; border-radius: 99px; background: var(--line-2); overflow: hidden; }
+.mp-bar i { display: block; height: 100%; border-radius: inherit; background: var(--ok); }
+.mp-gen li[data-state='soon'] .mp-bar i { background: var(--warn); }
+.mp-gen li[data-state='due'] .mp-bar i { background: var(--danger); }
+@media print { .maint-plan { display: none; } }
+.mp-note { margin: 0; padding: 0 18px; font-size: 13px; }
+.mp-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 12px 18px 18px; }
+@media (max-width: 700px) { .mp-form { grid-template-columns: 1fr 1fr; } }
+.mp-unknown { margin: 10px 0 0; font-size: 12px; line-height: 1.7; }

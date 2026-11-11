@@ -17,6 +17,7 @@ import type { Zone } from '../distribution/model'
 import { ReportStateError, useGenerators } from '../generation/repo'
 import { BackupCard } from './BackupCard'
 import { FuelTypesCard } from './FuelTypesCard'
+import { MaintenancePlanCard } from './MaintenancePlanCard'
 import { TeamCard } from './TeamCard'
 import { PermissionsPage } from './PermissionsPage'
 import { SmsPage } from '../sms/SmsPage'
@@ -88,6 +89,8 @@ export function SettingsPage() {
       <ZonesCard />
 
       <FuelTypesCard />
+
+      <MaintenancePlanCard />
 
       <BackupCard />
       <StorageCard />

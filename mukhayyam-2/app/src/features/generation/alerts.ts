@@ -1,4 +1,5 @@
 import { average, formatAmount } from '../../lib/numbers'
+import { everyText, leftText, maintenanceSchedule } from './maintenance'
 import { expectedConsumption, loadKva, logLoads, reportTotals, toBar, type AlertSettings, type Generator, type SiteReport } from './model'
 
 // Alerts only read the figures the site staff typed; they never change them.
@@ -14,6 +15,7 @@ export type AlertKind =
   | 'imbalance'
   | 'oil_change'
   | 'expected_consumption'
+  | 'maintenance'
 
 export interface Alert {
   id: string
@@ -157,6 +159,12 @@ export function computeAlerts(report: SiteReport, ctx: AlertContext): Alert[] {
         hours >= s.oilChangeDueHours ? `${name}: حان تغيير الزيت` : `${name}: اقترب موعد تغيير الزيت`,
         `${formatAmount(round(hours))} ساعة تشغيل منذ آخر تغيير، والموعد كل ${s.oilChangeDueHours} ساعة`)
     }
+
+    // The rest of the maintenance plan (filters, cooling, battery, belt): only what is due, and only once
+    // it was recorded at least once (nothing to count from otherwise).
+    for (const item of maintenanceSchedule(log.generatorId, [report, ...history], s, report.reportDate))
+      if (item.kind !== 'oil_change' && item.state === 'due')
+        add('maintenance', `${log.generatorId}:${item.kind}`, 'warn', `${name}: حان ${item.label}`, `${everyText(item.every)} · ${leftText(item)}`)
   }
 
   return alerts.sort((a, b) => (a.level === b.level ? 0 : a.level === 'danger' ? -1 : 1))

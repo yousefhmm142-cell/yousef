@@ -63,6 +63,13 @@ export function FuelStep({ report, fuelTypes, previous, update }: {
   update: Update
 }) {
   const nameOf = (id: number) => fuelTypes.find((f) => f.id === id)?.name ?? 'وقود'
+  // Suppliers typed before on this device, most recent first.
+  const suppliers = useLiveQuery(async () => {
+    const seen = new Set<string>()
+    for (const r of (await db.siteReports.toArray()).sort((a, b) => b.reportDate.localeCompare(a.reportDate)))
+      for (const f of r.fuel) if (f.supplier?.trim()) seen.add(f.supplier.trim())
+    return [...seen].slice(0, 12)
+  }, []) ?? []
   return (
     <>
       {report.fuel.length > 1 && (
@@ -117,6 +124,12 @@ export function FuelStep({ report, fuelTypes, previous, update }: {
                 hint={line.consumption !== null && line.consumption < 0 ? 'تنبيه: المتبقي أكبر من المجموع، راجع الأرقام' : 'يُحسب لحاله: المجموع − المتبقي'}
               />
               <TextField label="رقم الإرسالية" numeric value={line.shipmentNo} onChange={(v) => set((l) => (l.shipmentNo = v))} />
+              {(line.receivedQty ?? 0) > 0 && (
+                <>
+                  <TextField label="المورّد" value={line.supplier ?? ''} suggestions={suppliers} placeholder="مين جاب السولار" onChange={(v) => set((l) => (l.supplier = v))} />
+                  <NumberField label="سعر اللتر" unit="شيكل" max={999} value={line.unitPrice ?? null} onChange={(v) => set((l) => (l.unitPrice = v))} hint="اختياري" />
+                </>
+              )}
             </div>
             <NoteToggle value={line.notes} onChange={(v) => set((l) => (l.notes = v))} />
           </section>

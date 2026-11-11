@@ -23,6 +23,7 @@ import {
 } from './model'
 import { useAlertSettings, useEmployeeNames, useFuelTypes, useGenerators, useHistoryBefore } from './repo'
 import { clock12 } from '../../lib/format'
+import { MaintenanceCard } from './MaintenanceCard'
 
 const SQRT3 = Math.sqrt(3)
 
@@ -118,6 +119,7 @@ export function ReportView({ report, ctx }: { report: SiteReport; ctx: ReturnTyp
       <GeneratorGauges report={report} generators={generators} settings={settings} />
       <GeneratorsTable report={report} generators={generators} settings={settings} />
       <HourlyLoads report={report} generators={generators} />
+      <MaintenanceCard report={report} history={history} generators={generators} settings={settings} />
 
       <div className="two">
         <section className="card">
@@ -159,7 +161,7 @@ function FuelTable({ report, fuelTypes }: { report: SiteReport; fuelTypes: FuelT
       <div className="tw">
         <table className="tbl">
           <thead>
-            <tr><th>نوع الوقود</th><th>الرصيد الموجود</th><th>الكمية الواردة</th><th>المجموع</th><th>الرصيد المتبقي</th><th>الاستهلاك</th><th>رقم الإرسالية</th><th>ملاحظات</th></tr>
+            <tr><th>نوع الوقود</th><th>الرصيد الموجود</th><th>الكمية الواردة</th><th>المجموع</th><th>الرصيد المتبقي</th><th>الاستهلاك</th><th>رقم الإرسالية</th><th>المورّد</th><th>ملاحظات</th></tr>
           </thead>
           <tbody>
             {report.fuel.map((f, i) => (
@@ -171,6 +173,7 @@ function FuelTable({ report, fuelTypes }: { report: SiteReport; fuelTypes: FuelT
                 <td className="n em">{formatAmount(f.closingBalance)}</td>
                 <td className="n em">{formatAmount(f.consumption)}</td>
                 <td className="n">{f.shipmentNo || '—'}</td>
+                <td>{f.supplier?.trim() ? <>{f.supplier}{f.unitPrice != null && <small className="muted num"> · {formatAmount(f.unitPrice)} ₪/لتر</small>}</> : '—'}</td>
                 <td className="muted">{f.notes || '—'}</td>
               </tr>
             ))}

@@ -40,6 +40,8 @@ interface FuelRow {
   closing_balance: number | null
   consumption: number | null
   shipment_no: string | null
+  supplier?: string | null
+  unit_price?: number | null
   notes: string | null
 }
 
@@ -97,6 +99,8 @@ export function reportToRows(r: SiteReport): { header: Record<string, unknown>; 
           closing_balance: f.closingBalance,
           consumption: f.consumption,
           shipment_no: text(f.shipmentNo),
+          supplier: text(f.supplier ?? ''),
+          unit_price: f.unitPrice ?? null,
           notes: text(f.notes),
         })),
       },
@@ -172,6 +176,8 @@ export function reportFromRow(row: ReportRow): SiteReport {
         closingBalance: num(f.closing_balance),
         consumption: num(f.consumption),
         shipmentNo: f.shipment_no ?? '',
+        supplier: f.supplier ?? '',
+        unitPrice: num(f.unit_price ?? null),
         notes: f.notes ?? '',
       })),
     generators: [...row.generator_day_logs]

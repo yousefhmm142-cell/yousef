@@ -88,6 +88,9 @@ export function buildReport(a: ReportInput): Section[] {
       : undefined,
   })
 
+  // ---------- Fuel received: every shipment, its number checked ----------
+  sections.push(...shipmentSections(reports, a.fuelTypes, a.reports))
+
   // ---------- Generators ----------
   const genRows = a.generators
     .filter((g) => reports.some((r) => r.generators.some((l) => l.generatorId === g.id && l.didRun)))
@@ -191,4 +194,58 @@ export function taskMatrix(tasks: Task[], employees: Employee[], types: TaskType
     rows,
     total: ['المجموع', ...used.map((ty) => techs.reduce((n,e)=>n+count(e.id,ty.id),0)), techs.reduce((n,e)=>n+tasks.filter(t=>isAssignedTo(t,e.id)).length,0)],
   }
+}
+
+/**
+ * Every fuel receipt of the period, with its supplier and price, and a check on the shipment number:
+ * missing, or the same number on another day (in any report on record, not only this period).
+ * Then the totals per supplier.
+ */
+export function shipmentSections(reports: SiteReport[], fuelTypes: FuelType[], allReports: SiteReport[]): Section[] {
+  const nameOf = (id: number) => fuelTypes.find((f) => f.id === id)?.name ?? '—'
+  const norm = (n: string) => n.replace(/\s+/g, '').replace(/^0+/, '')
+  const usedOn = new Map<string, Set<string>>()
+  for (const r of allReports)
+    if (r.status !== 'draft')
+      for (const f of r.fuel) if ((f.receivedQty ?? 0) > 0 && f.shipmentNo.trim()) {
+        const k = norm(f.shipmentNo)
+        usedOn.set(k, (usedOn.get(k) ?? new Set()).add(r.reportDate))
+      }
+  const receipts = reports.flatMap((r) => r.fuel.filter((f) => (f.receivedQty ?? 0) > 0).map((f) => ({ date: r.reportDate, f })))
+  const rows = receipts.map(({ date, f }) => {
+    const no = f.shipmentNo.trim()
+    const others = no ? [...(usedOn.get(norm(no)) ?? [])].filter((d) => d !== date) : []
+    const check = !no ? 'بدون رقم إرسالية' : others.length ? `الرقم مكرر (${others.sort().join('، ')})` : 'سليم'
+    const price = f.unitPrice ?? null
+    return [date, nameOf(f.fuelTypeId), f.receivedQty, no || null, f.supplier?.trim() || null, price, price !== null ? Math.round(price * (f.receivedQty ?? 0)) : null, check] as Cell[]
+  })
+  const problems = rows.filter((r) => r[7] !== 'سليم').length
+  const out: Section[] = [
+    {
+      key: 'shipments',
+      title: 'السولار الوارد: الشحنات',
+      note: problems ? `${problems} بحاجة لمراجعة (رقم ناقص أو مكرر)` : rows.length ? 'كل أرقام الإرساليات سليمة' : undefined,
+      columns: ['اليوم', 'الصنف', 'الكمية (لتر)', 'رقم الإرسالية', 'المورّد', 'سعر اللتر', 'التكلفة (شيكل)', 'فحص الرقم'],
+      rows,
+      total: rows.length ? ['المجموع', '', sum(rows.map((r) => r[2] as number)), null, null, null, sum(rows.map((r) => r[6] as number | null)) || null, ''] : undefined,
+    },
+  ]
+  const bySupplier = new Map<string, { n: number; qty: number; cost: number; priced: number }>()
+  for (const { f } of receipts) {
+    const k = f.supplier?.trim() || 'غير محدد'
+    const x = bySupplier.get(k) ?? { n: 0, qty: 0, cost: 0, priced: 0 }
+    x.n++
+    x.qty += f.receivedQty ?? 0
+    if (f.unitPrice != null) { x.cost += f.unitPrice * (f.receivedQty ?? 0); x.priced += f.receivedQty ?? 0 }
+    bySupplier.set(k, x)
+  }
+  if (bySupplier.size > 1 || (bySupplier.size === 1 && !bySupplier.has('غير محدد')))
+    out.push({
+      key: 'suppliers',
+      title: 'السولار الوارد: حسب المورّد',
+      note: 'متوسط السعر من الشحنات اللي انكتب سعرها بس.',
+      columns: ['المورّد', 'الشحنات', 'الكمية (لتر)', 'متوسط سعر اللتر', 'التكلفة (شيكل)'],
+      rows: [...bySupplier].sort((x, y) => y[1].qty - x[1].qty).map(([k, x]) => [k, x.n, x.qty, x.priced ? Math.round((x.cost / x.priced) * 100) / 100 : null, x.priced ? Math.round(x.cost) : null]),
+    })
+  return out
 }

@@ -61,6 +61,19 @@ export interface AlertSettings {
   /** Typed consumption vs hours × liters per hour: gap (%) that raises a warning / a red alert. */
   expectedWarnPct: number
   expectedDangerPct: number
+  /** How often each maintenance is due (running hours or days); oil change has its own two settings. */
+  maintenancePlan?: MaintenancePlan
+}
+
+export type MaintenancePlan = Partial<Record<MaintenanceType, { hours?: number; days?: number }>>
+
+export const defaultMaintenancePlan: MaintenancePlan = {
+  oil_filter: { hours: 250 },
+  fuel_filter: { hours: 500 },
+  air_filter: { hours: 500 },
+  cooling: { days: 30 },
+  battery: { days: 60 },
+  belt: { days: 90 },
 }
 
 export const defaultAlertSettings: AlertSettings = {
@@ -82,6 +95,7 @@ export const defaultAlertSettings: AlertSettings = {
   phaseVoltage: 230,
   expectedWarnPct: 15,
   expectedDangerPct: 30,
+  maintenancePlan: defaultMaintenancePlan,
 }
 
 export interface FuelLine {
@@ -93,6 +107,9 @@ export interface FuelLine {
   closingBalance: number | null
   consumption: number | null
   shipmentNo: string
+  /** Who brought the fuel received this day, and the price per liter (both optional). */
+  supplier?: string
+  unitPrice?: number | null
   notes: string
 }
 
@@ -191,6 +208,8 @@ export function newReport(
         closingBalance: null,
         consumption: null,
         shipmentNo: '',
+        supplier: '',
+        unitPrice: null,
         notes: '',
       })),
     generators: generators

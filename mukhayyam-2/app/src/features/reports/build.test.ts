@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { taskMatrix } from './build'
+import { shipmentSections, taskMatrix } from './build'
+import type { SiteReport } from '../generation/model'
 import type { Task } from '../tasks/model'
 import type { Employee } from '../../types'
 
@@ -28,4 +29,21 @@ it('credits a shared order to both technicians and sums their contributions',()=
  const s=taskMatrix([joint],[emp('q','أحمد'),emp('m','سارة')],[{id:1,name:'تفتيش',isActive:true,sortOrder:1}],'k','t')
  expect(s.rows).toEqual([['أحمد',1,1],['سارة',1,1]])
  expect(s.total).toEqual(['المجموع',2,2])
+})
+
+describe('fuel shipments', () => {
+  const line = (shipmentNo: string, receivedQty: number | null, supplier = '', unitPrice: number | null = null) => ({
+    id: shipmentNo + receivedQty, fuelTypeId: 1, openingBalance: 0, receivedQty, totalQty: null, closingBalance: null, consumption: null, shipmentNo, supplier, unitPrice, notes: '',
+  })
+  const rep = (reportDate: string, fuel: ReturnType<typeof line>[]) => ({ reportDate, status: 'submitted', fuel } as unknown as SiteReport)
+  const types = [{ id: 1, name: 'سولار', isActive: true, sortOrder: 1 }]
+
+  it('flags a missing or repeated shipment number and sums the cost', () => {
+    const all = [rep('2026-11-01', [line('14520', 2000, 'الوقود', 6.5)]), rep('2026-11-03', [line('014520', 1000, 'الوقود', 6)]), rep('2026-11-04', [line('', 500)]), rep('2026-11-05', [line('9', 0)])]
+    const [s, by] = shipmentSections(all, types, all)
+    expect(s!.rows.map((r) => r[7])).toEqual(['الرقم مكرر (2026-11-03)', 'الرقم مكرر (2026-11-01)', 'بدون رقم إرسالية'])
+    expect(s!.rows[0]![6]).toBe(13000)
+    expect(s!.total![2]).toBe(3500)
+    expect(by!.rows[0]).toEqual(['الوقود', 2, 3000, 6.33, 19000])
+  })
 })

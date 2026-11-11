@@ -74,10 +74,13 @@ interface TextFieldProps {
   onChange(value: string): void
   placeholder?: string
   numeric?: boolean
+  /** Earlier values offered while typing (the browser's own list). */
+  suggestions?: readonly string[]
 }
 
-export function TextField({ label, value, onChange, placeholder, numeric }: TextFieldProps) {
+export function TextField({ label, value, onChange, placeholder, numeric, suggestions }: TextFieldProps) {
   const id = useId()
+  const listId = `${id}-list`
   return (
     <div className="nf">
       <label htmlFor={id}>{label}</label>
@@ -91,8 +94,10 @@ export function TextField({ label, value, onChange, placeholder, numeric }: Text
           autoComplete="off"
           placeholder={placeholder}
           value={value}
+          list={suggestions?.length ? listId : undefined}
           onChange={(e) => onChange(e.target.value)}
         />
+        {!!suggestions?.length && <datalist id={listId}>{suggestions.map((s) => <option key={s} value={s} />)}</datalist>}
       </div>
     </div>
   )

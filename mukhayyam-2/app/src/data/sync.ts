@@ -6,7 +6,7 @@ import { isDemo } from '../config'
 import { SHEET_SELECT, sheetFromRow, sheetToRows, type SheetRow } from '../features/distribution/remote'
 import type { DistributionSheet, Zone } from '../features/distribution/model'
 import { REPORT_SELECT, reportFromRow, reportToRows, type ReportRow } from '../features/generation/remote'
-import type { AlertSettings, FuelType, Generator, SiteReport } from '../features/generation/model'
+import { defaultMaintenancePlan, type AlertSettings, type FuelType, type Generator, type MaintenancePlan, type SiteReport } from '../features/generation/model'
 import type { ChildRows } from '../features/sheets/remote'
 import type { TaskType } from '../features/tasks/model'
 import { scheduleFromRow, type ScheduleRow } from '../features/attendance/remote'
@@ -402,6 +402,7 @@ export async function pullReference(): Promise<void> {
         phaseVoltage: n('phase_voltage'),
         expectedWarnPct: n('expected_warn_pct') || 15,
         expectedDangerPct: n('expected_danger_pct') || 30,
+        maintenancePlan: (s.maintenance_plan as unknown as MaintenancePlan | undefined) ?? defaultMaintenancePlan,
       },
     ])
   }
