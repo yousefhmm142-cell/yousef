@@ -46,7 +46,7 @@ export function EntryPage() {
   useDocumentTitle(date === today ? 'تقرير اليوم' : `تقرير ${dayName(date, today)}`)
 
   if (date > today) {
-    return <div className="empty"><h3>لا يمكن تعبئة يوم لم يأتِ بعد</h3><Link to="/" className="btn">تقرير اليوم</Link></div>
+    return <div className="empty"><h3>لا يمكن تعبئة يوم لم يأتِ بعد</h3><Link to={`/entry/${today}`} className="btn">تقرير اليوم</Link></div>
   }
   if (stored === undefined || !fuelTypes || !generators || previous === undefined || missingBefore === undefined) {
     return <Skeleton kind="list" />

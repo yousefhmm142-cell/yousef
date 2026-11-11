@@ -14,6 +14,7 @@ export function HistoryPage() {
     <SheetHistory
       title="التقارير السابقة"
       todayLabel="تقرير اليوم"
+      todayHref={`/entry/${today}`}
       emptyText="أول تقرير ترسله يظهر هنا."
       todayMissing={!!reports && !reports.some((r) => r.reportDate === today)}
       items={reports?.map((r) => {
@@ -22,7 +23,7 @@ export function HistoryPage() {
           id: r.id,
           date: r.reportDate,
           status: r.status,
-          href: isEditableStatus(r.status) ? (r.reportDate === today ? '/' : `/entry/${r.reportDate}`) : `/generation/${r.reportDate}`,
+          href: isEditableStatus(r.status) ? `/entry/${r.reportDate}` : `/generation/${r.reportDate}`,
           figures: (
             <>
               <span>استهلاك <b>{formatAmount(t.consumption)}</b></span>
