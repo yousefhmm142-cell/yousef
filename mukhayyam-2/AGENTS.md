@@ -19,8 +19,8 @@
 
 ## 1) قواعد الشغل (إلزامية)
 
-1. عدّل ثم شغّل: `cd app && npx tsc -b && npx vitest run` (الآن **77 اختباراً**، كلها يجب أن تنجح).
-2. إن لمست قاعدة البيانات: أضف migration جديدة في `supabase/migrations/` **و** ملف `supabase/updates/update-N.sql` (نفس المحتوى مع ترويسة)، وأعد توليد `supabase/setup.sql` بـ `supabase/build-setup.sh`، وأضف فحوصاً في `supabase/tests/checks.sql`، وشغّل `supabase/tests/run.sh` حتى تظهر `ALL CHECKS PASSED`. آخر رقم الآن: **update-21** (migration `…0024`).
+1. عدّل ثم شغّل: `cd app && npx tsc -b && npx vitest run` (الآن **119 اختباراً**؛ اختبارات ملفات Excel الحقيقية تتجاوز نفسها إذا الملفات مش موجودة)، وكمان `npm run lint`.
+2. إن لمست قاعدة البيانات: أضف migration جديدة في `supabase/migrations/` **و** ملف `supabase/updates/update-N.sql` (نفس المحتوى مع ترويسة)، وأعد توليد `supabase/setup.sql` بـ `supabase/build-setup.sh`، وأضف فحوصاً في `supabase/tests/checks.sql`، وشغّل `supabase/tests/run.sh` حتى تظهر `ALL CHECKS PASSED`. آخر رقم: شوف `ls supabase/updates | sort -V | tail -1` و`ls supabase/migrations | tail -1` (كودكس كمان بيضيف، اسحب قبل ما تختار رقم).
 3. كل ملف update يجب أن يكون **idempotent** (تكراره لا يضر) لأنه يُطبَّق تلقائياً مرة واحدة ويُسجَّل في `m2_ops.applied_updates`.
 4. لا تغيّر دالة RPC موجودة بتغيير توقيعها بدون `drop function` للقديمة (وإلا يبقى overload ملتبس في PostgREST).
 5. اجعل الرفع صغيراً ومتتابعاً: commit بوصف واضح ثم `git push` على الفرع. الرفع يشغّل النشر تلقائياً. **لا تفتح Pull Request** إلا إذا طُلب.
@@ -37,7 +37,7 @@
 - **المناطق الزمنية:** كل شيء بتوقيت `Asia/Gaza`. اليوم = `todayISO()`؛ أسبوع العمل يبدأ **السبت** (`weekStart` في `features/attendance/rules.ts`).
 
 ### مجلدات الواجهة (`app/src`)
-`app/` (الشِل، الراوتر، الحُرّاس `guards.tsx`، `modules.ts`، `update.ts` آلية التحديث) · `features/<وحدة>/` (generation, distribution, tasks, attendance, readings, seals, reports, settings, sheets=مشترك؛ stock بلا صفحة) · `data/` (`db.ts`, `sync.ts`, `supabase.ts`, `demo.ts`) · `ui/` (Confirm, Toast, status, Dialog…) · `lib/` (dates, numbers, saveFile, sheetPdf, appearance…) · `styles/` (ملف CSS لكل وحدة؛ انتبه لترتيب التتالي).
+`app/` (الشِل، الراوتر، الحُرّاس `guards.tsx`، `modules.ts`، `update.ts` آلية التحديث) · `features/<وحدة>/` (generation, distribution, tasks, attendance, readings, seals, reports, settings, sheets=مشترك) · `data/` (`db.ts`, `sync.ts`, `supabase.ts`, `demo.ts`) · `ui/` (Confirm, Toast, status, Dialog…) · `lib/` (dates, numbers, saveFile, sheetPdf, appearance…) · `styles/` (ملف CSS لكل وحدة؛ انتبه لترتيب التتالي).
 
 ## 3) الأجزاء الدقيقة (اقرأها قبل لمسها)
 
@@ -95,7 +95,7 @@
 - المناطق بطاقات (مثل رولات الأختام)؛ زر الفني يفتح نافذة اختيار بمربعات (ورق أو فني). المنطقة نفسها بكشوفات مختلفة تبقى منطقة وحدة (`areaKey`).
 - رمز `#`: «1_شرقية 31» أو «5_شرقية 33 (164697)» أو المطبوع «(164679) شقاقي ٢٨_39». المنطقة = اسم الطبلون بدون الرقم وبدون شمال/جنوب… (المقبرة + شمال المقبرة = منطقة وحدة)، ويقدر المسؤول ينقل طبلون لمنطقة ثانية.
 - كل منطقة: لفني (`mode=app`، يحتاج صلاحية `readings`) أو ورق (المكتب يعبّيها). القارئ يشتغل بدون نت بالكامل: القائمة والقراءات محفوظة على الجهاز (`readings:mine:<id>`)، كل قراءة تدخل طابور `data/actions` بخيار `background` (ما بتستنى الشبكة) وتظهر «جاري المزامنة». الكيبورد `inputMode=decimal`، أرقام ونقطة فقط، والقراءة لا تقل عن السابقة. لا يظهر رقم الجوال للقارئ.
-- المخزن انشال من الواجهة بطلب المستخدم (الجداول باقية في القاعدة).
+- المخزن انشال بطلب المستخدم: انحذف كوده من التطبيق (`features/stock`، بطاقة الأصناف، سحب `stock_items`). الجداول باقية بالقاعدة وجداول Dexie `stockItems/stockMoves` باقية بالتعريف بس (ما في داعي لنسخة جديدة).
 
 ### 3.12 الأحمال حسب الساعة (update-34، `sheets/loads.ts` + `sheets/BandGrid.tsx`)
 - جدول الورق: 6 أعمدة ساعات `9 · 12 · 3 · 6 · 9 · 12` (= 7–9، 9–12، 12–3، 3–6، 6–9، 9–12 ليلاً) في `BANDS`. **التوزيع:** لكل منطقة 3 قراءات بكل ساعة (`ZoneEntry.bands`، عمود `zone_day_entries.band_loads` jsonb)، المتوسط لكل ساعة (لما تكتمل الثلاث) ومتوسط اليوم. **التوليد:** لكل مولد قراءة وحدة بكل ساعة (`GeneratorLog.bandLoads`، `generator_day_logs.band_loads`)، خطوة جديدة «الأحمال» قبل «الإرسال»؛ الفاضي = شحطة.

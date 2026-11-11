@@ -91,7 +91,7 @@ export function splitNamePhone(raw: string): { name: string; phone: string | nul
 const num = (v: unknown): number | null => {
   if (v === null || v === undefined || v === '') return null
   if (typeof v === 'number') return Number.isFinite(v) ? v : null
-  const s = toLatinDigits(String(v)).replace(/٫/g, '.').replace(/[^0-9.\-]/g, '')
+  const s = toLatinDigits(String(v)).replace(/٫/g, '.').replace(/[^0-9.-]/g, '')
   if (!s) return null
   const n = Number(s)
   return Number.isFinite(n) ? n : null

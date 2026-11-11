@@ -1,8 +1,8 @@
 /* =========================================================
-   Warehouse and reports
+   Reports (and shared page bits)
    ========================================================= */
-.stock, .reports { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
-.stock .ph, .reports .ph { margin-bottom: 0; }
+.reports { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.reports .ph { margin-bottom: 0; }
 .ph-actions { margin-inline-start: auto; display: flex; gap: 8px; flex-wrap: wrap; }
 .kpis.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .table-wrap { overflow-x: auto; }
@@ -10,15 +10,6 @@
 .tbl td.neg { color: var(--danger); }
 .select.sm { height: 40px; width: auto; min-width: 160px; font-size: 13.5px; }
 
-.moves { list-style: none; margin: 0; padding: 0; }
-.move { display: flex; align-items: center; gap: 12px; padding: 10px 18px; flex-wrap: wrap; }
-.move + .move { border-top: 1px solid var(--line-2); }
-.move-ico { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; flex: none; }
-.move-ico.in { background: var(--ok-soft); color: var(--ok); }
-.move-ico.out { background: var(--danger-soft); color: var(--danger); }
-.move-main { flex: 1; min-width: 0; display: grid; }
-.move-main small { color: var(--muted); font-size: 12px; }
-.move-confirm { width: 100%; text-align: end; color: var(--danger); font-size: 12px; }
 .field-hint.warn { color: var(--warn); margin: 0; }
 
 @media (max-width: 900px) {

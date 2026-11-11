@@ -257,8 +257,6 @@ export interface LinkTask {
   started_at: string | null
   completed_at: string | null
   completion_notes: string | null
-  /** Warehouse items to pick from while the task is open. */
-  items?: Array<{ id: number; name: string; unit: string }>
   /** Materials recorded for this task. */
   materials?: Array<{ name: string; unit: string; qty: number }>
 }
@@ -284,13 +282,7 @@ async function demoLinkTask(token: string): Promise<LinkTask | null> {
     started_at: t.startedAt,
     completed_at: t.completedAt,
     completion_notes: t.completionNotes || null,
-    items: t.status === 'done' || t.status === 'cancelled' ? [] : (await db.stockItems.toArray()).filter((i) => i.isActive).map((i) => ({ id: i.id, name: i.name, unit: i.unit })),
-    materials: await Promise.all(
-      (await db.stockMoves.where('taskId').equals(t.id).toArray()).filter((m) => m.kind === 'out').map(async (m) => {
-        const item = await db.stockItems.get(m.itemId)
-        return { name: item?.name ?? '', unit: item?.unit ?? '', qty: m.qty }
-      }),
-    ),
+    materials: [],
   }
 }
 
@@ -309,9 +301,7 @@ export async function openTaskLink(token: string): Promise<LinkTask | null> {
   return (data as LinkTask | null) ?? null
 }
 
-export type UsedMaterial = { itemId: number; qty: number }
-
-export async function actOnTaskLink(token: string, action: 'start' | 'done', notes = '', materials: UsedMaterial[] = []): Promise<LinkTask | null> {
+export async function actOnTaskLink(token: string, action: 'start' | 'done', notes = ''): Promise<LinkTask | null> {
   if (isDemo) {
     // A phone opening the sheet or the link for the first time: the sample data may still be loading.
     await ensureDemoData()
@@ -324,8 +314,6 @@ export async function actOnTaskLink(token: string, action: 'start' | 'done', not
     if (action === 'start' && t.status !== 'done') await db.tasks.update(t.id, { status: 'in_progress', startedAt: started })
     if (action === 'done' && t.status !== 'done') {
       await db.tasks.update(t.id, { status: 'done', startedAt: started, completedAt: now, completionNotes: notes.trim() })
-      for (const m of materials.filter((x) => x.qty > 0))
-        await db.stockMoves.put({ id: crypto.randomUUID(), itemId: m.itemId, kind: 'out', qty: m.qty, at: now, note: `مهمة #${t.number}`, ref: '', taskId: t.id, createdBy: t.assigneeId ?? null })
     }
     return demoLinkTask(token)
   }
@@ -334,7 +322,7 @@ export async function actOnTaskLink(token: string, action: 'start' | 'done', not
     p_token: token,
     p_action: action,
     p_notes: notes.trim() || null,
-    p_materials: materials.filter((m) => m.qty > 0).map((m) => ({ item_id: m.itemId, qty: m.qty })),
+    p_materials: [],
   })
   check(error, status)
   return (data as LinkTask | null) ?? null

@@ -76,7 +76,7 @@ export interface Attention {
   detail: string
 }
 
-/** Things that need the manager now: approvals waiting, late tasks, stock running out, unsent work. */
+/** Things that need the manager now: approvals waiting, late tasks, fuel running low, unsent work. */
 export function useAttention(now: Date): Attention[] | undefined {
   return useLiveQuery(async () => {
     const [reports, sheets, tasks] = await Promise.all([

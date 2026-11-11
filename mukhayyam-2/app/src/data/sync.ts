@@ -11,7 +11,6 @@ import type { ChildRows } from '../features/sheets/remote'
 import type { TaskType } from '../features/tasks/model'
 import { scheduleFromRow, type ScheduleRow } from '../features/attendance/remote'
 import type { Schedule } from '../features/attendance/rules'
-import type { StockItem } from '../features/stock/model'
 import { isEditableStatus, type SheetMeta, type SheetStatus } from '../features/sheets/workflow'
 import { hasPage, isManagerRole, SITE_ROLES, usesSeals, type PageKey, type Employee, type Role } from '../types'
 import { db, deleteMeta, getMeta, setMeta } from './db'
@@ -333,7 +332,7 @@ interface GeneratorRow extends ListRow { brand: string; model: string | null; ca
 
 export async function pullReference(): Promise<void> {
   const sb = client()
-  const [people, generators, fuel, zones, settings, taskTypes, schedules, items] = await Promise.all([
+  const [people, generators, fuel, zones, settings, taskTypes, schedules] = await Promise.all([
     // '*' so this keeps working on a database that does not have the newer columns yet.
     run(sb.rpc('employee_directory')),
     run(sb.from('generators').select('id, name, brand, model, capacity_kva, liters_per_hour, is_active, sort_order')),
@@ -342,7 +341,6 @@ export async function pullReference(): Promise<void> {
     run(sb.from('app_settings').select('*').maybeSingle()),
     run(sb.from('task_types').select('id, name, is_active, sort_order')),
     run(sb.from('work_schedules').select('*')),
-    run(sb.from('stock_items').select('id, name, unit, min_qty, is_active, sort_order')),
   ])
   await replaceAll<Employee>(
     db.employees,
@@ -381,10 +379,6 @@ export async function pullReference(): Promise<void> {
   await replaceAll<Zone>(db.zones, list(zones as ListRow[]))
   await replaceAll<TaskType>(db.taskTypes, list(taskTypes as ListRow[]))
   await replaceAll<Schedule>(db.schedules, (schedules as ScheduleRow[]).map(scheduleFromRow))
-  await replaceAll<StockItem>(
-    db.stockItems,
-    (items as Array<ListRow & { unit: string; min_qty: number }>).map((r) => ({ ...list([r])[0]!, unit: r.unit, minQty: Number(r.min_qty) })),
-  )
   if (settings) {
     const s = settings as Record<string, number | string>
     const n = (k: string) => Number(s[k])

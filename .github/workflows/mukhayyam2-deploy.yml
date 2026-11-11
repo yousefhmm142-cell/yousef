@@ -38,7 +38,11 @@ jobs:
           cache-dependency-path: mukhayyam-2/app/package-lock.json
       - run: npm ci
       - run: npx tsc --noEmit
+      - run: npm run lint
       - run: npx vitest run
+      # UI smoke tests on the demo build: every main page opens without a crash or console error.
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test
       # The Supabase address and publishable key come from app/.env.hosting (public values).
       - id: build
         run: npx vite build --mode hosting --outDir dist-hosting
