@@ -24,6 +24,7 @@ const page = <T,>(load: () => Promise<T>, name: keyof T) =>
 const SettingsPage = page(() => import('../features/settings/SettingsPage'), 'SettingsPage')
 const TaskLinkPage = page(() => import('../features/tasks/LinkPage'), 'TaskLinkPage')
 const TasksPage = page(() => import('../features/tasks/TasksPage'), 'TasksPage')
+const Guide = page(() => import('../pages/Guide'), 'Guide')
 const SubscriberPage = page(() => import('../features/tasks/SubscriberPage'), 'SubscriberPage')
 const SealWorkPage = page(() => import('../features/tasks/SealWorkPage'), 'SealWorkPage')
 const MyTasksPage = page(() => import('../features/tasks/MyTasksPage'), 'MyTasksPage')
@@ -103,6 +104,7 @@ export const router = createBrowserRouter([
           { path: 'my-attendance', element: <Lazy><MyAttendancePage /></Lazy> },
           { path: 'account', element: <Account /> },
           { path: 'more', element: <More /> },
+          { path: 'guide', element: <Lazy><Guide /></Lazy> },
           { path: '*', element: <NotFound /> },
         ],
       },

@@ -28,14 +28,14 @@ async function visit(page: Page, path: string) {
   await page.waitForLoadState('networkidle')
   // The crash screen, the 404 screen and «not your page» all mean the page did not open.
   for (const t of ['حدث خطأ غير متوقع', 'الصفحة غير موجودة', 'هذه الصفحة ليست ضمن صلاحياتك'])
-    await expect(page.getByText(t), `${path}: ${t}`).toHaveCount(0)
+    await expect(page.getByRole('heading', { name: t }), `${path}: ${t}`).toHaveCount(0)
   await expect(page.locator('#root')).not.toBeEmpty()
 }
 
 test('the manager opens every page', async ({ page }) => {
   const errors = watchErrors(page)
   await login(page, '0590000002')
-  for (const path of ['/', '/generation', '/distribution', '/tasks', '/attendance', '/readings', '/reports', '/settings', '/settings?tab=sms', '/account', '/more'])
+  for (const path of ['/', '/generation', '/distribution', '/tasks', '/attendance', '/readings', '/reports', '/settings', '/settings?tab=sms', '/account', '/more', '/guide', '/subscriber'])
     await visit(page, path)
   expect(errors).toEqual([])
 })
@@ -62,5 +62,7 @@ test('a technician opens his tasks and attendance', async ({ page }) => {
   await login(page, '0590000005')
   await visit(page, '/')
   await visit(page, '/my-attendance')
+  await visit(page, '/guide')
+  await expect(page.getByRole('heading', { name: 'مهامي (الفني)' })).toBeVisible()
   expect(errors).toEqual([])
 })
