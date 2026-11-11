@@ -1,3 +1,4 @@
+import { ScrollTable } from '../../ui/ScrollTable'
 import { Skeleton } from '../../ui/fx/Skeleton'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { SignFooter } from '../sheets/signers'
@@ -94,7 +95,7 @@ export function ReportsPage() {
       <header className="ph">
         <div>
           <h1>التقارير</h1>
-          <p className="muted">ملخص المحروقات والمولدات والتوزيع والمهام والحضور والمخزن لأي أسبوع أو شهر.</p>
+          <p className="muted">ملخص المحروقات والمولدات والتوزيع والمهام والحضور لأي أسبوع أو شهر.</p>
         </div>
         <Segmented<Period> label="الفترة" value={period} options={periods} onChange={setPeriod} />
       </header>
@@ -174,7 +175,7 @@ function SectionCard({ section }: { section: Section }) {
       {section.rows.length === 0 ? (
         <p className="card-empty">لا بيانات في هذه الفترة.</p>
       ) : (
-        <div className="table-wrap"><ReportTable section={section} /></div>
+        <ScrollTable label={section.title}><ReportTable section={section} /></ScrollTable>
       )}
     </section>
   )

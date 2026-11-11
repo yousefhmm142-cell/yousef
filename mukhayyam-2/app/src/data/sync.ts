@@ -335,7 +335,7 @@ export async function pullReference(): Promise<void> {
   const sb = client()
   const [people, generators, fuel, zones, settings, taskTypes, schedules, items] = await Promise.all([
     // '*' so this keeps working on a database that does not have the newer columns yet.
-    run(sb.from('employees').select('*')),
+    run(sb.rpc('employee_directory')),
     run(sb.from('generators').select('id, name, brand, model, capacity_kva, liters_per_hour, is_active, sort_order')),
     run(sb.from('fuel_types').select('id, name, is_active, sort_order')),
     run(sb.from('zones').select('id, name, is_active, sort_order')),

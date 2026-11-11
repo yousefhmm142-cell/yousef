@@ -50,6 +50,8 @@ services:
       GOTRUE_JWT_SECRET: *jwt
       GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
       GOTRUE_MAILER_AUTOCONFIRM: "true"
+      GOTRUE_HOOK_PASSWORD_VERIFICATION_ATTEMPT_ENABLED: "true"
+      GOTRUE_HOOK_PASSWORD_VERIFICATION_ATTEMPT_URI: pg-functions://postgres/public/password_verification_attempt_hook
       GOTRUE_EXTERNAL_PHONE_ENABLED: "false"
 
   rest:

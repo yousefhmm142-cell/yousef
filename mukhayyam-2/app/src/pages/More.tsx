@@ -10,8 +10,9 @@ export function More() {
   const employee = useEmployee()
   const rest = navFor(employee).slice(4)
   return (
-    <div className="account">
-      <section className="rows glass">
+    <div className="account more-page">
+      <header className="ph"><div><h1>المزيد</h1><p className="muted">باقي صفحاتك وإعدادات حسابك.</p></div></header>
+      <section className="card rows">
         {[...rest, { to: '/account', label: 'حسابي', icon: UserRound }].map(({ to, label, icon: Icon }) => (
           <Link key={to} to={to} className="row">
             <Icon size={18} />

@@ -510,7 +510,7 @@ select test.login('موظف إداري'); set role authenticated;
 insert into public.tasks (task_type_id, assignee_id, expected_minutes, subscriber_name, subscriber_phone, location_text)
   values (2, null, 30, 'متصل تجريبي', '0591234567', 'قرب المسجد');
 select test.ok((select count(*) from public.tasks where subscriber_name = 'متصل تجريبي' and assignee_id is null and status = 'new') = 1, 'someone with the tasks page prepares a task with no technician yet');
-update public.tasks set assignee_id = (select id from public.employees where full_name = 'مجد عاشور') where subscriber_name = 'متصل تجريبي';
+update public.tasks set assignee_id = (select id from public.employee_directory() where full_name = 'مجد عاشور') where subscriber_name = 'متصل تجريبي';
 select test.ok((select assignee_id is not null and status = 'new' from public.tasks where subscriber_name = 'متصل تجريبي'), 'later it is given to a technician');
 insert into public.outgoing_messages (task_id, channel, to_phone, body) select id, 'whatsapp', '0590000005', 'x' from public.tasks where subscriber_name = 'متصل تجريبي';
 select test.ok((select status = 'sent' from public.tasks where subscriber_name = 'متصل تجريبي'), 'and sent to him');
@@ -633,7 +633,7 @@ update public.tasks set status='cancelled' where id=(select v from test.ids wher
 select test.ok((select count(*)=1 from public.task_events where task_id=(select v from test.ids where k='cancel_prepared') and event='cancelled'), 'replaying a cancellation does not duplicate the event');
 with t as (
  insert into public.tasks (task_type_id,assignee_id,expected_minutes)
- values (2,(select id from public.employees where full_name='قصي الشافعي'),30) returning id)
+ values (2,(select id from public.employee_directory() where full_name='قصي الشافعي'),30) returning id)
 insert into test.ids select 'cancel_assigned',id from t;
 reset role; select test.login('قصي الشافعي'); set role authenticated;
 select test.fails($$update public.tasks set status='cancelled' where id=(select v from test.ids where k='cancel_assigned')$$,'%Invalid task step%','removing the reason requirement does not let a technician cancel their task');
@@ -668,4 +668,95 @@ select public.report_client_issue(gen_random_uuid(),'error','Error','/tasks','',
 select test.fails($$select public.report_client_issue(gen_random_uuid(),'error','Error','/tasks','','test')$$,'%rate_limit%','diagnostic flood is limited to ten per employee per hour');
 reset role;
 
+-- ---------- Second audit batch: directory, provider hook and explicitly confirmed archives ----------
+reset role;
+create temp table second_test as select id as tech from public.employees where role='technician' and auth_user_id is not null and is_active limit 1;
+grant select on second_test to authenticated;
+update public.employees set pages='{}',can_seals=false where id=(select tech from second_test);
+select test.login((select full_name from public.employees where id=(select tech from second_test)));set role authenticated;
+select test.ok((select count(*)=1 from public.employees),'a technician reads only their own full employee record');
+select test.ok((select count(*)=1 from public.employee_directory()),'plain technician directory is limited to self');
+select test.fails($$select public.storage_overview()$$,'%not_allowed%','technician cannot read storage/admin archive metadata');
+select test.fails($$select public.prepare_cold_archive('audit')$$,'%not_allowed%','technician cannot export old audit rows');
+select test.fails($$select public.finish_cold_archive(gen_random_uuid())$$,'%not_allowed%','technician cannot purge archive records');
+select test.fails($$select public.restore_reading_archive('{}')$$,'%not_allowed%','technician cannot restore/overwrite reading sources');
+select test.fails($$select public.password_verification_attempt_hook('{}')$$,'%permission denied%','a logged-in client cannot invoke the password hook');
+reset role;
+update public.employees set pages=array['tasks'] where full_name='موظف إداري';
+select test.login('موظف إداري');set role authenticated;
+select test.ok(exists(select 1 from public.employee_directory() where role='technician' and phone is not null),'task dispatcher receives technician contacts through the restricted directory');
+select test.ok(not exists(select 1 from public.employee_directory() where id<>public.current_employee_id() and auth_user_id is not null),'directory hides other auth identities from the dispatcher');
+reset role;
+update public.employees set pages=array['seal-work'],can_seals=true where full_name='موظف إداري';
+select test.login('موظف إداري');set role authenticated;
+select test.ok(exists(select 1 from public.employee_directory() where role='technician'),'seal staff still have technician names');
+select test.ok(not exists(select 1 from public.employee_directory() where id<>public.current_employee_id() and phone is not null),'seal staff cannot enumerate coworkers phones');
+reset role;
+-- Call as the function owner: never expose the hook as an app RPC.
+select public.password_verification_attempt_hook(jsonb_build_object('user_id',(select auth_user_id from public.employees where id=(select tech from second_test)),'valid',false)) from generate_series(1,5);
+select test.ok((select public.password_verification_attempt_hook(jsonb_build_object('user_id',auth_user_id,'valid',true))->>'decision'='reject' from public.employees where id=(select tech from second_test)),'five failed attempts block even a correct password temporarily');
+select test.ok((select public.password_verification_attempt_hook(jsonb_build_object('user_id',auth_user_id,'valid',true))->>'should_logout_user'='false' from public.employees where id=(select tech from second_test)),'login throttling does not sign out active sessions');
+update m2_ops.login_attempts set blocked_until=now()-interval '1 minute',started_at=now()-interval '16 minutes';
+select test.ok((select public.password_verification_attempt_hook(jsonb_build_object('user_id',auth_user_id,'valid',true))->>'decision'='continue' from public.employees where id=(select tech from second_test)),'correct password works again after lock expires');
+select test.ok(not exists(select 1 from m2_ops.login_attempts),'successful verification clears past failures');
+
+insert into public.audit_log(table_name,record_id,action,at,new_row) values('tasks','second-old-audit','update',now()-interval '2 years','{"number":90001,"status":"done","link_token":"must-not-export","subscriber_name":"مشترك تجريبي"}'),('tasks','second-recent-audit','update',now(),'{}');
+create temp table archive_test(kind text primary key,archive jsonb);
+grant all on archive_test to authenticated;
+select test.login((select full_name from public.employees where role='manager' and is_active limit 1));set role authenticated;
+insert into archive_test values('audit',public.prepare_cold_archive('audit'));
+select test.ok(exists(select 1 from public.audit_log where record_id='second-old-audit'),'preparing/downloading an archive never deletes its source');
+select test.ok(not (select archive::text like '%must-not-export%' from archive_test where kind='audit'),'archive strips task link credentials');
+select public.finish_cold_archive((select (archive->>'receipt')::uuid from archive_test where kind='audit'));
+select test.ok(not exists(select 1 from public.audit_log where record_id='second-old-audit'),'confirmed archive deletes exactly the exported old records');
+select test.ok(exists(select 1 from public.audit_log where record_id='second-recent-audit'),'cleanup preserves recent audit history');
+select test.fails($$select public.finish_cold_archive((select (archive->>'receipt')::uuid from archive_test where kind='audit'))$$,'%archive_expired%','cleanup receipt cannot be replayed');
+reset role;
+insert into public.reading_batches(id,title,period_from,period_to,status,source_b64) values('00000000-0000-0000-0000-0000000038b1','أسبوع أرشيف تجريبي',current_date-740,current_date-733,'approved','bGVnYWN5');
+insert into public.reading_files(id,batch_id,file_name,source_b64) values('00000000-0000-0000-0000-0000000038f1','00000000-0000-0000-0000-0000000038b1','تجريبي.xlsx','ZmFrZS1leGNlbA==');
+insert into public.reading_rows(batch_id,file_id,ord,sheet_row,subscriber,prev,reading) values('00000000-0000-0000-0000-0000000038b1','00000000-0000-0000-0000-0000000038f1',1,1,'مشترك وهمي',10,15);
+select test.login((select full_name from public.employees where role='manager' and is_active limit 1));set role authenticated;
+insert into archive_test values('reading',public.prepare_cold_archive('reading','00000000-0000-0000-0000-0000000038b1'));
+select test.ok((select source_b64='ZmFrZS1leGNlbA==' from public.reading_files where id='00000000-0000-0000-0000-0000000038f1'),'preparing the reading archive preserves the original XLSX');
+select public.finish_cold_archive((select (archive->>'receipt')::uuid from archive_test where kind='reading'));
+select test.ok((select source_b64='' and archived_at is not null from public.reading_files where id='00000000-0000-0000-0000-0000000038f1'),'confirmed archive frees source bytes but retains file identity');
+select test.ok((select count(*)=1 from public.reading_rows where batch_id='00000000-0000-0000-0000-0000000038b1' and reading=15),'archiving never deletes subscriber readings');
+select test.fails($$select public.restore_reading_archive(jsonb_set((select archive from archive_test where kind='reading'),'{data,files,0,source_b64}','"tampered"'))$$,'%invalid_archive%','tampered restore is rejected atomically');
+select public.restore_reading_archive((select archive from archive_test where kind='reading'));
+select test.ok((select source_b64='ZmFrZS1leGNlbA==' and archived_at is null from public.reading_files where id='00000000-0000-0000-0000-0000000038f1'),'restoring archive restores exact original XLSX');
+select test.ok((select source_b64='bGVnYWN5' and archived_at is null from public.reading_batches where id='00000000-0000-0000-0000-0000000038b1'),'legacy single-file sources also round-trip');
+reset role;select set_config('request.jwt.claims','',false);set role anon;
+select test.fails($$select * from public.employee_directory()$$,'%permission denied%','anonymous users cannot query the staff directory');
+select test.fails($$select public.password_verification_attempt_hook('{}')$$,'%permission denied%','anonymous users cannot reset/poison the password verification ledger');
+select test.fails($$select public.prepare_cold_archive('audit')$$,'%permission denied%','anonymous users cannot export history');
+reset role;
+
+
+-- Changing a reading after download invalidates the cleanup receipt, without losing the source.
+select test.login((select full_name from public.employees where role='manager' and is_active limit 1));set role authenticated;
+update archive_test set archive=public.prepare_cold_archive('reading','00000000-0000-0000-0000-0000000038b1') where kind='reading';
+update public.reading_rows set reading=16 where batch_id='00000000-0000-0000-0000-0000000038b1';
+select test.fails($$select public.finish_cold_archive((select (archive->>'receipt')::uuid from archive_test where kind='reading'))$$,'%archive_changed%','a stale archive cannot clean up data changed after download');
+select test.ok((select source_b64='ZmFrZS1leGNlbA==' from public.reading_files where id='00000000-0000-0000-0000-0000000038f1'),'a stale archive leaves original sources untouched');
+select test.ok(not exists(select 1 from public.audit_log where table_name='reading_batches' and ((old_row ? 'source_b64') or (new_row ? 'source_b64'))),'workbook bodies are not multiplied in new change snapshots');
+select test.ok(not exists(select 1 from public.audit_log where (old_row ? 'link_token') or (new_row ? 'link_token')),'new audit snapshots omit task link credentials');
+reset role;
+insert into public.reading_batches(id,title,period_to,status) values('00000000-0000-0000-0000-0000000038b2','حديث',current_date,'approved'),('00000000-0000-0000-0000-0000000038b3','مفتوح قديم',current_date-800,'open');
+select test.login((select full_name from public.employees where role='manager' and is_active limit 1));set role authenticated;
+select test.fails($$select public.prepare_cold_archive('reading','00000000-0000-0000-0000-0000000038b2')$$,'%archive_not_allowed%','current reading weeks cannot be archived');
+select test.fails($$select public.prepare_cold_archive('reading','00000000-0000-0000-0000-0000000038b3')$$,'%archive_not_allowed%','even old open reading weeks cannot be archived');
+reset role;
+
+-- Minimal directory projections preserve each explicitly granted office workflow.
+update public.employees set pages=array['reports'],can_seals=false where full_name='موظف إداري';
+select test.login('موظف إداري');set role authenticated;
+select test.ok(exists(select 1 from public.employee_directory() where id<>public.current_employee_id() and tracks_attendance),'reports permission retains attendance fields needed by its summaries');
+select test.ok(not exists(select 1 from public.employee_directory() where id<>public.current_employee_id() and phone is not null),'reports permission does not expose coworkers phones');
+reset role;
+update public.employees set pages=array['readings'] where id=(select tech from second_test);
+update public.employees set pages=array['readings-admin'] where full_name='موظف إداري';
+select test.login('موظف إداري');set role authenticated;
+select test.ok(exists(select 1 from public.employee_directory() where id=(select tech from second_test) and 'readings'=any(pages)),'reading admin still sees whether a technician can use readings');
+select test.ok(not exists(select 1 from public.employee_directory() where id<>public.current_employee_id() and phone is not null),'reading admin receives no unnecessary phone numbers');
+reset role;
 \echo 'ALL CHECKS PASSED'

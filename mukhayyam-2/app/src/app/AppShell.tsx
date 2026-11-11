@@ -1,3 +1,4 @@
+import { RejectedNotice } from '../ui/RejectedNotice'
 import { PullToRefresh } from '../ui/fx/PullToRefresh'
 import { Ellipsis, Settings, UserRound } from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
@@ -132,6 +133,7 @@ export function AppShell() {
       </div>
 
       <SyncNotice />
+      <RejectedNotice />
 
       <PullToRefresh><main className="page" id="main">
         <div key={pathname} className="page-enter"><Outlet /></div>

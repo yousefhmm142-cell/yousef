@@ -237,8 +237,8 @@ export function KpiStrip() {
   const late = data.open.filter((t) => isOverdue(t, now)).length
   const tiles = [
     { key: 'online', to: '', n: present.length, label: 'متصلون الآن', note: 'على الموقع حالياً', tone: 'ok' },
-    { key: 'att', to: '/attendance', n: `${data.here}/${data.total}`, label: 'حضور اليوم', note: data.total ? `غاب ${data.total - data.here}` : 'لا أحد يسجّل بعد', tone: 'brand' },
-    { key: 'tasks', to: '/tasks', n: data.open.length, label: 'مهام مفتوحة', note: late ? `${late} متأخرة` : 'لا تأخير', tone: late ? 'danger' : 'brand' },
+    { key: 'att', to: '/attendance', n: `${data.here}/${data.total}`, label: 'حضور اليوم', note: data.total ? `غاب ${data.total - data.here}` : 'لا أحد يسجّل بعد', tone: !data.total ? 'info' : data.here === data.total ? 'ok' : 'warn' },
+    { key: 'tasks', to: '/tasks', n: data.open.length, label: 'مهام مفتوحة', note: late ? `${late} متأخرة` : 'لا تأخير', tone: late ? 'danger' : 'ok' },
     { key: 'appr', to: '/generation', n: data.approvals, label: 'بانتظار اعتمادك', note: data.approvals ? 'تقارير وكشوف مغلقة' : 'لا شيء ينتظر', tone: data.approvals ? 'warn' : 'ok' },
   ]
   return (

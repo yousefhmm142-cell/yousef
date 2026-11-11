@@ -1,3 +1,4 @@
+import { StorageCard } from './StorageCard'
 import { Skeleton } from '../../ui/fx/Skeleton'
 import { ClientIssues } from './ClientIssues'
 import { Clock, LayoutGrid, Pencil, Plus, Zap } from 'lucide-react'
@@ -90,6 +91,7 @@ export function SettingsPage() {
       <FuelTypesCard />
 
       <BackupCard />
+      <StorageCard />
 
       <section className="card">
         <div className="card-h"><span className="ico-round"><Clock size={16} /></span><h2>تأتي لاحقاً</h2></div>

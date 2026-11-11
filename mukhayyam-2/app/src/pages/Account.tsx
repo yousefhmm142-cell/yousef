@@ -1,3 +1,4 @@
+import { RejectedWrites } from '../ui/RejectedWrites'
 import { ChevronLeft, Download, LogOut, Moon, RefreshCw, Settings, Smartphone, Sun } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router'
@@ -50,6 +51,7 @@ export function Account() {
         </div>
       </section>
 
+      <RejectedWrites />
       <section className="card rows">
         <button type="button" className="row" onClick={toggleTheme}>
           <span className="ico-round">{theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}</span>

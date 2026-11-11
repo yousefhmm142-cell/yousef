@@ -1,3 +1,4 @@
+import { BoardMoveDialog } from './BoardMoveDialog'
 import { EmptyArt } from '../../ui/fx/EmptyArt'
 import { Skeleton } from '../../ui/fx/Skeleton'
 import { useLiveQuery } from 'dexie-react-hooks'
@@ -155,6 +156,7 @@ function AdminReadings() {
   useEffect(() => { setRows(null); setFiles([]); if (batchId) void loadRows(batchId) }, [batchId, loadRows])
   useEffect(() => onActionsSent(() => batchId && loadRows(batchId)), [batchId, loadRows])
 
+  const [movingBoard, setMovingBoard] = useState<{ board: string; area: string } | null>(null)
   const batch = batches?.find((b) => b.id === batchId) ?? null
   const areas = useMemo(() => (rows ? summarizeAreas(rows) : []), [rows])
   const done = rows?.filter(isDone).length ?? 0
@@ -179,8 +181,8 @@ function AdminReadings() {
     try {
       await job()
       if (ok) say(ok)
-    } catch {
-      say(navigator.onLine ? 'ما زبطت، جرّب مرة ثانية.' : 'هاي بدها إنترنت.', 'danger')
+    } catch (e) {
+      say(e instanceof Error && e.message === 'archived_sources' ? 'ملفات هالأسبوع مش موجودة بالنظام. إذا مؤرشفة، المدير بيرجعها من الإعدادات ← الأرشيف والمساحة.' : navigator.onLine ? 'ما زبطت، جرّب مرة ثانية.' : 'هاي بدها إنترنت.', 'danger')
     } finally {
       setBusy(null)
     }
@@ -190,6 +192,7 @@ function AdminReadings() {
     if (!batch || !rows) return
     await run('export', async () => {
       const sources = await weekSources(batch.id)
+      if (!sources.length || sources.some(s => !s.source)) throw new Error('archived_sources')
       const out = await exportWeek(sources.map((s) => ({ name: s.name, source: s.source, col: s.col, sheet: s.sheet, rows: rows.filter((r) => (r.fileId ?? null) === s.id) })), batch.title)
       await saveFile(out.data, out.name, out.mime)
     }, 'نزل الملف')
@@ -295,8 +298,7 @@ function AdminReadings() {
                       const board = e.target.value
                       e.target.value = ''
                       if (!board) return
-                      const to = window.prompt(`طبلون ${board} لأي منطقة؟`, area.area)?.trim()
-                      if (to && to !== area.area) void run('move', async () => { await moveBoard(batch.id, board, to); await loadRows(batch.id) }, `انتقل طبلون ${board} لمنطقة ${to}`)
+                      setMovingBoard({ board, area: area.area })
                     }}>
                       <option value="">اختار الطبلون</option>
                       {area.boards.map((b) => <option key={b} value={b}>{b}</option>)}
@@ -377,6 +379,7 @@ function AdminReadings() {
           }}
         />
       )}
+      {movingBoard && <BoardMoveDialog key={`${movingBoard.area}-${movingBoard.board}`} board={movingBoard.board} area={movingBoard.area} areas={areas.map(a => a.area)} busy={busy==='move'} onClose={() => setMovingBoard(null)} onMove={to => { if (!batch) return; const board=movingBoard.board; void run('move',async () => { await moveBoard(batch.id,board,to);await loadRows(batch.id);setMovingBoard(null) },`انتقل طبلون ${board} لمنطقة ${to}`) }} />}
     </div>
   )
 }

@@ -12,7 +12,7 @@ export interface AuthBackend {
   signOut(): Promise<void>
 }
 
-export type AuthErrorCode = 'bad_credentials' | 'offline' | 'inactive' | 'unknown'
+export type AuthErrorCode = 'rate_limited' | 'bad_credentials' | 'offline' | 'inactive' | 'unknown'
 
 export class AuthError extends Error {
   readonly code: AuthErrorCode
@@ -23,6 +23,7 @@ export class AuthError extends Error {
 }
 
 export const authErrorText: Record<AuthErrorCode, { title: string; detail: string }> = {
+  rate_limited: { title: 'محاولات كثيرة', detail: 'استنى ربع ساعة وحاول من جديد.' },
   bad_credentials: { title: 'رقم الجوال أو الرمز غير صحيح', detail: 'تأكد منهما وحاول مرة أخرى.' },
   offline: { title: 'لا يوجد اتصال بالإنترنت', detail: 'أول دخول على هذا الجهاز يحتاج إنترنت، وبعدها يعمل التطبيق بدونه.' },
   inactive: { title: 'هذا الحساب غير مفعّل', detail: 'تواصل مع مسؤول النظام لتفعيله.' },
@@ -145,6 +146,7 @@ export function supabaseBackend(sb: SupabaseClient): AuthBackend {
         password: pin,
       })
       if (error) {
+        if (error.status === 429 || error.message.includes('محاولات كثيرة')) throw new AuthError('rate_limited')
         if (error.status === 400) throw new AuthError('bad_credentials')
         throw new AuthError(navigator.onLine ? 'unknown' : 'offline')
       }

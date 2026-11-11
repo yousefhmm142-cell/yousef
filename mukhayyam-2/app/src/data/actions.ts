@@ -1,3 +1,4 @@
+import { rememberRejected } from './rejected'
 // Writes made without internet (tasks, attendance corrections, the warehouse): kept on this device,
 // shown at once, and sent to the server in the same order as soon as the internet is back.
 // Every row carries its own id, so sending the same thing twice cannot make it twice.
@@ -40,11 +41,16 @@ async function send(a: Action, ms = LIMIT_MS): Promise<Outcome> {
   if (!sb) return 'offline'
   const t = sb.from(a.table)
   const q = a.op === 'insert' ? t.insert(a.row!) : a.op === 'update' ? t.update(a.row!).eq('id', a.rowId!) : t.delete().eq('id', a.rowId!)
-  const res = await q.abortSignal(AbortSignal.timeout(ms))
-  if (!res.error) return 'done'
+  const res = await q.select('id').abortSignal(AbortSignal.timeout(ms))
+  // RLS can hide an update target without returning an error. Keep the refused intent.
+  if (!res.error) return a.op === 'update' && !res.data?.length ? 'refused' : 'done'
   if (res.status === 0 || !res.error.code) return 'offline'
   // Already there (sent before, the answer got lost on the way): nothing more to do.
-  if (res.error.code === '23505') return 'done'
+  if (res.error.code === '23505' && a.op === 'insert' && a.row?.id) {
+    const existing = await sb.from(a.table).select('id').eq('id', a.row.id).abortSignal(AbortSignal.timeout(ms)).maybeSingle()
+    if (!existing.error && existing.data) return 'done'
+    if (existing.status === 0) return 'offline'
+  }
   return 'refused'
 }
 
@@ -86,14 +92,17 @@ export function flushActions(): Promise<void> {
       if (!a) break
       const r = await send(a, LIMIT_MS * 2)
       if (r === 'offline') break
-      if (r === 'refused') refused.push(a.label)
+      if (r === 'refused') {
+        if (!(await rememberRejected({ source:'actions', id:a.id, label:a.label, code:'refused', payload:a as unknown as Record<string, unknown> }))) { say('سجل العمليات المرفوضة ممتلئ. راجعه من حسابي؛ العملية بعدها بالطابور.','danger'); break }
+        refused.push(a.label)
+      }
       else if (!a.quiet) sent++
       await locked(async () => setMeta(KEY, (await getActions()).filter((x) => x.id !== a.id)))
     }
     if (sent + refused.length > 0) {
       for (const f of refreshers) { try { await f() } catch { /* the page reads again on its next look */ } }
       if (sent) say(`وصل للخادم ${sent} ${sent > 10 ? 'تعديلاً' : 'تعديلات'} انعملت بدون نت`)
-      if (refused.length) say(`ما انقبل: ${refused.slice(0, 3).join('، ')}${refused.length > 3 ? '…' : ''}. راجعها.`, 'danger')
+      if (refused.length) say(`ما انقبل: ${refused.slice(0, 3).join('، ')}${refused.length > 3 ? '…' : ''}. راجعها من حسابي.`, 'danger')
     }
   })().finally(() => { flushing = null })
   return flushing

@@ -1,3 +1,4 @@
+import { rememberRejected } from '../../data/rejected'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect } from 'react'
 import { isDemo } from '../../config'
@@ -397,6 +398,7 @@ export function flushSealQueue(): Promise<void> {
         try { fail(res.error, res.status) } catch (e) { code = e instanceof SealError ? e.code : '' }
         // No internet or the server is busy: keep it and try again later.
         if (code === 'offline' || code === 'not_installed' || code === 'unknown') break
+        if (!(await rememberRejected({ source:'seals', id:op.id, label:op.fn==='seal_issue' ? 'صرف دفعة أختام' : op.fn==='seal_record' ? 'تسجيل شغل ختم' : 'تعديل أختام', code, payload:{ fn:op.fn,args:op.args } }))) { say('سجل العمليات المرفوضة ممتلئ. راجعه من حسابي؛ العملية بعدها بالطابور.','danger'); break }
         refused++
       } else sent++
       const real = op.tmp && !res.error ? (res.data as { batch_id?: string } | null)?.batch_id : undefined
@@ -413,7 +415,7 @@ export function flushSealQueue(): Promise<void> {
       await readSeals()
       announce()
       if (sent > 0) say(`وصل المدير ${sent} ${sent > 10 ? 'عملية' : 'عمليات'} على الأختام`)
-      if (refused > 0) say(`${refused} من عمليات الأختام ما انقبلت (تعارضت مع شي تغيّر). راجع الصفحة.`, 'danger')
+      if (refused > 0) say(`${refused} من عمليات الأختام ما انقبلت (تعارضت مع شي تغيّر). تفاصيلها محفوظة في حسابي.`, 'danger')
     }
   })().finally(() => {
     flushing = null
