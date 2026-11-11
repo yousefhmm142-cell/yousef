@@ -28,7 +28,7 @@ const periods = [
 ] as const
 const statuses: Array<{ value: SearchFilters['status']; label: string }> = [
   { value: null, label: 'الكل' },
-  { value: 'open', label: 'عند الفنيين' },
+  { value: 'open', label: 'غير مستخدم' },
   { value: 'used', label: 'مستخدم' },
   { value: 'damaged', label: 'تالف' },
   { value: 'lost', label: 'ضائع' },

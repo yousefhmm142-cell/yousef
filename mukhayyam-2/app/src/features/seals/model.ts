@@ -59,7 +59,7 @@ export interface Seal {
 
 export const sealStatusInfo: Record<SealStatus, { label: string; tone: Tone }> = {
   in_stock: { label: 'في المخزن', tone: 'neutral' },
-  issued: { label: 'عند الفني', tone: 'warn' },
+  issued: { label: 'غير مستخدم', tone: 'warn' },
   used: { label: 'مستخدم', tone: 'ok' },
   damaged: { label: 'تالف', tone: 'danger' },
   lost: { label: 'ضائع', tone: 'danger' },

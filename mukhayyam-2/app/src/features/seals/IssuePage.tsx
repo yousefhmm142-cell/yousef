@@ -67,7 +67,7 @@ export function SealIssuePage() {
 
       <div className="kpis">
         <div className="kpi hero"><div className="kpi-label">في المخزن</div><div className="kpi-value num">{sum.inStock}<small>ختم</small></div><div className="kpi-sub">جاهزة للصرف</div></div>
-        <div className="kpi glass"><div className="kpi-label">عند الفنيين</div><div className="kpi-value num">{sum.issued}</div><div className="kpi-sub">لم تُستخدم بعد</div></div>
+        <div className="kpi glass"><div className="kpi-label">غير مستخدم</div><div className="kpi-value num">{sum.issued}</div><div className="kpi-sub">لم تُستخدم بعد</div></div>
         <div className="kpi glass"><div className="kpi-label">مستخدمة</div><div className="kpi-value num">{sum.used}</div><div className="kpi-sub">مسجّلة بتفاصيلها</div></div>
         <div className="kpi glass"><div className="kpi-label">تالفة أو ضائعة</div><div className="kpi-value num">{sum.damaged + sum.lost}</div><div className="kpi-sub">{sum.lost ? `${sum.lost} ضائع` : 'خارج المخزن'}</div></div>
       </div>
@@ -114,7 +114,7 @@ export function SealIssuePage() {
                 <StackBar parts={[{ status: 'used', n: st.used }, { status: 'issued', n: st.issued }, { status: 'bad', n: st.damaged + st.lost }, { status: 'in_stock', n: st.inStock }]} />
                 <div className="roll-nums">
                   <div><b className="num">{st.inStock}</b><span>مخزن</span></div>
-                  <div className="n-issued"><b className="num">{st.issued}</b><span>عند الفني</span></div>
+                  <div className="n-issued"><b className="num">{st.issued}</b><span>غير مستخدم</span></div>
                   <div className="n-used"><b className="num">{st.used}</b><span>مستخدم</span></div>
                   <div className="n-bad"><b className="num">{st.damaged + st.lost}</b><span>تالف</span></div>
                 </div>

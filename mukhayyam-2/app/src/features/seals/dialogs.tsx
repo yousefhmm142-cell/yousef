@@ -376,7 +376,7 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
     if (!seal) return
     const yes = await confirm(
       kind === 'undo'
-        ? { title: `إلغاء تسجيل الختم ${seal.sealNo}؟`, message: 'يرجع الختم «عند الفني» ويُمسح ما سُجّل عليه (الطبلون والعمل).', confirmLabel: 'إلغاء التسجيل', danger: true }
+        ? { title: `إلغاء تسجيل الختم ${seal.sealNo}؟`, message: 'يرجع الختم «غير مستخدم» ويُمسح ما سُجّل عليه (الطبلون والعمل).', confirmLabel: 'إلغاء التسجيل', danger: true }
         : { title: `إرجاع الختم ${seal.sealNo} للمخزن؟`, message: 'يخرج من الفني ويرجع جاهزاً للصرف، ويُمسح أي تسجيل عليه.', confirmLabel: 'إرجاع للمخزن', danger: true },
     )
     if (!yes) return
