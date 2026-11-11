@@ -56,7 +56,7 @@ export async function refreshAttendance(): Promise<void> {
     sb.from('attendance_punches').select('id, employee_id, kind, at, method, reason, recorded_by').gte('at', since).order('at').limit(5000),
     sb.from('leaves').select('id, employee_id, from_date, to_date, type, notes').gte('to_date', since.slice(0, 10)),
     sb.from('holidays').select('holiday_date, name'),
-    sb.from('attendance_points').select('id, name, code, is_active, revoked_at, lat, lng, radius_m'),
+    sb.from('attendance_points').select('id, name, code, is_active, revoked_at, lat, lng, radius_m, allowed_ips'),
     sb.from('attendance_devices').select('id, employee_id, label, created_at, last_used_at, revoked_at'),
   ])
   if (punches.error || leaves.error || holidays.error || points.error || devices.error) return
@@ -67,7 +67,7 @@ export async function refreshAttendance(): Promise<void> {
     await db.holidays.bulkPut((holidays.data as Array<{ holiday_date: string; name: string }>).map((h) => ({ date: h.holiday_date, name: h.name })))
     await replace<AttendancePoint>(
       db.attendancePoints,
-      (points.data as Array<{ id: number; name: string; code: string; is_active: boolean; revoked_at: string | null; lat: number | null; lng: number | null; radius_m: number }>).map((p) => ({
+      (points.data as Array<{ id: number; name: string; code: string; is_active: boolean; revoked_at: string | null; lat: number | null; lng: number | null; radius_m: number; allowed_ips: string[] | null }>).map((p) => ({
         id: p.id,
         name: p.name,
         code: p.code,
@@ -75,6 +75,7 @@ export async function refreshAttendance(): Promise<void> {
         lat: p.lat,
         lng: p.lng,
         radiusM: p.radius_m,
+        allowedIps: p.allowed_ips ?? [],
       })),
     )
     await replace<AttendanceDevice>(
@@ -264,6 +265,45 @@ export async function setPointPlace(point: AttendancePoint, place: { lat: number
   const res = await sb.from('attendance_points').update({ lat: place?.lat ?? null, lng: place?.lng ?? null, radius_m: radiusM }).eq('id', point.id)
   check(res.error, res.status)
   await refreshAttendance()
+}
+
+/** The manager, on the office internet, approves the address the server sees: scans must come from it. */
+export async function addOfficeNetwork(point: AttendancePoint): Promise<{ ip: string; ips: string[] }> {
+  if (isDemo) {
+    const ips = [...(point.allowedIps ?? []), 'demo']
+    await db.attendancePoints.update(point.id, { allowedIps: ips })
+    return { ip: 'demo', ips }
+  }
+  const sb = online()
+  const { data, error, status } = await sb.rpc('attendance_office_network_add', { p_point: point.id })
+  check(error, status)
+  await refreshAttendance()
+  return data as { ip: string; ips: string[] }
+}
+
+/** Replaces the allowed addresses (remove one, or none = scans from anywhere again). */
+export async function setOfficeNetworks(point: AttendancePoint, ips: string[]) {
+  if (isDemo) return void (await db.attendancePoints.update(point.id, { allowedIps: ips }))
+  const sb = online()
+  const res = await sb.from('attendance_points').update({ allowed_ips: ips }).eq('id', point.id)
+  check(res.error, res.status)
+  await refreshAttendance()
+}
+
+/** People allowed to scan from anywhere (field staff). */
+export async function loadPunchAnywhere(): Promise<Set<string>> {
+  if (isDemo) return new Set()
+  const sb = getSupabase()
+  if (!sb || !navigator.onLine) return new Set()
+  const { data } = await sb.from('employees').select('id').eq('punch_anywhere', true)
+  return new Set(((data ?? []) as Array<{ id: string }>).map((r) => r.id))
+}
+
+export async function setPunchAnywhere(employeeId: string, value: boolean) {
+  if (isDemo) return
+  const sb = online()
+  const { error, status } = await sb.rpc('admin_set_punch_anywhere', { p_id: employeeId, p_value: value })
+  check(error, status)
 }
 
 export async function scanPunch(point: string, token: string, opts: { peek?: boolean; place?: PhonePlace } = {}): Promise<ScanResult> {

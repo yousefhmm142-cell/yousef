@@ -105,6 +105,8 @@
 
 - **صفحات «التوليد» و«التوزيع» الممنوحة تُعبّي وتُرسل** (update-35): `can_fill_generation()/can_fill_distribution()` = دور الموقع أو الصفحة الممنوحة (`has_own_page`)؛ تحكمها السياسات و`sheet_guard` حسب الجدول. الاعتماد للمدير فقط. بالواجهة: `FillGate` وروابط `entry/` و`sheet/`.
 
+- **الحضور بالـQR بينفتح بس من إنترنت المكتب** (update-38): `attendance_points.allowed_ips` (حد أقصى 5)؛ المدير وهو على واي فاي المكتب يضغط «اعتماد شبكة المكتب» (`attendance_office_network_add`) فيحفظ العنوان اللي بيشوفه الخادم. `client_ip()` يقرأ `cf-connecting-ip` أولاً ثم `x-real-ip` ثم أول `x-forwarded-for` (الأخير قابل للتزوير لو غاب الأولان، وما انفحص على Supabase الحقيقي). الخارج عن الشبكة يحصل `wrong_network`. `employees.punch_anywhere` (شارة «من أي مكان» بقائمة الجوالات) يتجاوز الشبكة والموقع للفنيين. المعاينة (peek) غير مقيّدة.
+
 ### 3.9 المظهر
 `lib/appearance.ts` + `public/theme.js` + `styles/tokens.css`: حجم النص (`data-size`) والخط (`data-font`). الوضع الليلي بزر في الشِل (مخفي بالطباعة).
 

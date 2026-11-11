@@ -43,6 +43,8 @@ export interface AttendancePoint {
   lat?: number | null
   lng?: number | null
   radiusM?: number
+  /** Public addresses of the office internet: a scan from any other address is refused (empty = anywhere). */
+  allowedIps?: string[]
 }
 
 /** A phone allowed to record attendance for one person. tokenHash is used in demo mode only. */

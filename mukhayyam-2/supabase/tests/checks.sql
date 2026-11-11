@@ -759,4 +759,18 @@ select test.login('موظف إداري');set role authenticated;
 select test.ok(exists(select 1 from public.employee_directory() where id=(select tech from second_test) and 'readings'=any(pages)),'reading admin still sees whether a technician can use readings');
 select test.ok(not exists(select 1 from public.employee_directory() where id<>public.current_employee_id() and phone is not null),'reading admin receives no unnecessary phone numbers');
 reset role;
+-- ---------- QR attendance only from the office network ----------
+reset role; select test.login('رامي أبو عجوة'); set role authenticated;
+select test.ok(public.client_ip() is null, 'no address without a web request');
+select set_config('request.headers', '{"cf-connecting-ip": "203.0.113.7", "x-forwarded-for": "198.51.100.1, 10.0.0.1"}', false);
+select test.ok(public.client_ip() = '203.0.113.7', 'the edge header gives the address');
+select test.ok((public.attendance_office_network_add((select min(id) from public.attendance_points))->>'ip') = '203.0.113.7', 'the manager approves the network he sits on');
+select test.ok((select allowed_ips = array['203.0.113.7'] from public.attendance_points order by id limit 1), 'the address is kept');
+select public.attendance_office_network_add((select min(id) from public.attendance_points));
+select test.ok((select cardinality(allowed_ips) = 1 from public.attendance_points order by id limit 1), 'approving twice does not duplicate it');
+reset role; select test.login('مشغّل الموقع'); set role authenticated;
+select test.fails($$select public.attendance_office_network_add((select min(id) from public.attendance_points))$$, '%not_allowed%', 'only a manager approves a network');
+select test.fails($$select public.admin_set_punch_anywhere(public.current_employee_id(), true)$$, '%not_allowed%', 'only a manager lets someone scan from anywhere');
+reset role;
+
 \echo 'ALL CHECKS PASSED'

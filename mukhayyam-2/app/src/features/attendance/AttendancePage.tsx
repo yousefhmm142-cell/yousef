@@ -1,6 +1,6 @@
 import { CountUp } from '../../ui/fx/CountUp'
 import { Skeleton } from '../../ui/fx/Skeleton'
-import { ChevronLeft, ChevronRight, Clock3, MapPin, MessageCircle, Printer, QrCode, RefreshCw, Smartphone, Trash2, UserCheck, UserX, Users } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Clock3, MapPin, Wifi, X, MessageCircle, Printer, QrCode, RefreshCw, Smartphone, Trash2, UserCheck, UserX, Users } from 'lucide-react'
 import { SignFooter } from '../sheets/signers'
 import qrcode from 'qrcode-generator'
 import { useEffect, useMemo, useState } from 'react'
@@ -31,6 +31,10 @@ import {
   renewPoint,
   getPlace,
   setPointPlace,
+  addOfficeNetwork,
+  setOfficeNetworks,
+  loadPunchAnywhere,
+  setPunchAnywhere,
   revokeDevice,
   useDevices,
   useHolidays,
@@ -535,6 +539,34 @@ function SheetAndPhones({ people }: { people: Employee[] }) {
   useEffect(() => {
     if (point?.radiusM) setRadius(point.radiusM)
   }, [point?.radiusM])
+  const [networking, setNetworking] = useState(false)
+  const [anywhere, setAnywhere] = useState<Set<string>>(new Set())
+  useEffect(() => { void loadPunchAnywhere().then(setAnywhere) }, [])
+  const ips = point?.allowedIps ?? []
+
+  /** On the office internet: the address the server sees becomes the one scans must come from. */
+  async function approveNetwork() {
+    if (!point) return
+    setNetworking(true)
+    try {
+      const r = await addOfficeNetwork(point)
+      toast(`اعتُمدت شبكة المكتب (${r.ip})`)
+    } catch (e) {
+      toast(e instanceof SheetStateError && e.message === 'too_many' ? 'وصلت الحد (5 عناوين). احذف واحد قبل.' : errText(e) || 'تعذّر الاعتماد. تأكد من الإنترنت.', 'danger')
+    } finally {
+      setNetworking(false)
+    }
+  }
+  async function toggleAnywhere(id: string, who: string) {
+    const on = !anywhere.has(id)
+    try {
+      await setPunchAnywhere(id, on)
+      setAnywhere((s) => { const n = new Set(s); if (on) n.add(id); else n.delete(id); return n })
+      toast(on ? `${who} بيسجّل من أي مكان` : `${who} رجع يسجّل من المكتب بس`)
+    } catch (e) {
+      toast(errText(e), 'danger')
+    }
+  }
   const name = (id: string) => people.find((e) => e.id === id)?.fullName ?? '—'
   const active = (devices ?? []).filter((d) => !d.revokedAt).sort((a, b) => name(a.employeeId).localeCompare(name(b.employeeId), 'ar'))
 
@@ -588,6 +620,29 @@ function SheetAndPhones({ people }: { people: Employee[] }) {
                   ورقة جديدة بدل القديمة
                 </Button>
               </div>
+              <div className="att-place att-net">
+                <b>شبكة المكتب (الإنترنت)</b>
+                {ips.length > 0 ? (
+                  <p className="muted">محدّد: التسجيل ما بينقبل إلا من إنترنت المكتب. لو حدا صوّر من بيانات الجوال أو من البيت بيطلعله «سجّل من واي فاي المكتب».</p>
+                ) : (
+                  <p className="muted">لسا ما حدّدتها: التسجيل بينقبل من أي إنترنت. وإنت جالس بالمكتب على واي فاي المكتب (مش بيانات الجوال) اضغط الزر.</p>
+                )}
+                {ips.length > 0 && (
+                  <ul className="att-ips">
+                    {ips.map((ip) => (
+                      <li key={ip}><Wifi size={14} /><span className="num ltr">{ip}</span>
+                        <button type="button" className="icon-btn sm" aria-label={`حذف ${ip}`} onClick={() => void setOfficeNetworks(point, ips.filter((x) => x !== ip)).then(() => toast('انحذف العنوان'), (e) => toast(errText(e), 'danger'))}><X size={14} /></button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <div className="task-actions">
+                  <Button variant="secondary" icon={<Wifi size={16} />} busy={networking} onClick={() => void approveNetwork()}>
+                    {ips.length ? 'إضافة الشبكة اللي أنا عليها الآن' : 'اعتماد شبكة المكتب الحالية'}
+                  </Button>
+                </div>
+                <p className="muted att-net-note">إذا عندكم خط إنترنت ثاني (احتياطي) اضغط الزر وإنت عليه كمان. لو غيّر المزوّد العنوان، اضغط الزر مرة ثانية.</p>
+              </div>
               <div className="att-place">
                 <b>موقع المكتب</b>
                 {point.lat != null && point.lng != null ? (
@@ -626,6 +681,7 @@ function SheetAndPhones({ people }: { people: Employee[] }) {
                     <b>{name(d.employeeId)}</b>
                     <small>{d.label || 'جوال'} · آخر تسجيل: {d.lastUsedAt ? stamp(d.lastUsedAt) : 'لم يسجّل بعد'}</small>
                   </span>
+                  <Chip pressed={anywhere.has(d.employeeId)} onClick={() => void toggleAnywhere(d.employeeId, name(d.employeeId))}>من أي مكان</Chip>
                   <Button variant="ghost" onClick={() => void revokeDevice(d.id).then(() => toast('أُوقف الجوال'), (e) => toast(errText(e), 'danger'))}>إيقاف</Button>
                 </li>
               ))}
