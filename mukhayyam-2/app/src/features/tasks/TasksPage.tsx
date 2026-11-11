@@ -217,6 +217,7 @@ export function TasksPage() {
 
       <div className="ph-actions task-actions">
         <Button variant="secondary" size="lg" icon={<ListChecks size={18} />} onClick={() => setParams({ view: 'archive' })}>أرشيف الفنيين</Button>
+        <Button variant="secondary" size="lg" icon={<UserRound size={18} />} onClick={() => navigate('/subscriber')}>ملف مشترك</Button>
         <Button variant="secondary" size="lg" icon={<Printer size={18} />} onClick={() => window.print()} disabled={dayTasksState.busy || !dayTasksState.ready} className="desk-only">
           {pastDay ? 'طباعة كشف اليوم المختار' : 'طباعة كشف اليوم'}
         </Button>
@@ -658,6 +659,7 @@ function GiveDialog({ task, technicians, typeName, zoneName, onClose }: {
         <div className="prep-summary">
           <b>{typeName(task.typeId)}{task.details && ` · ${task.details}`}</b>
           <span>{[task.subscriberName, task.subscriberPhone && formatPhone(task.subscriberPhone), zoneName(task.zoneId), task.location].filter(Boolean).join(' · ') || 'بدون تفاصيل المشترك'}</span>
+          {task.subscriberName && <a className="link-btn" href={`/subscriber?${new URLSearchParams({ name: task.subscriberName, ...(task.subscriberPhone ? { phone: task.subscriberPhone } : {}) })}`} target="_blank" rel="noreferrer">شو صار لهالمشترك قبل؟</a>}
         </div>
         <TechnicianPicker technicians={technicians} value={assigneeIds} onChange={setAssigneeIds} />
         <div className="field">

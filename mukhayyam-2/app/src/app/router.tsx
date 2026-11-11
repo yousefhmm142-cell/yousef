@@ -24,6 +24,7 @@ const page = <T,>(load: () => Promise<T>, name: keyof T) =>
 const SettingsPage = page(() => import('../features/settings/SettingsPage'), 'SettingsPage')
 const TaskLinkPage = page(() => import('../features/tasks/LinkPage'), 'TaskLinkPage')
 const TasksPage = page(() => import('../features/tasks/TasksPage'), 'TasksPage')
+const SubscriberPage = page(() => import('../features/tasks/SubscriberPage'), 'SubscriberPage')
 const SealWorkPage = page(() => import('../features/tasks/SealWorkPage'), 'SealWorkPage')
 const MyTasksPage = page(() => import('../features/tasks/MyTasksPage'), 'MyTasksPage')
 const MyAttendancePage = page(() => import('../features/attendance/MyAttendancePage'), 'MyAttendancePage')
@@ -84,6 +85,7 @@ export const router = createBrowserRouter([
           { path: 'distribution/entry/:date', element: <FillGate page="distribution"><DistributionEntryPage /></FillGate> },
           { path: 'history', element: <RoleGate roles={site}><SiteHistoryPage /></RoleGate> },
           { path: 'tasks', element: <PageGate page="tasks"><Lazy><TasksPage /></Lazy></PageGate> },
+          { path: 'subscriber', element: <PageGate page="tasks"><Lazy><SubscriberPage /></Lazy></PageGate> },
           { path: 'tasks/seal-work', element: <PageGate page="seal-work"><Lazy><SealWorkPage /></Lazy></PageGate> },
           {
             path: 'attendance',

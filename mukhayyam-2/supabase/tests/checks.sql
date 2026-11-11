@@ -877,6 +877,14 @@ select test.fails($$select public.maintenance_plan_set('{"rocket":{"days":5}}')$
 reset role; select test.login('مشغّل الموقع'); set role authenticated;
 select test.fails($$select public.maintenance_plan_set('{}')$$,'%not_allowed%','only the manager edits the maintenance plan');
 reset role;
+-- ---------- Subscriber profile (update-42) ----------
+select test.login('رامي أبو عجوة'); set role authenticated;
+select test.ok((select jsonb_array_length(public.subscriber_profile('مشترك مشتركة وهمي')->'tasks')>=1),'the profile lists the tasks of the subscriber');
+select test.ok((select jsonb_array_length(public.subscriber_profile('مشترك  مشتركه وهمي')->'tasks')>=1),'the profile folds spelling and spaces of the name');
+select test.fails($$select public.subscriber_profile('م')$$,'%short_name%','a one-letter name is refused');
+reset role; select test.login('مشغّل الموقع'); set role authenticated;
+select test.fails($$select public.subscriber_profile('مشترك مشتركة وهمي')$$,'%not_allowed%','the site operator cannot read subscriber profiles');
+reset role;
 do $$ declare original text;begin select definition into original from shared_sms_original;execute original;end $$;
 
 \echo 'ALL CHECKS PASSED'

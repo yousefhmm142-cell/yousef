@@ -250,3 +250,24 @@ table.seal-table tbody tr:hover { background: color-mix(in srgb, var(--brand) 5%
 .uq-seals .seal-pill[data-hit] { background: var(--brand-soft); border-color: var(--brand); }
 @media (max-width: 560px) { .uq-seals .seal-pill { font-size: 17.5px; padding: 9px 13px 9px 11px; } .uq-search { height: 52px; } }
 .uq-search input::-webkit-search-cancel-button, .uq-search input::-webkit-search-decoration { -webkit-appearance: none; appearance: none; display: none; }
+
+/* Subscriber profile */
+.subscriber-page { max-width: 1100px; margin: 0 auto; display: grid; gap: 14px; }
+.sp-matches { list-style: none; margin: -6px 0 0; padding: 6px; display: grid; }
+.sp-matches button { width: 100%; display: flex; align-items: baseline; gap: 10px; padding: 10px 12px; border: 0; background: none; border-radius: 10px; font: inherit; text-align: start; cursor: pointer; color: var(--ink); }
+.sp-matches button:hover, .sp-matches button:focus-visible { background: var(--brand-soft); }
+.sp-head { display: flex; align-items: center; gap: 14px; padding: 16px 18px; flex-wrap: wrap; }
+.sp-who { flex: 1; min-width: 200px; }
+.sp-who h2 { margin: 0; font-size: 20px; }
+.sp-who p { margin: 4px 0 0; display: flex; gap: 14px; flex-wrap: wrap; }
+.sp-who p span { display: inline-flex; align-items: center; gap: 4px; }
+.sp-stats { display: flex; gap: 18px; }
+.sp-stats div { display: grid; text-align: center; }
+.sp-stats b { font-size: 22px; }
+.sp-stats small { color: var(--muted); font-size: 12px; }
+.sp-list { list-style: none; margin: 0; padding: 0; }
+.sp-list li { padding: 12px 18px; display: grid; gap: 3px; }
+.sp-list li + li { border-top: 1px solid var(--line-2); }
+.sp-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.sp-list p { margin: 2px 0 0; font-size: 13.5px; }
+.sp-loading { padding: 24px; text-align: center; color: var(--muted); }
