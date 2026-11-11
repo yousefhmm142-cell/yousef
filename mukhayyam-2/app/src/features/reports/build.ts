@@ -1,3 +1,4 @@
+import { isAssignedTo } from '../tasks/model'
 import { addDays, type ISODate } from '../../lib/dates'
 import { dayResult, gazaDate, weekTotals, type Leave, type Punch, type Schedule } from '../attendance/rules'
 import type { DistributionSheet, Zone } from '../distribution/model'
@@ -179,15 +180,15 @@ export function buildReport(a: ReportInput): Section[] {
 
 /** Number of tasks per technician and type, with totals: the daily sheet and the report use it. */
 export function taskMatrix(tasks: Task[], employees: Employee[], types: TaskType[], key: string, title: string): Section {
-  const techs = employees.filter((e) => e.role === 'technician' && (e.isActive || tasks.some((t) => t.assigneeId === e.id)))
+  const techs = employees.filter((e) => e.role === 'technician' && (e.isActive || tasks.some((t) => isAssignedTo(t, e.id))))
   const used = types.filter((ty) => tasks.some((t) => t.typeId === ty.id))
-  const count = (emp: string, type: number) => tasks.filter((t) => t.assigneeId === emp && t.typeId === type).length
-  const rows = techs.map((e) => [e.fullName, ...used.map((ty) => count(e.id, ty.id) || null), tasks.filter((t) => t.assigneeId === e.id).length] as Cell[])
+  const count = (emp: string, type: number) => tasks.filter((t) => isAssignedTo(t, emp) && t.typeId === type).length
+  const rows = techs.map((e) => [e.fullName, ...used.map((ty) => count(e.id, ty.id) || null), tasks.filter((t) => isAssignedTo(t, e.id)).length] as Cell[])
   return {
     key,
     title,
     columns: ['الفني', ...used.map((t) => t.name), 'المجموع'],
     rows,
-    total: ['المجموع', ...used.map((ty) => tasks.filter((t) => t.typeId === ty.id).length), tasks.length],
+    total: ['المجموع', ...used.map((ty) => techs.reduce((n,e)=>n+count(e.id,ty.id),0)), techs.reduce((n,e)=>n+tasks.filter(t=>isAssignedTo(t,e.id)).length,0)],
   }
 }

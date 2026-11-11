@@ -18,6 +18,7 @@ interface TaskRow {
   number: number
   task_type_id: number
   assignee_id: string | null
+  assignee_ids?: string[]
   created_by: string | null
   details: string | null
   subscriber_name: string | null
@@ -43,6 +44,7 @@ export const taskFromRow = (r: TaskRow): Task => ({
   number: r.number,
   typeId: r.task_type_id,
   assigneeId: r.assignee_id,
+  assigneeIds: r.assignee_ids,
   createdBy: r.created_by,
   details: r.details ?? '',
   subscriberName: r.subscriber_name ?? '',
@@ -93,14 +95,14 @@ export async function refreshTasks(): Promise<boolean> {
   await flushActions()
   const waiting = new Set((await getActions()).filter((a) => a.table === 'tasks').map((a) => String(a.row?.id ?? a.rowId)))
   const since = new Date(Date.now() - 120 * 86_400_000).toISOString()
-  const { data, error } = await sb
-    .from('tasks')
-    .select('*')
-    .or(`status.not.in.(done,cancelled),created_at.gte.${since}`)
-    .order('number', { ascending: false })
-    .limit(1000)
-  if (error || !data) return false
-  const rows = (data as TaskRow[]).map(taskFromRow)
+  const raw:TaskRow[]=[]
+  for(let offset=0;;offset+=1000) {
+    const {data,error}=await sb.from('tasks').select('*').or(`status.not.in.(done,cancelled),created_at.gte.${since}`).order('number',{ascending:false}).order('id').range(offset,offset+999)
+    if(error || !data)return false
+    raw.push(...data as TaskRow[])
+    if(data.length<1000)break
+  }
+  const rows=[...new Map(raw.map(row=>[row.id,taskFromRow(row)])).values()]
   await db.transaction('rw', db.tasks, async () => {
     const keep = new Set(rows.map((r) => r.id))
     const old = await db.tasks.toArray()
@@ -146,6 +148,7 @@ export async function createTask(input: NewTask, createdBy: string): Promise<Tas
     link_token: linkToken,
     task_type_id: input.typeId,
     assignee_id: input.assigneeId,
+    assignee_ids: input.assigneeIds ?? (input.assigneeId ? [input.assigneeId] : []),
     details: input.details.trim() || null,
     subscriber_name: input.subscriberName.trim() || null,
     subscriber_phone: input.subscriberPhone || null,
@@ -173,17 +176,17 @@ async function queued<T>(run: () => Promise<T>): Promise<T> {
 }
 
 /** Gives a prepared task (or one not yet sent) to a technician. */
-export async function assignTask(task: Task, assigneeId: string, priority: Task['priority'], expectedMinutes: number): Promise<Task> {
+export async function assignTask(task: Task, assigneeId: string, priority: Task['priority'], expectedMinutes: number, assigneeIds: string[] = [assigneeId]): Promise<Task> {
   if (isDemo) {
-    await db.tasks.update(task.id, { assigneeId, priority, expectedMinutes, status: 'new', sentAt: null, seenAt: null })
+    await db.tasks.update(task.id, { assigneeId, assigneeIds, priority, expectedMinutes, status: 'new', sentAt: null, seenAt: null })
     return (await db.tasks.get(task.id))!
   }
   const how = await queued(() => runOrQueue(
-    { table: 'tasks', op: 'update', rowId: task.id, row: { assignee_id: assigneeId, priority, expected_minutes: expectedMinutes }, label: `تعيين مهمة ${task.number || ''}`.trim() },
-    () => db.tasks.update(task.id, { assigneeId, priority, expectedMinutes, status: 'new', sentAt: null, seenAt: null }).then(() => undefined),
+    { table: 'tasks', op: 'update', rowId: task.id, row: { assignee_id: assigneeId, assignee_ids: assigneeIds, priority, expected_minutes: expectedMinutes }, label: `تعيين مهمة ${task.number || ''}`.trim() },
+    () => db.tasks.update(task.id, { assigneeId, assigneeIds, priority, expectedMinutes, status: 'new', sentAt: null, seenAt: null }).then(() => undefined),
   ))
   if (how === 'sent') await reload(task.id)
-  else await db.tasks.update(task.id, { assigneeId, priority, expectedMinutes })
+  else await db.tasks.update(task.id, { assigneeId, assigneeIds, priority, expectedMinutes })
   return (await db.tasks.get(task.id))!
 }
 
@@ -238,6 +241,7 @@ async function reload(id: string) {
 
 // ---------- The technician's link (no sign-in) ----------
 export interface LinkTask {
+  shared?: boolean;
   number: number
   type: string
   assignee: string
@@ -267,6 +271,7 @@ async function demoLinkTask(token: string): Promise<LinkTask | null> {
     number: t.number,
     type: type?.name ?? 'مهمة',
     assignee: who?.fullName ?? '',
+    shared: (t.assigneeIds?.length ?? 0)>1,
     details: t.details || null,
     subscriber_name: t.subscriberName || null,
     subscriber_phone: t.subscriberPhone,
@@ -312,6 +317,7 @@ export async function actOnTaskLink(token: string, action: 'start' | 'done', not
     await ensureDemoData()
     const t = await db.tasks.where('linkToken').equals(token).first()
     if (!t) throw new SheetStateError('not_found')
+    if ((t.assigneeIds?.length ?? 0)>1) throw new SheetStateError('office_completes_shared')
     if (t.status === 'cancelled') throw new SheetStateError('cancelled')
     const now = serverNow().toISOString()
     const started = t.startedAt ?? now
@@ -332,4 +338,15 @@ export async function actOnTaskLink(token: string, action: 'start' | 'done', not
   })
   check(error, status)
   return (data as LinkTask | null) ?? null
+}
+
+/** Only task-authorized office staff can send an assigned shared order from the subscription. */
+export async function sendSharedTaskSms(task: Task, request: string): Promise<{sent:number;already:number;failed:Array<{phone:string;code:string}>;body:string}> {
+  if (isDemo) return {sent:task.assigneeIds?.length ?? 0,already:0,failed:[],body:''}
+  await flushActions()
+  if((await getActions()).some(a=>a.table==='tasks' && String(a.row?.id??a.rowId)===task.id)) throw new SheetStateError('task_waiting_sync')
+  const {data,error,status}=await online().rpc('task_send_shared_sms',{p_task:task.id,p_request:request,p_members:task.assigneeIds ?? (task.assigneeId ? [task.assigneeId] : [])})
+  check(error,status)
+  await refreshTasks().catch(()=>false)
+  return data
 }

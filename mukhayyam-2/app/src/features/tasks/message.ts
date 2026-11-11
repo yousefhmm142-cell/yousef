@@ -1,4 +1,4 @@
-import { durationText, international, type Task, type WaCode } from './model'
+import { isSharedTask, durationText, international, type Task, type WaCode } from './model'
 
 /** The private page behind the order, opened by the technician from the message. */
 export const taskLink = (token: string, origin = window.location.origin) => `${origin}/t/${token}`
@@ -7,7 +7,7 @@ export const taskLink = (token: string, origin = window.location.origin) => `${o
 export function taskMessage(t: Task, names: { type: string; zone?: string | null }, link: string): string {
   const lines: string[] = []
   const flag = t.priority === 'emergency' ? 'طارئ: ' : t.priority === 'urgent' ? 'مستعجل: ' : ''
-  lines.push(`${flag}مهمة رقم ${t.number} · ${names.type}`)
+  lines.push(`${flag}مهمة${isSharedTask(t) ? ' مشتركة' : ''} رقم ${t.number} · ${names.type}`)
   if (t.details.trim()) lines.push(t.details.trim())
   const who = [t.subscriberName.trim(), t.subscriberPhone].filter(Boolean).join(' · ')
   if (who) lines.push(`المشترك: ${who}`)
@@ -24,7 +24,7 @@ export function taskMessage(t: Task, names: { type: string; zone?: string | null
  */
 export function taskSms(t: Task, names: { type: string; zone?: string | null }): string {
   const flag = t.priority === 'emergency' ? 'طارئ ' : t.priority === 'urgent' ? 'مستعجل ' : ''
-  const head = `${flag}مهمة ${t.number}: ${names.type}`
+  const head = `${flag}مهمة${isSharedTask(t) ? ' مشتركة' : ''} ${t.number}: ${names.type}`
   const who = t.subscriberName.trim().split(/\s+/).slice(0, 2).join(' ')
   const where = [names.zone, t.location.trim()].filter(Boolean).join(' ')
   const parts = [head, who, t.subscriberPhone ?? '', where, t.details.trim()].filter(Boolean)
@@ -42,7 +42,7 @@ export function taskSms(t: Task, names: { type: string; zone?: string | null }):
  */
 export function taskSmsFull(t: Task, names: { type: string; zone?: string | null }): string {
   const flag = t.priority === 'emergency' ? 'طارئ: ' : t.priority === 'urgent' ? 'مستعجل: ' : ''
-  const lines = [`${flag}مهمة ${t.number}: ${names.type}`]
+  const lines = [`${flag}مهمة${isSharedTask(t) ? ' مشتركة' : ''} ${t.number}: ${names.type}`]
   if (t.details.trim()) lines.push(t.details.trim())
   const who = [t.subscriberName.trim(), t.subscriberPhone].filter(Boolean).join(' ')
   if (who) lines.push(`المشترك: ${who}`)

@@ -20,6 +20,8 @@ export interface Task {
   typeId: number
   /** Null while the task is only prepared (a call written down, no technician yet). */
   assigneeId: string | null
+  /** All participants; absent on cached older single-technician tasks. */
+  assigneeIds?: string[]
   createdBy: string | null
   details: string
   subscriberName: string
@@ -43,6 +45,8 @@ export interface Task {
 export interface NewTask {
   typeId: number
   assigneeId: string | null
+  /** All participants; absent on cached older single-technician tasks. */
+  assigneeIds?: string[]
   details: string
   subscriberName: string
   subscriberPhone: string | null
@@ -69,6 +73,10 @@ export const priorityInfo: Record<TaskPriority, { label: string; tone: Tone }> =
 
 export const PRIORITY_OPTIONS = (['normal', 'urgent', 'emergency'] as const).map((value) => ({ value, label: priorityInfo[value].label }))
 export const EXPECTED_OPTIONS = [15, 30, 45, 60, 90, 120, 180, 240]
+
+export const taskAssignees = (t: Pick<Task, 'assigneeId' | 'assigneeIds'>): string[] => [...new Set(t.assigneeIds?.length ? t.assigneeIds : t.assigneeId ? [t.assigneeId] : [])]
+export const isAssignedTo = (t: Pick<Task, 'assigneeId' | 'assigneeIds'>, id: string) => taskAssignees(t).includes(id)
+export const isSharedTask = (t: Pick<Task, 'assigneeId' | 'assigneeIds'>) => taskAssignees(t).length > 1
 
 export const isOpen = (t: Task) => t.status !== 'done' && t.status !== 'cancelled'
 

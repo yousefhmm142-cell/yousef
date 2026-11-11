@@ -1,8 +1,12 @@
+import { TechnicianPicker } from './TechnicianPicker'
+import { sendSharedOrder, SharedSmsError } from './sharedSms'
+import { useTaskSearch } from './useTaskSearch'
+import { useDayTasks } from './useDayTasks'
 import { EmptyArt } from '../../ui/fx/EmptyArt'
 import { CountUp } from '../../ui/fx/CountUp'
 import { Skeleton } from '../../ui/fx/Skeleton'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { AlarmClock, CalendarDays, CheckCheck, ChevronLeft, ChevronRight, Copy, ListChecks, MapPin, MessageCircle, MessageSquareText, Phone, PhoneIncoming, Plus, Printer, ScrollText, UserRound, XCircle } from 'lucide-react'
+import { Search, X, AlarmClock, CalendarDays, CheckCheck, ChevronLeft, ChevronRight, Copy, ListChecks, MapPin, MessageCircle, MessageSquareText, Phone, PhoneIncoming, Plus, Printer, ScrollText, UserRound, XCircle } from 'lucide-react'
 import { taskMatrix } from '../reports/build'
 import { TaskPrintSheet } from './TaskPrintSheet'
 import { sealWorkAsTasks, useSealWork } from './sealWork'
@@ -33,6 +37,7 @@ import { SheetStateError } from '../sheets/workflow'
 import { smsUrl, taskLink, taskMessage, taskSms, taskSmsFull, whatsappUrl } from './message'
 import { sendCompanySms, smsError } from '../sms/repo'
 import {
+  isSharedTask, taskAssignees, isAssignedTo,
   durationText,
   elapsedMinutes,
   EXPECTED_OPTIONS,
@@ -48,10 +53,14 @@ import {
 import { assignTask, cancelTask, markDone, createTask, recordSent, refreshTasks, useTasks, useTaskTypes } from './repo'
 
 const errorText: Record<string, string> = {
+  task_waiting_sync:'المهمة بعدها بانتظار المزامنة. لما توصل بتقدر تبعتها.',
+  assignment_changed:'الفنيون تغيّروا على المهمة. افتحها من جديد وراجع الأسماء قبل الإرسال.',
+  missing_technician_phone:'في فني مش فعّال أو ما إله رقم جوال. راجع الأسماء والأرقام.',
+  task_closed:'المهمة انغلقت أو انلغت. ما انبعتت رسالة جديدة.',
   offline: 'المهام تحتاج إنترنت لأنها تُرسل برسالة. اتصل وحاول مرة أخرى.',
 }
 class SmsError extends Error {}
-const errText = (e: unknown) => (e instanceof SmsError ? e.message : errorText[e instanceof SheetStateError ? e.message : ''] ?? 'تعذّر الحفظ. حاول مرة أخرى.')
+const errText = (e: unknown) => (e instanceof SmsError || e instanceof SharedSmsError ? e.message : errorText[e instanceof SheetStateError ? e.message : ''] ?? 'تعذّر الحفظ. حاول مرة أخرى.')
 
 type View = 'waiting' | 'open' | 'late' | 'today' | 'all'
 
@@ -102,6 +111,10 @@ export function TasksPage() {
   const zones = useZones()
   const technicians = useTechnicians()
   const now = useNow(30_000)
+  const [search,setSearch]=useState('')
+  const people=useLiveQuery(()=>db.employees.toArray(),[])
+  const taskSearch=useTaskSearch(search,tasks,people,types,zones)
+  const searching=!!fold(search)
   const [picked, setView] = useState<View | null>(null)
   const [who, setWho] = useState<string | null>(null)
   // null = today (the live board); a past day shows what happened that day.
@@ -119,11 +132,13 @@ export function TasksPage() {
   }, [])
 
   const today = todayISO()
+  const day=pastDay??today
+  const dayTasksState=useDayTasks(day,tasks)
   const all = tasks ?? []
   // A call written down, waiting for a technician: shown on its own, above everything.
   const prepared = all.filter((t) => !t.assigneeId && isOpen(t)).sort((a, b) => a.createdAt.localeCompare(b.createdAt))
   const open = all.filter((t) => isOpen(t) && !!t.assigneeId)
-  const doneToday = all.filter((t) => t.status === 'done' && t.completedAt && toISODate(new Date(t.completedAt)) === today)
+  const doneOnDay = dayTasksState.rows.filter((t) => t.status === 'done' && t.completedAt && toISODate(new Date(t.completedAt)) === day)
   const late = open.filter((t) => isOverdue(t, now))
 
   // Calls waiting for a technician come first when there are any.
@@ -131,22 +146,23 @@ export function TasksPage() {
   // A past day: every task created, finished or cancelled that day (open ones first, then newest).
   const dayOf = (iso: string | null | undefined) => (iso ? toISODate(new Date(iso)) : null)
   const dayTasks = pastDay
-    ? all.filter((t) => dayOf(t.createdAt) === pastDay || dayOf(t.completedAt) === pastDay || dayOf(t.cancelledAt) === pastDay).sort((a, b) => Number(isOpen(b)) - Number(isOpen(a)) || b.number - a.number)
+    ? dayTasksState.rows.filter((t) => dayOf(t.createdAt) === pastDay || dayOf(t.completedAt) === pastDay || dayOf(t.cancelledAt) === pastDay).sort((a, b) => Number(isOpen(b)) - Number(isOpen(a)) || b.number - a.number)
     : []
-  const shown = (pastDay ? dayTasks : view === 'late' ? late : view === 'today' ? doneToday : view === 'all' ? all.filter((t) => !!t.assigneeId) : open).filter((t) => !who || t.assigneeId === who)
+  const shown = searching ? taskSearch.rows : (pastDay ? dayTasks : view === 'late' ? late : view === 'today' ? doneOnDay : view === 'all' ? all.filter((t) => !!t.assigneeId) : open).filter((t) => !who || isAssignedTo(t,who))
   const stepDay = (by: number) => {
     const next = addDays(pastDay ?? today, by)
     setPastDay(next >= today ? null : next)
   }
   const typeName = (id: number) => types?.find((t) => t.id === id)?.name ?? 'مهمة'
   const zoneName = (id: number | null) => (id ? zones?.find((z) => z.id === id)?.name ?? null : null)
-  const person = (id: string | null) => (id ? technicians.find((e) => e.id === id) : undefined)
-  const givingTask = all.find((t) => t.id === giving) ?? null
+  const person = (id:string|null) => id ? people?.find(e=>e.id===id) ?? technicians.find(e=>e.id===id) : undefined
+  const participants=(task:Task)=>taskAssignees(task).map(id=>person(id)).filter((p):p is Employee=>!!p)
+  const givingTask = all.find((t) => t.id === giving) ?? taskSearch.rows.find(t=>t.id===giving) ?? null
   const confirmDone = useConfirm()
   const toastDone = useToast()
   async function doneFor(t: Task) {
-    const who = person(t.assigneeId)?.fullName ?? 'الفني'
-    const yes = await confirmDone({ title: `${who} خلّص المهمة؟`, message: `${typeName(t.typeId)}${t.subscriberName ? ` · ${t.subscriberName}` : ''}. بتنحسب منجزة باسمه بوقت هلأ.`, confirmLabel: 'تم الإنجاز ✓' })
+    const who = participants(t).map(p=>p.fullName).join('، ') || 'الفني'
+    const yes = await confirmDone({ title: isSharedTask(t) ? `خلصوا المهمة المشتركة؟` : `${who} خلّص المهمة؟`, message: `${typeName(t.typeId)}${t.subscriberName ? ` · ${t.subscriberName}` : ''}. ${isSharedTask(t) ? 'بتنحسب منجزة بأسمائهم' : 'بتنحسب منجزة باسمه'} بوقت هلأ.`, confirmLabel: 'تم الإنجاز ✓' })
     if (!yes) return
     try {
       await markDone(t)
@@ -155,12 +171,11 @@ export function TasksPage() {
       toastDone(errText(e), 'danger')
     }
   }
-  const openTask = all.find((t) => t.id === openId) ?? null
-  const people = useLiveQuery(() => db.employees.toArray(), [])
+  const openTask = all.find((t) => t.id === openId) ?? taskSearch.rows.find(t=>t.id===openId) ?? null
   // What the technicians did with seals today counts as their finished tasks too.
   const sealNames = useMemo(() => (people ? new Map(people.map((e) => [e.id, e.fullName] as [string, string])) : undefined), [people])
-  const sealToday = useSealWork(today, today, sealNames)
-  const sealDone = useMemo(() => sealWorkAsTasks(sealToday, types ?? []), [sealToday, types])
+  const sealToday = useSealWork(day, day, sealNames)
+  const sealDone = useMemo(() => sealWorkAsTasks(sealToday.filter(l=>l.date===day), types ?? []), [sealToday, types, day])
 
   if (params.get('view') === 'archive') return <div className="tasks"><TaskArchive onClose={() => setParams({})} /></div>
 
@@ -173,7 +188,9 @@ export function TasksPage() {
         </div>
       </header>
 
-      <div className="task-daybar" role="group" aria-label="اليوم">
+      <div className="task-search"><Search size={20} aria-hidden="true" /><input type="search" aria-label="بحث عام بالمهام" placeholder="ابحث برقم المهمة، المشترك، الفني أو التفاصيل…" maxLength={160} value={search} onChange={e=>setSearch(e.target.value)} />{search && <button type="button" className="icon-btn" aria-label="مسح البحث" onClick={()=>setSearch('')}><X size={18} /></button>}</div>
+      {searching && <div className="task-search-summary" role="status"><b>نتائج البحث بكل المهام</b><span>{taskSearch.busy ? 'جاري البحث…' : `${taskSearch.rows.length}${taskSearch.more ? '+' : ''} نتيجة`}</span>{taskSearch.error && <p>{taskSearch.error}</p>}</div>}
+      {!searching && <div className="task-daybar" role="group" aria-label="اليوم">
         <button type="button" className="tdb-step" aria-label="اليوم اللي قبله" onClick={() => stepDay(-1)}><ChevronRight size={22} /></button>
         <label className="tdb-day">
           <CalendarDays size={18} />
@@ -182,14 +199,14 @@ export function TasksPage() {
         </label>
         <button type="button" className="tdb-step" aria-label="اليوم اللي بعده" disabled={!pastDay} onClick={() => stepDay(1)}><ChevronLeft size={22} /></button>
         {pastDay && <button type="button" className="tdb-today" onClick={() => setPastDay(null)}>رجوع لليوم</button>}
-      </div>
+      </div>}
 
-      {!pastDay && <div className="task-board" role="tablist" aria-label="حالة المهام">
+      {!searching && !pastDay && <div className="task-board" role="tablist" aria-label="حالة المهام">
         {([
           ['waiting', 'بانتظار فني', prepared.length, PhoneIncoming, prepared.length ? 'brand' : ''],
           ['open', 'عند الفنيين', open.length, ListChecks, ''],
           ['late', 'تجاوزت وقتها', late.length, AlarmClock, late.length ? 'danger' : ''],
-          ['today', 'خلصت اليوم', doneToday.length + sealDone.tasks.length, CheckCheck, 'ok'],
+          ['today', 'خلصت اليوم', doneOnDay.length + sealDone.tasks.length, CheckCheck, 'ok'],
         ] as const).map(([k, label, n, Icon, tone]) => (
           <button key={k} type="button" role="tab" aria-selected={view === k} className="tb-tile" data-tone={tone || undefined} onClick={() => setView(k)}>
             <span className="tb-top"><Icon size={17} />{label}</span>
@@ -200,8 +217,8 @@ export function TasksPage() {
 
       <div className="ph-actions task-actions">
         <Button variant="secondary" size="lg" icon={<ListChecks size={18} />} onClick={() => setParams({ view: 'archive' })}>أرشيف الفنيين</Button>
-        <Button variant="secondary" size="lg" icon={<Printer size={18} />} onClick={() => window.print()} className="desk-only">
-          طباعة كشف اليوم
+        <Button variant="secondary" size="lg" icon={<Printer size={18} />} onClick={() => window.print()} disabled={dayTasksState.busy || !dayTasksState.ready} className="desk-only">
+          {pastDay ? 'طباعة كشف اليوم المختار' : 'طباعة كشف اليوم'}
         </Button>
         {hasPage(employee, 'seal-work') && <Button variant="secondary" size="lg" icon={<ScrollText size={18} />} onClick={() => navigate('/tasks/seal-work')} className={isManagerRole(employee.role) ? undefined : 'desk-only'}>
           كشف أعمال الأختام
@@ -215,7 +232,7 @@ export function TasksPage() {
         </Button>
       </div>
 
-      {!pastDay && view === 'waiting' && <section className="card prep-card">
+      {!searching && !pastDay && view === 'waiting' && <section className="card prep-card">
         <div className="card-h">
           <span className="ico-round brand"><PhoneIncoming size={16} /></span>
           <h2>مهام مجهّزة بانتظار فني</h2>
@@ -244,27 +261,28 @@ export function TasksPage() {
         )}
       </section>}
 
-      {(pastDay || view !== 'waiting') && <div className="task-filters">
+      {!searching && (pastDay || view !== 'waiting') && <div className="task-filters">
         <div className="chips">
           <Chip pressed={!who} onClick={() => setWho(null)}>الكل</Chip>
           {technicians.map((t) => (
             <Chip key={t.id} pressed={who === t.id} onClick={() => setWho(who === t.id ? null : t.id)}>
               {t.fullName}
-              {open.some((x) => x.assigneeId === t.id) && <span className="chip-count num">{open.filter((x) => x.assigneeId === t.id).length}</span>}
+              {open.some((x) => isAssignedTo(x,t.id)) && <span className="chip-count num">{open.filter((x) => isAssignedTo(x,t.id)).length}</span>}
             </Chip>
           ))}
           {!pastDay && <Chip pressed={view === 'all'} onClick={() => setView(view === 'all' ? 'open' : 'all')}>آخر 30 يوم</Chip>}
         </div>
       </div>}
 
-      {pastDay && tasks && <p className="task-daysum"><b className="num">{dayTasks.length}</b> {dayTasks.length === 1 ? 'مهمة' : 'مهام'} · <b className="num">{dayTasks.filter((t) => t.status === 'done').length}</b> أُنجزت{dayTasks.some((t) => t.status === 'cancelled') && <> · <b className="num">{dayTasks.filter((t) => t.status === 'cancelled').length}</b> أُلغيت</>}</p>}
+      {!searching && pastDay && tasks && <p className="task-daysum"><b className="num">{dayTasks.length}</b> {dayTasks.length === 1 ? 'مهمة' : 'مهام'} · <b className="num">{dayTasks.filter((t) => t.status === 'done').length}</b> أُنجزت{dayTasks.some((t) => t.status === 'cancelled') && <> · <b className="num">{dayTasks.filter((t) => t.status === 'cancelled').length}</b> أُلغيت</>}</p>}
 
-      {!pastDay && view === 'waiting' ? null : !tasks ? (
+      {!searching && !pastDay && view === 'waiting' ? null : !tasks || (searching && taskSearch.busy && !taskSearch.rows.length) ? (
         <Skeleton kind="list" />
       ) : shown.length === 0 ? (
         <div className="empty card"><EmptyArt kind="tech" />
-          <h3>{pastDay ? 'ما في مهام باليوم هاد' : view === 'open' ? 'لا مهام عند الفنيين' : view === 'late' ? 'ولا مهمة متأخرة 👌' : view === 'today' ? 'لم تُنجز مهام اليوم بعد' : 'لا مهام'}</h3>
-          {!pastDay && <p>اضغط «مهمة جديدة»، اختر الفني ونوع العمل، وأرسلها بضغطة.</p>}
+          <h3>{searching ? 'ما في مهام بتطابق البحث' : pastDay ? 'ما في مهام باليوم هاد' : view === 'open' ? 'لا مهام عند الفنيين' : view === 'late' ? 'ولا مهمة متأخرة 👌' : view === 'today' ? 'لم تُنجز مهام اليوم بعد' : 'لا مهام'}</h3>
+          {searching && <p>جرّب رقم المهمة، اسم المشترك أو اسم الفني.</p>}
+          {!searching && !pastDay && <p>اضغط «مهمة جديدة»، اختر الفني ونوع العمل، وأرسلها بضغطة.</p>}
         </div>
       ) : (
         <ul className="task-list">
@@ -278,12 +296,12 @@ export function TasksPage() {
                   <span className="task-no num">{t.number || '…'}</span>
                   <span className="task-main">
                     <span className="task-title">
-                      <b>{typeName(t.typeId)}</b>
+                      <b>{typeName(t.typeId)}</b>{isSharedTask(t) && <Pill tone="brand">مهمة مشتركة</Pill>}
                       {t.priority !== 'normal' && <Pill tone={priorityInfo[t.priority].tone}>{priorityInfo[t.priority].label}</Pill>}
                     </span>
                     {t.details && <span className="task-details">{t.details}</span>}
                     <span className="task-meta">
-                      {tech && <><Avatar name={tech.fullName} size={20} />{tech.fullName}</>}
+                      {tech && <><Avatar name={tech.fullName} size={20} />{participants(t).map(p=>p.fullName).join('، ')}</>}
                       {t.subscriberName && <> · {t.subscriberName}</>}
                       {zoneName(t.zoneId) && <> · {zoneName(t.zoneId)}</>}
                       {t.location && <> · {t.location}</>}
@@ -296,6 +314,7 @@ export function TasksPage() {
                     </span>
                   </span>
                 </button>
+                {searching && !t.assigneeId && isOpen(t) && <Button onClick={()=>setGiving(t.id)}>أعطيها لفني</Button>}
                 {t.assigneeId && isOpen(t) && (
                   <button type="button" className="done-btn" aria-label={`تم إنجاز المهمة ${t.number || ''}`} title="الفني خلّصها: علّمها منجزة" onClick={() => void doneFor(t)}>
                     <CheckCheck size={20} /><span>تم</span><small className="done-more">الفني خلّصها</small>
@@ -307,9 +326,11 @@ export function TasksPage() {
         </ul>
       )}
 
-      {types && <TaskPrintSheet day={today} tasks={[...doneToday, ...sealDone.tasks]} employees={people ?? []} types={sealDone.types} />}
+      {searching && taskSearch.more && <Button variant="secondary" busy={taskSearch.busy} onClick={taskSearch.loadMore}>عرض المزيد من النتائج</Button>}
+      {dayTasksState.error && <p className="banner warn" role="status">{dayTasksState.error}</p>}
+      {types && <TaskPrintSheet day={day} tasks={[...doneOnDay, ...sealDone.tasks]} employees={people ?? []} types={sealDone.types} />}
 
-      <DailySheet tasks={[...all.filter((t) => t.status !== 'cancelled' && toISODate(new Date(t.createdAt)) === today), ...sealDone.tasks]} types={sealDone.types} />
+      <DailySheet day={day} busy={dayTasksState.busy} tasks={[...dayTasksState.rows.filter((t) => t.status !== 'cancelled' && toISODate(new Date(t.createdAt)) === day), ...sealDone.tasks]} types={sealDone.types} />
 
       {preparing && <PrepareDialog onClose={() => setPreparing(false)} />}
       {givingTask && <GiveDialog task={givingTask} technicians={technicians} typeName={typeName} zoneName={zoneName} onClose={() => setGiving(null)} />}
@@ -324,7 +345,7 @@ export function TasksPage() {
       {openTask && (
         <TaskDialog
           task={openTask}
-          tech={person(openTask.assigneeId)}
+          tech={person(openTask.assigneeId)} participants={participants(openTask)}
           typeName={typeName(openTask.typeId)}
           zoneName={zoneName(openTask.zoneId)}
           now={now}
@@ -557,23 +578,31 @@ function GiveDialog({ task, technicians, typeName, zoneName, onClose }: {
 }) {
   const toast = useToast()
   const me = useEmployee()
-  const [assigneeId, setAssigneeId] = useState<string | null>(null)
+  const [assigneeIds,setAssigneeIds]=useState<string[]>([])
+  const request=useRef<string|null>(null)
+  const saved=useRef<Task|null>(null)
+  const [locked,setLocked]=useState(false)
   const [priority, setPriority] = useState<TaskPriority>(task.priority)
   const [expected, setExpected] = useState(task.expectedMinutes)
   const [busy, setBusy] = useState<Channel | 'cancel' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const confirm = useConfirm()
-  const tech = technicians.find((t) => t.id === assigneeId)
+  const selected=assigneeIds.map(id=>technicians.find(t=>t.id===id)).filter((p):p is Employee=>!!p)
+  const tech=selected[0]
+  const shared=selected.length>1
+  const selectedNames=selected.map(t=>t.fullName).join('، ')
 
   async function give(channel: Channel) {
     if (!tech) return setError('اختر الفني.')
-    if (!tech.phone) return setError(`لا يوجد رقم جوال لـ ${tech.fullName}. أضفه من الإعدادات.`)
+    const missing=selected.find(t=>!t.phone)
+    if (missing) return setError(`لا يوجد رقم جوال لـ ${missing.fullName}. أضفه من الإعدادات.`)
     setBusy(channel)
     setError(null)
     try {
-      const next = await assignTask(task, tech.id, priority, expected)
-      const via = await sendOrder(next, channel, { ...tech, phone: tech.phone! }, { type: typeName(next.typeId), zone: zoneName(next.zoneId) }, isManagerRole(me.role))
-      toast(`أُرسلت المهمة ${next.number} إلى ${tech.fullName}${via === 'company' ? ' · SMS من اشتراك الشركة' : ''}`)
+      const next = saved.current ?? await assignTask(task, tech.id, priority, expected,assigneeIds)
+      saved.current=next;setLocked(true)
+      const via = shared && channel==='sms' ? await sendSharedOrder(next,request) : await sendOrder(next, channel, { ...tech, phone: tech.phone! }, { type: typeName(next.typeId), zone: zoneName(next.zoneId) }, isManagerRole(me.role))
+      toast(via==='already' ? 'الرسالة مُرسلة للفنيين من قبل، ما كرّرنا الإرسال.' : `أُرسلت المهمة ${next.number} إلى ${selectedNames}${via === 'company' ? ' · SMS من اشتراك الشركة' : ''}`)
       onClose()
     } catch (e) {
       setError(errText(e))
@@ -601,10 +630,10 @@ function GiveDialog({ task, technicians, typeName, zoneName, onClose }: {
       title="ملخص الإرسال"
       tag={`مهمة ${task.number}`}
       bigLabel="الفني"
-      big={tech?.fullName ?? 'اختر الفني'}
+      big={selectedNames || 'اختر الفنيين'}
       rows={[['المطلوب', typeName(task.typeId)], ['المشترك', task.subscriberName], ['الجوال', task.subscriberPhone ? <bdi dir="ltr">{formatPhone(task.subscriberPhone)}</bdi> : ''], ['المكان', [zoneName(task.zoneId), task.location].filter(Boolean).join(' · ')]]}
       more={[['الأولوية', priorityInfo[priority].label], ['المدة المتوقعة', durationText(expected)]]}
-      note={<span>بيفتح واتساب أو الرسائل والنص جاهز، وبتصير المهمة «أُرسلت».</span>}
+      note={<span>{shared ? 'نفس الرسالة لكل الفنيين من رصيد الشركة؛ رسالة لكل رقم. المكتب بيسجّل الإنجاز.' : 'بيفتح واتساب أو الرسائل والنص جاهز.'}</span>}
     />
   )
 
@@ -612,31 +641,25 @@ function GiveDialog({ task, technicians, typeName, zoneName, onClose }: {
     <Dialog
       open
       onClose={onClose}
-      title={`أعطِ المهمة ${task.number} لفني`}
-      subtitle="اختر الفني وابعتها بضغطة."
+      title={`أعطِ المهمة ${task.number} للفنيين`}
+      subtitle="اختر فني أو أكثر وابعتها بضغطة."
       icon={<MessageCircle size={20} />}
       aside={aside}
       footer={
         <>
           <FootHint />
           <Button variant="ghost" busy={busy === 'cancel'} disabled={!!busy} onClick={() => void cancel()}>إلغاء الطلب</Button>
-          <Button variant="primary" icon={<MessageSquareText size={17} />} busy={busy === 'sms'} disabled={!!busy} onClick={() => void give('sms')}>SMS</Button>
-          <Button variant="secondary" icon={<MessageCircle size={17} />} busy={busy === 'whatsapp'} disabled={!!busy} onClick={() => void give('whatsapp')}>إرسال واتساب</Button>
+          <Button variant="primary" icon={<MessageSquareText size={17} />} busy={busy === 'sms'} disabled={!!busy} onClick={() => void give('sms')}>{shared ? 'SMS للكل من رصيد الشركة' : 'SMS'}</Button>
+          <Button variant="secondary" icon={<MessageCircle size={17} />} busy={busy === 'whatsapp'} disabled={!!busy || shared} title={shared ? 'المهمة المشتركة تُرسل SMS من رصيد الشركة' : undefined} onClick={() => void give('whatsapp')}>إرسال واتساب</Button>
         </>
       }
     >
-      <div className="form-grid" onKeyDown={saveOnCtrlEnter(() => void give('sms'))}>
+      <fieldset className="form-grid task-compose-fields" disabled={!!busy || locked} onKeyDown={saveOnCtrlEnter(() => void give('sms'))}>
         <div className="prep-summary">
           <b>{typeName(task.typeId)}{task.details && ` · ${task.details}`}</b>
           <span>{[task.subscriberName, task.subscriberPhone && formatPhone(task.subscriberPhone), zoneName(task.zoneId), task.location].filter(Boolean).join(' · ') || 'بدون تفاصيل المشترك'}</span>
         </div>
-        <div className="field">
-          <span className="label">الفني</span>
-          <div className="chips">
-            {technicians.map((t) => <Chip key={t.id} pressed={assigneeId === t.id} onClick={() => setAssigneeId(t.id)}>{t.fullName}</Chip>)}
-          </div>
-          {tech && !tech.phone && <span className="field-error">لا يوجد رقم جوال لهذا الفني. أضفه من الإعدادات.</span>}
-        </div>
+        <TechnicianPicker technicians={technicians} value={assigneeIds} onChange={setAssigneeIds} />
         <div className="field">
           <span className="label">الأولوية</span>
           <Segmented<TaskPriority> label="الأولوية" value={priority} options={PRIORITY_OPTIONS} onChange={setPriority} />
@@ -648,7 +671,7 @@ function GiveDialog({ task, technicians, typeName, zoneName, onClose }: {
           </div>
         </div>
         {error && <p className="field-error" role="alert">{error}</p>}
-      </div>
+      </fieldset>
     </Dialog>
   )
 }
@@ -671,7 +694,10 @@ function NewTaskDialog({ technicians, onClose, typeName, zoneName }: {
     else if (typeId === null) setTypeId(id)
     else setExtraTypes([...extraTypes, id])
   }
-  const [assigneeId, setAssigneeId] = useState<string | null>(null)
+  const [assigneeIds,setAssigneeIds]=useState<string[]>([])
+  const request=useRef<string|null>(null)
+  const saved=useRef<Task|null>(null)
+  const [locked,setLocked]=useState(false)
   const [details, setDetails] = useState('')
   const [subscriberName, setSubscriberName] = useState('')
   const [subscriberPhone, setSubscriberPhone] = useState('')
@@ -682,23 +708,28 @@ function NewTaskDialog({ technicians, onClose, typeName, zoneName }: {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState<Channel | null>(null)
 
-  const tech = technicians.find((t) => t.id === assigneeId)
+  const selected=assigneeIds.map(id=>technicians.find(t=>t.id===id)).filter((p):p is Employee=>!!p)
+  const tech=selected[0]
+  const shared=selected.length>1
+  const selectedNames=selected.map(t=>t.fullName).join('، ')
   const activeTypes = useMemo(() => (types ?? []).filter((t) => t.isActive), [types])
 
   async function save(channel: Channel) {
     if (!typeId) return setError('اختر نوع المهمة.')
     if (!tech) return setError('اختر الفني.')
-    if (!tech.phone) return setError(`لا يوجد رقم جوال لـ ${tech.fullName}. أضفه من الإعدادات.`)
+    const missing=selected.find(t=>!t.phone)
+    if (missing) return setError(`لا يوجد رقم جوال لـ ${missing.fullName}. أضفه من الإعدادات.`)
     if (subscriberPhone && !isValidPhone(subscriberPhone)) return setError('رقم المشترك 10 خانات ويبدأ بـ 059 أو 056.')
     setBusy(channel)
     setError(null)
     try {
-      const task = await createTask(
-        { typeId, assigneeId: tech.id, details: [extraTypes.map((x) => activeTypes.find((t) => t.id === x)?.name ?? '').filter(Boolean).join(' + '), details.trim()].filter(Boolean).join(' · '), subscriberName, subscriberPhone: subscriberPhone || null, zoneId: null, location: [place, location.trim()].filter(Boolean).join(' · '), priority, expectedMinutes: expected },
+      const task = saved.current ?? await createTask(
+        { typeId, assigneeId: tech.id, assigneeIds, details: [extraTypes.map((x) => activeTypes.find((t) => t.id === x)?.name ?? '').filter(Boolean).join(' + '), details.trim()].filter(Boolean).join(' · '), subscriberName, subscriberPhone: subscriberPhone || null, zoneId: null, location: [place, location.trim()].filter(Boolean).join(' · '), priority, expectedMinutes: expected },
         me.id,
       )
-      const via = await sendOrder(task, channel, { ...tech, phone: tech.phone! }, { type: typeName(task.typeId), zone: zoneName(task.zoneId) }, isManagerRole(me.role))
-      toast(`أُرسلت المهمة ${task.number} إلى ${tech.fullName}${via === 'company' ? ' · SMS من اشتراك الشركة' : ''}`)
+      saved.current=task;setLocked(true)
+      const via = shared && channel==='sms' ? await sendSharedOrder(task,request) : await sendOrder(task, channel, { ...tech, phone: tech.phone! }, { type: typeName(task.typeId), zone: zoneName(task.zoneId) }, isManagerRole(me.role))
+      toast(via==='already' ? 'الرسالة مُرسلة للفنيين من قبل، ما كرّرنا الإرسال.' : `أُرسلت المهمة ${task.number} إلى ${selectedNames}${via === 'company' ? ' · SMS من اشتراك الشركة' : ''}`)
       onClose()
     } catch (e) {
       setError(errText(e))
@@ -710,10 +741,10 @@ function NewTaskDialog({ technicians, onClose, typeName, zoneName }: {
     <SummaryAside
       title="ملخص المهمة"
       bigLabel="الفني"
-      big={tech?.fullName ?? 'اختر الفني'}
+      big={selectedNames || 'اختر الفنيين'}
       rows={[['المطلوب', [typeId, ...extraTypes].map((x) => activeTypes.find((t) => t.id === x)?.name ?? '').filter(Boolean).join(' + ')], ['المشترك', subscriberName.trim()], ['الجوال', subscriberPhone ? <bdi dir="ltr">{formatPhone(subscriberPhone)}</bdi> : ''], ['المكان', [place, location.trim()].filter(Boolean).join(' · ')]]}
       more={[['الأولوية', priorityInfo[priority].label], ['المدة المتوقعة', durationText(expected)]]}
-      note={<span>واتساب: الرسالة كاملة مع رابط «أنهيت». SMS: بدون رابط (من الاشتراك رسالة وحدة قصيرة، ومن جوالك كاملة).</span>}
+      note={<span>{shared ? 'مهمة مشتركة: نفس SMS لكل الفنيين من رصيد الشركة، والمكتب بيسجّل الإنجاز.' : 'واتساب: الرسالة كاملة. SMS: من اشتراك الشركة أو جوالك.'}</span>}
     />
   )
 
@@ -722,31 +753,20 @@ function NewTaskDialog({ technicians, onClose, typeName, zoneName }: {
       open
       onClose={onClose}
       title="مهمة جديدة"
-      subtitle="اختر الفني والمطلوب، وابعتها بضغطة."
+      subtitle="اختر فني أو أكثر والمطلوب، وابعتها بضغطة."
       icon={<Plus size={20} />}
       aside={aside}
       footer={
         <>
           <FootHint />
           <Button variant="ghost" onClick={onClose}>إلغاء</Button>
-          <Button variant="primary" icon={<MessageSquareText size={17} />} busy={busy === 'sms'} disabled={!!busy} onClick={() => void save('sms')}>SMS</Button>
-          <Button variant="secondary" icon={<MessageCircle size={17} />} busy={busy === 'whatsapp'} disabled={!!busy} onClick={() => void save('whatsapp')}>إرسال واتساب</Button>
+          <Button variant="primary" icon={<MessageSquareText size={17} />} busy={busy === 'sms'} disabled={!!busy} onClick={() => void save('sms')}>{shared ? 'SMS للكل من رصيد الشركة' : 'SMS'}</Button>
+          <Button variant="secondary" icon={<MessageCircle size={17} />} busy={busy === 'whatsapp'} disabled={!!busy || shared} title={shared ? 'المهمة المشتركة تُرسل SMS من رصيد الشركة' : undefined} onClick={() => void save('whatsapp')}>إرسال واتساب</Button>
         </>
       }
     >
-      <div className="form-grid" onKeyDown={saveOnCtrlEnter(() => void save('sms'))}>
-        <div className="field">
-          <span className="label">الفني</span>
-          <div className="chips">
-            {technicians.length === 0 && <span className="field-hint">لا فنيين بعد. أضفهم من الإعدادات.</span>}
-            {technicians.map((t) => (
-              <Chip key={t.id} pressed={assigneeId === t.id} onClick={() => setAssigneeId(t.id)}>
-                {t.fullName}
-              </Chip>
-            ))}
-          </div>
-          {tech && !tech.phone && <span className="field-error">لا يوجد رقم جوال لهذا الفني. أضفه من الإعدادات.</span>}
-        </div>
+      <fieldset className="form-grid task-compose-fields" disabled={!!busy || locked} onKeyDown={saveOnCtrlEnter(() => void save('sms'))}>
+        <TechnicianPicker technicians={technicians} value={assigneeIds} onChange={setAssigneeIds} />
         <div className="field">
           <span className="label">نوع المهمة <small className="muted">· بتقدر تختار أكثر من عمل</small></span>
           <div className="chips">
@@ -794,19 +814,21 @@ function NewTaskDialog({ technicians, onClose, typeName, zoneName }: {
           <span className="field-hint">بعدها تظهر المهمة «تجاوزت وقتها» عندك.</span>
         </div>
         {error && <p className="field-error" role="alert">{error}</p>}
-      </div>
+      </fieldset>
     </Dialog>
   )
 }
 
-function TaskDialog({ task, tech, typeName, zoneName, now, onClose }: {
+function TaskDialog({ task, tech, participants, typeName, zoneName, now, onClose }: {
   task: Task
   tech: Employee | undefined
+  participants: Employee[]
   typeName: string
   zoneName: string | null
   now: Date
   onClose(): void
 }) {
+  const request=useRef<string|null>(null)
   const toast = useToast()
   const me = useEmployee()
   const [busy, setBusy] = useState<string | null>(null)
@@ -819,8 +841,9 @@ function TaskDialog({ task, tech, typeName, zoneName, now, onClose }: {
     if (!tech?.phone) return toast('لا يوجد رقم جوال لهذا الفني', 'danger')
     setBusy(channel)
     try {
-      const via = await sendOrder(task, channel, { ...tech, phone: tech.phone! }, { type: typeName, zone: zoneName }, isManagerRole(me.role))
-      if (via === 'company') toast(`انبعتت SMS لـ ${tech.fullName} من اشتراك الشركة`)
+      const via = isSharedTask(task) && channel==='sms' ? await sendSharedOrder(task,request) : await sendOrder(task, channel, { ...tech, phone: tech.phone! }, { type: typeName, zone: zoneName }, isManagerRole(me.role))
+      if (via === 'already') toast('الرسالة مُرسلة من قبل، ما كرّرنا الإرسال.')
+      else if (via === 'company') toast(`انبعتت SMS لـ ${participants.map(p=>p.fullName).join("، ")} من اشتراك الشركة`)
     } catch (e) {
       toast(errText(e), 'danger')
     } finally {
@@ -853,7 +876,7 @@ function TaskDialog({ task, tech, typeName, zoneName, now, onClose }: {
   ]
 
   return (
-    <Dialog open onClose={onClose} title={`مهمة ${task.number} · ${typeName}`}>
+    <Dialog open onClose={onClose} title={`مهمة${isSharedTask(task) ? ' مشتركة' : ''} ${task.number} · ${typeName}`} >
       <div className="task-detail">
         <div className="task-detail-head">
           <Pill tone={isOverdue(task, now) ? 'danger' : taskStatusInfo[task.status].tone}>
@@ -866,7 +889,7 @@ function TaskDialog({ task, tech, typeName, zoneName, now, onClose }: {
         </div>
 
         <dl className="task-facts">
-          {tech && <div><dt>الفني</dt><dd>{tech.fullName}{tech.phone && <> · <span className="num ltr">{formatPhone(tech.phone)}</span></>}</dd></div>}
+          {tech && <div><dt>الفنيون</dt><dd>{participants.map(p=>p.fullName).join('، ')}{!isSharedTask(task) && tech.phone && <> · <span className="num ltr">{formatPhone(tech.phone)}</span></>}</dd></div>}
           {task.details && <div><dt>التفاصيل</dt><dd>{task.details}</dd></div>}
           {(task.subscriberName || task.subscriberPhone) && (
             <div><dt>المشترك</dt><dd>{task.subscriberName}{task.subscriberPhone && <>{task.subscriberName ? ' · ' : ''}<span className="num ltr">{formatPhone(task.subscriberPhone)}</span></>}</dd></div>
@@ -884,8 +907,8 @@ function TaskDialog({ task, tech, typeName, zoneName, now, onClose }: {
 
         {open && (
           <div className="task-actions">
-            <Button variant="primary" icon={<MessageSquareText size={17} />} busy={busy === 'sms'} onClick={() => void send('sms')}>SMS</Button>
-            <Button variant="secondary" icon={<MessageCircle size={17} />} busy={busy === 'whatsapp'} onClick={() => void send('whatsapp')}>
+            <Button variant="primary" icon={<MessageSquareText size={17} />} busy={busy === 'sms'} onClick={() => void send('sms')}>{isSharedTask(task) ? 'SMS للكل من رصيد الشركة' : 'SMS'}</Button>
+            <Button variant="secondary" icon={<MessageCircle size={17} />} busy={busy === 'whatsapp'} disabled={!!busy || isSharedTask(task)} onClick={() => void send('whatsapp')}>
               {task.status === 'new' ? 'إرسال واتساب' : 'إعادة على واتساب'}
             </Button>
             <Button
@@ -909,19 +932,20 @@ function TaskDialog({ task, tech, typeName, zoneName, now, onClose }: {
 }
 
 /** The paper "daily electricians' tasks" sheet: each technician against each task type, with totals. */
-function DailySheet({ tasks, types: withSeals }: { tasks: Task[]; types: TaskType[] }) {
+function DailySheet({ day,busy,tasks, types: withSeals }: { day:ISODate;busy:boolean;tasks: Task[]; types: TaskType[] }) {
   const employees = useLiveQuery(() => db.employees.toArray(), [])
   const own = useTaskTypes()
   const types = own ? withSeals : undefined
-  if (!employees || !types || tasks.length === 0) return null
-  const section = taskMatrix(tasks, employees, types, 'today', 'كشف مهام اليوم')
+  if (!employees || !types) return null
+  const title=day===todayISO() ? 'كشف مهام اليوم' : `كشف مهام ${describeDay(day).weekday} ${describeDay(day).date}`
+  const section = taskMatrix(tasks, employees, types,day,title)
   return (
     <section className="card">
       <div className="card-h">
-        <h2>كشف مهام اليوم</h2>
+        <h2>{title}</h2>
         <span className="meta">كل فني حسب نوع المهمة · <span className="num">{tasks.length}</span> مهمة</span>
       </div>
-      <div className="table-wrap"><ReportTable section={section} /></div>
+      <small className="card-empty">المهمة المشتركة بتنحسب لكل فني شارك فيها.</small>{busy ? <Skeleton kind="table" /> : <div className="table-wrap"><ReportTable section={section} /></div>}
     </section>
   )
 }

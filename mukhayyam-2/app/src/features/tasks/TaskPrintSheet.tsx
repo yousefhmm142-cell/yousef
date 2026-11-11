@@ -1,3 +1,4 @@
+import { isAssignedTo } from './model'
 import { describeDay, type ISODate } from '../../lib/dates'
 import type { Employee } from '../../types'
 import { stamp } from '../sheets/ui'
@@ -18,9 +19,9 @@ export function TaskPrintSheet({ day, tasks, employees, types }: {
 }) {
   const columns = types.filter((t) => t.isActive || tasks.some((x) => x.typeId === t.id)).sort((a, b) => a.sortOrder - b.sortOrder)
   const techs = employees
-    .filter((e) => e.role === 'technician' && (e.isActive || tasks.some((t) => t.assigneeId === e.id)))
+    .filter((e) => e.role === 'technician' && (e.isActive || tasks.some((t) => isAssignedTo(t, e.id))))
     .sort((a, b) => a.fullName.localeCompare(b.fullName, 'ar'))
-  const count = (emp: string, type: number) => tasks.filter((t) => t.assigneeId === emp && t.typeId === type).length
+  const count = (emp: string, type: number) => tasks.filter((t) => isAssignedTo(t, emp) && t.typeId === type).length
   const blanks = Math.max(1, 8 - techs.length)
   const { weekday, date } = describeDay(day)
 
@@ -60,7 +61,7 @@ export function TaskPrintSheet({ day, tasks, employees, types }: {
         </thead>
         <tbody>
           {techs.map((e, i) => {
-            const total = tasks.filter((t) => t.assigneeId === e.id).length
+            const total = tasks.filter((t) => isAssignedTo(t, e.id)).length
             return (
               <tr key={e.id}>
                 <td className="num">{i + 1}</td>
@@ -86,14 +87,15 @@ export function TaskPrintSheet({ day, tasks, employees, types }: {
           <tr>
             <td colSpan={2}>المجموع</td>
             {columns.map((c) => {
-              const n = tasks.filter((t) => t.typeId === c.id).length
+              const n = techs.reduce((n,e)=>n+count(e.id,c.id),0)
               return <td key={c.id} className="num tf-count">{n || ''}</td>
             })}
-            <td className="num tf-count">{tasks.length || ''}</td>
+            <td className="num tf-count">{techs.reduce((n,e)=>n+tasks.filter(t=>isAssignedTo(t,e.id)).length,0) || ''}</td>
           </tr>
         </tfoot>
       </table>
 
+      <p className="meta">المهمة المشتركة محسوبة لكل فني شارك فيها.</p>
       <SignFooter />
     </div>
   )

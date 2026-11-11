@@ -287,3 +287,5 @@ a.dash-kpi:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
 @media print { .rejected-notice,.storage-card { display:none !important; } }
 
 .dash-kpi[data-tone='info'] { border-inline-start-color:var(--info); }
+
+.client-issues-disclosure>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px;cursor:pointer;list-style:none;font-weight:700}.client-issues-disclosure>summary::-webkit-details-marker{display:none}.client-issues-disclosure[open]>summary svg{transform:rotate(180deg)}.client-issues-disclosure>.card{border:0;background:transparent;box-shadow:none}

@@ -99,7 +99,7 @@ export function TaskLinkPage() {
           <h2>ألغى المدير هذه المهمة</h2>
           <p>لا داعي لتنفيذها.</p>
         </section>
-      ) : (
+      ) : state.task.shared ? <p className="card card-empty">مهمة مشتركة · المكتب بيسجّل إنجازها.</p> : (
         <section className="tlink-actions">
           {state.task.status !== 'in_progress' ? (
             <Button variant="secondary" size="lg" block icon={<Play size={18} />} busy={busy === 'start'} onClick={() => void act('start')}>

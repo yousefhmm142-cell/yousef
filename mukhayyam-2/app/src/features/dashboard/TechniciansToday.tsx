@@ -1,3 +1,4 @@
+import { isAssignedTo } from '../tasks/model'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo } from 'react'
 import { Link } from 'react-router'
@@ -17,8 +18,8 @@ export function TechniciansToday() {
   const people = data.people.filter(p => p.role === 'technician' && p.isActive && !p.deletedAt).sort((a,b) => a.fullName.localeCompare(b.fullName,'ar'))
   return <section className="card fx-techs fx-decoration"><header className="card-h"><h2>الفنيين اليوم</h2><span className="meta">كل فني وشغله اليوم</span></header>
     {!people.length ? <p className="card-empty">ما في فنيين فعّالين بعد.</p> : <div className="fx-tech-grid">{people.map(p => {
-      const own = data.tasks.filter(t => t.assigneeId === p.id)
-      const done = own.filter(t => t.status === 'done' && t.completedAt && gazaDate(t.completedAt) === today).length + sealed.filter(t => t.assigneeId === p.id).length
+      const own = data.tasks.filter(t => isAssignedTo(t, p.id))
+      const done = own.filter(t => t.status === 'done' && t.completedAt && gazaDate(t.completedAt) === today).length + sealed.filter(t => isAssignedTo(t, p.id)).length
       const open = own.filter(isOpen).length
       const pct = done + open ? done / (done + open) * 100 : 0
       return <Link key={p.id} to="/tasks" className="fx-tech" aria-label={`${p.fullName}، خلص ${done}، معه ${open}`}>

@@ -10,10 +10,10 @@ import { Button, Pill } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
 import { useConfirm } from '../../ui/Confirm'
 import { refreshTasks, useTasks, useTaskTypes } from './repo'
-import { isOpen, taskStatusInfo, type Task } from './model'
+import { isAssignedTo, isSharedTask, isOpen, taskStatusInfo, type Task } from './model'
 
 export async function actOwnTask(task: Task, employeeId: string, action: 'start' | 'done', notes = '') {
-  if (task.assigneeId !== employeeId || !isOpen(task) || (action === 'done' && task.status !== 'in_progress'))
+  if (!isAssignedTo(task,employeeId) || isSharedTask(task) || !isOpen(task) || (action === 'done' && task.status !== 'in_progress'))
     throw new Error('not_allowed')
   const now = serverNow().toISOString()
   const changes =
@@ -76,7 +76,7 @@ export function MyTasksPage() {
       window.removeEventListener('online', load)
     }
   }, [])
-  const mine = (tasks ?? []).filter((t) => t.assigneeId === me.id && (past ? !isOpen(t) : isOpen(t)))
+  const mine = (tasks ?? []).filter((t) => isAssignedTo(t,me.id) && (past ? !isOpen(t) : isOpen(t)))
   async function act(t: Task) {
     if (busy) return
     const action = t.status === 'in_progress' ? 'done' : 'start'
@@ -125,6 +125,7 @@ export function MyTasksPage() {
               </h2>
               <Pill tone={taskStatusInfo[t.status].tone}>{taskStatusInfo[t.status].label}</Pill>
             </header>
+            {isSharedTask(t) && <p className="muted">مهمة مشتركة · المكتب بيسجّل إنجازها.</p>}
             {t.details && <p>{t.details}</p>}
             {t.subscriberName && <p>المشترك: {t.subscriberName}</p>}
             {t.location && <p>المكان: {t.location}</p>}
@@ -133,7 +134,7 @@ export function MyTasksPage() {
                 اتصال بالمشترك
               </a>
             )}
-            {t.status === 'in_progress' && (
+            {t.status === 'in_progress' && !isSharedTask(t) && (
               <label>
                 ملاحظات الإنجاز (اختياري)
                 <textarea
@@ -143,7 +144,7 @@ export function MyTasksPage() {
                 />
               </label>
             )}
-            {isOpen(t) && (
+            {isOpen(t) && !isSharedTask(t) && (
               <Button variant="primary" block busy={busy === t.id} disabled={busy !== null} onClick={() => void act(t)}>
                 {t.status === 'in_progress' ? 'خلصت المهمة' : 'ابدأ الشغل'}
               </Button>

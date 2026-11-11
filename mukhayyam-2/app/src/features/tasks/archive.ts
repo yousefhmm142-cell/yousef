@@ -1,3 +1,4 @@
+import { taskAssignees, isSharedTask } from './model'
 import { toISODate } from '../../lib/dates'
 import type { Task, TaskType } from './model'
 import type { SealWorkLine } from './sealWork'
@@ -18,16 +19,16 @@ export function buildArchive(tasks: Task[], seals: SealWorkLine[], types: TaskTy
   return [
     ...tasks
       .filter((t) => t.status === 'done' && t.completedAt && t.assigneeId)
-      .map((t) => ({
-        id: t.id,
+      .flatMap((t) => taskAssignees(t).map(techId => ({
+        id: isSharedTask(t) ? `${t.id}:${techId}` : t.id,
         date: toISODate(new Date(t.completedAt!)),
-        techId: t.assigneeId!,
-        reference: `مهمة #${t.number}`,
+        techId,
+        reference: `مهمة${isSharedTask(t) ? ' مشتركة' : ''} #${t.number}`,
         work: [types.find((x) => x.id === t.typeId)?.name ?? 'مهمة', t.details].filter(Boolean).join(' · '),
         subscriber: t.subscriberName,
         notes: t.completionNotes,
         seals: [] as number[],
-      })),
+      }))),
     ...seals.map((s) => ({
       id: `seal-${s.date}-${s.techId}-${s.seals.join('-')}`,
       date: s.date,

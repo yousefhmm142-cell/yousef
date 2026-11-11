@@ -22,3 +22,10 @@ describe('reports', () => {
     expect(s.total).toEqual(['المجموع', 2, 1, 3])
   })
 })
+
+it('credits a shared order to both technicians and sums their contributions',()=>{
+ const joint={...task('a','q',1,''),assigneeIds:['q','m']}
+ const s=taskMatrix([joint],[emp('q','أحمد'),emp('m','سارة')],[{id:1,name:'تفتيش',isActive:true,sortOrder:1}],'k','t')
+ expect(s.rows).toEqual([['أحمد',1,1],['سارة',1,1]])
+ expect(s.total).toEqual(['المجموع',2,2])
+})

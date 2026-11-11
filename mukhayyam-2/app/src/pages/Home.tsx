@@ -1,4 +1,3 @@
-import { PulseLine } from '../ui/fx/PulseLine'
 import { DayStrip } from '../features/dashboard/DayStrip'
 import { TechniciansToday } from '../features/dashboard/TechniciansToday'
 import { Skeleton } from '../ui/fx/Skeleton'
@@ -83,7 +82,6 @@ function ManagerHome() {
         </div>
       </header>
 
-      <PulseLine />
       <KpiStrip />
       <DayStrip />
 

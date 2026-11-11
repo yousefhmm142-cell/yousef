@@ -1,6 +1,6 @@
 import { StorageCard } from './StorageCard'
 import { Skeleton } from '../../ui/fx/Skeleton'
-import { ClientIssues } from './ClientIssues'
+import { ClientIssuesDisclosure } from './ClientIssuesDisclosure'
 import { Clock, LayoutGrid, Pencil, Plus, Zap } from 'lucide-react'
 import { useState } from 'react'
 import { useSearchParams } from 'react-router'
@@ -47,7 +47,6 @@ export function SettingsPage() {
       />
 
       {tab === 'permissions' ? <PermissionsPage /> : tab === 'sms' ? <SmsPage /> : <>
-      <ClientIssues />
       <TeamCard />
 
       <section className="card">
@@ -99,6 +98,7 @@ export function SettingsPage() {
           {soon.map((s) => <li key={s}>{s}</li>)}
         </ul>
       </section>
+      <ClientIssuesDisclosure />
 
       </>}
 
