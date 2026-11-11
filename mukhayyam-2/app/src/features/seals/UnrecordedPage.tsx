@@ -1,4 +1,4 @@
-import { AlarmClock, Printer, UserX } from 'lucide-react'
+import { AlarmClock, Printer, Search, UserX, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { isDemo } from '../../config'
 import { describeDay, todayISO } from '../../lib/dates'
@@ -8,7 +8,7 @@ import { Chip } from '../../ui/form'
 import { Avatar, Button } from '../../ui/primitives'
 import { SignFooter } from '../sheets/signers'
 import { UseDialog } from './dialogs'
-import { ordinalWord, type Seal, type SealData } from './model'
+import { fold, latinDigits, ordinalWord, type Seal, type SealData } from './model'
 import { dayLabel, SealPill, SealsLoading, SealsTabs } from './parts'
 import { useSealData, useSealsLive, useSealsReady } from './repo'
 
@@ -51,11 +51,14 @@ export function SealUnrecordedPage() {
   const ready = useSealsReady()
   const data = useSealData()
   const [minDays, setMinDays] = useState<number>(0)
+  const [query, setQuery] = useState('')
   const [tech, setTech] = useState<string | null>(null)
   const [dialog, setDialog] = useState<Seal | null>(null)
   const [printing, setPrinting] = useState<Person[] | null>(null)
   const today = todayISO()
 
+  // Each word typed must match: part of the seal number, the technician's name or the batch («الرابعة»).
+  const words = useMemo(() => fold(latinDigits(query)).split(' ').filter(Boolean), [query])
   const people = useMemo<Person[]>(() => {
     if (!data) return []
     const batchById = new Map(data.batches.map((b) => [b.id, b]))
@@ -68,11 +71,17 @@ export function SealUnrecordedPage() {
       const days = Math.max(0, daysBetween(issuedOn, today))
       if (days < minDays) continue
       const personKey = techId ?? '—'
-      const p = by.get(personKey) ?? by.set(personKey, { id: techId, name: techId ? data.names.get(techId) ?? '—' : 'بدون اسم', lines: [], count: 0, oldest: 0 }).get(personKey)!
+      const name = techId ? data.names.get(techId) ?? '—' : 'بدون اسم'
+      const label = batch ? `الدفعة ${batch.label?.trim() || ordinalWord(batch.batchNo)}` : 'أختام مصروفة'
+      if (words.length) {
+        const text = fold(`${name} ${label}`)
+        if (!words.every((w) => String(s.sealNo).includes(w) || text.includes(w))) continue
+      }
+      const p = by.get(personKey) ?? by.set(personKey, { id: techId, name, lines: [], count: 0, oldest: 0 }).get(personKey)!
       const lineKey = batch?.id ?? `solo-${issuedOn}`
       let line = p.lines.find((l) => l.key === lineKey)
       if (!line) {
-        line = { key: lineKey, batchNo: batch?.batchNo ?? null, label: batch ? `الدفعة ${batch.label?.trim() || ordinalWord(batch.batchNo)}` : 'أختام مصروفة', issuedOn, days, seals: [] }
+        line = { key: lineKey, batchNo: batch?.batchNo ?? null, label, issuedOn, days, seals: [] }
         p.lines.push(line)
       }
       line.seals.push(s)
@@ -85,7 +94,7 @@ export function SealUnrecordedPage() {
     }
     // Names in alphabetical order (nobody is ranked); «بدون اسم» first, since it needs a name.
     return [...by.values()].sort((a, b) => Number(a.id !== null) - Number(b.id !== null) || a.name.localeCompare(b.name, 'ar'))
-  }, [data, minDays, today])
+  }, [data, minDays, today, words])
 
   if (isDemo) return <div className="empty card"><h3>الأختام تعمل على قاعدة البيانات الحقيقية</h3><p>هذه الصفحة غير متاحة في وضع التجربة.</p></div>
   if (!ready || !data) return <SealsLoading />
@@ -128,6 +137,20 @@ export function SealUnrecordedPage() {
         </div>
       )}
 
+      <div className="uq-search" role="search">
+        <Search size={20} aria-hidden="true" />
+        <input
+          type="search"
+          inputMode="search"
+          value={query}
+          placeholder="ابحث: رقم الختم أو جزء منه · اسم الفني · الدفعة"
+          aria-label="بحث في الأختام غير المسجّلة"
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => e.key === 'Escape' && setQuery('')}
+        />
+        {query && <button type="button" className="icon-btn" aria-label="مسح البحث" onClick={() => setQuery('')}><X size={18} /></button>}
+      </div>
+
       <div className="uq-filters">
         <div className="chips" role="group" aria-label="كم صار من الصرف">
           {LATE.map((l) => <Chip key={l.value} pressed={minDays === l.value} onClick={() => setMinDays(l.value)}>{l.label}</Chip>)}
@@ -141,8 +164,8 @@ export function SealUnrecordedPage() {
       {shown.length === 0 ? (
         <section className="empty card">
           <EmptyArt kind="clipboard" />
-          <h3>{minDays ? 'ولا ختم بهالمدة' : 'كل الأختام المصروفة مسجّلة'}</h3>
-          <p>{minDays ? 'جرّب «الكل» لتشوف كل اللي عند الفنيين.' : 'ما في ختم عند فني بدون تسجيل.'}</p>
+          <h3>{query ? 'ما في نتائج للبحث' : minDays ? 'ولا ختم بهالمدة' : 'كل الأختام المصروفة مسجّلة'}</h3>
+          <p>{query ? 'جرّب رقم أقصر أو اسم الفني. وإذا اخترت مدة أو فني، جرّب «الكل».' : minDays ? 'جرّب «الكل» لتشوف كل اللي عند الفنيين.' : 'ما في ختم عند فني بدون تسجيل.'}</p>
         </section>
       ) : (
         <div className="uq-list">
@@ -167,7 +190,7 @@ export function SealUnrecordedPage() {
                     <small className="muted num">{l.seals.length} ختم</small>
                   </div>
                   <div className="uq-seals">
-                    {l.seals.map((s) => <SealPill key={s.sealNo} seal={s} onClick={() => setDialog(s)} />)}
+                    {l.seals.map((s) => <SealPill key={s.sealNo} seal={s} hit={words.some((w) => /^\d+$/.test(w) && String(s.sealNo).includes(w)) || undefined} onClick={() => setDialog(s)} />)}
                   </div>
                 </section>
               ))}
