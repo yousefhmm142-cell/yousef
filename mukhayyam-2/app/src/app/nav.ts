@@ -1,4 +1,4 @@
-import { FileBarChart, Gauge, History, House, LayoutGrid, ListChecks, ScanLine, ScrollText, Settings, Stamp, Users, Zap, type LucideIcon } from 'lucide-react'
+import { ClipboardList, FileBarChart, Gauge, History, House, LayoutGrid, ListChecks, ScanLine, ScrollText, Settings, Stamp, Users, Zap, type LucideIcon } from 'lucide-react'
 import { GRANTABLE_PAGES, type Employee } from '../types'
 
 export interface NavItem {
@@ -47,7 +47,8 @@ function baseNav({ role, canSeals }: Pick<Employee, 'role' | 'canSeals'>): NavIt
       ...(role === 'technician' ? [{to:'/',label:'مهامي',icon:ListChecks},{to:'/my-attendance',label:'حضوري',icon:ScanLine}] : []),
       { to: '/seals', label: 'صرف الأختام', icon: Stamp },
       { to: '/seals/recent', label: 'آخر ما صُرف', icon: History },
-      { to: '/seals/log', label: 'سجل الأختام', icon: ScrollText },
+      { to: '/seals/unrecorded', label: 'غير المسجّلة', icon: ClipboardList },
+      { to: '/seals/log', label: 'تسجيل الأختام والبحث', icon: ScrollText },
     ]
   }
   switch (role) {

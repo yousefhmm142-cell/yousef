@@ -12,7 +12,8 @@ export function SealsTabs({ canIssue = true }: { canIssue?: boolean }) {
     <nav className="seals-tabs" aria-label="صفحات الأختام">
       <NavLink to="/seals" end>صرف الأختام</NavLink>
       <NavLink to="/seals/recent">آخر ما صُرف</NavLink>
-      <NavLink to="/seals/log">سجل الأختام والبحث</NavLink>
+      <NavLink to="/seals/unrecorded">غير المسجّلة</NavLink>
+      <NavLink to="/seals/log">تسجيل الأختام والبحث</NavLink>
       <SealHistoryButton />
     </nav>
   )

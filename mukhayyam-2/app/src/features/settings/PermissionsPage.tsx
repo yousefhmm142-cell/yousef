@@ -46,7 +46,7 @@ export function PermissionsPage() {
         <ul className="perm-help">
           <li><Tag size={15} aria-hidden="true" /> <b>المسمّى:</b> اكتب ما يُنادى به الشخص (نائب المدير، محاسبة، مشرف...) واضغط حفظ.</li>
           <li><Eye size={15} aria-hidden="true" /> <b>الصفحات:</b> اضغط على الصفحة لتفتحها له للاطلاع فقط، واضغط مرة ثانية لتغلقها. التعديل يبقى حسب دوره.</li>
-          <li><Stamp size={15} aria-hidden="true" /> <b>الأختام:</b> تفتح له صفحتي «صرف الأختام» و«سجل الأختام» كاملتين.</li>
+          <li><Stamp size={15} aria-hidden="true" /> <b>الأختام:</b> تفتح له صفحتي «صرف الأختام» و«تسجيل الأختام والبحث» كاملتين.</li>
         </ul>
       </section>
 

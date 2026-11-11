@@ -43,7 +43,7 @@ const sorts: Array<{ value: GroupSort; label: string }> = [
 
 /** Page 2: look up any seal (or a whole roll, a tableau, a technician) and record what became of it. */
 export function SealLogPage() {
-  useDocumentTitle('سجل الأختام')
+  useDocumentTitle('تسجيل الأختام والبحث')
   useSealsLive()
   const ready = useSealsReady()
   const toast = useToast()
@@ -125,7 +125,7 @@ export function SealLogPage() {
     <div className="seals">
       <header className="ph">
         <div>
-          <h1>سجل الأختام</h1>
+          <h1>تسجيل الأختام والبحث</h1>
           <p className="muted">ابحث برقم الختم أو أول أرقامه، أو الطبلون، أو الفني، أو المشترك، وسجّل ما صار لكل ختم.</p>
         </div>
         <div className="ph-actions">
