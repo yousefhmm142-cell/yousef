@@ -9,6 +9,7 @@ import { Segmented } from '../../ui/form'
 import { Avatar, Button, Pill } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
 import { titleOf } from '../../types'
+import { AlertsCard } from './AlertsCard'
 import { saveSmsLogin, sendCompanySms, smsError, smsInfo, smsParts, type SendResult, type SmsInfo } from './repo'
 
 /** Settings › الرسائل: the subscription's balance, its login, and one message to many people. */
@@ -55,6 +56,7 @@ export function SmsPage() {
 
       {editing && <LoginCard info={info} onSaved={() => { setEditing(false); void load() }} />}
       <GroupCard ready={!!info?.ready} onSent={() => void load()} />
+      <AlertsCard ready={!!info?.ready} />
     </div>
   )
 }

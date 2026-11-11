@@ -314,3 +314,13 @@
 .loads-intro { display: grid; gap: 4px; }
 .loads-intro span { color: var(--muted); font-size: 14px; line-height: 1.7; }
 .zloads, .gloads { display: grid; gap: 14px; }
+
+/* Settings › الرسائل › automatic alerts */
+.alerts-phones { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.alerts-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.alerts-state { display: grid; gap: 6px; padding: 12px 14px; border-radius: 12px; background: var(--surface-2, rgba(0,0,0,.03)); }
+.alerts-state ul { list-style: none; margin: 0 0 6px; padding: 0; display: grid; gap: 6px; }
+.alerts-state li { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13.5px; }
+.alerts-state p { margin: 0 0 6px; display: flex; align-items: center; gap: 6px; font-size: 13.5px; }
+.alerts-err { color: var(--danger); display: block; font-size: 12.5px; }
+@media (max-width: 700px) { .alerts-phones { grid-template-columns: 1fr; } }

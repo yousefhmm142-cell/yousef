@@ -838,6 +838,34 @@ select test.ok(exists(select 1 from public.tasks where id=(select v from test.id
 select test.ok(not exists(select 1 from public.task_events where task_id=(select v from test.ids where k='joint_task')),'shared technicians cannot enumerate peers phones through SMS event metadata');
 select test.ok(not exists(select 1 from public.task_search('مشترك أمس التجريبي') where id=(select v from test.ids where k='joint_yesterday')),'general search preserves row security for unassigned work');
 reset role;
+-- ---------- Server alerts by SMS (update-40) ----------
+reset role;
+delete from test.shared_sms_calls;
+insert into m2_ops.sms_config(id,user_name,user_pass) values(1,'t','t') on conflict(id) do update set user_name='t',user_pass='t';
+update public.app_settings set alert_sms=false, alert_phones='{}', report_late_warn='00:00';
+select test.ok(m2_ops.alerts_run()=0,'alerts send nothing while they are off');
+select test.ok((select count(*)=0 from test.shared_sms_calls),'no provider call while alerts are off');
+with x as(insert into public.tasks(task_type_id,assignee_id,expected_minutes) values(2,(select v from test.ids where k='joint_a'),15) returning id) insert into test.ids select 'alert_late',id from x;
+-- Backdated past the guard (it stamps its own times).
+set session_replication_role=replica;
+update public.tasks set status='sent',sent_at=now()-interval '1 hour' where id=(select v from test.ids where k='alert_late');
+set session_replication_role=origin;
+select test.ok(exists(select 1 from m2_ops.alerts_due() where kind='late_task' and ref like '%'||(select v from test.ids where k='alert_late')||'%'),'a sent task past its time is due for an alert');
+select test.login('رامي أبو عجوة'); set role authenticated;
+select test.fails($$select public.alerts_set(true,array['123'])$$,'%bad_phone%','alert phones must be mobile numbers');
+select test.fails($$select public.alerts_set(true,'{}')$$,'%no_phone%','alerts cannot be turned on without a phone');
+select public.alerts_set(true,array['0591234567']);
+select test.ok((select (public.alerts_info()->>'on')::boolean and jsonb_array_length(public.alerts_info()->'due')>0),'the manager sees alerts on and what is due');
+reset role; select test.login('موظف إداري'); set role authenticated;
+select test.fails($$select public.alerts_info()$$,'%not_allowed%','only the manager reads the alert settings');
+select test.fails($$select public.alerts_set(false,'{}')$$,'%not_allowed%','only the manager changes the alert settings');
+reset role;
+select test.ok(m2_ops.alerts_run()>=1,'the job sends what is due once alerts are on');
+select test.ok((select count(*)>=1 from test.shared_sms_calls where mobile='972591234567'),'alerts go to the chosen phone');
+select test.ok(not exists(select 1 from m2_ops.alerts_due() where kind='late_task' and ref like '%'||(select v from test.ids where k='alert_late')||'%'),'a task is alerted only once');
+select test.ok(m2_ops.alerts_run()=0,'a second run repeats nothing');
+update public.app_settings set alert_sms=false, alert_phones='{}', report_late_warn='10:00';
+update public.tasks set status='cancelled', cancel_reason='test' where id=(select v from test.ids where k='alert_late');
 do $$ declare original text;begin select definition into original from shared_sms_original;execute original;end $$;
 
 \echo 'ALL CHECKS PASSED'

@@ -57,3 +57,34 @@ export async function sendCompanySms(phones: string[], text: string, taskId: str
   }
   return out
 }
+
+// ---------- Alerts the server texts by itself (update-40) ----------
+
+export interface CronJob { name: string; active: boolean; last_at: string | null; last_status: string | null; last_error: string | null }
+export interface AlertsInfo {
+  on: boolean
+  phones: string[]
+  /** What would go out right now. */
+  due: Array<{ kind: string; body: string }>
+  last_backup: string | null
+  jobs: CronJob[]
+  /** Whether the database has the scheduler at all. */
+  cron: boolean
+}
+
+export async function alertsInfo(): Promise<AlertsInfo> {
+  const { data, error } = await server().rpc('alerts_info')
+  if (error) throw new Error(error.message.includes('alerts_info') ? 'missing' : 'failed')
+  return data as AlertsInfo
+}
+
+export async function saveAlerts(on: boolean, phones: string[]) {
+  const { error } = await server().rpc('alerts_set', { p_on: on, p_phones: phones })
+  if (error) throw new Error(/bad_phone|no_phone|too_many/.exec(error.message)?.[0] ?? 'failed')
+}
+
+export async function testAlerts(): Promise<SendResult> {
+  const { data, error } = await server().rpc('alerts_test')
+  if (error) throw new Error(/no_phone/.exec(error.message)?.[0] ?? 'failed')
+  return data as SendResult
+}
