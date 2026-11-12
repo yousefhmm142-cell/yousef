@@ -249,3 +249,12 @@ VITE_SUPABASE_URL=http://localhost:54321 VITE_SUPABASE_ANON_KEY=$KEY npx vite bu
 - **دليل الاستخدام** `/guide` من «المزيد»: خطوات حسب دور الشخص. إذا تغيّر اسم زر، عدّل الدليل.
 - **تقسيم ملفات:** المهام (`TaskDialogs.tsx`, `PrepareDialog.tsx`, `places.ts`)، الأختام (`UseDialog.tsx`, `editDialogs.tsx`، والصفحات لسا بتستورد من `dialogs.tsx`)، الحضور (`DayDialog.tsx`, `SheetAndPhones.tsx`, `attendanceData.ts`).
 - **على صاحب المشروع:** حماية تخمين الرمز (`password_verification_attempt_hook`) لازم تتفعّل يدوياً من Supabase › Authentication › Hooks (يمكن بس بخطة Teams). ما انفحص على الحقيقي.
+
+### خطة التحسين الثانية (`docs/improvement-plan-2.md`، 7 منطق + 8 شكل، تشرين الثاني)
+- **«بدها انتباهك»** بالرئيسية: `dashboard/attention.ts` (`buildAttention` نقية + اختبارات) و`useAttention` في `activity.ts`. كل تنبيه بيفتح **نافذة بنفس الصفحة** (طلب صاحب المشروع) فيها التفاصيل وزر لصفحته. صفحة المهام بتقبل `?view=late`.
+- **البحث الشامل** `app/GlobalSearch.tsx` + `searchAll.ts`: Ctrl+K أو «/»، ونافذة وحدة بتنفتح بـ`openSearch()`. **للمدير زر البحث بقائمة «…» مش بالشريط** (زر بالشريط ضيّق القائمة وقصّ «القراءات»: لا ترجعه). المهام: `/tasks?open=<id>&q=`، الأختام `/seals/log?q=`.
+- **المهام:** `subscriberHistory` (مشترك عنده مهمة مفتوحة/متكرر) و`typicalMinutes` (المدة المتعلّمة) في `tasks/model.ts`، والملاحظة `SubscriberHistoryNote.tsx`.
+- **السولار والمولدات:** `generation/forecast.ts` (`fuelForecast`: يوم ما بيخلص وموعد الطلب) و`health.ts` (`generatorHealth`: الصرف من الأيام اللي المولد اشتغل فيها لحاله بس). رسالة السولار بالخادم بتحكي اليومين (update-43).
+- **الأختام:** `previousOnBoard` و`skippedInBatches` في `seals/model.ts`. تسجيل ختم كان «غير مستخدم» بيطلع توست فيه «تراجع».
+- **الشكل:** مقياس خط `--fs-*` بالـrem وكل `font-size` صار rem (حجم الكتابة بـ«حسابي» بيكبّر الكل). النوافذ بالجوال ورقة من تحت. الجداول: رأس وأول عمود لاصقين، والتقارير بطاقات بالجوال. ترقيم «صفحة 1 من 3» بالطباعة. ألوان مقاسة: `--faint` و`warn/danger/ok` أغمق بالفاتح، و`--brand-text` للأحمر كنص (بالغامق أفتح) — **استعمل `--brand-text` لأي نص أحمر و`--brand` للخلفيات**. أهداف اللمس ≥44px بالجوال (`base.css`). `buzz()` في `lib/appearance.ts` (اهتزاز، بينطفي من «حسابي»). `toast(text, tone, { label, run })` لزر بالتوست.
+- حجم الحزمة بعد الخطة: 161.7 KB gzip (كان 146.8).
