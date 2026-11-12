@@ -1,3 +1,4 @@
+import { TrendChart } from '../reports/TrendChart'
 import { useEffect, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useEmployee } from '../../auth/AuthProvider'
@@ -89,6 +90,20 @@ export function MyAttendancePage() {
         <p className="banner warn" role="status">
           تعذّر التحديث. المعروض هو آخر سجل محفوظ على هالجهاز.
         </p>
+      )}
+      {punches && punches.length > 0 && (
+        <TrendChart
+          title="ساعات الشغل بآخر 14 يوم"
+          unit="ساعة"
+          empty="ما في أيام فيها حضور وانصراف."
+          points={Array.from({ length: 14 }, (_, i) => addDays(todayISO(), i - 13)).map((day) => {
+            // From the first arrival to the last leaving of the day; nothing when one of them is missing.
+            const list = punches.filter((p) => gazaDate(p.at) === day)
+            const first = list.filter((p) => p.kind === 'in').sort((a, b) => a.at.localeCompare(b.at))[0]
+            const last = list.filter((p) => p.kind === 'out').sort((a, b) => a.at.localeCompare(b.at)).pop()
+            return { date: day, value: first && last && last.at > first.at ? Math.round(((Date.parse(last.at) - Date.parse(first.at)) / 3_600_000) * 10) / 10 : null }
+          })}
+        />
       )}
       <section className="card personal-history">
         <h2>آخر 30 يوم</h2>

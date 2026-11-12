@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { describeDay } from '../../lib/dates'
+import { describeDay, todayISO } from '../../lib/dates'
 import { formatAmount } from '../../lib/numbers'
 import type { DayPoint } from './build'
 
@@ -16,6 +16,9 @@ export function TrendChart({ title, unit, points, empty }: { title: string; unit
   // Thin bars: never wider than a few percent of the plot, whatever the number of days.
   const bw = Math.min(W * 0.6, 3.2)
   const shown = hover !== null ? points[hover]! : null
+  const today = todayISO()
+  // The value is written above the highest bar only (the rest show on hover or tap).
+  const top = points.reduce((best, p, i) => (p.value !== null && (best < 0 || p.value > points[best]!.value!) ? i : best), -1)
   return (
     <section className="card trend">
       <div className="card-h">
@@ -33,11 +36,16 @@ export function TrendChart({ title, unit, points, empty }: { title: string; unit
             return (
               <g key={p.date} onMouseEnter={() => setHover(i)} onClick={() => setHover(i)}>
                 <rect x={x} y="0" width={W} height="60" fill="transparent" />
-                {p.value !== null && <rect x={x + (W - bw) / 2} y={60 - h} width={bw} height={h} rx="0.6" className="trend-bar" data-on={hover === i || undefined} />}
+                {p.value !== null && <rect x={x + (W - bw) / 2} y={60 - h} width={bw} height={h} rx="0.6" className="trend-bar" data-on={hover === i || undefined} data-today={p.date === today || undefined} />}
               </g>
             )
           })}
         </svg>
+        {top >= 0 && (
+          <span className="trend-top num" aria-hidden="true" style={{ left: `${((points.length - 1 - top) + 0.5) * W}%`, bottom: `${Math.round((points[top]!.value! / max) * (56 / 60) * 150) + 40}px` }}>
+            {formatAmount(points[top]!.value!)}
+          </span>
+        )}
         <div className="trend-axis num" aria-hidden="true">
           <span>{describeDay(points[0]!.date).date.replace(/ \d{4}$/, '')}</span>
           <span>{describeDay(points[points.length - 1]!.date).date.replace(/ \d{4}$/, '')}</span>

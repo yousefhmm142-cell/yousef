@@ -72,3 +72,7 @@
   .reports .card .tbl td:first-child::before { display: none; }
   .reports .card .tbl td:not(:first-child):empty { display: none; }
 }
+.trend-plot { position: relative; }
+.trend-bar[data-today] { fill: var(--brand-hi); opacity: 1; }
+.trend-top { position: absolute; transform: translateX(-50%); font-size: var(--fs-xs); font-weight: 800; color: var(--ink-2); pointer-events: none; white-space: nowrap; }
+.history .trend, .personal-page .trend { margin-bottom: 14px; }

@@ -433,8 +433,10 @@ export interface HistoryItem {
 }
 
 /** Earlier days for the person who fills the form, newest first, with a shortcut to today's. */
-export function SheetHistory({ title, items, todayMissing, todayLabel, todayHref = '/', emptyText }: {
+export function SheetHistory({ title, items, todayMissing, todayLabel, todayHref = '/', emptyText, chart }: {
   title: string
+  /** A chart above the list (the generation history shows its diesel use). */
+  chart?: ReactNode
   /** Where today's form is filled. */
   todayHref?: string
   items: HistoryItem[] | undefined
@@ -458,6 +460,7 @@ export function SheetHistory({ title, items, todayMissing, todayLabel, todayHref
           <ChevronLeft size={20} />
         </Link>
       )}
+      {chart}
       {!items ? (
         <Skeleton kind="list" />
       ) : items.length === 0 ? (

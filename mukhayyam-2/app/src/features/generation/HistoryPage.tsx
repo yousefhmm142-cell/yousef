@@ -1,4 +1,5 @@
-import { todayISO } from '../../lib/dates'
+import { addDays, todayISO } from '../../lib/dates'
+import { TrendChart } from '../reports/TrendChart'
 import { formatAmount } from '../../lib/numbers'
 import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import { SheetHistory } from '../sheets/ui'
@@ -16,6 +17,17 @@ export function HistoryPage() {
       todayLabel="تقرير اليوم"
       todayHref={`/entry/${today}`}
       emptyText="أول تقرير ترسله يظهر هنا."
+      chart={reports && reports.some((r) => r.status !== 'draft') ? (
+        <TrendChart
+          title="الاستهلاك بآخر 30 يوم"
+          unit="لتر"
+          empty="ما في تقارير بآخر 30 يوم."
+          points={Array.from({ length: 30 }, (_, i) => addDays(today, i - 29)).map((date) => {
+            const r = reports.find((x) => x.reportDate === date && x.status !== 'draft')
+            return { date, value: r ? reportTotals(r).consumption : null }
+          })}
+        />
+      ) : undefined}
       todayMissing={!!reports && !reports.some((r) => r.reportDate === today)}
       items={reports?.map((r) => {
         const t = reportTotals(r)
