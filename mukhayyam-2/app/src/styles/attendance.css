@@ -133,3 +133,9 @@ table.week { width: 100%; border-collapse: collapse; min-width: 900px; }
 .att-ips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
 .att-ips li { display: inline-flex; align-items: center; gap: 8px; padding: 4px 6px 4px 12px; border-radius: 999px; background: var(--ok-soft); color: var(--ok); font-weight: 700; }
 .att-net-note { font-size: 13px; margin: 0; }
+
+/* On a wide screen the people of the day sit two to a row, so a row is not a long empty strip. */
+@media (min-width: 1000px) {
+  .att-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .att-row { height: 100%; }
+}
