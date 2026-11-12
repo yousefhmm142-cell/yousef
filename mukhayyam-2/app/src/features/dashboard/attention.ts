@@ -2,6 +2,7 @@ import { addDays, dayName, type ISODate } from '../../lib/dates'
 import { formatAmount } from '../../lib/numbers'
 import type { DistributionSheet } from '../distribution/model'
 import { fuelOutlook } from '../generation/alerts'
+import { fuelForecast } from '../generation/forecast'
 import { maintenanceSchedule } from '../generation/maintenance'
 import type { AlertSettings, Generator, SiteReport } from '../generation/model'
 import type { Seal } from '../seals/model'
@@ -120,6 +121,10 @@ export function buildAttention(a: AttentionInput): Attention[] {
         lines: [
           { text: `الباقي ${formatAmount(Math.round(o.remaining))} لتر (تقرير ${dayName(last.reportDate)})` },
           ...(o.dailyAverage ? [{ text: `المعدل اليومي ${formatAmount(Math.round(o.dailyAverage))} لتر` }] : []),
+          ...(() => {
+            const f = fuelForecast(last, sent.slice(1))
+            return f ? [{ text: `بيخلص تقريباً ${dayName(f.runOutDate, a.today)} ${Number(f.runOutDate.slice(8))}/${Number(f.runOutDate.slice(5, 7))} · اطلب قبل ${dayName(f.orderBy, a.today)} ${Number(f.orderBy.slice(8))}/${Number(f.orderBy.slice(5, 7))}${f.rough ? ' (تقدير تقريبي)' : ''}` }] : []
+          })(),
         ],
       })
   }

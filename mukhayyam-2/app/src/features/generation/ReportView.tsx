@@ -24,6 +24,9 @@ import {
 import { useAlertSettings, useEmployeeNames, useFuelTypes, useGenerators, useHistoryBefore } from './repo'
 import { clock12 } from '../../lib/format'
 import { MaintenanceCard } from './MaintenanceCard'
+import { HealthCard } from './HealthCard'
+import { fuelForecast } from './forecast'
+import { describeDay } from '../../lib/dates'
 
 const SQRT3 = Math.sqrt(3)
 
@@ -64,6 +67,7 @@ export function ReportView({ report, ctx }: { report: SiteReport; ctx: ReturnTyp
   const totals = reportTotals(report)
   const use = consumptionStats(report, history)
   const outlook = fuelOutlook(report, history)
+  const forecast = fuelForecast(report, history)
   const warnCount = alerts.filter((a) => a.level === 'warn').length
   const dangerCount = alerts.length - warnCount
   const sparkMax = Math.max(1, ...use.series)
@@ -78,6 +82,12 @@ export function ReportView({ report, ctx }: { report: SiteReport; ctx: ReturnTyp
           <div className="kpi-sub">
             {outlook.days !== null ? `يكفي نحو ${formatAmount(Math.floor(outlook.days * 10) / 10)} يوم بالمعدل الحالي` : 'لم يُعبّأ الرصيد المتبقي'}
           </div>
+          {forecast && (
+            <div className="kpi-sub fc-line">
+              بيخلص تقريباً <b>{describeDay(forecast.runOutDate).weekday} {shortDate(forecast.runOutDate)}</b> · اطلب قبل <b>{describeDay(forecast.orderBy).weekday} {shortDate(forecast.orderBy)}</b>
+              {forecast.rough && <small> (تقدير تقريبي: بيانات قليلة)</small>}
+            </div>
+          )}
         </div>
         <div className="kpi glass">
           <div className="kpi-label"><span className="kpi-ico"><Gauge size={16} /></span>الاستهلاك</div>
@@ -120,6 +130,7 @@ export function ReportView({ report, ctx }: { report: SiteReport; ctx: ReturnTyp
       <GeneratorsTable report={report} generators={generators} settings={settings} />
       <HourlyLoads report={report} generators={generators} />
       <MaintenanceCard report={report} history={history} generators={generators} settings={settings} />
+      <HealthCard report={report} history={history} generators={generators} />
 
       <div className="two">
         <section className="card">
@@ -312,3 +323,6 @@ function GeneratorGauges({ report, generators, settings }: { report: SiteReport;
     })}</div>
   </section>
 }
+
+/** «19/11». */
+const shortDate = (d: string) => `${Number(d.slice(8))}/${Number(d.slice(5, 7))}`

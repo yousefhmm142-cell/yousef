@@ -885,6 +885,19 @@ select test.fails($$select public.subscriber_profile('م')$$,'%short_name%','a o
 reset role; select test.login('مشغّل الموقع'); set role authenticated;
 select test.fails($$select public.subscriber_profile('مشترك مشتركة وهمي')$$,'%not_allowed%','the site operator cannot read subscriber profiles');
 reset role;
+-- ---------- Fuel alert names the day (update-43) ----------
+reset role;
+with r as (insert into public.site_reports (report_date, status, submitted_at) values ('2026-12-01','draft',null) returning id)
+insert into test.ids select 'fuel_rep', id from r;
+insert into public.site_report_fuel (report_id, fuel_type_id, opening_balance, received_qty, total_qty, closing_balance, consumption)
+  values ((select v from test.ids where k='fuel_rep'), 1, 1500, 0, 1500, 500, 1000);
+set session_replication_role=replica;
+update public.site_reports set status='approved' where id=(select v from test.ids where k='fuel_rep');
+set session_replication_role=origin;
+select test.ok(exists(select 1 from m2_ops.alerts_due() where kind='fuel_low' and body like '%بيخلص تقريباً%' and body like '%اطلبوا قبل%'),'the fuel alert names the day it runs out and the day to order');
+set session_replication_role=replica;
+delete from public.site_reports where id=(select v from test.ids where k='fuel_rep');
+set session_replication_role=origin;
 do $$ declare original text;begin select definition into original from shared_sms_original;execute original;end $$;
 
 \echo 'ALL CHECKS PASSED'

@@ -378,3 +378,26 @@
 .mp-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 12px 18px 18px; }
 @media (max-width: 700px) { .mp-form { grid-template-columns: 1fr 1fr; } }
 .mp-unknown { margin: 10px 0 0; font-size: var(--fs-xs); line-height: 1.7; }
+
+/* Fuel run-out line on the fuel card */
+.fc-line { margin-top: 2px; }
+.fc-line b { font-weight: 800; }
+
+/* Generator health */
+.hc-list { list-style: none; margin: 0; padding: 4px 18px 6px; display: grid; }
+.hc-list li { display: grid; grid-template-columns: 140px repeat(3, minmax(0, 1fr)); gap: 14px; align-items: start; padding: 12px 0; }
+.hc-list li + li { border-top: 1px solid var(--line-2); }
+.hc-name { font-size: var(--fs-md); padding-top: 2px; }
+.hc-m { display: grid; gap: 2px; }
+.hc-m small { color: var(--muted); font-size: var(--fs-xs); }
+.hc-m .num { display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; font-size: var(--fs-sm); }
+.hc-m .num b { font-size: var(--fs-md); }
+.hc-m i { font-style: normal; color: var(--muted); font-size: var(--fs-xs); }
+.hc-s { font-size: var(--fs-xs); font-weight: 700; }
+.hc-m[data-trend='worse'] .hc-s, .hc-m[data-trend='worse'] svg { color: var(--danger); }
+.hc-m[data-trend='better'] .hc-s, .hc-m[data-trend='better'] svg { color: var(--ok); }
+.hc-m[data-trend='same'] .hc-s { color: var(--muted); }
+.hc-m.off span { font-size: var(--fs-xs); color: var(--muted); }
+.hc-note { margin: 0; padding: 0 18px 14px; font-size: var(--fs-xs); color: var(--muted); }
+@media (max-width: 800px) { .hc-list li { grid-template-columns: 1fr 1fr; } .hc-name { grid-column: 1 / -1; } }
+@media print { .health-card { display: none; } }
