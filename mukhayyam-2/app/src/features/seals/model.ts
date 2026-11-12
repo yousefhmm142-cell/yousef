@@ -380,3 +380,34 @@ export function totals(seals: Seal[]) {
   }
   return c
 }
+
+// ---------- Seal checks (plan 2, L7) ----------
+
+const boardKey = (b: string) => fold(latinDigits(b)).replace(/\s+/g, '').toLowerCase()
+
+/** Seals already recorded as used on this board (newest first), apart from the one being recorded. */
+export function previousOnBoard(seals: Seal[], board: string, exceptSealNo?: number): Seal[] {
+  const k = boardKey(board)
+  if (!k) return []
+  return seals
+    .filter((s) => s.status === 'used' && s.sealNo !== exceptSealNo && s.boardNo && boardKey(s.boardNo) === k)
+    .sort((a, b) => (b.usedOn ?? '').localeCompare(a.usedOn ?? '') || b.sealNo - a.sealNo)
+}
+
+/**
+ * Seals of a batch still out while seals before AND after them in the same batch were recorded: the
+ * technician skipped them, so they are the likeliest to be lost. (Batch 1–20 with 1–8 and 12–20
+ * recorded → 9, 10, 11.)
+ */
+export function skippedInBatches(seals: Seal[]): Set<number> {
+  const byBatch = new Map<string, Seal[]>()
+  for (const s of seals) if (s.batchId) byBatch.set(s.batchId, [...(byBatch.get(s.batchId) ?? []), s])
+  const out = new Set<number>()
+  for (const list of byBatch.values()) {
+    const done = list.filter((s) => s.status !== 'issued' && s.status !== 'in_stock').map((s) => s.sealNo)
+    if (done.length < 2) continue
+    const lo = Math.min(...done), hi = Math.max(...done)
+    for (const s of list) if (s.status === 'issued' && s.sealNo > lo && s.sealNo < hi) out.add(s.sealNo)
+  }
+  return out
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { composeDetails, noFilters, ordinalWord, parseSealNumbers, rollStats, searchSeals, splitDetails, tokenize, continueAfterSeparator, withoutPendingStart, rollPrefix, type Seal, type SealBatch, type SealData, type SealRoll } from './model'
+import { composeDetails, noFilters, ordinalWord, parseSealNumbers, rollStats, searchSeals, splitDetails, tokenize, continueAfterSeparator, withoutPendingStart, rollPrefix, previousOnBoard, skippedInBatches, type Seal, type SealBatch, type SealData, type SealRoll } from './model'
 
 const roll: SealRoll = { id: 'r1', fromNo: 181301, toNo: 181400, receivedOn: '2026-07-30', note: '', headerText: null, sheetLabel: null, sheetPos: null, sheetCol: null, sheetWidth: null, sheetTab: null }
 const roll2: SealRoll = { id: 'r2', fromNo: 183001, toNo: 183100, receivedOn: '2026-08-03', note: '', headerText: null, sheetLabel: null, sheetPos: null, sheetCol: null, sheetWidth: null, sheetTab: null }
@@ -125,5 +125,22 @@ describe('the roll start after each separator', () => {
     expect(withoutPendingStart('223802-223835', '2238')).toBe('223802-223835')
     expect(withoutPendingStart('2238', '2238')).toBe('')
     expect(rollPrefix({ fromNo: 223801 })).toBe('2238')
+  })
+})
+
+describe('seal checks', () => {
+  const s = (sealNo: number, status: Seal['status'], extra: Partial<Seal> = {}): Seal =>
+    ({ sealNo, rollId: 'r', status, batchId: 'b', batchPos: null, technicianId: 't', issuedOn: '2026-11-01', usedOn: null, details: '', boardNo: '', ...extra })
+  it('finds the earlier seal on the same board, spelling and digits folded', () => {
+    const seals = [s(1, 'used', { boardNo: '361', usedOn: '2026-10-03' }), s(2, 'used', { boardNo: '٣٦١', usedOn: '2026-11-01' }), s(3, 'used', { boardNo: '362' }), s(4, 'issued', { boardNo: '361' })]
+    expect(previousOnBoard(seals, ' 361 ').map((x) => x.sealNo)).toEqual([2, 1])
+    expect(previousOnBoard(seals, '361', 2).map((x) => x.sealNo)).toEqual([1])
+    expect(previousOnBoard(seals, '')).toEqual([])
+  })
+  it('marks the seals skipped inside a batch', () => {
+    const batch = Array.from({ length: 20 }, (_, i) => s(i + 1, i + 1 >= 9 && i + 1 <= 11 ? 'issued' : 'used'))
+    expect([...skippedInBatches(batch)]).toEqual([9, 10, 11])
+    const tail = Array.from({ length: 10 }, (_, i) => s(i + 1, i < 5 ? 'used' : 'issued'))
+    expect([...skippedInBatches(tail)]).toEqual([]) // the end of a batch is not skipped, just not reached yet
   })
 })

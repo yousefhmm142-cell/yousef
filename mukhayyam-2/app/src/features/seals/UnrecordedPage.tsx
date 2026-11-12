@@ -8,7 +8,7 @@ import { Chip } from '../../ui/form'
 import { Avatar, Button } from '../../ui/primitives'
 import { SignFooter } from '../sheets/signers'
 import { UseDialog } from './dialogs'
-import { fold, latinDigits, ordinalWord, type Seal, type SealData } from './model'
+import { fold, latinDigits, ordinalWord, skippedInBatches, type Seal, type SealData } from './model'
 import { dayLabel, SealPill, SealsLoading, SealsTabs } from './parts'
 import { useSealData, useSealsLive, useSealsReady } from './repo'
 
@@ -56,6 +56,7 @@ export function SealUnrecordedPage() {
   const [dialog, setDialog] = useState<Seal | null>(null)
   const [printing, setPrinting] = useState<Person[] | null>(null)
   const today = todayISO()
+  const skipped = useMemo(() => (data ? skippedInBatches(data.seals) : new Set<number>()), [data])
 
   // Each word typed must match: part of the seal number, the technician's name or the batch («الرابعة»).
   const words = useMemo(() => fold(latinDigits(query)).split(' ').filter(Boolean), [query])
@@ -187,10 +188,11 @@ export function SealUnrecordedPage() {
                     <span className="muted">صُرفت {l.issuedOn === today ? 'اليوم' : dayLabel(l.issuedOn)}</span>
                     <span className="uq-age num" title="من يوم الصرف"><AlarmClock size={13} /> {ageText(l.days)}</span>
                     <span className="grow" />
+                    {l.seals.some((s) => skipped.has(s.sealNo)) && <span className="uq-skip-note">قفز عن {l.seals.filter((s) => skipped.has(s.sealNo)).length}</span>}
                     <small className="muted num">{l.seals.length} ختم</small>
                   </div>
                   <div className="uq-seals">
-                    {l.seals.map((s) => <SealPill key={s.sealNo} seal={s} hit={words.some((w) => /^\d+$/.test(w) && String(s.sealNo).includes(w)) || undefined} onClick={() => setDialog(s)} />)}
+                    {l.seals.map((s) => <SealPill key={s.sealNo} seal={s} skipped={skipped.has(s.sealNo)} hit={words.some((w) => /^\d+$/.test(w) && String(s.sealNo).includes(w)) || undefined} onClick={() => setDialog(s)} />)}
                   </div>
                 </section>
               ))}

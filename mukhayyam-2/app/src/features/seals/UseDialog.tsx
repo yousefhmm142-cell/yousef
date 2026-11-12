@@ -9,7 +9,7 @@ import { useToast } from '../../ui/Toast'
 import { useConfirm } from '../../ui/Confirm'
 import { SubscriberField } from '../tasks/SubscriberField'
 import { recordSeal,returnToStock,sealErrorText } from './repo'
-import { composeDetails,ordinalWord,parseSealNumbers,splitDetails,WORK_CHOICES,type Seal,type SealData } from './model'
+import { composeDetails,ordinalWord,parseSealNumbers,splitDetails,WORK_CHOICES,type Seal,type SealData, previousOnBoard } from './model'
 import { SealHistoryButton } from './SealHistory'
 import { dayLabel,SealPill } from './parts'
 
@@ -178,6 +178,18 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
               <span className="label">رقم الطبلون</span>
               <input ref={boardBox} value={board} placeholder="361" onChange={(e) => setBoard(e.target.value)} />
             </label>
+            {(() => {
+              // Information only: a seal on this board before (the new one usually replaces it).
+              const before = previousOnBoard(data.seals, board, found?.sealNo)
+              const last = before[0]
+              return last ? (
+                <p className="seal-prev" role="status">
+                  على هالطبلون ختم سابق <b className="num">{last.sealNo}</b>{last.usedOn ? <> من <span className="num">{dayLabel(last.usedOn)}</span></> : null}
+                  {last.technicianId ? ` (${data.names.get(last.technicianId) ?? '—'})` : ''}
+                  {before.length > 1 && <> و{before.length - 1} قبله</>}
+                </p>
+              ) : null
+            })()}
             <div className="field">
               <span className="label">العمل</span>
               <div className="work-chips">

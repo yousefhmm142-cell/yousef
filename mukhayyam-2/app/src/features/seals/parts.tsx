@@ -32,7 +32,7 @@ export function SealsLoading() {
 }
 
 /** A seal number coloured by what happened to it. */
-export function SealPill({ seal, hit, dim, onClick }: { seal: Seal; hit?: boolean; dim?: boolean; onClick?(): void }) {
+export function SealPill({ seal, hit, dim, skipped, onClick }: { seal: Seal; hit?: boolean; dim?: boolean; skipped?: boolean; onClick?(): void }) {
   const info = sealStatusInfo[seal.status]
   const content = (
     <>
@@ -40,9 +40,9 @@ export function SealPill({ seal, hit, dim, onClick }: { seal: Seal; hit?: boolea
       <span className="num">{seal.sealNo}</span>
     </>
   )
-  const title = `${seal.sealNo} · ${info.label}${seal.details ? ` · ${seal.details}` : ''}`
+  const title = `${seal.sealNo} · ${info.label}${skipped ? ' · قفز عنه: انسجّل اللي قبله واللي بعده' : ''}${seal.details ? ` · ${seal.details}` : ''}`
   return onClick ? (
-    <button type="button" className="seal-pill" data-status={seal.status} data-hit={hit || undefined} data-dim={dim || undefined} title={title} onClick={onClick}>{content}</button>
+    <button type="button" className="seal-pill" data-status={seal.status} data-hit={hit || undefined} data-dim={dim || undefined} data-skipped={skipped || undefined} title={title} onClick={onClick}>{content}</button>
   ) : (
     <span className="seal-pill" data-status={seal.status} data-hit={hit || undefined} data-dim={dim || undefined} title={title}>{content}</span>
   )

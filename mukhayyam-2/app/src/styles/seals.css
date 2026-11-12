@@ -271,3 +271,9 @@ table.seal-table tbody tr:hover { background: color-mix(in srgb, var(--brand) 5%
 .sp-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .sp-list p { margin: 2px 0 0; font-size: var(--fs-sm); }
 .sp-loading { padding: 24px; text-align: center; color: var(--muted); }
+
+/* Seal checks: the earlier seal on a board, and seals skipped inside a batch */
+.seal-prev { margin: -4px 0 0; padding: 8px 12px; border-radius: 10px; background: var(--info-soft); font-size: var(--fs-sm); }
+.seal-pill[data-skipped] { box-shadow: inset 0 0 0 2px var(--danger); }
+.seal-pill[data-skipped]::after { content: '؟'; margin-inline-start: 2px; color: var(--danger); font-weight: 800; }
+.uq-skip-note { padding: 2px 9px; border-radius: 99px; background: var(--danger-soft); color: var(--danger); font-size: var(--fs-xs); font-weight: 800; }
