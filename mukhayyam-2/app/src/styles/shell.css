@@ -180,13 +180,6 @@
 @media(max-width:900px){.tabbar.glass{background:var(--surface);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:0 8px 30px #0003;border:1px solid var(--line);}.page{padding-bottom:calc(var(--tabbar-h) + 48px + var(--safe-b));}}
 @media(max-width:900px){:root[data-theme='dark'] .tabbar.glass{background:var(--surface);backdrop-filter:none;-webkit-backdrop-filter:none;}}
 
-/* ---------- Global search (Ctrl+K) ---------- */
-.search-btn { height: 46px; padding: 0 14px; border-radius: 999px; display: inline-flex; align-items: center; gap: 8px; flex: none; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); font: inherit; font-weight: 800; font-size: var(--fs-sm); cursor: pointer; transition: background .15s, transform .15s; }
-.search-btn:hover { background: var(--surface-2); }
-.search-btn kbd, .gs-foot kbd { padding: 1px 7px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface-2); font: 700 var(--fs-xs) var(--font); color: var(--muted); direction: ltr; }
-:root[data-theme='dark'] .search-btn { background: var(--glass); border-color: var(--glass-edge); }
-@media (max-width: 1100px) { .search-btn span, .search-btn kbd { display: none; } .search-btn { width: 46px; padding: 0; justify-content: center; } }
-
 .gsearch { padding: 0; border: 0; background: transparent; width: min(680px, calc(100vw - 32px)); max-width: none; max-height: none; margin: 10vh auto auto; overflow: visible; color: var(--ink); }
 .gsearch::backdrop { background: color-mix(in srgb, var(--bg) 45%, transparent); backdrop-filter: blur(6px); }
 .gs-panel { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; max-height: 70vh; border-radius: var(--r-xl); background: var(--glass-strong); backdrop-filter: blur(var(--blur)) saturate(1.4); -webkit-backdrop-filter: blur(var(--blur)) saturate(1.4); border: 1px solid var(--glass-edge); box-shadow: var(--shadow-lg); overflow: hidden; animation: gs-in .18s var(--ease); }
@@ -214,3 +207,15 @@
   .gs-foot, .gs-kbd { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .gs-panel { animation: none; } }
+
+/* ---------- Global search (Ctrl+K) ---------- */
+/* A round icon only: the top menu needs its room. With the «…» menu (managers) it lives there on
+   desktop, and the icon shows on phones only. */
+.search-btn { width: 46px; height: 46px; border-radius: 999px; display: inline-grid; place-items: center; flex: none; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); cursor: pointer; transition: background .15s; }
+.search-btn:hover { background: var(--surface-2); }
+:root[data-theme='dark'] .search-btn { background: var(--glass); border-color: var(--glass-edge); }
+.search-btn.phone-only { display: none; }
+@media (max-width: 900px) { .search-btn.phone-only { display: inline-grid; } .search-btn { width: 40px; height: 40px; } }
+.nav-more-search { width: 100%; display: flex; align-items: center; gap: 10px; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; text-align: start; }
+.nav-more-search span { flex: 1; }
+.nav-more-search kbd, .gs-foot kbd { padding: 1px 7px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface-2); font: 700 var(--fs-xs) var(--font); color: var(--muted); direction: ltr; }

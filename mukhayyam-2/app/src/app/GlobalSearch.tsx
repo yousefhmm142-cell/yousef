@@ -16,7 +16,19 @@ import { GROUPS, searchAll, type Hit } from './searchAll'
 
 const ICON = { pages: FileText, tasks: Hash, subscribers: UserRound, seals: Stamp, people: Users } as const
 
-/** The button in the top bar, and the window it opens (also Ctrl+K, or «/» outside a text box). */
+/** Opens the search window from anywhere (a button, the «…» menu). */
+export const openSearch = () => window.dispatchEvent(new Event('m2:search'))
+
+/** The round search button (it only asks the window to open). */
+export function SearchButton({ className }: { className?: string }) {
+  return (
+    <button type="button" className={`search-btn${className ? ` ${className}` : ''}`} onClick={openSearch} aria-label="بحث (Ctrl+K)" title="بحث (Ctrl+K)">
+      <Search size={20} aria-hidden="true" />
+    </button>
+  )
+}
+
+/** The search window, mounted once in the shell: Ctrl+K, «/» outside a text box, or openSearch(). */
 export function GlobalSearch() {
   const [open, setOpen] = useState(false)
   useEffect(() => {
@@ -25,19 +37,12 @@ export function GlobalSearch() {
       if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K' || e.code === 'KeyK')) { e.preventDefault(); setOpen(true) }
       else if (e.key === '/' && !typing && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); setOpen(true) }
     }
+    const onOpen = () => setOpen(true)
     document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
+    window.addEventListener('m2:search', onOpen)
+    return () => { document.removeEventListener('keydown', onKey); window.removeEventListener('m2:search', onOpen) }
   }, [])
-  return (
-    <>
-      <button type="button" className="search-btn" onClick={() => setOpen(true)} aria-label="بحث (Ctrl+K)" title="بحث (Ctrl+K)">
-        <Search size={20} aria-hidden="true" />
-        <span>بحث</span>
-        <kbd className="gs-kbd">Ctrl K</kbd>
-      </button>
-      {open && <SearchWindow onClose={() => setOpen(false)} />}
-    </>
-  )
+  return open ? <SearchWindow onClose={() => setOpen(false)} /> : null
 }
 
 function SearchWindow({ onClose }: { onClose(): void }) {

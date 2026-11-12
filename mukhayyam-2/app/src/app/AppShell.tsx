@@ -1,6 +1,6 @@
 import { RejectedNotice } from '../ui/RejectedNotice'
 import { PullToRefresh } from '../ui/fx/PullToRefresh'
-import { Ellipsis, Settings, UserRound } from 'lucide-react'
+import { Ellipsis, Search, Settings, UserRound } from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router'
 import { useEmployee } from '../auth/AuthProvider'
@@ -9,7 +9,7 @@ import { Avatar, Logo } from '../ui/primitives'
 import { StatusBadge, SyncNotice, ThemeToggle } from '../ui/status'
 import { ManagerActivityProvider } from '../features/dashboard/ActivityLive'
 import { navFor, type NavItem } from './nav'
-import { GlobalSearch } from './GlobalSearch'
+import { GlobalSearch, openSearch, SearchButton } from './GlobalSearch'
 
 const MAX_TABS = 5
 const accountTab: NavItem = { to: '/account', label: 'حسابي', icon: UserRound }
@@ -104,6 +104,9 @@ export function AppShell() {
               <Ellipsis size={21} aria-hidden="true" />
             </summary>
             <nav className="nav-more-list" aria-label="التقارير والكشوفات">
+              <button type="button" className="nav-more-search" onClick={() => { moreRef.current?.removeAttribute('open'); openSearch() }}>
+                <Search size={18} aria-hidden="true" /><span>بحث</span><kbd>Ctrl K</kbd>
+              </button>
               {moreItems.map(({ to, label, icon: Icon }) => (
                 <NavLink key={to} to={to}><Icon size={18} aria-hidden="true" /><span>{label}</span></NavLink>
               ))}
@@ -112,7 +115,7 @@ export function AppShell() {
         )}
 
         <div className="topbar-end">
-          <GlobalSearch />
+          <SearchButton className={moreItems.length ? 'phone-only' : undefined} />
           {hasSettings && (
             <NavLink to="/settings" className="settings-btn" aria-label="الإعدادات" title="الإعدادات">
               <Settings size={22} aria-hidden="true" />
@@ -134,6 +137,7 @@ export function AppShell() {
       <ThemeToggle />
       </div>
 
+      <GlobalSearch />
       <SyncNotice />
       <RejectedNotice />
 
