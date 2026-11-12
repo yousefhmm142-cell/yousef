@@ -84,3 +84,21 @@
   .print-sheet table.ps-hr .ps-readings { display: block; font-size: 8.5pt; }
   .print-sheet table.ps-hr .ps-avg { display: block; font-size: 10.5pt; }
 }
+
+/* ---------- Every printed sheet (plan 2, V6) ----------
+   «صفحة 1 من 3» at the bottom of each page, the table header again on each page, no row cut in
+   two, a section title never left alone at the bottom, 12mm margins. */
+@media print {
+  @page {
+    margin: 12mm 12mm 14mm;
+    @bottom-center { content: "صفحة " counter(page) " من " counter(pages); font: 9pt 'Almarai', sans-serif; color: #444; }
+  }
+  @page landscape {
+    @bottom-center { content: "صفحة " counter(page) " من " counter(pages); font: 9pt 'Almarai', sans-serif; color: #444; }
+  }
+  .print-sheet thead { display: table-header-group; }
+  .print-sheet tfoot { display: table-footer-group; }
+  .print-sheet tr, .print-sheet .ps-foot, .print-sheet .tf-sign { break-inside: avoid; page-break-inside: avoid; }
+  .print-sheet h2, .print-sheet .ps-sub, .print-sheet .rp-block > h2 { break-after: avoid; page-break-after: avoid; }
+  .print-sheet .ps-head { break-after: avoid; }
+}
