@@ -352,3 +352,12 @@
 }
 @keyframes sheet-up { from { transform: translateY(100%); } }
 @media (prefers-reduced-motion: reduce) { .dialog[open] { animation: none; } }
+
+/* Toast: a thin bar that runs out with its time, and a button («تراجع») when there is one. */
+.toast { position: relative; overflow: hidden; pointer-events: auto; }
+.toast-text { flex: 1; min-width: 0; }
+.toast-action { flex: none; margin-inline-start: 6px; padding: 6px 14px; min-height: 36px; border: 1px solid color-mix(in srgb, currentColor 35%, transparent); border-radius: 999px; background: color-mix(in srgb, currentColor 12%, transparent); color: inherit; font: inherit; font-weight: 800; cursor: pointer; }
+.toast-action:hover { background: color-mix(in srgb, currentColor 22%, transparent); }
+.toast-time { position: absolute; inset-inline: 0; bottom: 0; height: 3px; background: currentColor; opacity: .35; transform-origin: right; animation: toast-time var(--toast-ms, 3200ms) linear forwards; }
+@keyframes toast-time { to { transform: scaleX(0); } }
+@media (prefers-reduced-motion: reduce) { .toast-time { animation: none; display: none; } }

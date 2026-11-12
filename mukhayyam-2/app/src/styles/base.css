@@ -28,3 +28,18 @@ img { display: block; max-width: 100%; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ---------- Phones: every tap target at least 44px (plan 2, V8) ----------
+   «:root» in front so these win over the page styles loaded after this file. */
+@media (max-width: 700px) {
+  :root .icon-btn, :root .search-btn, :root .topbar-row > .icon-btn, :root .me { min-width: 44px; min-height: 44px; }
+  :root .chip, :root .seal-pill, :root .segmented button, :root .search-hints button, :root .back-btn, :root .work-chips .chip, :root .quick-why .chip { min-height: 44px; }
+  :root .link-btn { min-height: 44px; display: inline-flex; align-items: center; }
+  :root .app-brand, :root .seals-tabs a, :root .guide-toc a { min-height: 44px; }
+  :root .datenav button, :root .day-jump button { min-width: 44px; min-height: 44px; }
+  /* A small link in a row: the tap area grows, the look does not. */
+  :root .feed-open { position: relative; }
+  :root .feed-open::after { content: ''; position: absolute; inset: -12px -14px; }
+  /* Search boxes: the field fills its box. */
+  :root .feed-search input, :root .uq-search input, :root .task-search input { min-height: 44px; }
+}

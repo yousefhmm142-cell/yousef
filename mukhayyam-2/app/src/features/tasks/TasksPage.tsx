@@ -37,6 +37,7 @@ priorityInfo,taskStatusInfo,type Task
 import { markDone,refreshTasks,useTasks,useTaskTypes } from './repo'
 import { errText, useTechnicians, GiveDialog, NewTaskDialog, TaskDialog } from './TaskDialogs'
 import { PrepareDialog,SubscribersButton } from './PrepareDialog'
+import { buzz } from '../../lib/appearance'
 
 type View = 'waiting' | 'open' | 'late' | 'today' | 'all'
 
@@ -107,6 +108,7 @@ export function TasksPage() {
     if (!yes) return
     try {
       await markDone(t)
+      buzz()
       toastDone(`انحسبت منجزة لـ ${who}`)
     } catch (e) {
       toastDone(errText(e), 'danger')

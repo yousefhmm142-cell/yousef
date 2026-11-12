@@ -11,6 +11,7 @@ import { useConfirm } from '../../ui/Confirm'
 import { SheetStateError } from '../sheets/workflow'
 import { durationText, priorityInfo } from './model'
 import { actOnTaskLink, openTaskLink, type LinkTask } from './repo'
+import { buzz } from '../../lib/appearance'
 
 type State = { kind: 'loading' } | { kind: 'missing' } | { kind: 'offline' } | { kind: 'ready'; task: LinkTask }
 
@@ -48,6 +49,7 @@ export function TaskLinkPage() {
     try {
       const task = await actOnTaskLink(token, action, notes)
       if (task) setState({ kind: 'ready', task })
+      if (action === 'done') buzz()
     } catch (e) {
       const code = e instanceof SheetStateError ? e.message : ''
       setError(code === 'offline' ? 'لا يوجد إنترنت. اتصل واضغط مرة ثانية.' : code === 'cancelled' ? 'ألغى المدير هذه المهمة.' : 'لم يُحفظ. حاول مرة ثانية.')

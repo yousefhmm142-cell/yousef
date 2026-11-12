@@ -66,3 +66,27 @@ const subscribe = (cb: () => void) => {
 
 export const useTextSize = () => useSyncExternalStore(subscribe, () => size)
 export const useFont = () => useSyncExternalStore(subscribe, () => font)
+
+// ---------- A short buzz on the phone when something is saved (plan 2, V8) ----------
+let haptics: boolean = read('m2-haptics', ['on', 'off'], 'on') === 'on'
+
+export function setHaptics(on: boolean) {
+  haptics = on
+  try {
+    localStorage.setItem('m2-haptics', on ? 'on' : 'off')
+  } catch {
+    // Only on this visit.
+  }
+  listeners.forEach((l) => l())
+}
+
+export const useHaptics = () => useSyncExternalStore(subscribe, () => haptics)
+
+/** 10ms on a touch phone, when the person has not turned it off. Nothing on a computer. */
+export function buzz() {
+  try {
+    if (haptics && 'vibrate' in navigator && matchMedia('(pointer: coarse)').matches) navigator.vibrate(10)
+  } catch {
+    // Not supported: nothing to do.
+  }
+}

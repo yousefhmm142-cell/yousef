@@ -12,6 +12,7 @@ import { recordSeal,returnToStock,sealErrorText } from './repo'
 import { composeDetails,ordinalWord,parseSealNumbers,splitDetails,WORK_CHOICES,type Seal,type SealData, previousOnBoard } from './model'
 import { SealHistoryButton } from './SealHistory'
 import { dayLabel,SealPill } from './parts'
+import { buzz } from '../../lib/appearance'
 
 // ---------- What happened to a seal ----------
 type Outcome = 'used' | 'damaged' | 'lost'
@@ -63,8 +64,12 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
     setBusy(true)
     setError(null)
     try {
-      await recordSeal(found.sealNo, status, date, line)
-      toast(`سُجّل الختم ${found.sealNo}`)
+      // A seal that was out and is now recorded can be taken back at once («تراجع»): it goes back to «غير مستخدم».
+      const wasOut = found.status === 'issued'
+      const no = found.sealNo
+      await recordSeal(no, status, date, line)
+      buzz()
+      toast(`سُجّل الختم ${no}`, 'ok', wasOut ? { label: 'تراجع', run: async () => { try { await recordSeal(no, 'issued', null, ''); toast(`رجع الختم ${no} «غير مستخدم»`) } catch { toast('ما قدرنا نتراجع. افتح الختم وألغِ تسجيله.', 'danger') } } } : undefined)
       if (next && !seal) {
         setNo('')
         setBoard('')

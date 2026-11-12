@@ -7,7 +7,7 @@ import { isDemo } from '../config'
 import { buildLabel, checkNow } from '../app/update'
 import { useToast } from '../ui/Toast'
 import { Chip, Segmented } from '../ui/form'
-import { FONTS, setFont, setTextSize, TEXT_SIZES, useFont, useTextSize, type TextSize } from '../lib/appearance'
+import { FONTS, setFont, setHaptics, setTextSize, TEXT_SIZES, useFont, useHaptics, useTextSize, type TextSize } from '../lib/appearance'
 import { useConfirm } from '../ui/Confirm'
 import { formatPhone } from '../lib/phone'
 import { useTheme } from '../lib/theme'
@@ -24,6 +24,7 @@ export function Account() {
   const employee = useEmployee()
   const toast = useToast()
   const textSize = useTextSize()
+  const haptics = useHaptics()
   const font = useFont()
   const { signOut } = useAuth()
   const [theme, toggleTheme] = useTheme()
@@ -123,6 +124,10 @@ export function Account() {
                 </Chip>
               ))}
             </div>
+          </div>
+          <div className="field">
+            <span className="label">اهتزاز خفيف لما ينحفظ إشي (بالجوال)</span>
+            <Segmented<'on' | 'off'> label="الاهتزاز" value={haptics ? 'on' : 'off'} options={[{ value: 'on', label: 'شغّال' }, { value: 'off', label: 'مطفي' }]} onChange={(v) => setHaptics(v === 'on')} />
           </div>
           <p className="appearance-preview">هيك بتظهر الكتابة: تقرير اليوم، الرصيد المتبقي 1250 لتر، التشغيلة الأولى من 6:00 ص إلى 9:30 ص.</p>
           <small className="muted">يُحفظ على هذا الجهاز فقط.</small>

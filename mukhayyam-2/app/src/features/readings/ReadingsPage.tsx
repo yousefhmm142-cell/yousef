@@ -1,3 +1,4 @@
+import { buzz } from '../../lib/appearance'
 import { BoardMoveDialog } from './BoardMoveDialog'
 import { EmptyArt } from '../../ui/fx/EmptyArt'
 import { Skeleton } from '../../ui/fx/Skeleton'
@@ -90,6 +91,7 @@ function ReaderReadings() {
 
   const onSave: Saver = async (row, v) => {
     const patch = await saveReading(row, v, { me: me.id })
+    buzz()
     setData((d) => d && { ...d, rows: d.rows.map((r) => (r.id === row.id ? { ...r, ...patch, enteredAt: new Date().toISOString() } : r)) })
   }
 

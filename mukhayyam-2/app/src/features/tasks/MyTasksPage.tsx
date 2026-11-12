@@ -11,6 +11,7 @@ import { useToast } from '../../ui/Toast'
 import { useConfirm } from '../../ui/Confirm'
 import { refreshTasks, useTasks, useTaskTypes } from './repo'
 import { isAssignedTo, isSharedTask, isOpen, taskStatusInfo, type Task } from './model'
+import { buzz } from '../../lib/appearance'
 
 export async function actOwnTask(task: Task, employeeId: string, action: 'start' | 'done', notes = '') {
   if (!isAssignedTo(task,employeeId) || isSharedTask(task) || !isOpen(task) || (action === 'done' && task.status !== 'in_progress'))
@@ -84,6 +85,7 @@ export function MyTasksPage() {
     setBusy(t.id)
     try {
       await actOwnTask(t, me.id, action, notes[t.id] ?? '')
+      if (action === 'done') buzz()
       toast(navigator.onLine ? 'انحفظت المهمة' : 'انحفظت على جهازك، بتتزامن لما يرجع النت')
     } catch {
       toast('تعذّر حفظ المهمة. حاول مرة ثانية.', 'danger')
