@@ -7,12 +7,15 @@ import { Dialog } from '../../ui/Dialog'
 import { Chip } from '../../ui/form'
 import { Button } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
-import { createTask,useTaskTypes } from './repo'
+import { createTask,useTasks,useTaskTypes } from './repo'
+import { typicalMinutes } from './model'
+import { SubscriberHistoryNote } from './SubscriberHistoryNote'
 import { errText } from './TaskDialogs'
 import { PLACES,placeFor } from './places'
 /** A subscriber calls: write down who, what, where and the phone. The technician comes later. */
 export function PrepareDialog({ onClose }: { onClose(): void }) {
   const me = useEmployee()
+  const allTasks = useTasks()
   const toast = useToast()
   const types = useTaskTypes()
   const subscribers = useSubscribers()
@@ -56,7 +59,7 @@ export function PrepareDialog({ onClose }: { onClose(): void }) {
     setBusy(true)
     setError(null)
     try {
-      const t = await createTask({ typeId, assigneeId: null, details: fullDetails, subscriberName: name, subscriberPhone: phone || null, zoneId: null, location: where, priority: 'normal', expectedMinutes: 30 }, me.id)
+      const t = await createTask({ typeId, assigneeId: null, details: fullDetails, subscriberName: name, subscriberPhone: phone || null, zoneId: null, location: where, priority: 'normal', expectedMinutes: typicalMinutes(allTasks ?? [], typeId) ?? 30 }, me.id)
       toast(`جُهّزت المهمة ${t.number}، بانتظار فني`)
       if (again) {
         setName(''); clearPick(); setTypeId(null); setExtraTypes([]); setDetails(''); setPlace(''); setLocation(''); setBusy(false)
@@ -152,6 +155,7 @@ export function PrepareDialog({ onClose }: { onClose(): void }) {
             </div>
           </div>
         )}
+        <SubscriberHistoryNote name={name} phone={phone || null} />
         <div className="form-card">
           <span className="form-card-title">المطلوب <small>· بتقدر تختار أكثر من عمل</small></span>
           <div className="chips">

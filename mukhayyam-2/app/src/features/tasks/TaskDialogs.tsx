@@ -4,7 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { Copy,MessageCircle,MessageSquareText,Plus,XCircle } from 'lucide-react'
 import { SubscriberField } from './SubscriberField'
 import { FootHint,SummaryAside,saveOnCtrlEnter } from '../../ui/SummaryAside'
-import { useMemo,useRef,useState } from 'react'
+import { useEffect,useMemo,useRef,useState } from 'react'
 import { useEmployee } from '../../auth/AuthProvider'
 import { db } from '../../data/db'
 import { formatTime } from '../../lib/format'
@@ -20,7 +20,7 @@ import { SheetStateError } from '../sheets/workflow'
 import { smsUrl,taskLink,taskMessage,taskSms,taskSmsFull,whatsappUrl } from './message'
 import { sendCompanySms,smsError } from '../sms/repo'
 import {
-isSharedTask,durationText,
+isSharedTask,durationText,typicalMinutes,
 elapsedMinutes,
 EXPECTED_OPTIONS,
 isOpen,
@@ -32,7 +32,8 @@ type Channel,
 type Task,
 type TaskPriority
 } from './model'
-import { assignTask,cancelTask,createTask,recordSent,refreshTasks,useTaskTypes } from './repo'
+import { assignTask,cancelTask,createTask,recordSent,refreshTasks,useTasks,useTaskTypes } from './repo'
+import { SubscriberHistoryNote } from './SubscriberHistoryNote'
 import { PLACES,placeFor } from './places'
 export const errorText: Record<string, string> = {
   task_waiting_sync:'المهمة بعدها بانتظار المزامنة. لما توصل بتقدر تبعتها.',
@@ -173,6 +174,7 @@ export function GiveDialog({ task, technicians, typeName, zoneName, onClose }: {
           <span>{[task.subscriberName, task.subscriberPhone && formatPhone(task.subscriberPhone), zoneName(task.zoneId), task.location].filter(Boolean).join(' · ') || 'بدون تفاصيل المشترك'}</span>
           {task.subscriberName && <a className="link-btn" href={`/subscriber?${new URLSearchParams({ name: task.subscriberName, ...(task.subscriberPhone ? { phone: task.subscriberPhone } : {}) })}`} target="_blank" rel="noreferrer">شو صار لهالمشترك قبل؟</a>}
         </div>
+        <SubscriberHistoryNote name={task.subscriberName ?? ''} phone={task.subscriberPhone} exceptId={task.id} />
         <TechnicianPicker technicians={technicians} value={assigneeIds} onChange={setAssigneeIds} />
         <div className="field">
           <span className="label">الأولوية</span>
@@ -183,6 +185,7 @@ export function GiveDialog({ task, technicians, typeName, zoneName, onClose }: {
           <div className="chips">
             {EXPECTED_OPTIONS.map((m) => <Chip key={m} pressed={expected === m} onClick={() => setExpected(m)}>{durationText(m)}</Chip>)}
           </div>
+          <ExpectedHint typeId={task.typeId} />
         </div>
         {error && <p className="field-error" role="alert">{error}</p>}
       </fieldset>
@@ -218,7 +221,15 @@ export function NewTaskDialog({ technicians, onClose, typeName, zoneName }: {
   const [place, setPlace] = useState('')
   const [location, setLocation] = useState('')
   const [priority, setPriority] = useState<TaskPriority>('normal')
-  const [expected, setExpected] = useState(30)
+  const [expected, setExpectedRaw] = useState(30)
+  // The time follows the usual one for the chosen kind, until it is picked by hand.
+  const touched = useRef(false)
+  const setExpected = (m: number) => { touched.current = true; setExpectedRaw(m) }
+  const allTasks = useTasks()
+  useEffect(() => {
+    if (touched.current || typeId === null) return
+    setExpectedRaw(typicalMinutes(allTasks ?? [], typeId) ?? 30)
+  }, [typeId, allTasks])
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState<Channel | null>(null)
 
@@ -300,6 +311,7 @@ export function NewTaskDialog({ technicians, onClose, typeName, zoneName }: {
             <input className="input ltr num" type="tel" inputMode="tel" placeholder="059 000 0000" value={formatPhone(subscriberPhone)} onChange={(e) => setSubscriberPhone(normalizePhone(e.target.value))} />
           </label>
         </div>
+        <SubscriberHistoryNote name={subscriberName} phone={subscriberPhone || null} />
         <div className="two-col">
           <label className="field">
             <span className="label">المكان (اختياري)</span>
@@ -325,6 +337,7 @@ export function NewTaskDialog({ technicians, onClose, typeName, zoneName }: {
               <Chip key={m} pressed={expected === m} onClick={() => setExpected(m)}>{durationText(m)}</Chip>
             ))}
           </div>
+          {typeId !== null && <ExpectedHint typeId={typeId} />}
           <span className="field-hint">بعدها تظهر المهمة «تجاوزت وقتها» عندك.</span>
         </div>
         {error && <p className="field-error" role="alert">{error}</p>}
@@ -445,3 +458,10 @@ export function TaskDialog({ task, tech, participants, typeName, zoneName, now, 
   )
 }
 
+
+/** «المعتاد لهالنوع: 45 دقيقة» under the time choices, once enough tasks of the kind are done. */
+function ExpectedHint({ typeId }: { typeId: number }) {
+  const tasks = useTasks()
+  const m = typicalMinutes(tasks ?? [], typeId)
+  return m ? <span className="expected-hint">المعتاد لهالنوع (من آخر المهام المنجزة): <b className="num">{durationText(m)}</b></span> : null
+}

@@ -106,3 +106,50 @@ export function durationText(minutes: number): string {
  */
 export const international = (phone: string, code: WaCode = 970) => `${code}${phone.replace(/^0/, '')}`
 export type WaCode = 970 | 972
+
+// ---------- Before a task is written: has this subscriber called before? (plan 2, L3) ----------
+
+const foldName = (s: string) =>
+  s.replace(/[ً-ْـ]/g, '').replace(/[أإآٱ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/ؤ/g, 'و').replace(/ئ/g, 'ي').replace(/\s+/g, ' ').trim()
+
+export interface SubscriberHistory {
+  /** Tasks for him still open (not done, not cancelled), newest first. */
+  open: Task[]
+  /** Tasks for him in the last 30 days (cancelled ones not counted). */
+  lastMonth: number
+}
+
+/** Same subscriber = the same name (spelling folded, two words at least) or the same phone. */
+export function subscriberHistory(tasks: Task[], name: string, phone: string | null, now: Date, exceptId?: string): SubscriberHistory {
+  const n = foldName(name)
+  const byName = n.split(' ').length >= 2
+  const p = phone && /^05\d{8}$/.test(phone) ? phone : null
+  if (!byName && !p) return { open: [], lastMonth: 0 }
+  const since = now.getTime() - 30 * 86_400_000
+  const mine = tasks.filter((t) => t.id !== exceptId && t.status !== 'cancelled' && ((byName && foldName(t.subscriberName ?? '') === n) || (!!p && t.subscriberPhone === p)))
+  return {
+    open: mine.filter(isOpen).sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    lastMonth: mine.filter((t) => Date.parse(t.createdAt) >= since).length,
+  }
+}
+
+// ---------- The expected time, learned from the tasks of the same kind (plan 2, L4) ----------
+
+/**
+ * The median time the last 30 finished tasks of this kind took (from start to done), as the nearest
+ * choice in EXPECTED_OPTIONS. Under 3 minutes or over 8 hours does not count (forgotten or tapped by
+ * mistake). Fewer than 5 such tasks: null (keep the usual 30 minutes).
+ */
+export function typicalMinutes(tasks: Task[], typeId: number): number | null {
+  const took = tasks
+    .filter((t) => t.typeId === typeId && t.status === 'done' && t.startedAt && t.completedAt)
+    .sort((a, b) => b.completedAt!.localeCompare(a.completedAt!))
+    .slice(0, 30)
+    .map((t) => (Date.parse(t.completedAt!) - Date.parse(t.startedAt!)) / 60_000)
+    .filter((m) => m >= 3 && m <= 480)
+    .sort((a, b) => a - b)
+  if (took.length < 5) return null
+  const mid = took.length / 2
+  const median = took.length % 2 ? took[Math.floor(mid)]! : (took[mid - 1]! + took[mid]!) / 2
+  return EXPECTED_OPTIONS.reduce((best, m) => (Math.abs(m - median) < Math.abs(best - median) ? m : best), EXPECTED_OPTIONS[0]!)
+}
