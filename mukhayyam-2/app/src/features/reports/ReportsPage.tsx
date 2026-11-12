@@ -175,12 +175,12 @@ export function ReportTable({ section }: { section: Section }) {
       </thead>
       <tbody>
         {section.rows.map((r, i) => (
-          <tr key={i}>{r.map((c, j) => <td key={j} className={j === 0 ? 'l' : 'num'}>{show(c)}</td>)}</tr>
+          <tr key={i}>{r.map((c, j) => <td key={j} className={j === 0 ? 'l' : 'num'} data-label={section.columns[j]}>{show(c)}</td>)}</tr>
         ))}
       </tbody>
       {section.total && (
         <tfoot>
-          <tr>{section.total.map((c, j) => <td key={j} className={j === 0 ? 'l' : 'num'}>{show(c)}</td>)}</tr>
+          <tr>{section.total.map((c, j) => <td key={j} className={j === 0 ? 'l' : 'num'} data-label={section.columns[j]}>{show(c)}</td>)}</tr>
         </tfoot>
       )}
     </table>
