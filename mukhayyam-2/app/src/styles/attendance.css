@@ -14,24 +14,24 @@
 }
 .att-row:hover { box-shadow: var(--shadow-lg); }
 .att-name { flex: 1; min-width: 0; display: grid; }
-.att-name small { color: var(--muted); font-size: 12px; }
-.att-times { display: grid; justify-items: end; font-size: 13px; color: var(--ink-2); }
+.att-name small { color: var(--muted); font-size: var(--fs-xs); }
+.att-times { display: grid; justify-items: end; font-size: 0.8125rem; color: var(--ink-2); }
 .att-tags { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; min-width: 120px; }
 
 .week-bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; }
 .week-label { display: grid; text-align: center; min-width: 200px; }
-.week-label span { font-size: 12.5px; color: var(--muted); }
+.week-label span { font-size: 0.78125rem; color: var(--muted); }
 .week-print { margin-inline-start: auto; }
 .week-card { padding: 0; overflow: hidden; }
 .week-scroll { overflow-x: auto; }
 table.week { width: 100%; border-collapse: collapse; min-width: 900px; }
-.week th, .week td { padding: 0; border-bottom: 1px solid var(--line-2); text-align: center; font-size: 13px; }
+.week th, .week td { padding: 0; border-bottom: 1px solid var(--line-2); text-align: center; font-size: 0.8125rem; }
 .week thead th { padding: 10px 6px; color: var(--muted); font-weight: 700; background: var(--surface-2); }
-.week thead th small { display: block; font-weight: 400; font-size: 11.5px; }
+.week thead th small { display: block; font-weight: 400; font-size: 0.71875rem; }
 .week thead th[data-today] { color: var(--brand); }
 .week .week-person { text-align: start; padding: 10px 14px; min-width: 150px; background: var(--surface); position: sticky; inset-inline-start: 0; z-index: 1; }
-.week tbody .week-person b { display: block; font-size: 14px; }
-.week tbody .week-person small { color: var(--muted); font-weight: 400; font-size: 11.5px; }
+.week tbody .week-person b { display: block; font-size: 0.875rem; }
+.week tbody .week-person small { color: var(--muted); font-weight: 400; font-size: 0.71875rem; }
 .week-cell {
   width: 100%; min-height: 58px; padding: 6px 4px; display: grid; place-content: center; gap: 3px;
   border: 0; background: none; font: inherit; color: inherit; cursor: pointer;
@@ -41,10 +41,10 @@ table.week { width: 100%; border-collapse: collapse; min-width: 900px; }
 .week td[data-status='absent'] { background: color-mix(in srgb, var(--danger-soft) 70%, transparent); }
 .week td[data-status='off'], .week td[data-status='holiday'] { background: repeating-linear-gradient(45deg, transparent 0 6px, var(--surface-2) 6px 12px); }
 .week td[data-status='leave'] { background: var(--info-soft); }
-.tag { font-style: normal; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: var(--sunken); color: var(--muted); justify-self: center; }
+.tag { font-style: normal; font-size: 0.6875rem; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: var(--sunken); color: var(--muted); justify-self: center; }
 .tag.warn { background: var(--warn-soft); color: var(--warn); }
 .tag.ok { background: var(--ok-soft); color: var(--ok); }
-.week-mark { font-size: 12.5px; font-weight: 700; color: var(--muted); }
+.week-mark { font-size: 0.78125rem; font-weight: 700; color: var(--muted); }
 .week-mark.absent { color: var(--danger); }
 .week-mark.leave { color: var(--info); }
 .week td.total { padding: 8px; font-weight: 800; min-width: 64px; }
@@ -86,53 +86,53 @@ table.week { width: 100%; border-collapse: collapse; min-width: 900px; }
 /* ---------- The scan page ---------- */
 .scan { max-width: 480px; margin: 0 auto; padding: 18px 16px 40px; display: grid; gap: 14px; min-height: 100dvh; align-content: start; }
 .scan-step { padding: 20px; display: grid; gap: 12px; text-align: center; }
-.scan-step h1 { margin: 0; font-size: 24px; }
+.scan-step h1 { margin: 0; font-size: var(--fs-xl); }
 .scan-step p { margin: 0; }
 .scan-people { display: grid; gap: 8px; margin-top: 6px; }
 .scan-person {
   display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-radius: var(--r-in);
-  border: 1px solid var(--line); background: var(--surface-2); font: inherit; font-size: 16px; font-weight: 700; color: var(--ink); cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface-2); font: inherit; font-size: 1rem; font-weight: 700; color: var(--ink); cursor: pointer;
 }
 .scan-person:hover { border-color: var(--brand); }
 .scan-person svg { color: var(--brand); }
 .scan-done { padding: 28px 20px 18px; display: grid; justify-items: center; gap: 4px; text-align: center; }
 .scan-ico { width: 74px; height: 74px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: linear-gradient(150deg, #2f9e6b, #1d7a50); box-shadow: 0 16px 34px -16px #1d7a50; }
 .scan-done.out .scan-ico { background: linear-gradient(150deg, var(--brand-hi), var(--brand-lo)); box-shadow: 0 16px 34px -16px var(--brand); }
-.scan-hello { margin: 12px 0 0; color: var(--muted); font-size: 16px; }
-.scan-done h1 { margin: 0; font-size: 28px; }
-.scan-time { margin: 2px 0 6px; font-size: 40px; font-weight: 800; letter-spacing: -1px; }
+.scan-hello { margin: 12px 0 0; color: var(--muted); font-size: 1rem; }
+.scan-done h1 { margin: 0; font-size: 1.75rem; }
+.scan-time { margin: 2px 0 6px; font-size: 2.5rem; font-weight: 800; letter-spacing: -1px; }
 .scan-done p { margin: 0; }
 .scan-today { list-style: none; margin: 14px 0 0; padding: 12px 0 0; border-top: 1px dashed var(--line-2); display: grid; gap: 6px; width: 100%; }
-.scan-today li { display: flex; align-items: center; justify-content: center; gap: 6px; color: var(--ink-2); font-size: 14px; }
+.scan-today li { display: flex; align-items: center; justify-content: center; gap: 6px; color: var(--ink-2); font-size: 0.875rem; }
 .scan-today svg { color: var(--ok); }
-.scan-notme { margin-top: 14px; border: 0; background: none; color: var(--muted); font: inherit; font-size: 13px; text-decoration: underline; cursor: pointer; }
+.scan-notme { margin-top: 14px; border: 0; background: none; color: var(--muted); font: inherit; font-size: 0.8125rem; text-decoration: underline; cursor: pointer; }
 
 
 /* Clock times: arrival dark green, leaving mulberry, a dash between; big and bold everywhere. */
 .inout { display: inline-flex; align-items: baseline; gap: 6px; white-space: nowrap; line-height: 1.2; }
-.inout b { font-size: 16px; font-weight: 800; letter-spacing: -.2px; }
+.inout b { font-size: 1rem; font-weight: 800; letter-spacing: -.2px; }
 .t-in { color: var(--t-in); }
 .t-out { color: var(--t-out); }
 .t-dash { color: var(--muted); font-weight: 700; }
-.wk-open { font-size: 11.5px; font-weight: 700; color: var(--warn); }
+.wk-open { font-size: 0.71875rem; font-weight: 700; color: var(--warn); }
 .att-punches .punch-time.in .time-btn b { color: var(--t-in); }
 .att-punches .punch-time.out .time-btn b { color: var(--t-out); }
 .punch-time .time-btn { min-height: 46px; min-width: 104px; padding: 4px 10px; }
-.punch-time .time-btn b { font-size: 18px; }
+.punch-time .time-btn b { font-size: var(--fs-lg); }
 
 .att-place { display: grid; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--line-2); }
 .att-place p { margin: 0; }
 .att-place .input { max-width: 160px; }
 
 /* The reason of a leave, under the word «إجازة». */
-.wk-why { display: block; margin-top: 3px; font-size: 11.5px; font-weight: 400; color: var(--ink-2); line-height: 1.3; white-space: normal; }
+.wk-why { display: block; margin-top: 3px; font-size: 0.71875rem; font-weight: 400; color: var(--ink-2); line-height: 1.3; white-space: normal; }
 .att-tags .wk-why { margin-top: 0; }
-.quick-why .chip { font-size: 13px; padding: 6px 12px; }
+.quick-why .chip { font-size: 0.8125rem; padding: 6px 12px; }
 
 .att-net { margin-top: 14px; }
 .att-ips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
 .att-ips li { display: inline-flex; align-items: center; gap: 8px; padding: 4px 6px 4px 12px; border-radius: 999px; background: var(--ok-soft); color: var(--ok); font-weight: 700; }
-.att-net-note { font-size: 13px; margin: 0; }
+.att-net-note { font-size: 0.8125rem; margin: 0; }
 
 /* On a wide screen the people of the day sit two to a row, so a row is not a long empty strip. */
 @media (min-width: 1000px) {

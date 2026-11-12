@@ -10,6 +10,13 @@
   --topbar-h: 72px;
   --tabbar-h: 74px;
   --safe-b: env(safe-area-inset-bottom, 0px);
+  /* One type scale. In rem, so the «large text» setting (html font-size) grows every size together. */
+  --fs-xs: .75rem;     /* 12px */
+  --fs-sm: .84375rem;  /* 13.5px */
+  --fs-md: .9375rem;   /* 15px */
+  --fs-lg: 1.125rem;   /* 18px */
+  --fs-xl: 1.5rem;     /* 24px */
+  --fs-2xl: 2rem;      /* 32px */
 }
 
 :root[data-theme='light'] {

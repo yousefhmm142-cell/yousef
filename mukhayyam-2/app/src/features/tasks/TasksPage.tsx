@@ -54,7 +54,8 @@ export function TasksPage() {
   const people=useLiveQuery(()=>db.employees.toArray(),[])
   const taskSearch=useTaskSearch(search,tasks,people,types,zones)
   const searching=!!fold(search)
-  const [picked, setView] = useState<View | null>(null)
+  // «?view=late» (from the home page's «بدها انتباهك») opens on that list.
+  const [picked, setView] = useState<View | null>(() => { const v = new URLSearchParams(location.search).get('view'); return v === 'late' || v === 'open' || v === 'today' || v === 'waiting' || v === 'all' ? v : null })
   const [who, setWho] = useState<string | null>(null)
   // null = today (the live board); a past day shows what happened that day.
   const [pastDay, setPastDay] = useState<ISODate | null>(null)

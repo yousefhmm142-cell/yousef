@@ -1,8 +1,14 @@
-import { createContext, useContext } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../data/db'
-import { dayName } from '../../lib/dates'
-import { isOpen, isOverdue } from '../tasks/model'
+import { dayName, todayISO } from '../../lib/dates'
+import { useEmployee } from '../../auth/AuthProvider'
+import { isDemo } from '../../config'
+import { rejectedWrites } from '../../data/rejected'
+import { defaultAlertSettings } from '../generation/model'
+import { batchSaved, listBatches } from '../readings/repo'
+import { smsInfo } from '../sms/repo'
+import { buildAttention, type Attention, type AttentionInput } from './attention'
 
 // The manager's home page: what happened lately (from what this device already holds, so it is
 // instant and works offline) and what needs attention now.
@@ -68,28 +74,69 @@ export function useCachedFeed(): FeedEvent[] | undefined {
   }, [])
 }
 
-export interface Attention {
-  key: string
-  to: string
-  tone: 'warn' | 'danger' | 'info'
-  title: string
-  detail: string
-}
+export type { Attention } from './attention'
 
-/** Things that need the manager now: approvals waiting, late tasks, fuel running low, unsent work. */
+/**
+ * Everything that waits for the manager now (see attention.ts). Live from this device; the SMS balance,
+ * the readings week and the refused writes are looked up every 30 minutes.
+ */
 export function useAttention(now: Date): Attention[] | undefined {
+  const me = useEmployee()
+  const manager = me.role === 'admin' || me.role === 'manager'
+  const [extra, setExtra] = useState<{ sms: number | null; readings: AttentionInput['readings']; rejected: AttentionInput['rejected'] }>({ sms: null, readings: null, rejected: [] })
+  useEffect(() => {
+    let alive = true
+    async function look() {
+      const rejected = (await rejectedWrites(me.id).catch(() => [])).map((r) => ({ label: r.label, code: r.code }))
+      let sms: number | null = null
+      let readings: AttentionInput['readings'] = null
+      if (manager && navigator.onLine && !isDemo) {
+        try {
+          const b = (await smsInfo(true)).balance
+          if (b && /^-?\d+(\.\d+)?$/.test(b) && Number(b) >= 0) sms = Number(b)
+        } catch { /* no SMS account yet */ }
+        try {
+          const open = (await listBatches()).find((b) => b.status === 'open')
+          const rows = open ? await batchSaved(open.id) : null
+          if (open && rows) {
+            const areas = new Map<string, boolean>()
+            for (const r of rows) areas.set(r.area, (areas.get(r.area) ?? false) || !!r.mode)
+            readings = { title: open.title, unassigned: [...areas].filter(([, has]) => !has).map(([area]) => area).sort((a, b) => a.localeCompare(b, 'ar')) }
+          }
+        } catch { /* readings not reachable now */ }
+      }
+      if (alive) setExtra({ sms, readings, rejected })
+    }
+    void look()
+    const t = window.setInterval(() => void look(), 30 * 60_000)
+    return () => { alive = false; window.clearInterval(t) }
+  }, [me.id, manager])
+
+  const minute = Math.floor(now.getTime() / 60_000)
   return useLiveQuery(async () => {
-    const [reports, sheets, tasks] = await Promise.all([
-      db.siteReports.where('status').equals('submitted').toArray(),
-      db.distributionSheets.where('status').equals('submitted').toArray(),
+    const [reports, sheets, tasks, generators, settings, people, types, seals] = await Promise.all([
+      db.siteReports.toArray(),
+      db.distributionSheets.toArray(),
       db.tasks.toArray(),
+      db.generators.toArray(),
+      db.alertSettings.get(1),
+      db.employees.toArray(),
+      db.taskTypes.toArray(),
+      manager || me.canSeals ? db.seals.where('status').equals('issued').toArray() : Promise.resolve(null),
     ])
-    const list: Attention[] = []
-    if (reports.length) list.push({ key: 'reports', to: '/generation', tone: 'warn', title: `${reports.length} ${reports.length === 1 ? 'تقرير توليد' : 'تقارير توليد'} بانتظار اعتمادك`, detail: reports.map((r) => dayName(r.reportDate)).join('، ') })
-    if (sheets.length) list.push({ key: 'sheets', to: '/distribution', tone: 'warn', title: `${sheets.length} ${sheets.length === 1 ? 'كشف توزيع' : 'كشوف توزيع'} بانتظار اعتمادك`, detail: sheets.map((r) => dayName(r.sheetDate)).join('، ') })
-    const open = tasks.filter(isOpen)
-    const late = open.filter((t) => isOverdue(t, now))
-    if (late.length) list.push({ key: 'late', to: '/tasks', tone: 'danger', title: `${late.length} مهمة تجاوزت وقتها`, detail: `من ${open.length} مفتوحة` })
-    return list
-  }, [now.getMinutes()])
+    const at = new Date(minute * 60_000)
+    return buildAttention({
+      now: at,
+      today: todayISO(),
+      gazaHour: Number(new Intl.DateTimeFormat('en-US', { hour: 'numeric', hourCycle: 'h23', timeZone: 'Asia/Gaza' }).format(at)),
+      reports, sheets, tasks, generators,
+      settings: settings ?? defaultAlertSettings,
+      names: new Map(people.map((p) => [p.id, p.fullName])),
+      seals,
+      readings: extra.readings,
+      smsBalance: extra.sms,
+      rejected: extra.rejected,
+      typeName: (id) => types.find((t) => t.id === id)?.name ?? 'مهمة',
+    })
+  }, [minute, extra, manager, me.canSeals])
 }

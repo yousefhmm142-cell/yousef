@@ -7,7 +7,7 @@ body {
   background-image: var(--bg-art);
   background-attachment: fixed;
   color: var(--ink);
-  font: 400 15px/1.65 var(--font);
+  font: 400 var(--fs-md)/1.65 var(--font);
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
   transition: background-color .4s, color .3s;

@@ -8,7 +8,7 @@
 .table-wrap { overflow-x: auto; }
 .tbl th.l, .tbl td.l { text-align: start; }
 .tbl td.neg { color: var(--danger); }
-.select.sm { height: 40px; width: auto; min-width: 160px; font-size: 13.5px; }
+.select.sm { height: 40px; width: auto; min-width: 160px; font-size: var(--fs-sm); }
 
 .field-hint.warn { color: var(--warn); margin: 0; }
 
@@ -37,6 +37,6 @@
 .trend-bar[data-on] { opacity: 1; }
 .trend-base { stroke: var(--line); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .trend-avg { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 4 4; vector-effect: non-scaling-stroke; }
-.trend-axis { display: flex; justify-content: space-between; color: var(--muted); font-size: 12px; margin-top: 4px; direction: rtl; }
+.trend-axis { display: flex; justify-content: space-between; color: var(--muted); font-size: var(--fs-xs); margin-top: 4px; direction: rtl; }
 @media (max-width: 900px) { .trends { grid-template-columns: 1fr; } }
 @media print { .trends { display: none; } }

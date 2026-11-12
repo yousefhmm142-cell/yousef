@@ -8,10 +8,10 @@
 }
 .stepper.scroll::-webkit-scrollbar { display: none; }
 .stepper.scroll .step { flex: none; padding: 0 14px; scroll-snap-align: center; white-space: nowrap; }
-.stepper.scroll .step-dot .num { font-size: 12px; font-weight: 800; }
+.stepper.scroll .step-dot .num { font-size: var(--fs-xs); font-weight: 800; }
 @media (max-width: 560px) {
   .stepper.scroll { border-radius: 999px; }
-  .stepper.scroll .step { flex-direction: row; gap: 6px; font-size: 13px; padding: 0 12px; border-radius: 999px; }
+  .stepper.scroll .step { flex-direction: row; gap: 6px; font-size: 0.8125rem; padding: 0 12px; border-radius: 999px; }
 }
 
 .fcard[data-off] { background: var(--surface-2); }
@@ -26,16 +26,16 @@
 .summary-row.total b { color: var(--ink); font-weight: 800; }
 .entry.wide { max-width: 1280px; }
 
-.kpi-text { font-size: 22px; letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kpi-text { font-size: 1.375rem; letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ---------- Day bar ---------- */
 .tl { padding: 12px 18px 16px; display: grid; gap: 8px; }
 .tl-row { display: grid; grid-template-columns: 130px 1fr; align-items: center; gap: 14px; }
-.tl-label b { display: block; font-size: 14px; }
-.tl-label small { display: block; font-size: 12px; color: var(--muted); }
+.tl-label b { display: block; font-size: 0.875rem; }
+.tl-label small { display: block; font-size: var(--fs-xs); color: var(--muted); }
 .tl-ticks { position: relative; height: 18px; }
 .tl-ticks i {
-  position: absolute; top: 0; transform: translateX(50%); font-style: normal; font-size: 12px; color: var(--faint); white-space: nowrap;
+  position: absolute; top: 0; transform: translateX(50%); font-style: normal; font-size: var(--fs-xs); color: var(--faint); white-space: nowrap;
 }
 .tl-ticks i:first-child { transform: none; }
 .tl-track {
@@ -52,8 +52,8 @@
   background: linear-gradient(180deg, color-mix(in srgb, var(--brand-hi) 34%, transparent), color-mix(in srgb, var(--brand) 10%, transparent));
   border-top: 2px solid var(--brand-hi); display: grid; place-items: start center;
 }
-.tl-load b { margin-top: 2px; font-size: 12px; font-weight: 800; color: var(--brand-lo); white-space: nowrap; line-height: 1.1; }
-.tl-load b small { font-size: 12px; font-weight: 700; margin-inline-start: 1px; }
+.tl-load b { margin-top: 2px; font-size: var(--fs-xs); font-weight: 800; color: var(--brand-lo); white-space: nowrap; line-height: 1.1; }
+.tl-load b small { font-size: var(--fs-xs); font-weight: 700; margin-inline-start: 1px; }
 :root[data-theme='dark'] .tl-load b { color: #ffd2d8; }
 .tl-seg {
   position: absolute; inset-inline: 0; bottom: 3px; height: 11px; border-radius: 6px;
@@ -64,7 +64,7 @@
 /* ---------- Run grid ---------- */
 .matrix td { vertical-align: top; }
 .zr { display: grid; gap: 4px; }
-.zr-loads { font-size: 13px; font-weight: 700; color: var(--ink-2); }
+.zr-loads { font-size: 0.8125rem; font-weight: 700; color: var(--ink-2); }
 .zr-loads small { font-weight: 400; color: var(--faint); }
 .zr-loads.warn { color: var(--warn); }
 
@@ -72,8 +72,8 @@
   .tl { padding: 10px 14px 14px; }
   .tl-row { grid-template-columns: 92px 1fr; gap: 10px; }
   .tl-ticks i[data-odd] { display: none; }
-  .tl-load b { font-size: 12px; }
-  .kpi-text { font-size: 18px; }
+  .tl-load b { font-size: var(--fs-xs); }
+  .kpi-text { font-size: var(--fs-lg); }
 }
 
 /* ---------- Printing: the paper form is landscape ---------- */
@@ -104,11 +104,11 @@
 .zone-item:hover { border-color: color-mix(in srgb, var(--brand) 35%, var(--line)); }
 .zone-item:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--brand-soft); border-color: var(--brand); }
 .zone-text { display: grid; min-width: 0; line-height: 1.35; }
-.zone-text b { font-size: 14px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.zone-text small { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.zone-text b { font-size: 0.875rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.zone-text small { font-size: var(--fs-xs); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .zone-dot {
   flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
-  background: var(--sunken); color: var(--muted); font-size: 13px; font-weight: 800;
+  background: var(--sunken); color: var(--muted); font-size: 0.8125rem; font-weight: 800;
 }
 .zone-item[data-done] .zone-dot { background: var(--ok-soft); color: var(--ok); }
 .zone-item[aria-current] { border-color: var(--brand); background: var(--brand-soft); color: var(--brand); }
@@ -141,7 +141,7 @@
 
 /* All the readings, then their average after them. */
 .zr-loads { display: grid; gap: 2px; }
-.zr-all { font-weight: 400; font-size: 12px; color: var(--muted); }
+.zr-all { font-weight: 400; font-size: var(--fs-xs); color: var(--muted); }
 .zr-avg { font-weight: 800; }
 @media print {
   .print-sheet .ps-readings { display: block; font-size: 8pt; font-weight: 400; line-height: 1.25; }
@@ -160,12 +160,12 @@
 .tl-wave { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .tl-wave .w-ok path:last-child { stroke: var(--ok); stroke-width: 2.2px; stroke-linejoin: round; }
 .tl-wave .w-warn path:last-child { stroke: #D49B00; stroke-width: 2.2px; stroke-linejoin: round; }
-.tl-val { position: absolute; left: 50%; transform: translate(-50%, -2px); font-size: 12px; font-weight: 800; white-space: nowrap; color: #17643f;
+.tl-val { position: absolute; left: 50%; transform: translate(-50%, -2px); font-size: var(--fs-xs); font-weight: 800; white-space: nowrap; color: #17643f;
   background: color-mix(in srgb, var(--surface) 82%, transparent); padding: 0 5px; border-radius: 6px; line-height: 1.35; }
-.tl-val small { font-size: 12px; margin-inline-start: 1px; }
+.tl-val small { font-size: var(--fs-xs); margin-inline-start: 1px; }
 .tl-val[data-warn] { color: #9a6b00; }
 :root[data-theme='dark'] .tl-val { color: #8ff0bd; background: #0e1014cc; }
 :root[data-theme='dark'] .tl-val[data-warn] { color: #ffd166; }
 .tl-key-ok { color: var(--ok); font-weight: 700; }
 .tl-key-warn { color: #B88600; }
-@media (max-width: 560px) { .tl-val { font-size: 12px; } .tl-val small { display: none; } }
+@media (max-width: 560px) { .tl-val { font-size: var(--fs-xs); } .tl-val small { display: none; } }

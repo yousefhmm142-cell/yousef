@@ -12,10 +12,11 @@ import {
   BookOpen,
   Settings,
   Search,
+  Info,
 } from 'lucide-react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { useEmployee } from '../../auth/AuthProvider'
 import { db } from '../../data/db'
 import { todayISO } from '../../lib/dates'
@@ -25,7 +26,9 @@ import { usePresent } from '../../data/presence'
 import { formatTime } from '../../lib/format'
 import { useNow } from '../../lib/useNow'
 import { roleLabel, type Role } from '../../types'
-import { Avatar } from '../../ui/primitives'
+import { Avatar, Button } from '../../ui/primitives'
+import { Dialog } from '../../ui/Dialog'
+import type { Attention } from './attention'
 import { useAttention, useFeed, useActivityConnection, type EventKind, type FeedEvent } from './activity'
 
 const kindIcon: Record<EventKind, typeof Radio> = {
@@ -49,32 +52,86 @@ export function ago(iso: string, now: Date): string {
   return `${formatTime(new Date(iso))} · قبل ${Math.floor(hours / 24)} يوم`
 }
 
-/** What needs the manager's decision or notice, first. */
+/** What needs the manager's decision or notice, first. Each opens in a window here (not a new page). */
 export function AttentionCard() {
   const now = useNow(60_000)
   const items = useAttention(now)
+  const [open, setOpen] = useState<Attention | 'all' | null>(null)
   if (!items) return null
   if (!items.length)
     return (
-      <section className="attention ok glass" aria-label="يحتاج انتباهك">
+      <section className="attention ok glass" aria-label="بدها انتباهك">
         <CheckCircle2 size={20} aria-hidden="true" />
-        <b>كل شيء تمام</b>
-        <span>لا شيء ينتظر اعتمادك ولا مهام متأخرة.</span>
+        <b>كل شي تمام</b>
+        <span>ولا إشي بستنى اعتمادك، ولا مهام متأخرة، ولا تنبيهات.</span>
       </section>
     )
+  const shown = items.slice(0, 5)
   return (
-    <section className="attention-list" aria-label="يحتاج انتباهك">
-      {items.map((a) => (
-        <Link key={a.key} to={a.to} className="attention glass" data-tone={a.tone}>
-          <AlertTriangle size={20} aria-hidden="true" />
-          <span className="attention-text">
-            <b>{a.title}</b>
-            {a.detail && <small>{a.detail}</small>}
-          </span>
-          <ChevronLeft size={18} aria-hidden="true" />
-        </Link>
-      ))}
+    <section className="attention-wrap" aria-label="بدها انتباهك">
+      <div className="attention-head">
+        <h2>بدها انتباهك</h2>
+        <span className="num">{items.length}</span>
+        {items.length > shown.length && <button type="button" className="link-btn" onClick={() => setOpen('all')}>كل التنبيهات ({items.length})</button>}
+      </div>
+      <div className="attention-list">
+        {shown.map((a) => <AttentionButton key={a.key} a={a} onOpen={() => setOpen(a)} />)}
+      </div>
+      {open && <AttentionDialog item={open} all={items} onPick={setOpen} onClose={() => setOpen(null)} />}
     </section>
+  )
+}
+
+const toneIcon = { danger: AlertTriangle, warn: AlertTriangle, info: Info } as const
+
+function AttentionButton({ a, onOpen }: { a: Attention; onOpen(): void }) {
+  const Icon = toneIcon[a.tone]
+  return (
+    <button type="button" className="attention glass" data-tone={a.tone} onClick={onOpen}>
+      <Icon size={20} aria-hidden="true" />
+      <span className="attention-text">
+        <b>{a.title}</b>
+        {a.detail && <small>{a.detail}</small>}
+      </span>
+      <ChevronLeft size={18} aria-hidden="true" />
+    </button>
+  )
+}
+
+/** One alert in detail (what exactly, and a way to its page), or the whole list. */
+function AttentionDialog({ item, all, onPick, onClose }: { item: Attention | 'all'; all: Attention[]; onPick(a: Attention | 'all'): void; onClose(): void }) {
+  const navigate = useNavigate()
+  const go = (to: string) => { onClose(); navigate(to) }
+  if (item === 'all')
+    return (
+      <Dialog open onClose={onClose} title="كل التنبيهات" subtitle={`${all.length} بدهم انتباهك`} icon={<AlertTriangle size={18} />} className="attention-dialog">
+        <div className="attention-list one">{all.map((a) => <AttentionButton key={a.key} a={a} onOpen={() => onPick(a)} />)}</div>
+      </Dialog>
+    )
+  const Icon = toneIcon[item.tone]
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      title={item.title}
+      subtitle={item.detail}
+      icon={<Icon size={18} />}
+      className="attention-dialog"
+      footer={
+        <>
+          {all.length > 1 && <Button variant="ghost" onClick={() => onPick('all')}>كل التنبيهات</Button>}
+          <Button variant="primary" icon={<ChevronLeft size={17} />} onClick={() => go(item.to)}>افتح {item.toLabel}</Button>
+        </>
+      }
+    >
+      <ul className="attention-lines" data-tone={item.tone}>
+        {item.lines.map((l, i) => (
+          <li key={i}>
+            {l.to ? <button type="button" className="link-row" onClick={() => go(l.to!)}><span>{l.text}</span><ChevronLeft size={16} aria-hidden="true" /></button> : <span>{l.text}</span>}
+          </li>
+        ))}
+      </ul>
+    </Dialog>
   )
 }
 
