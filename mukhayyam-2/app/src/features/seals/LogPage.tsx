@@ -48,7 +48,7 @@ export function SealLogPage() {
   const ready = useSealsReady()
   const toast = useToast()
   const data = useSealData()
-  const [query, setQuery] = useState('')
+  const [query, setQuery] = useState(() => new URLSearchParams(location.search).get('q') ?? '')
   const [filters, setFilters] = useState<SearchFilters>(noFilters)
   const [sort, setSort] = useState<GroupSort>('newest')
   const [view, setView] = useState<View>('groups')

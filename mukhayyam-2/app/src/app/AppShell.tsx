@@ -9,6 +9,7 @@ import { Avatar, Logo } from '../ui/primitives'
 import { StatusBadge, SyncNotice, ThemeToggle } from '../ui/status'
 import { ManagerActivityProvider } from '../features/dashboard/ActivityLive'
 import { navFor, type NavItem } from './nav'
+import { GlobalSearch } from './GlobalSearch'
 
 const MAX_TABS = 5
 const accountTab: NavItem = { to: '/account', label: 'حسابي', icon: UserRound }
@@ -111,6 +112,7 @@ export function AppShell() {
         )}
 
         <div className="topbar-end">
+          <GlobalSearch />
           {hasSettings && (
             <NavLink to="/settings" className="settings-btn" aria-label="الإعدادات" title="الإعدادات">
               <Settings size={22} aria-hidden="true" />

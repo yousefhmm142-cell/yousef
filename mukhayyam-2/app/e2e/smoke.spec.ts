@@ -66,3 +66,13 @@ test('a technician opens his tasks and attendance', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'مهامي (الفني)' })).toBeVisible()
   expect(errors).toEqual([])
 })
+
+test('the global search opens a page with Ctrl+K and Enter', async ({ page }) => {
+  const errors = watchErrors(page)
+  await login(page, '0590000002')
+  await page.keyboard.press('Control+k')
+  await page.getByRole('combobox', { name: 'بحث' }).fill('الحضور')
+  await page.keyboard.press('Enter')
+  await expect(page).toHaveURL(/\/attendance$/)
+  expect(errors).toEqual([])
+})

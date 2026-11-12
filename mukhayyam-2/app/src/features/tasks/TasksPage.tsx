@@ -50,7 +50,8 @@ export function TasksPage() {
   const zones = useZones()
   const technicians = useTechnicians()
   const now = useNow(30_000)
-  const [search,setSearch]=useState('')
+  // The search box and the open task can come in the link (from the global search).
+  const [search,setSearch]=useState(() => new URLSearchParams(location.search).get('q') ?? '')
   const people=useLiveQuery(()=>db.employees.toArray(),[])
   const taskSearch=useTaskSearch(search,tasks,people,types,zones)
   const searching=!!fold(search)
@@ -62,7 +63,7 @@ export function TasksPage() {
   const [creating, setCreating] = useState(false)
   const [preparing, setPreparing] = useState(false)
   const [giving, setGiving] = useState<string | null>(null)
-  const [openId, setOpenId] = useState<string | null>(null)
+  const [openId, setOpenId] = useState<string | null>(() => new URLSearchParams(location.search).get('open'))
 
   // Fresh from the server while this screen is open: a finished task shows up within seconds.
   useEffect(() => {
