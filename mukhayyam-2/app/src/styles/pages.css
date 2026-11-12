@@ -23,7 +23,7 @@
   background: var(--glass); border: 1px solid var(--glass-edge); font-weight: 700; font-size: 0.90625rem; color: var(--ink-2);
   backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
 }
-.login-modules svg { color: var(--brand); }
+.login-modules svg { color: var(--brand-text); }
 
 .login-card { position: relative; isolation: isolate; border-radius: var(--r-xl); padding: 30px 28px; animation: rise .6s .08s var(--ease) both; }
 .login-card::after { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none; background: radial-gradient(ellipse at 50% 55%, var(--ok-soft), transparent 72%); opacity: 0; transition: opacity .45s; }
@@ -37,7 +37,7 @@
 
 .demo { margin-top: 20px; padding-top: 18px; border-top: 1px dashed var(--line); }
 .demo-head { display: grid; gap: 2px; margin-bottom: 12px; }
-.demo-head > b { color: var(--brand); font-size: 0.875rem; }
+.demo-head > b { color: var(--brand-text); font-size: 0.875rem; }
 .demo-head span { font-size: 0.78125rem; color: var(--muted); }
 .demo-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .demo-item {
@@ -95,7 +95,7 @@
 .mod-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
 .mod-icon {
   width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; margin-bottom: 6px;
-  background: var(--brand-soft); color: var(--brand);
+  background: var(--brand-soft); color: var(--brand-text);
 }
 .mod-card b { font-size: 1.03125rem; font-weight: 800; }
 .mod-summary { font-size: var(--fs-sm); color: var(--muted); }
@@ -193,7 +193,7 @@ button.row:hover, a.row:hover { background: var(--surface-2); }
 }
 .install-app > span:nth-child(2) { flex: 1; display: grid; }
 .install-app small { color: var(--muted); font-size: var(--fs-xs); }
-.install-ico { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--brand-soft); color: var(--brand); flex: none; }
+.install-ico { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--brand-soft); color: var(--brand-text); flex: none; }
 
 /* ---------- Manager home: attention, who is online, latest movements ---------- */
 .attention-list { display: grid; gap: 10px; margin-bottom: 14px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
@@ -261,7 +261,7 @@ a.dash-kpi:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
 
 /* ---------- The hourly loads table (screen) ---------- */
 .tbl.hourly th { text-align: center; }
-.tbl.hourly th b { display: block; font-size: 1rem; color: var(--brand); }
+.tbl.hourly th b { display: block; font-size: 1rem; color: var(--brand-text); }
 .tbl.hourly th small { display: block; font-weight: 600; color: var(--muted); font-size: 0.71875rem; }
 .tbl.hourly td.hr-cell { text-align: center; min-width: 78px; }
 .hr-reads { display: block; color: var(--muted); font-size: 0.78125rem; }

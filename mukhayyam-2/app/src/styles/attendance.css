@@ -28,7 +28,7 @@ table.week { width: 100%; border-collapse: collapse; min-width: 900px; }
 .week th, .week td { padding: 0; border-bottom: 1px solid var(--line-2); text-align: center; font-size: 0.8125rem; }
 .week thead th { padding: 10px 6px; color: var(--muted); font-weight: 700; background: var(--surface-2); }
 .week thead th small { display: block; font-weight: 400; font-size: 0.71875rem; }
-.week thead th[data-today] { color: var(--brand); }
+.week thead th[data-today] { color: var(--brand-text); }
 .week .week-person { text-align: start; padding: 10px 14px; min-width: 150px; background: var(--surface); position: sticky; inset-inline-start: 0; z-index: 1; }
 .week tbody .week-person b { display: block; font-size: 0.875rem; }
 .week tbody .week-person small { color: var(--muted); font-weight: 400; font-size: 0.71875rem; }
@@ -94,7 +94,7 @@ table.week { width: 100%; border-collapse: collapse; min-width: 900px; }
   border: 1px solid var(--line); background: var(--surface-2); font: inherit; font-size: 1rem; font-weight: 700; color: var(--ink); cursor: pointer;
 }
 .scan-person:hover { border-color: var(--brand); }
-.scan-person svg { color: var(--brand); }
+.scan-person svg { color: var(--brand-text); }
 .scan-done { padding: 28px 20px 18px; display: grid; justify-items: center; gap: 4px; text-align: center; }
 .scan-ico { width: 74px; height: 74px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: linear-gradient(150deg, #2f9e6b, #1d7a50); box-shadow: 0 16px 34px -16px #1d7a50; }
 .scan-done.out .scan-ico { background: linear-gradient(150deg, var(--brand-hi), var(--brand-lo)); box-shadow: 0 16px 34px -16px var(--brand); }

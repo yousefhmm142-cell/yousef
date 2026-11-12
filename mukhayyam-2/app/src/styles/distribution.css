@@ -111,10 +111,10 @@
   background: var(--sunken); color: var(--muted); font-size: 0.8125rem; font-weight: 800;
 }
 .zone-item[data-done] .zone-dot { background: var(--ok-soft); color: var(--ok); }
-.zone-item[aria-current] { border-color: var(--brand); background: var(--brand-soft); color: var(--brand); }
-.zone-item[aria-current] .zone-text b { color: var(--brand); }
+.zone-item[aria-current] { border-color: var(--brand); background: var(--brand-soft); color: var(--brand-text); }
+.zone-item[aria-current] .zone-text b { color: var(--brand-text); }
 .zone-item[aria-current] .zone-dot { background: var(--brand); color: var(--on-brand, #fff); }
-.zone-item.send .zone-dot { color: var(--brand); }
+.zone-item.send .zone-dot { color: var(--brand-text); }
 /* Phones: "send" takes its own full row under the zones. */
 .zone-item.send { grid-column: 1 / -1; }
 
@@ -167,5 +167,5 @@
 :root[data-theme='dark'] .tl-val { color: #8ff0bd; background: #0e1014cc; }
 :root[data-theme='dark'] .tl-val[data-warn] { color: #ffd166; }
 .tl-key-ok { color: var(--ok); font-weight: 700; }
-.tl-key-warn { color: #B88600; }
+.tl-key-warn { color: var(--warn); }
 @media (max-width: 560px) { .tl-val { font-size: var(--fs-xs); } .tl-val small { display: none; } }

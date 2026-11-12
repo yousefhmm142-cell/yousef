@@ -25,7 +25,7 @@
   display: grid; place-items: center; flex: none;
   background: var(--sunken); color: var(--ink-2);
 }
-.ico-round.brand { background: var(--brand-soft); color: var(--brand); }
+.ico-round.brand { background: var(--brand-soft); color: var(--brand-text); }
 
 /* ---------- Buttons ---------- */
 .btn {
@@ -72,7 +72,7 @@
 .pill.warn { background: var(--warn-soft); color: var(--warn); }
 .pill.danger { background: var(--danger-soft); color: var(--danger); }
 .pill.info { background: var(--info-soft); color: var(--info); }
-.pill.brand { background: var(--brand-soft); color: var(--brand); }
+.pill.brand { background: var(--brand-soft); color: var(--brand-text); }
 
 /* ---------- Fields ---------- */
 .field { display: grid; gap: 6px; }
@@ -99,7 +99,7 @@
 }
 .empty .halo {
   width: 72px; height: 72px; border-radius: 50%; display: grid; place-items: center;
-  background: radial-gradient(circle, var(--brand-soft), transparent 70%); color: var(--brand);
+  background: radial-gradient(circle, var(--brand-soft), transparent 70%); color: var(--brand-text);
 }
 .empty h3 { margin: 0; color: var(--ink); font-size: var(--fs-lg); }
 .empty p { margin: 0; max-width: 360px; }

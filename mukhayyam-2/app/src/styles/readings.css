@@ -11,7 +11,7 @@
 
 .rd-summary { padding: 14px 16px; display: grid; gap: 12px; }
 .rd-count { display: flex; align-items: baseline; gap: 8px; }
-.rd-count b { font-size: 2.125rem; font-weight: 800; color: var(--brand); line-height: 1; }
+.rd-count b { font-size: 2.125rem; font-weight: 800; color: var(--brand-text); line-height: 1; }
 .rd-count span { color: var(--muted); font-weight: 700; }
 .rd-bar { height: 8px; border-radius: 99px; background: var(--sunken); overflow: hidden; }
 .rd-bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--brand), var(--brand-hi)); transition: width .4s ease; }
@@ -19,7 +19,7 @@
 .rd-tools { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 .rd-seg { display: inline-flex; padding: 3px; border-radius: 12px; background: var(--sunken); }
 .rd-seg button { border: 0; background: none; font: inherit; font-weight: 700; padding: 7px 14px; border-radius: 9px; color: var(--ink-2); cursor: pointer; }
-.rd-seg button[aria-pressed='true'] { background: var(--surface); color: var(--brand); box-shadow: var(--shadow); }
+.rd-seg button[aria-pressed='true'] { background: var(--surface); color: var(--brand-text); box-shadow: var(--shadow); }
 .rd-search { flex: 1; min-width: 160px; display: flex; align-items: center; gap: 8px; padding: 0 12px; height: 40px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--surface-2); color: var(--muted); }
 .rd-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; font: inherit; color: var(--ink); }
 
@@ -37,7 +37,7 @@
 .rd-upload { display: grid; gap: 12px; }
 .rd-upload .rd-warn { margin: 0; }
 .rd-upload-n { margin: 0; font-size: 1rem; }
-.rd-upload-n b { font-size: 1.25rem; color: var(--brand); }
+.rd-upload-n b { font-size: 1.25rem; color: var(--brand-text); }
 .rd-upload-areas { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 40vh; overflow: auto; }
 .rd-upload-areas li { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 8px 12px; border-radius: 10px; background: var(--sunken); }
 .rd-upload-areas small { grid-column: 1 / -1; color: var(--muted); overflow-wrap: anywhere; }
@@ -63,7 +63,7 @@
 .rd-who-btn:disabled { cursor: default; opacity: .8; }
 .rd-who-btn > span { display: grid; min-width: 0; }
 .rd-who-btn small { color: var(--warn); font-size: var(--fs-xs); }
-.rd-who-btn.none { border-style: dashed; border-color: color-mix(in srgb, var(--brand) 45%, var(--line)); color: var(--brand); background: var(--brand-soft); }
+.rd-who-btn.none { border-style: dashed; border-color: color-mix(in srgb, var(--brand) 45%, var(--line)); color: var(--brand-text); background: var(--brand-soft); }
 .rd-who-btn.paper { color: var(--info); background: var(--info-soft); border-color: transparent; }
 .rd-who-btn.mixed { color: var(--warn); background: var(--warn-soft); border-color: transparent; }
 .rd-panel { padding: 14px; display: grid; gap: 12px; scroll-margin-top: 90px; }
@@ -88,7 +88,7 @@
 .rd-pick small { color: var(--muted); font-size: 0.78125rem; }
 .rd-pick .paper { background: var(--info-soft); border-color: transparent; }
 .rd-pick-ico { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); color: var(--info); flex: none; }
-.rd-pick-on { position: absolute; top: 8px; inset-inline-end: 8px; color: var(--brand); }
+.rd-pick-on { position: absolute; top: 8px; inset-inline-end: 8px; color: var(--brand-text); }
 .rd-pick-note { margin: 12px 0 0; color: var(--muted); font-size: 0.8125rem; }
 .rd-pick-clear { margin-top: 10px; }
 
@@ -122,11 +122,11 @@
 .rf-ring .fg { stroke: #3ddc97; stroke-linecap: round; transition: stroke-dashoffset .5s var(--ease); }
 .rf-ring b { position: relative; font-size: 1.0625rem; }
 .rf-resume { display: flex; align-items: center; gap: 12px; width: 100%; text-align: start; border: 0; border-radius: 20px; padding: 16px; background: var(--brand-soft); color: var(--ink); font: inherit; cursor: pointer; }
-.rf-resume > svg:first-child { color: var(--brand); flex: none; }
+.rf-resume > svg:first-child { color: var(--brand-text); flex: none; }
 .rf-resume > span { flex: 1; display: grid; gap: 2px; min-width: 0; }
 .rf-resume b { font-size: 1.03125rem; font-weight: 800; }
 .rf-resume small { color: var(--muted); font-size: var(--fs-sm); }
-.rf-resume > svg:last-child { color: var(--brand); flex: none; }
+.rf-resume > svg:last-child { color: var(--brand-text); flex: none; }
 .rf-search { display: flex; align-items: center; gap: 10px; height: 54px; padding: 0 16px; border-radius: 18px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); color: var(--muted); }
 .rf-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; font: inherit; font-size: 1rem; color: var(--ink); }
 .rf-sec { display: grid; gap: 10px; margin-top: 6px; }
@@ -138,7 +138,7 @@
 .rf-chips button[aria-pressed='true'] span { color: #aab1bb; }
 .rf-list { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; overflow: hidden; box-shadow: var(--shadow); }
 .rf-group + .rf-group .rf-row, .rf-group + .rf-group .rf-area { border-top: 1px solid var(--line-2); }
-.rf-area { margin: 0; padding: 10px 16px 4px; font-size: 0.8125rem; font-weight: 800; color: var(--brand); }
+.rf-area { margin: 0; padding: 10px 16px 4px; font-size: 0.8125rem; font-weight: 800; color: var(--brand-text); }
 .rf-empty { margin: 0; padding: 22px; text-align: center; color: var(--muted); }
 .rf-row { display: flex; align-items: center; gap: 12px; width: 100%; text-align: start; border: 0; background: transparent; padding: 12px 14px; font: inherit; color: var(--ink); cursor: pointer; }
 .rf-row:hover { background: var(--sunken); }
@@ -174,9 +174,9 @@
 .rf-cell b { font-size: 1.25rem; font-weight: 800; direction: ltr; line-height: 1.2; }
 .rf-cell small { font-size: 0.78125rem; font-weight: 700; color: var(--ok); }
 .rf-cell small.bad { color: var(--danger); }
-.rf-cell small.sel { color: var(--brand); font-size: 0.8125rem; }
+.rf-cell small.sel { color: var(--brand-text); font-size: 0.8125rem; }
 .rf-cell > small:only-child { color: var(--faint); font-size: 0.8125rem; font-weight: 600; }
-.rf-cell > small.sel:only-child { color: var(--brand); }
+.rf-cell > small.sel:only-child { color: var(--brand-text); }
 .rf-rr.sel .rf-cell { border-color: var(--brand); background: var(--surface); box-shadow: 0 0 0 3px var(--brand-soft); }
 .rf-cell.low, .rf-rr.sel .rf-cell.low { border-color: var(--danger); }
 .rf-cell.done { background: var(--ok-soft); border-color: transparent; }

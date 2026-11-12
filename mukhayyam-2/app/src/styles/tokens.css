@@ -40,17 +40,19 @@
   --ink: #1B1517;
   --ink-2: #3B3236;
   --muted: #6E6468;
-  --faint: #8F868A;
+  --faint: #776E72; /* 4.6:1 on surface-2 (was #8F868A, 3.5:1) */
   --brand: #8E1B2B;
   --brand-hi: #B12638;
   --brand-lo: #5F0F1B;
   --brand-soft: #8e1b2b12;
+  /* Brand red used as text (links, active chips): the same as --brand here, lighter in dark. */
+  --brand-text: #8E1B2B;
   --on-brand: #fff;
-  --ok: #1E7B55; --ok-soft: #1e7b5517;
+  --ok: #1A6C4A; --ok-soft: #1a6c4a17;
   /* Attendance: arrival dark green, leaving mulberry. */
   --t-in: #0E6B3F; --t-out: #7A1E55;
-  --warn: #B25E0B; --warn-soft: #b25e0b17;
-  --danger: #D9412E; --danger-soft: #d9412e14;
+  --warn: #9A5008; --warn-soft: #9a500817;
+  --danger: #C0392B; --danger-soft: #c0392b14;
   --info: #2F5DA8; --info-soft: #2f5da812;
   --shadow: 0 1px 1px #1b151705, 0 14px 34px -18px #1b151738;
   --shadow-lg: 0 40px 80px -40px #1b151759, 0 2px 6px #1b15170a;
@@ -81,8 +83,9 @@
   --ink: #F1F3F5;
   --ink-2: #C8CDD4;
   --muted: #8B929D;
-  --faint: #6D747F;
+  --faint: #838A96; /* 5.3:1 on surface-2 (was #6D747F, 3.9:1) */
   --brand: #D0364A;
+  --brand-text: #E8657A; /* 5.8:1 on surface-2; --brand stays for fills and buttons */
   --brand-hi: #E5485B;
   --brand-lo: #8E1B2B;
   --brand-soft: #d0364a1f;
