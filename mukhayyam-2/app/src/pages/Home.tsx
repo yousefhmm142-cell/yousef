@@ -11,7 +11,7 @@ import { buildLabel } from '../app/update'
 import { db } from '../data/db'
 import { useTeam } from '../data/team'
 import { clockOffsetMs } from '../lib/clock'
-import { firstName, formatLongDate, formatTime, formatWeekday, greeting } from '../lib/format'
+import { firstName } from '../lib/format'
 import { useDocumentTitle } from '../lib/useDocumentTitle'
 import { useNow } from '../lib/useNow'
 import { useOnline } from '../lib/useOnline'
@@ -25,8 +25,8 @@ import { useToday } from '../lib/viewDay'
 import { isEditableStatus, statusInfo, type SheetStatus } from '../features/sheets/workflow'
 import { dayName, todayISO, type ISODate } from '../lib/dates'
 import { gazaDate } from '../features/attendance/rules'
-import { ActivityCard, AttentionCard, KpiStrip, PresenceCard } from '../features/dashboard/DashboardCards'
-import { DailyBars, FuelCard, Insights, LoadGauge, MonthRing, UsageChart } from '../features/dashboard/HomeCharts'
+import { ActivityCard, AttentionCard, PresenceCard } from '../features/dashboard/DashboardCards'
+import { DailyBars, FuelCard, HomeHeader, Insights, KpiBoxes, LoadGauge, MonthRing, UsageChart } from '../features/dashboard/HomeCharts'
 import { lazy, Suspense } from 'react'
 const MyTasksPage=lazy(()=>import('../features/tasks/MyTasksPage').then(m=>({default:m.MyTasksPage})))
 const MyAttendancePage=lazy(()=>import('../features/attendance/MyAttendancePage').then(m=>({default:m.MyAttendancePage})))
@@ -64,30 +64,16 @@ const managerModules: Array<{ key: ModuleKey; to: string }> = [
 function ManagerHome() {
   useDocumentTitle('الرئيسية')
   const employee = useEmployee()
-  const now = useNow()
 
   return (
     <div className="home">
-      <header className="home-head">
-        <div>
-          <p className="eyebrow">
-            {formatWeekday(now)} · <span className="num">{formatLongDate(now)}</span>
-          </p>
-          <h1>
-            {greeting(now)}، {firstName(employee.fullName)}
-          </h1>
-        </div>
-        <div className="clock glass" aria-label="الوقت الآن بتوقيت الخادم">
-          <Clock size={18} aria-hidden="true" />
-          <b className="num">{formatTime(now)}</b>
-        </div>
-      </header>
+      <HomeHeader name={firstName(employee.fullName)} />
 
       <div className="hc-main">
         <UsageChart />
         <LoadGauge />
       </div>
-      <KpiStrip />
+      <KpiBoxes />
       <DayStrip />
 
       <div className="hc-two">
@@ -121,7 +107,7 @@ function ManagerHome() {
 
       <div className="home-row">
         <ActivityCard />
-        <PresenceCard />
+        <div id="presence"><PresenceCard /></div>
       </div>
 
       <TechniciansToday />

@@ -1,10 +1,16 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ArrowLeft, Droplet, Gauge, Timer, TrendingUp } from 'lucide-react'
+import { ArrowLeft, Droplet, Gauge, Info, Plus, Printer, Timer, TrendingUp } from 'lucide-react'
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { db } from '../../data/db'
 import { addDays, dayName, todayISO, type ISODate } from '../../lib/dates'
-import { formatNumber } from '../../lib/format'
+import { formatLongDate, formatNumber, formatTime, formatWeekday, greeting } from '../../lib/format'
+import { useNow } from '../../lib/useNow'
+import { usePresent } from '../../data/presence'
+import { CountUp } from '../../ui/fx/CountUp'
+import { gazaDate } from '../attendance/rules'
+import { isOpen, isOverdue } from '../tasks/model'
+import { useAttention } from './activity'
 import { fuelOutlook } from '../generation/alerts'
 import { fuelForecast } from '../generation/forecast'
 import { loadKva, logLoads, reportTotals, toBar, type SiteReport } from '../generation/model'
@@ -82,46 +88,55 @@ export function UsageChart() {
     return { cur, prev, now, before, totals, any: cur.some((c) => c.v !== null) }
   }, [reports, metric, range])
 
-  if (!data) return <article className="hc-card glass hc-usage" aria-busy="true" />
+  if (!data) return <article className="hc-card hc-usage" aria-busy="true" />
   const unit = metric === 'fuel' ? 'لتر' : 'س'
   const change = data.before > 0 && data.now > 0 ? ((data.now - data.before) / data.before) * 100 : null
-  const H = 230
-  const pad = { t: 16, b: 28, l: 8, r: 8 }
-  const max = Math.max(1, ...data.cur.map((c) => c.v ?? 0), ...data.prev.map((v) => v ?? 0)) * 1.12
+  const H = 250
+  const pad = { t: 10, b: 24 }
   const n = data.cur.length
-  const x = (i: number) => (width ? width - pad.r - (i * (width - pad.l - pad.r)) / Math.max(1, n - 1) : 0)
-  const y = (v: number) => pad.t + (1 - v / max) * (H - pad.t - pad.b)
-  const line = (vals: Array<number | null>) => {
-    let d = ''
-    let open = false
-    vals.forEach((v, i) => {
-      if (v === null) { open = false; return }
-      d += `${open ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`
-      open = true
-    })
-    return d
+  const vals = [...data.cur.map((c) => c.v), ...data.prev].filter((v): v is number => v !== null && v > 0)
+  const top = vals.length ? Math.max(...vals) * 1.04 : 1
+  const bottom = vals.length ? Math.min(...vals) * 0.9 : 0
+  const span = Math.max(1, top - bottom)
+  const x = (i: number) => (width ? width - (i * width) / Math.max(1, n - 1) : 0)
+  const y = (v: number) => pad.t + (H - pad.b - pad.t) * (1 - (v - bottom) / span)
+  // a smooth line through the days that have a report (a day without one is skipped, not dropped to zero)
+  const curve = (series: Array<number | null>) => {
+    const p = series.map((v, i) => (v === null || v <= 0 ? null : ([x(i), y(v)] as const))).filter((q): q is readonly [number, number] => !!q)
+    return {
+      d: p.map(([px, py], i) => {
+        if (!i) return `M${px.toFixed(1)},${py.toFixed(1)}`
+        const [x0, y0] = p[i - 1]!
+        const m = ((x0 + px) / 2).toFixed(1)
+        return `C${m},${y0.toFixed(1)} ${m},${py.toFixed(1)} ${px.toFixed(1)},${py.toFixed(1)}`
+      }).join(''),
+      first: p[0],
+      last: p[p.length - 1],
+    }
   }
-  const pts = data.cur.map((c, i) => (c.v === null ? null : [x(i), y(c.v)] as const)).filter((p): p is readonly [number, number] => !!p)
-  const area = pts.length > 1 ? `${line(data.cur.map((c) => c.v))}L${pts[pts.length - 1]![0]},${H - pad.b}L${pts[0]![0]},${H - pad.b}Z` : ''
-  const every = n <= 7 ? 1 : n <= 30 ? 5 : 15
+  const now = curve(data.cur.map((c) => c.v))
+  const prev = curve(data.prev)
+  const area = now.first && now.last && now.first !== now.last ? `${now.d}L${now.last[0]},${H - pad.b}L${now.first[0]},${H - pad.b}Z` : ''
+  const step = Math.ceil(n / 6)
   const h = hover !== null ? data.cur[hover] : null
+  const hp = hover !== null ? data.prev[hover] : null
+  const diff = h?.v && hp ? Math.round(((h.v - hp) / hp) * 100) : null
 
   function onMove(e: React.PointerEvent) {
     if (!width) return
     const box = (e.currentTarget as HTMLElement).getBoundingClientRect()
-    const rel = (width - pad.r - (e.clientX - box.left)) / (width - pad.l - pad.r)
-    setHover(Math.max(0, Math.min(n - 1, Math.round(rel * (n - 1)))))
+    setHover(Math.max(0, Math.min(n - 1, Math.round(((width - (e.clientX - box.left)) / width) * (n - 1)))))
   }
 
   return (
-    <article className="hc-card glass hc-usage">
+    <article className="hc-card hc-usage">
       <div className="hc-h">
         <div className="hc-titles">
           <h2>{metric === 'fuel' ? 'استهلاك السولار' : 'ساعات التشغيل'}</h2>
           <small className="num">
             آخر {range} يوم <b>{fmt(data.now)} {unit}</b>
             {change !== null && (
-              <span className={`hc-pill ${change > 0 ? 'warn' : 'ok'}`}>{change > 0 ? '↗' : '↘'} {Math.abs(Math.round(change))}% {change > 0 ? 'أكثر' : 'أقل'} من الفترة اللي قبلها</span>
+              <span className={`hc-pill ${change > 0 ? 'warn' : 'ok'}`}>{change > 0 ? '↗' : '↘'} {Math.abs(Math.round(change))}% {change > 0 ? 'أكثر' : 'أقل'} من اللي قبلها</span>
             )}
           </small>
         </div>
@@ -136,28 +151,37 @@ export function UsageChart() {
           ))}
         </div>
       </div>
+      <div className="hc-legend-line"><span><i />هالفترة</span><span><i className="d" />الفترة اللي قبلها</span></div>
       <div className="hc-area" ref={ref} onPointerMove={onMove} onPointerLeave={() => setHover(null)}>
         {!data.any ? (
           <p className="hc-empty">ما وصلت تقارير توليد بهالمدة.</p>
         ) : width > 0 && (
-          <svg width={width} height={H} role="img" aria-label={`${metric === 'fuel' ? 'استهلاك السولار' : 'ساعات التشغيل'} آخر ${range} يوم: ${fmt(data.now)} ${unit}`}>
+          <svg key={`${metric}-${range}`} className="hc-draw" width={width} height={H} role="img" aria-label={`${metric === 'fuel' ? 'استهلاك السولار' : 'ساعات التشغيل'} آخر ${range} يوم: ${fmt(data.now)} ${unit}`}>
             <defs>
               <linearGradient id="hcFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stopColor="var(--brand-hi)" stopOpacity=".32" />
-                <stop offset="1" stopColor="var(--brand-hi)" stopOpacity="0" />
+                <stop offset="0" stopColor="#E5485B" stopOpacity=".42" />
+                <stop offset="1" stopColor="#E5485B" stopOpacity="0" />
               </linearGradient>
             </defs>
-            {[0.25, 0.5, 0.75, 1].map((f) => <line key={f} className="hc-grid" x1={pad.l} x2={width - pad.r} y1={y(max * f)} y2={y(max * f)} />)}
-            <path className="hc-prev" d={line(data.prev)} />
-            <path d={area} fill="url(#hcFill)" />
-            <path className="hc-line" d={line(data.cur.map((c) => c.v))} />
-            {data.cur.map((c, i) => (i % every === 0 || i === n - 1) && (
-              <text key={c.date} className="hc-ax num" x={Math.min(Math.max(x(i), 18), width - 18)} y={H - 8} textAnchor="middle">{short(c.date)}</text>
+            {[0, 1, 2, 3].map((g) => {
+              const gy = pad.t + ((H - pad.b - pad.t) * g) / 3
+              return (
+                <g key={g}>
+                  <line className="hc-grid" x1={0} x2={width} y1={gy} y2={gy} />
+                  <text className="hc-ax num" x={width - 2} y={gy - 4} textAnchor="start">{fmt(top - (span * g) / 3)}</text>
+                </g>
+              )
+            })}
+            {Array.from({ length: n }, (_, i) => i).filter((i) => i % step === 0).map((i) => (
+              <text key={i} className="hc-ax num" x={Math.min(Math.max(x(i), 18), width - 18)} y={H - 4} textAnchor="middle">{short(data.cur[i]!.date)}</text>
             ))}
+            {area && <path className="hc-fill" d={area} fill="url(#hcFill)" />}
+            <path className="hc-prev" d={prev.d} />
+            <path className="hc-line" d={now.d} />
             {hover !== null && (
               <>
                 <line className="hc-cursor" x1={x(hover)} x2={x(hover)} y1={pad.t} y2={H - pad.b} />
-                {h?.v != null && <circle className="hc-dot" cx={x(hover)} cy={y(h.v)} r={5} />}
+                {h?.v ? <circle className="hc-dot" cx={x(hover)} cy={y(h.v)} r={6} /> : null}
               </>
             )}
           </svg>
@@ -165,8 +189,9 @@ export function UsageChart() {
         {h && (
           <div className="hc-tip num" style={{ left: Math.min(Math.max(x(hover!), 90), width - 90) }}>
             <b>{dayName(h.date)} {short(h.date)}</b>
-            <span>{h.v === null ? 'ما في تقرير' : `${fmt(h.v)} ${unit}`}</span>
-            {data.prev[hover!] != null && <small>قبلها: {fmt(data.prev[hover!]!)} {unit}</small>}
+            <span className="r"><span>هالفترة</span><span>{h.v ? `${fmt(h.v)} ${unit}` : 'ما في تقرير'}</span></span>
+            <span className="r"><span>اللي قبلها</span><span>{hp ? `${fmt(hp)} ${unit}` : '—'}</span></span>
+            {diff !== null && <span className="r"><span>الفرق</span><span style={{ color: diff > 0 ? '#ff9a8a' : '#6ee7b7' }}>{diff > 0 ? '+' : ''}{diff}%</span></span>}
           </div>
         )}
       </div>
@@ -217,20 +242,17 @@ export function LoadGauge() {
 
   const pct = figures?.pct ?? null
   const tone = pct === null ? 'muted' : pct >= 90 ? 'danger' : pct >= 75 ? 'warn' : 'ok'
-  const angle = -90 + (Math.min(100, pct ?? 0) / 100) * 180
-  // a half circle from the left (0%) over the top to the right (100%)
-  const R = 104
+  const p = Math.min(100, Math.max(0, pct ?? 0))
+  // right to left like the design: 0% on the right, the needle turns left
   const cx = 140
-  const cy = 136
-  const arc = (from: number, to: number) => {
-    const p = (f: number) => [cx + R * Math.cos(Math.PI * (1 - f)), cy - R * Math.sin(Math.PI * (1 - f))] as const
-    const [x1, y1] = p(from)
-    const [x2, y2] = p(to)
-    return `M${x1.toFixed(1)},${y1.toFixed(1)}A${R},${R} 0 0 1 ${x2.toFixed(1)},${y2.toFixed(1)}`
-  }
+  const cy = 140
+  const R = 104
+  const len = Math.PI * R
+  const half = `M${cx + R},${cy}A${R},${R} 0 0 0 ${cx - R},${cy}`
+  const da = Math.PI * 0.9
 
   return (
-    <article className="hc-card glass hc-gauge">
+    <article className="hc-card hc-gauge">
       <div className="hc-h">
         <div className="hc-titles">
           <h2>حمل المولدات</h2>
@@ -241,16 +263,30 @@ export function LoadGauge() {
       </div>
       <div className="hc-gauge-svg">
         <svg viewBox="0 0 280 160" role="img" aria-label={pct === null ? 'ما في قراءات حمل' : `الحمل ${pct}% من قدرة المولدات الشغالة`}>
-          <path className="hc-g-track" d={arc(0, 1)} />
-          <path className="hc-g-ok" d={arc(0, 0.75)} />
-          <path className="hc-g-warn" d={arc(0.75, 0.9)} />
-          <path className="hc-g-danger" d={arc(0.9, 1)} />
+          <defs>
+            <linearGradient id="hcGauge" x1="1" y1="0" x2="0" y2="0">
+              <stop offset="0" stopColor="#8E1B2B" />
+              <stop offset=".6" stopColor="#E5485B" />
+              <stop offset="1" stopColor="#FFB8C3" />
+            </linearGradient>
+          </defs>
+          {Array.from({ length: 31 }, (_, i) => {
+            const a = (Math.PI * i) / 30
+            const big = i % 5 === 0
+            const r1 = R + 16
+            const r2 = R + (big ? 28 : 22)
+            return <line key={i} className={`hc-tick${big ? ' big' : ''}`} x1={cx + r1 * Math.cos(a)} y1={cy - r1 * Math.sin(a)} x2={cx + r2 * Math.cos(a)} y2={cy - r2 * Math.sin(a)} />
+          })}
+          <path className="hc-g-track" d={half} />
+          {pct !== null && <path className="hc-g-val" d={half} strokeDasharray={len} strokeDashoffset={shown ? len * (1 - p / 100) : len} />}
+          <circle cx={cx + R * Math.cos(da)} cy={cy - R * Math.sin(da)} r={5} className="hc-g-limit"><title>حد الخطر 90%</title></circle>
           {pct !== null && (
-            <g className="hc-needle" style={{ transform: `rotate(${shown ? angle : -90}deg)`, transformOrigin: `${cx}px ${cy}px` }}>
-              <line x1={cx} y1={cy} x2={cx} y2={cy - R + 18} />
-              <circle cx={cx} cy={cy} r={9} />
+            <g className="hc-needle" style={{ transform: `rotate(${shown ? (-180 * p) / 100 : 0}deg)` }}>
+              <path d={`M${cx},${cy - 5}L${cx + R - 24},${cy}L${cx},${cy + 5}Z`} />
             </g>
           )}
+          <circle cx={cx} cy={cy} r={10} className="hc-g-hub" />
+          <circle cx={cx} cy={cy} r={4} className="hc-g-hub2" />
         </svg>
       </div>
       <div className="hc-g-center">
@@ -281,7 +317,7 @@ export function DailyBars() {
       return { date, v: byDate.get(date) ?? null }
     })
   }, [reports])
-  if (!days) return <article className="hc-card glass" aria-busy="true" />
+  if (!days) return <article className="hc-card" aria-busy="true" />
   const vals = days.map((d) => d.v ?? 0)
   const withData = days.filter((d) => d.v)
   const max = Math.max(1, ...vals)
@@ -296,7 +332,7 @@ export function DailyBars() {
   const y = (v: number) => base - (v / (max * 1.1)) * (base - 14)
 
   return (
-    <article className="hc-card glass">
+    <article className="hc-card">
       <div className="hc-h">
         <div className="hc-titles"><h2>السولار باليوم</h2><small>آخر 14 يوم · الخط المتقطّع المعدّل</small></div>
         <span className="grow" />
@@ -359,11 +395,11 @@ export function MonthRing() {
     const waiting = all.filter((x) => x.status === 'submitted').length
     return { expected: days * 2, approved, waiting, missing: Math.max(0, days * 2 - approved - waiting) }
   }, [])
-  if (!data) return <article className="hc-card glass" aria-busy="true" />
+  if (!data) return <article className="hc-card" aria-busy="true" />
   const pct = data.expected ? Math.round((data.approved / data.expected) * 100) : 0
   const C = 2 * Math.PI * 80
   return (
-    <article className="hc-card glass">
+    <article className="hc-card">
       <div className="hc-h"><div className="hc-titles"><h2>تقارير الشهر</h2><small>التوليد والتوزيع</small></div></div>
       <div className="hc-ring">
         <svg viewBox="0 0 200 200" aria-hidden="true">
@@ -411,7 +447,7 @@ export function FuelCard() {
   const span = f.forecast ? Math.max(1, (Date.parse(f.forecast.runOutDate) - Date.parse(today)) / 86_400_000) : null
   const orderAt = f.forecast && span ? Math.max(0, Math.min(100, ((Date.parse(f.forecast.orderBy) - Date.parse(today)) / 86_400_000 / span) * 100)) : null
   return (
-    <article className="hc-card glass hc-fuel">
+    <article className="hc-card hc-fuel">
       <div className="hc-tank" aria-hidden="true" data-tone={tone}><i style={{ height: shown ? `${fill}%` : 0 }} /></div>
       <div className="hc-lead">
         <small>السولار · الرصيد المتبقي {f.latest.reportDate !== today && <>({dayName(f.latest.reportDate)})</>}</small>
@@ -483,7 +519,7 @@ export function Insights() {
   ].filter(Boolean) as Array<{ icon: typeof Droplet; tone: string; label: string; value: string; side: string }>
   if (!items.length) return null
   return (
-    <section className="hc-card glass hc-ins" aria-label="شو لافت">
+    <section className="hc-card hc-ins" aria-label="شو لافت">
       <div className="hc-h"><div className="hc-titles"><h2>شو لافت</h2><small>من آخر 30 يوم</small></div><span className="grow" /><Link to="/reports" className="hc-more">التقارير <ArrowLeft size={14} aria-hidden="true" /></Link></div>
       <div className="hc-ins-grid">
         {items.map((it) => (
@@ -495,5 +531,143 @@ export function Insights() {
         ))}
       </div>
     </section>
+  )
+}
+
+/** The four boxes under the charts (like the design): what waits, open tasks, attendance, who is online. */
+export function KpiBoxes() {
+  const present = usePresent()
+  const now = useNow(60_000)
+  const shown = useShown()
+  const data = useLiveQuery(async () => {
+    const today = todayISO()
+    const yesterday = addDays(today, -1)
+    const [people, punches, tasks, reports, sheets] = await Promise.all([
+      db.employees.toArray(),
+      db.punches.where('at').above(new Date(Date.now() - 60 * 3_600_000).toISOString()).toArray(),
+      db.tasks.toArray(),
+      db.siteReports.where('status').equals('submitted').toArray(),
+      db.distributionSheets.where('status').equals('submitted').toArray(),
+    ])
+    const tracked = people.filter((e) => e.isActive && e.tracksAttendance)
+    const cameIn = (day: ISODate) => new Set(punches.filter((p) => p.kind === 'in' && gazaDate(p.at) === day).map((p) => p.employeeId))
+    const inToday = cameIn(today)
+    const inYesterday = cameIn(yesterday)
+    const done = Array.from({ length: 7 }, (_, i) => {
+      const day = addDays(today, i - 6)
+      return tasks.filter((t) => t.status === 'done' && t.completedAt && gazaDate(t.completedAt) === day).length
+    })
+    const waitingDays = [...reports.map((r) => r.reportDate), ...sheets.map((s) => s.sheetDate)].sort()
+    return {
+      total: tracked.length,
+      here: tracked.filter((e) => inToday.has(e.id)).length,
+      hereYesterday: tracked.filter((e) => inYesterday.has(e.id)).length,
+      open: tasks.filter(isOpen),
+      done,
+      approvals: reports.length + sheets.length,
+      reportsWaiting: reports.length,
+      oldestWaiting: waitingDays[0] ?? null,
+    }
+  }, [])
+  if (!data) return <section className="hc-kbs" aria-busy="true" />
+  const late = data.open.filter((t) => isOverdue(t, now)).length
+  const pct = data.total ? Math.round((data.here / data.total) * 100) : 0
+  const vsYesterday = data.here - data.hereYesterday
+  const more = (to: string, label: string) => (
+    <Link className="hc-kb-more" to={to}>{label}<ArrowLeft size={14} aria-hidden="true" /></Link>
+  )
+  return (
+    <section className={`hc-kbs${shown ? ' go' : ''}`} aria-label="أرقام اليوم">
+      <article className="hc-kb dark">
+        <div className="hc-kb-lab">بانتظار اعتمادك <Info size={13} aria-hidden="true" /></div>
+        <div className="hc-kb-v num"><CountUp value={data.approvals} /></div>
+        <div className="hc-kb-d">{data.approvals ? <span className="hc-pill warn">من {dayName(data.oldestWaiting!)}</span> : <span className="hc-pill ok">ما في اشي ينتظر</span>}</div>
+        <svg className="hc-kb-pic" viewBox="0 0 96 64" aria-hidden="true">
+          {[0, 1, 2, 3].map((i) => {
+            const lit = i < Math.min(4, data.approvals)
+            const h = lit ? 52 : 30
+            return <rect key={i} className={`hc-kb-bar${lit ? ' lit' : ''}`} x={96 - 4 * 16 - 3 * 8 + i * 24} y={60 - h} width={16} height={h} rx={8} style={{ transitionDelay: `${i * 90}ms` }} />
+          })}
+        </svg>
+        {more(data.reportsWaiting ? '/generation' : '/distribution', data.approvals ? 'افتحها' : 'التوليد')}
+      </article>
+      <article className="hc-kb">
+        <div className="hc-kb-lab">مهام مفتوحة <Info size={13} aria-hidden="true" /></div>
+        <div className="hc-kb-v num"><CountUp value={data.open.length} /></div>
+        <div className="hc-kb-d">{late ? <span className="hc-pill danger">{late} متأخرة</span> : <span className="hc-pill ok">ما في تأخير</span>}<span className="num">خلص {data.done[6]}</span></div>
+        <KbLine values={data.done} />
+        {more('/tasks', 'شوف المهام')}
+      </article>
+      <article className="hc-kb">
+        <div className="hc-kb-lab">حضور اليوم <Info size={13} aria-hidden="true" /></div>
+        <div className="hc-kb-v num"><CountUp value={data.here} /><small>من {data.total}</small></div>
+        <div className="hc-kb-d">{vsYesterday === 0 ? <span className="hc-pill">زي أمس</span> : <span className={`hc-pill ${vsYesterday > 0 ? 'ok' : 'warn'}`}>{vsYesterday > 0 ? '↑' : '↓'} {Math.abs(vsYesterday)} عن أمس</span>}</div>
+        <svg className="hc-kb-pic" viewBox="0 0 96 64" aria-hidden="true">
+          <circle cx="48" cy="32" r="24" className="hc-kb-ring-bg" />
+          <circle cx="48" cy="32" r="24" className="hc-kb-ring" strokeDasharray={2 * Math.PI * 24} strokeDashoffset={2 * Math.PI * 24 * (1 - (shown ? pct : 0) / 100)} transform="rotate(-90 48 32)" />
+          <text x="48" y="37" textAnchor="middle" className="hc-kb-ring-t num">{pct}%</text>
+        </svg>
+        {more('/attendance', 'شوف الحضور')}
+      </article>
+      <article className="hc-kb">
+        <div className="hc-kb-lab">متصلون الآن <Info size={13} aria-hidden="true" /></div>
+        <div className="hc-kb-v num"><CountUp value={present.length} /></div>
+        <div className="hc-kb-d"><span className="hc-pill ok">على الموقع هلأ</span></div>
+        <svg className="hc-kb-pic" viewBox="0 0 96 64" aria-hidden="true">
+          {Array.from({ length: 5 }, (_, i) => <circle key={i} className={`hc-kb-dot${i < Math.min(5, present.length) ? ' lit' : ''}`} cx={88 - i * 19} cy={32} r={7} style={{ transitionDelay: `${i * 70}ms` }} />)}
+        </svg>
+        <a className="hc-kb-more" href="#presence">مين متصل<ArrowLeft size={14} aria-hidden="true" /></a>
+      </article>
+    </section>
+  )
+}
+
+function KbLine({ values }: { values: number[] }) {
+  const mx = Math.max(...values)
+  const mn = Math.min(...values)
+  // oldest on the right, today on the left
+  const X = (i: number) => 96 - (i * 96) / (values.length - 1)
+  const Y = (v: number) => 54 - ((v - mn) / (mx - mn || 1)) * 44
+  const d = values.map((v, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join('')
+  const lx = X(values.length - 1)
+  const ly = Y(values[values.length - 1]!)
+  return (
+    <svg className="hc-kb-pic" viewBox="0 0 96 64" aria-hidden="true">
+      <path d={`${d}L${lx},64L96,64Z`} className="hc-kb-area" />
+      <path d={d} className="hc-kb-line" />
+      <circle cx={lx} cy={ly} r={4} className="hc-kb-line-dot" />
+    </svg>
+  )
+}
+
+/** The top of the home page, like the design: a live line, the greeting, and the two everyday buttons. */
+export function HomeHeader({ name }: { name: string }) {
+  const now = useNow()
+  const attention = useAttention(now) ?? []
+  const counts = useLiveQuery(async () => {
+    const today = todayISO()
+    const [tasks, reports, sheets] = await Promise.all([
+      db.tasks.where('status').equals('done').toArray(),
+      db.siteReports.where('status').equals('submitted').count(),
+      db.distributionSheets.where('status').equals('submitted').count(),
+    ])
+    return { doneToday: tasks.filter((t) => t.completedAt && gazaDate(t.completedAt) === today).length, waiting: reports + sheets }
+  }, [])
+  return (
+    <header className="hc-head">
+      <div className="hc-head-t">
+        <span className="hc-live num">مباشر · {counts?.doneToday ?? 0} مهمة خلصت اليوم · {counts?.waiting ?? 0} بانتظار اعتمادك</span>
+        <h1>{greeting(now)}، {name}</h1>
+        <p className="num">
+          {formatWeekday(now)} {formatLongDate(now)} · {formatTime(now)}
+          {attention.length > 0 && <> · <a href="#today-attention">{attention.length === 1 ? 'شغلة وحدة بدها انتباهك' : `${attention.length} أشياء بدها انتباهك`}</a></>}
+        </p>
+      </div>
+      <span className="grow" />
+      <div className="hc-head-b">
+        <Link className="hc-btn desk-only" to="/tasks?print=1"><Printer size={17} aria-hidden="true" />طباعة كشف اليوم</Link>
+        <Link className="hc-btn primary" to="/tasks?new=1"><Plus size={17} aria-hidden="true" />مهمة جديدة</Link>
+      </div>
+    </header>
   )
 }

@@ -61,7 +61,8 @@ export function TasksPage() {
   const [who, setWho] = useState<string | null>(null)
   // null = today (the live board); a past day shows what happened that day.
   const [pastDay, setPastDay] = useState<ISODate | null>(null)
-  const [creating, setCreating] = useState(false)
+  // «?new=1» and «?print=1» come from the buttons at the top of the home page.
+  const [creating, setCreating] = useState(() => new URLSearchParams(location.search).get('new') === '1')
   const [preparing, setPreparing] = useState(false)
   const [giving, setGiving] = useState<string | null>(null)
   const [openId, setOpenId] = useState<string | null>(() => new URLSearchParams(location.search).get('open'))
@@ -76,6 +77,12 @@ export function TasksPage() {
   const today = todayISO()
   const day=pastDay??today
   const dayTasksState=useDayTasks(day,tasks)
+  const printAsked = params.get('print') === '1'
+  useEffect(() => {
+    if (!printAsked || dayTasksState.busy || !dayTasksState.ready) return
+    setParams({}, { replace: true })
+    window.setTimeout(() => window.print(), 400)
+  }, [printAsked, dayTasksState.busy, dayTasksState.ready, setParams])
   const all = tasks ?? []
   // A call written down, waiting for a technician: shown on its own, above everything.
   const prepared = all.filter((t) => !t.assigneeId && isOpen(t)).sort((a, b) => a.createdAt.localeCompare(b.createdAt))
