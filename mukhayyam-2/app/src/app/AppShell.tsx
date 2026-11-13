@@ -42,7 +42,7 @@ export function AppShell() {
   return (
     <ManagerActivityProvider enabled={compact}><div className={`shell${mini ? ' mini' : ''}`}>
       <a href="#main" className="skip">تخطَّ إلى المحتوى</a>
-      <div className="scene" aria-hidden="true"><i className="b1" /><i className="b2" /><i className="b3" /></div>
+      <div className="scene" aria-hidden="true"><i className="b1" /><i className="b2" /><i className="b3" /><i className="grain" /></div>
 
       {/* Computers: the floating sidebar on the right. */}
       <Sidebar items={items} mini={mini} onToggle={toggleMini} />
