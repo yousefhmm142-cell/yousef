@@ -117,6 +117,7 @@ function BatchCard({ data, batch, onPrint, onEdit, onAssign, onDeleted }: { data
         )}
         <span className="muted num">{roll ? `${roll.fromNo}–${roll.toNo}` : ''} · {used}/{seals.length} مستخدم</span>
         <span className="grow" />
+        <div className="batch-actions">
         <Button variant="ghost" icon={<Printer size={15} />} onClick={onPrint}>ورقة الصرف</Button>
         <Button variant="ghost" icon={<Pencil size={15} />} onClick={onEdit}>تعديل</Button>
         <SealHistoryButton table="seal_batches" record={batch.id} label="السجل" />
@@ -141,6 +142,7 @@ function BatchCard({ data, batch, onPrint, onEdit, onAssign, onDeleted }: { data
         >
           حذف
         </Button>
+        </div>
       </div>
       <div className="batch-strip">
         {seals.map((s) => <SealPill key={s.sealNo} seal={s} />)}

@@ -71,6 +71,10 @@ button.seal-pill:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--bran
 .batch-head .tech { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px 4px 6px; border-radius: 999px; background: color-mix(in srgb, var(--t-out) 9%, transparent); color: var(--t-out); font-weight: 800; font-size: 0.875rem; }
 .batch-head .grow { flex: 1; }
 .batch-head .muted { font-size: 0.8125rem; }
+/* the four buttons of a batch: one tidy group, on one line when there is room */
+.batch-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.batch-actions .btn { height: 36px; min-height: 36px; padding: 0 14px; font-size: 0.8125rem; border-radius: 999px; border: 1px solid var(--line); }
+.batch-actions .btn:last-child { color: var(--danger); }
 .batch-strip { display: flex; flex-wrap: wrap; gap: 7px; }
 
 /* ----- Dialogs ----- */
@@ -203,8 +207,8 @@ table.seal-table tbody tr:hover { background: color-mix(in srgb, var(--brand) 5%
 .issue-why { margin: 0; padding: 10px 12px; border-radius: var(--r-lg); background: var(--sunken); font-weight: 700; font-size: 0.875rem; border: 1px dashed var(--line); }
 .batch-head .tech.none { background: var(--sunken); color: var(--muted); }
 /* «تعبئة الاسم»: blue, so a batch still waiting for its name stands out */
-.btn.assign-btn { background: linear-gradient(180deg, #3f78cf, #2F5DA8); border-color: #2F5DA8; color: #fff; box-shadow: 0 8px 18px -8px #2F5DA8; }
-.btn.assign-btn:hover { background: linear-gradient(180deg, #356cc0, #264d8c); }
+:root .btn.assign-btn { background: linear-gradient(180deg, #3f78cf, #2F5DA8); border-color: #2F5DA8; color: #fff; box-shadow: 0 8px 18px -8px #2F5DA8; }
+:root .btn.assign-btn:hover { background: linear-gradient(180deg, #356cc0, #264d8c); }
 
 .unnamed { padding: 14px 18px; display: grid; gap: 10px; margin-bottom: 14px; border: 1.5px solid color-mix(in srgb, var(--info) 40%, transparent); }
 .unnamed h2 { margin: 0; font-size: 1rem; font-weight: 800; color: var(--info); }

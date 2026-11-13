@@ -61,11 +61,16 @@ body { background: var(--bg); background-image: none; }
 .topbar-row { position: sticky; top: 16px; z-index: 50; max-width: none; margin: 0; }
 .topbar.glass { position: relative; z-index: 50; display: flex; align-items: center; gap: 10px; height: 64px; min-height: 0; padding: 0 10px 0 14px; border-radius: 22px; background: var(--g-bar); }
 .topbar .grow { flex: 1; }
+/* the bar stays on top while the page scrolls: nearly solid, so the page never shows through its words */
+:root[data-theme='dark'] .topbar.glass { background: linear-gradient(180deg, #1d1719, #161214); }
+:root[data-theme='light'] .topbar.glass { background: linear-gradient(180deg, #fbf8f6, #f6f1ee); }
 .page.stage { max-width: none; width: 100%; margin: 0; padding: 26px; border-radius: 30px; background: var(--g-stage); flex: 1; }
 
 /* cards inside the panel: the preview's lighter glass (dialogs stay solid) */
 .stage .card, .stage .glass { background: var(--g-card); border-color: var(--g-border-2); box-shadow: var(--g-hi); backdrop-filter: none; -webkit-backdrop-filter: none; }
 .stage dialog .card, .stage dialog .glass { background: var(--surface); border-color: var(--line); }
+/* the seals pages keep their burgundy edge */
+.stage .seals :is(.roll-card, .batch-card, .group-card, .kpi, .unnamed, .tech-nav) { border: 1.5px solid color-mix(in srgb, var(--brand-hi) 62%, var(--line)); }
 
 /* the brand moves to the sidebar on computers */
 .shell .app-brand { display: none; }
@@ -159,7 +164,12 @@ body { background: var(--bg); background-image: none; }
 .nt small { color: var(--muted); font-size: 12px; }
 .nt em { font-style: normal; color: var(--faint); font-size: 11px; }
 .notif-empty { padding: 14px; text-align: center; color: var(--muted); font-size: 13px; }
-.notif-foot { height: 40px; border-radius: 12px; border: 1px solid var(--line); background: var(--sunken); font: inherit; font-weight: 800; font-size: 12.5px; color: var(--ink-2); cursor: pointer; }
+.notif-foot { margin: 0; text-align: center; font-size: 12px; color: var(--muted); }
+.notif-tools { display: flex; gap: 8px; }
+.notif-search { flex: 1; display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--sunken); color: var(--muted); }
+.notif-search input { flex: 1; min-width: 0; border: 0; background: none; font: inherit; font-size: 13px; color: var(--ink); outline: none; }
+.notif-tools .select { height: 38px; width: auto; font-size: 13px; }
+.notif-list { max-height: min(46vh, 420px); }
 
 /* ---------- Between computer and phone: the rail only ---------- */
 @media (max-width: 1180px) and (min-width: 901px) {

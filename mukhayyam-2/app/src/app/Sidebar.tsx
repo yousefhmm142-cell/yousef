@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { BookOpen, ChevronDown, ChevronRight, Stamp } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { NavLink, useLocation } from 'react-router'
 import { useEmployee } from '../auth/AuthProvider'
 import { db } from '../data/db'
@@ -74,6 +74,13 @@ export function Sidebar({ items, mini, onToggle }: { items: NavItem[]; mini: boo
   const inSeals = pathname.startsWith('/seals')
   const [sealsOpen, setSealsOpen] = useState(inSeals)
   useEffect(() => { if (inSeals) setSealsOpen(true) }, [inSeals])
+  // When the seals list opens, bring its pages into view (the menu scrolls without a bar).
+  const sealsBox = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!sealsOpen) return
+    const t = window.setTimeout(() => sealsBox.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 420)
+    return () => window.clearTimeout(t)
+  }, [sealsOpen])
 
   const system = items.filter((i) => i.to === '/settings')
   const rest = items.filter((i) => i.to !== '/settings')
@@ -121,7 +128,7 @@ export function Sidebar({ items, mini, onToggle }: { items: NavItem[]; mini: boo
             <nav className="sb-nav" aria-label="المتابعة">
               {follow.map((i) =>
                 groupSeals && i.to === '/seals' ? (
-                  <div key="seals" className={`sb-group${sealsOpen ? ' open' : ''}`}>
+                  <div key="seals" ref={sealsBox} className={`sb-group${sealsOpen ? ' open' : ''}`}>
                     <button type="button" className={`sb-item${inSeals ? ' active' : ''}`} data-tip="الأختام" aria-expanded={sealsOpen} onClick={() => setSealsOpen((o) => !o)}>
                       <Stamp size={21} aria-hidden="true" />
                       <span className="sb-t">الأختام</span>

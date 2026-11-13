@@ -164,7 +164,7 @@
   background: color-mix(in srgb, var(--surface) 82%, transparent); padding: 0 5px; border-radius: 6px; line-height: 1.35; }
 .tl-val small { font-size: var(--fs-xs); margin-inline-start: 1px; }
 .tl-val[data-warn] { color: #9a6b00; }
-:root[data-theme='dark'] .tl-val { color: #8ff0bd; background: #0e1014cc; }
+:root[data-theme='dark'] .tl-val { color: #8ff0bd; background: #151113cc; }
 :root[data-theme='dark'] .tl-val[data-warn] { color: #ffd166; }
 .tl-key-ok { color: var(--ok); font-weight: 700; }
 .tl-key-warn { color: var(--warn); }

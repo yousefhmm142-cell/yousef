@@ -25,7 +25,7 @@ import { useToday } from '../lib/viewDay'
 import { isEditableStatus, statusInfo, type SheetStatus } from '../features/sheets/workflow'
 import { dayName, todayISO, type ISODate } from '../lib/dates'
 import { gazaDate } from '../features/attendance/rules'
-import { ActivityCard, AttentionCard, PresenceCard } from '../features/dashboard/DashboardCards'
+import { AttentionCard, PresenceCard } from '../features/dashboard/DashboardCards'
 import { DailyBars, FuelCard, HomeHeader, Insights, KpiBoxes, LoadGauge, MonthRing, UsageChart } from '../features/dashboard/HomeCharts'
 import { lazy, Suspense } from 'react'
 const MyTasksPage=lazy(()=>import('../features/tasks/MyTasksPage').then(m=>({default:m.MyTasksPage})))
@@ -105,10 +105,7 @@ function ManagerHome() {
         })}
       </section>
 
-      <div className="home-row">
-        <ActivityCard />
-        <div id="presence"><PresenceCard /></div>
-      </div>
+      <div id="presence"><PresenceCard /></div>
 
       <TechniciansToday />
       <div className="home-row">

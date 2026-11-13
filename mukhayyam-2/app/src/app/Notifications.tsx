@@ -1,8 +1,8 @@
-import { AlertTriangle, Bell, Info } from 'lucide-react'
+import { AlertTriangle, Bell, Info, Search } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useEmployee } from '../auth/AuthProvider'
-import { useAttention, useFeed } from '../features/dashboard/activity'
+import { useAttention, useFeed, type EventKind } from '../features/dashboard/activity'
 import { ago } from '../features/dashboard/DashboardCards'
 import { useNow } from '../lib/useNow'
 
@@ -27,12 +27,16 @@ export function NotificationsBell() {
   const [open, setOpen] = useState(false)
   const [unreadOnly, setUnreadOnly] = useState(false)
   const [seen, setSeen] = useState(readSeen)
+  const [kind, setKind] = useState<EventKind | ''>('')
+  const [search, setSearch] = useState('')
   const box = useRef<HTMLDivElement>(null)
 
-  const recent = useMemo(() => (feed ?? []).slice(0, 25), [feed])
+  // All the latest movements live here now (they left the home page).
+  const recent = useMemo(() => feed ?? [], [feed])
   const unread = recent.filter((e) => e.at > seen)
   const count = attention.length + unread.length
-  const shown = unreadOnly ? unread : recent
+  const q = search.trim()
+  const shown = (unreadOnly ? unread : recent).filter((e) => (!kind || e.kind === kind) && (!q || `${e.who} ${e.text} ${e.reference ?? ''}`.includes(q)))
 
   useEffect(() => {
     if (!open) return
@@ -89,9 +93,25 @@ export function NotificationsBell() {
             <button type="button" className={unreadOnly ? '' : 'on'} onClick={() => setUnreadOnly(false)}>آخر الحركات</button>
             <button type="button" className={unreadOnly ? 'on' : ''} onClick={() => setUnreadOnly(true)}>غير مقروءة {unread.length > 0 && <span className="num">({unread.length})</span>}</button>
           </div>
+          <div className="notif-tools">
+            <label className="notif-search">
+              <Search size={15} aria-hidden="true" />
+              <input aria-label="بحث بالحركات" placeholder="ابحث عن شخص أو مرجع…" value={search} onChange={(e) => setSearch(e.target.value)} />
+            </label>
+            <select className="select" aria-label="نوع الحركة" value={kind} onChange={(e) => setKind(e.target.value as EventKind | '')}>
+              <option value="">كل الحركات</option>
+              <option value="seal">الأختام</option>
+              <option value="task">المهام</option>
+              <option value="attendance">الحضور</option>
+              <option value="report">التوليد</option>
+              <option value="sheet">التوزيع</option>
+              <option value="reading">القراءات</option>
+              <option value="settings">الإعدادات</option>
+            </select>
+          </div>
           <ul className="notif-list">
             {shown.length === 0 ? (
-              <li className="notif-empty">{unreadOnly ? 'كل شي مقروء.' : 'ما في حركات بعد.'}</li>
+              <li className="notif-empty">{q || kind ? 'ما في حركات بتطابق البحث.' : unreadOnly ? 'كل شي مقروء.' : 'ما في حركات بعد.'}</li>
             ) : (
               shown.map((e) => (
                 <li key={e.id}>
@@ -103,7 +123,7 @@ export function NotificationsBell() {
               ))
             )}
           </ul>
-          {me && <button type="button" className="notif-foot" onClick={() => go('/')}>كل الحركات بالرئيسية</button>}
+          {me && <p className="notif-foot num">{shown.length} حركة في السجل الأخير</p>}
         </div>
       )}
     </div>
