@@ -19,7 +19,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useEmployee } from '../../auth/AuthProvider'
 import { db } from '../../data/db'
-import { todayISO } from '../../lib/dates'
+import { addDays, todayISO } from '../../lib/dates'
 import { gazaDate } from '../attendance/rules'
 import { isOpen, isOverdue } from '../tasks/model'
 import { usePresent } from '../../data/presence'
@@ -288,7 +288,12 @@ export function KpiStrip() {
     ])
     const tracked = people.filter((e) => e.isActive && e.tracksAttendance)
     const inToday = new Set(punches.filter((p) => p.kind === 'in' && gazaDate(p.at) === today).map((p) => p.employeeId))
-    return { total: tracked.length, here: tracked.filter((e) => inToday.has(e.id)).length, open: tasks.filter(isOpen), approvals: reports + sheets }
+    // tasks finished on each of the last 7 days, oldest first (the little line in the tasks box)
+    const done = Array.from({ length: 7 }, (_, i) => {
+      const day = addDays(today, i - 6)
+      return tasks.filter((t) => t.completedAt && gazaDate(t.completedAt) === day).length
+    })
+    return { total: tracked.length, here: tracked.filter((e) => inToday.has(e.id)).length, open: tasks.filter(isOpen), approvals: reports + sheets, done }
   }, [])
   if (!data) return null
   const late = data.open.filter((t) => isOverdue(t, now)).length
@@ -306,6 +311,7 @@ export function KpiStrip() {
             <b className="num dash-kpi-n">{typeof t.n === 'number' ? <CountUp value={t.n} /> : <><CountUp value={data.here} />/{data.total}</>}</b>
             <span className="dash-kpi-l">{t.label}</span>
             <small>{t.note}</small>
+            <KpiPic kind={t.key} data={data} online={present.length} />
           </>
         )
         return t.to ? (
@@ -315,5 +321,44 @@ export function KpiStrip() {
         )
       })}
     </section>
+  )
+}
+
+/** The small picture in each box: dots for who is online, a ring for attendance, a line for finished tasks, pills for what waits. */
+function KpiPic({ kind, data, online }: { kind: string; data: { total: number; here: number; approvals: number; done: number[] }; online: number }) {
+  if (kind === 'att') {
+    const pct = data.total ? data.here / data.total : 0
+    const C = 2 * Math.PI * 22
+    return (
+      <svg className="kpi-pic" viewBox="0 0 60 60" aria-hidden="true">
+        <circle cx="30" cy="30" r="22" className="kpi-ring-bg" />
+        <circle cx="30" cy="30" r="22" className="kpi-ring" strokeDasharray={C} strokeDashoffset={C * (1 - pct)} transform="rotate(-90 30 30)" />
+        <text x="30" y="34" textAnchor="middle" className="kpi-ring-t num">{Math.round(pct * 100)}%</text>
+      </svg>
+    )
+  }
+  if (kind === 'tasks') {
+    const max = Math.max(1, ...data.done)
+    const pts = data.done.map((v, i) => `${(80 - (i * 80) / 6).toFixed(1)},${(50 - (v / max) * 40).toFixed(1)}`).join(' ')
+    return (
+      <svg className="kpi-pic" viewBox="0 0 84 56" aria-hidden="true">
+        <polyline points={pts} className="kpi-line" />
+        <circle cx="0" cy={50 - (data.done[6]! / max) * 40} r="3.5" className="kpi-line-dot" />
+      </svg>
+    )
+  }
+  if (kind === 'appr') {
+    const n = Math.min(4, data.approvals)
+    return (
+      <svg className="kpi-pic" viewBox="0 0 84 56" aria-hidden="true">
+        {[0, 1, 2, 3].map((i) => <rect key={i} x={66 - i * 20} y={8} width={14} height={40} rx={7} className={i < n ? 'kpi-pill on' : 'kpi-pill'} />)}
+      </svg>
+    )
+  }
+  const n = Math.min(5, online)
+  return (
+    <svg className="kpi-pic" viewBox="0 0 84 56" aria-hidden="true">
+      {Array.from({ length: 5 }, (_, i) => <circle key={i} cx={74 - i * 16} cy={28} r={6.5} className={i < n ? 'kpi-dot on' : 'kpi-dot'} />)}
+    </svg>
   )
 }

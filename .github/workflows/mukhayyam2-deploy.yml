@@ -10,12 +10,13 @@ name: Mukhayyam 2 · publish
 
 on:
   push:
-    branches: [main, claude/youthful-bell-qnhys0]
+    # ui-preview: a trial copy on https://ui-preview.mukhayyam2.pages.dev (the database is not touched)
+    branches: [main, claude/youthful-bell-qnhys0, ui-preview]
     paths: ['mukhayyam-2/app/**', 'mukhayyam-2/supabase/updates/**', 'mukhayyam-2/supabase/apply-updates.sh', '.github/workflows/mukhayyam2-deploy.yml']
   workflow_dispatch:
 
 concurrency:
-  group: mukhayyam2-publish
+  group: mukhayyam2-publish-${{ github.ref_name == 'ui-preview' && 'preview' || 'main' }}
   cancel-in-progress: true
 
 jobs:
@@ -48,7 +49,7 @@ jobs:
         run: npx vite build --mode hosting --outDir dist-hosting
       # The database first, so the new app never calls something the server does not have yet.
       - name: Update the database
-        if: env.HAS_DB == 'true'
+        if: env.HAS_DB == 'true' && github.ref_name != 'ui-preview'
         working-directory: mukhayyam-2/supabase
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
@@ -56,14 +57,14 @@ jobs:
           command -v psql >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client)
           ./apply-updates.sh
       # Published even if the database step failed, as long as the app built (that failure still shows red).
-      - name: Publish to https://mukhayyam2.pages.dev
+      - name: Publish to https://mukhayyam2.pages.dev (or the ui-preview trial link)
         if: ${{ !cancelled() && steps.build.outcome == 'success' && env.HAS_CF == 'true' }}
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: mukhayyam-2/app
-          command: pages deploy dist-hosting --project-name=mukhayyam2 --branch=main --commit-dirty=true
+          command: pages deploy dist-hosting --project-name=mukhayyam2 --branch=${{ github.ref_name == 'ui-preview' && 'ui-preview' || 'main' }} --commit-dirty=true
       - name: Not published yet
         if: env.HAS_CF != 'true'
         run: echo "::notice::Built and checked. Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID secrets to publish automatically."

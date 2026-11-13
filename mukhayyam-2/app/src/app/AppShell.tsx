@@ -1,7 +1,7 @@
 import { RejectedNotice } from '../ui/RejectedNotice'
 import { PullToRefresh } from '../ui/fx/PullToRefresh'
 import { Ellipsis, Search, Settings, UserRound } from 'lucide-react'
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router'
 import { useEmployee } from '../auth/AuthProvider'
 import { isManagerRole, titleOf } from '../types'
@@ -10,11 +10,11 @@ import { StatusBadge, SyncNotice, ThemeToggle } from '../ui/status'
 import { ManagerActivityProvider } from '../features/dashboard/ActivityLive'
 import { navFor, type NavItem } from './nav'
 import { GlobalSearch, openSearch, SearchButton } from './GlobalSearch'
+import { NotificationsBell } from './Notifications'
+import { Sidebar, useSidebarMini } from './Sidebar'
 
 const MAX_TABS = 5
 const accountTab: NavItem = { to: '/account', label: 'حسابي', icon: UserRound }
-/** Managers keep the long reports behind one disclosure; staff keep their page names. */
-const compactLinks = new Set(['/reports', '/tasks/seal-work'])
 const moreTab: NavItem = { to: '/more', label: 'المزيد', icon: Ellipsis }
 
 export function AppShell() {
@@ -23,30 +23,10 @@ export function AppShell() {
   const items = navFor(employee)
   // Phones: up to five tabs; the rest sit behind «المزيد».
   const tabs = items.length < MAX_TABS ? [...items, accountTab] : [...items.slice(0, MAX_TABS - 1), moreTab]
-
   const hasSettings = items.some((i) => i.to === '/settings')
-  const moreItems = compact ? items.filter((i) => compactLinks.has(i.to)) : []
-  const barItems = items.filter((i) => i.to !== '/settings' && !(compact && compactLinks.has(i.to)))
-  const moreRef = useRef<HTMLDetailsElement>(null)
-
-  // The arch follows the current section's link, as wide as its word.
-  const navRef = useRef<HTMLElement>(null)
+  const [mini, toggleMini] = useSidebarMini()
   const { pathname } = useLocation()
-  useEffect(() => {
-    if (moreRef.current) moreRef.current.open = false
-  }, [pathname])
-  useEffect(() => {
-    const close = (e: PointerEvent | KeyboardEvent) => {
-      const d = moreRef.current
-      if (!d?.open) return
-      if (e instanceof KeyboardEvent) {
-        if (e.key === 'Escape') { d.open = false; d.querySelector('summary')?.focus() }
-      } else if (!d.contains(e.target as Node)) d.open = false
-    }
-    document.addEventListener('pointerdown', close)
-    document.addEventListener('keydown', close)
-    return () => { document.removeEventListener('pointerdown', close); document.removeEventListener('keydown', close) }
-  }, [])
+
   const tabRef = useRef<HTMLElement>(null)
   const [indicator, setIndicator] = useState<{ x: number; w: number } | null>(null)
   useLayoutEffect(() => {
@@ -58,92 +38,63 @@ export function AppShell() {
     void document.fonts?.ready.then(place)
     return () => ro.disconnect()
   }, [pathname, tabs.length])
-  const [arch, setArch] = useState<{ x: number; w: number } | null>(null)
-  useLayoutEffect(() => {
-    const nav = navRef.current
-    if (!nav) return
-    const place = () => {
-      const a = nav.querySelector<HTMLElement>('.topnav-link.active')
-      setArch(a ? { x: a.offsetLeft, w: a.offsetWidth } : null)
-    }
-    place()
-    const ro = new ResizeObserver(place)
-    ro.observe(nav)
-    void document.fonts?.ready.then(place)
-    return () => ro.disconnect()
-  }, [pathname, barItems.length])
 
   return (
-    <ManagerActivityProvider enabled={compact}><div className="shell">
+    <ManagerActivityProvider enabled={compact}><div className={`shell${mini ? ' mini' : ''}`}>
       <a href="#main" className="skip">تخطَّ إلى المحتوى</a>
-      <div className="topbar-row">
-      <header className="topbar glass">
-        <Link to="/" className="app-brand" aria-label="الرئيسية">
-          <Logo height={38} />
-          <span className="app-brand-text">
-            <b>مخيم 2</b>
-            <small>أبناء فارس أبو زايد</small>
-          </span>
-        </Link>
+      <div className="scene" aria-hidden="true"><i className="b1" /><i className="b2" /><i className="b3" /></div>
 
-        {barItems.length > 1 && (
-          <nav className="topnav" aria-label="الأقسام" ref={navRef}>
-            <span className={`nav-arch${arch ? ' on' : ''}`} aria-hidden="true" style={arch ? { width: arch.w, transform: `translateX(${arch.x}px)` } : undefined} />
-            {barItems.map(({ to, label, icon: Icon }) => (
-              <NavLink key={to} to={to} end={to === '/' || to === '/tasks'} className={compact && compactLinks.has(to) ? 'topnav-link compact' : 'topnav-link'} aria-label={label} title={compact && compactLinks.has(to) ? label : undefined}>
-                <Icon size={17} aria-hidden="true" />
-                <span>{label}</span>
+      {/* Computers: the floating sidebar on the right. */}
+      <Sidebar items={items} mini={mini} onToggle={toggleMini} />
+
+      <div className="shell-main">
+        <div className="topbar-row">
+          <header className="topbar glass">
+            {/* Phones keep the name on the left of the bar; computers have it in the sidebar. */}
+            <Link to="/" className="app-brand" aria-label="الرئيسية">
+              <Logo height={34} />
+              <span className="app-brand-text">
+                <b>مخيم 2</b>
+                <small>أبناء فارس أبو زايد</small>
+              </span>
+            </Link>
+            <button type="button" className="top-search" onClick={openSearch} aria-label="بحث (Ctrl+K)">
+              <Search size={18} aria-hidden="true" />
+              <span>ابحث: مهمة، مشترك، ختم، صفحة…</span>
+              <kbd>Ctrl K</kbd>
+            </button>
+            <span className="grow" />
+            <div className="topbar-end">
+              <SearchButton className="phone-only" />
+              {hasSettings && (
+                <NavLink to="/settings" className="rbtn top-settings" aria-label="الإعدادات" title="الإعدادات">
+                  <Settings size={19} aria-hidden="true" />
+                </NavLink>
+              )}
+              <ThemeToggle />
+              {compact && <NotificationsBell />}
+              <NavLink to="/account" className="me" aria-label={`حسابي: ${employee.fullName}`}>
+                <span className="me-avatar">
+                  <Avatar name={employee.fullName} />
+                  <StatusBadge />
+                </span>
+                <span className="me-text">
+                  <b>{employee.fullName}</b>
+                  <small>{titleOf(employee)}</small>
+                </span>
               </NavLink>
-            ))}
-          </nav>
-        )}
-
-        {moreItems.length > 0 && (
-          <details ref={moreRef} className="nav-more">
-            <summary className={`topnav-link nav-more-toggle${moreItems.some((i) => pathname === i.to) ? ' active' : ''}`} aria-label="التقارير وكشف أعمال الأختام" title="التقارير والكشوفات">
-              <Ellipsis size={21} aria-hidden="true" />
-            </summary>
-            <nav className="nav-more-list" aria-label="التقارير والكشوفات">
-              <button type="button" className="nav-more-search" onClick={() => { moreRef.current?.removeAttribute('open'); openSearch() }}>
-                <Search size={18} aria-hidden="true" /><span>بحث</span><kbd>Ctrl K</kbd>
-              </button>
-              {moreItems.map(({ to, label, icon: Icon }) => (
-                <NavLink key={to} to={to}><Icon size={18} aria-hidden="true" /><span>{label}</span></NavLink>
-              ))}
-            </nav>
-          </details>
-        )}
-
-        <div className="topbar-end">
-          <SearchButton className={moreItems.length ? 'phone-only' : undefined} />
-          {hasSettings && (
-            <NavLink to="/settings" className="settings-btn" aria-label="الإعدادات" title="الإعدادات">
-              <Settings size={22} aria-hidden="true" />
-              <span>الإعدادات</span>
-            </NavLink>
-          )}
-          <NavLink to="/account" className="me" aria-label={`حسابي: ${employee.fullName}`}>
-            <span className="me-avatar">
-              <Avatar name={employee.fullName} />
-              <StatusBadge />
-            </span>
-            <span className="me-text">
-              <b>{employee.fullName}</b>
-              <small>{titleOf(employee)}</small>
-            </span>
-          </NavLink>
+            </div>
+          </header>
         </div>
-      </header>
-      <ThemeToggle />
+
+        <GlobalSearch />
+        <SyncNotice />
+        <RejectedNotice />
+
+        <PullToRefresh><main className="page stage glass" id="main">
+          <div key={pathname} className="page-enter"><Outlet /></div>
+        </main></PullToRefresh>
       </div>
-
-      <GlobalSearch />
-      <SyncNotice />
-      <RejectedNotice />
-
-      <PullToRefresh><main className="page" id="main">
-        <div key={pathname} className="page-enter"><Outlet /></div>
-      </main></PullToRefresh>
 
       {tabs.length > 1 && (
         <nav className="tabbar glass" aria-label="الأقسام" ref={tabRef}>

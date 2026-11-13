@@ -26,6 +26,7 @@ import { isEditableStatus, statusInfo, type SheetStatus } from '../features/shee
 import { dayName, todayISO, type ISODate } from '../lib/dates'
 import { gazaDate } from '../features/attendance/rules'
 import { ActivityCard, AttentionCard, KpiStrip, PresenceCard } from '../features/dashboard/DashboardCards'
+import { DailyBars, FuelCard, Insights, LoadGauge, MonthRing, UsageChart } from '../features/dashboard/HomeCharts'
 import { lazy, Suspense } from 'react'
 const MyTasksPage=lazy(()=>import('../features/tasks/MyTasksPage').then(m=>({default:m.MyTasksPage})))
 const MyAttendancePage=lazy(()=>import('../features/attendance/MyAttendancePage').then(m=>({default:m.MyAttendancePage})))
@@ -82,10 +83,21 @@ function ManagerHome() {
         </div>
       </header>
 
+      <div className="hc-main">
+        <UsageChart />
+        <LoadGauge />
+      </div>
       <KpiStrip />
       <DayStrip />
 
+      <div className="hc-two">
+        <DailyBars />
+        <MonthRing />
+      </div>
+      <FuelCard />
+
       <div id="today-attention"><AttentionCard /></div>
+      <Insights />
 
       <section className="mod-grid" aria-label="الوحدات">
         {managerModules.map(({ key, to }) => {
