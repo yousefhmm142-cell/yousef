@@ -52,6 +52,11 @@ describe('words and details', () => {
     expect(splitDetails('طبلون شمال المقبرة (19) فصل خدمة يحيى الخطيب', 'شمال المقبرة 19')).toEqual({ board: 'شمال المقبرة 19', work: 'فصل خدمة يحيى الخطيب', subscriber: '' })
     expect(splitDetails('طبلون 8 a  الأبراج   ( تغيير الطبلون الكبير )', '8 a الأبراج').board).toBe('8 a الأبراج')
   })
+  it('keeps several subscribers of one board in the same brackets', () => {
+    const line = composeDetails({ board: '361', work: 'تركيب اشتراك', subscriber: 'حمزة الداية، سامي خالد' })
+    expect(line).toBe('طبلون 361 تركيب اشتراك (حمزة الداية، سامي خالد)')
+    expect(splitDetails(line, '361').subscriber.split(/\s*،\s*/)).toEqual(['حمزة الداية', 'سامي خالد'])
+  })
 })
 
 describe('search', () => {

@@ -1,4 +1,4 @@
-import { Check,Stamp } from 'lucide-react'
+import { Check, Plus, Stamp, X } from 'lucide-react'
 import { FootHint,SummaryAside,saveOnCtrlEnter } from '../../ui/SummaryAside'
 import { useEffect,useRef,useState } from 'react'
 import { todayISO } from '../../lib/dates'
@@ -41,7 +41,13 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
   const typed = no.replace(/\D/g, '').length >= 6
   const bad = typed && !found ? 'هذا الرقم غير موجود في أي رول مسجّل.' : found && !found.technicianId && status === 'used' ? (found.status === 'issued' ? 'دفعة هذا الختم بدون اسم بعد: اختر اسمها من «آخر ما صُرف» أولاً.' : 'هذا الختم لم يُصرف لفني بعد.') : null
   const batch = found?.batchId ? data.batches.find((b) => b.id === found.batchId) : null
-  const line = status === 'used' ? composeDetails({ board, work, subscriber }) : work.trim() || (status === 'damaged' ? 'تالف' : 'ضائع')
+  // One board can serve several subscribers: they are kept in the same brackets, separated by «، ».
+  const subs = subscriber.split(/\s*،\s*/)
+  const setSub = (i: number, v: string) => setSubscriber(subs.map((x, k) => (k === i ? v : x)).join('، '))
+  const addSub = () => setSubscriber([...subs, ''].join('، '))
+  const dropSub = (i: number) => setSubscriber(subs.filter((_, k) => k !== i).join('، '))
+  const subscriberLine = subs.map((x) => x.trim()).filter(Boolean).join('، ')
+  const line = status === 'used' ? composeDetails({ board, work, subscriber: subscriberLine }) : work.trim() || (status === 'damaged' ? 'تالف' : 'ضائع')
 
   useEffect(() => {
     ;(seal ? boardBox : first).current?.focus()
@@ -115,7 +121,7 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
       bigLabel="رقم الختم"
       big={found ? <span className="num">{found.sealNo}</span> : ''}
       rows={[['الفني', found?.technicianId ? data.names.get(found.technicianId) ?? '' : ''], ['الحالة', status === 'used' ? 'مستخدم' : status === 'damaged' ? 'تالف' : 'ضائع'], ['التاريخ', dayLabel(date)]]}
-      more={status === 'used' ? [['المشترك', subscriber.trim()], ['الطبلون', board.trim()], ['العمل', work.trim()]] : [['ملاحظة', work.trim()]]}
+      more={status === 'used' ? [[subs.filter((x) => x.trim()).length > 1 ? 'المشتركين' : 'المشترك', subscriberLine], ['الطبلون', board.trim()], ['العمل', work.trim()]] : [['ملاحظة', work.trim()]]}
       note={line ? <span>بينكتب بالسجل: «{line}»</span> : undefined}
     />
   )
@@ -178,7 +184,26 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
 
         {status === 'used' ? (
           <>
-            <SubscriberField label="اسم المشترك (اختياري) · اكتب اسمين وبيطلع الطبلون" value={subscriber} onChange={setSubscriber} onPick={(x) => { if (x.b) setBoard(x.b) }} placeholder="مثل: محمد أحمد" />
+            {subs.map((v, i) => (
+              <div key={i} className="seal-sub">
+                <SubscriberField
+                  label={i === 0 ? 'اسم المشترك (اختياري) · اكتب اسمين وبيطلع الطبلون' : `المشترك ${i + 1} على نفس الطبلون`}
+                  value={v}
+                  onChange={(x) => setSub(i, x)}
+                  onPick={(x) => { if (x.b && (i === 0 || !board.trim())) setBoard(x.b) }}
+                  placeholder="مثل: محمد أحمد"
+                />
+                {i === 0 ? (
+                  <button type="button" className="seal-sub-btn" onClick={addSub} title="الطبلون عليه أكثر من مشترك">
+                    <Plus size={14} aria-hidden="true" />مشترك آخر
+                  </button>
+                ) : (
+                  <button type="button" className="seal-sub-btn drop" onClick={() => dropSub(i)} aria-label={`شيل المشترك ${i + 1}`}>
+                    <X size={14} aria-hidden="true" />شيل
+                  </button>
+                )}
+              </div>
+            ))}
             <label className="seal-field">
               <span className="label">رقم الطبلون</span>
               <input ref={boardBox} value={board} placeholder="361" onChange={(e) => setBoard(e.target.value)} />
