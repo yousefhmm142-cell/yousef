@@ -28,6 +28,9 @@
 .hc-legend-line i.d { border-top: 1.6px dashed var(--muted); }
 .hc-area { position: relative; height: 250px; touch-action: pan-y; }
 .hc-area svg { overflow: visible; display: block; }
+/* the drawings never set the width of their card: they sit on top of it and follow its size (window, zoom) */
+.hc-area > svg, .hc-bars > svg { position: absolute; inset: 0 0 auto 0; }
+.hc-area, .hc-bars { min-width: 0; width: 100%; }
 .hc-grid { stroke: var(--line); stroke-dasharray: 3 6; }
 .hc-ax { fill: var(--faint); font: 700 10.5px var(--font); }
 .hc-fill { animation: hc-fade 1.2s .4s both; }
@@ -213,6 +216,16 @@ g:hover > .hc-bar { filter: brightness(1.18); }
   .hc-fuel { grid-template-columns: auto minmax(0, 1fr) minmax(0, 1.4fr); }
   .hc-facts { grid-column: 1 / -1; grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .hc-facts > div { border-bottom: 0; flex-direction: column; gap: 2px; }
+}
+/* medium screens (or a zoomed browser): keep every word whole */
+@media (max-width: 1400px) {
+  .hc-main { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
+  .hc-minis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hc-kb-pic { width: 64px; }
+}
+@media (max-width: 1300px) {
+  .hc-kbs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hc-kb-pic { width: 84px; }
 }
 @media (max-width: 1100px) {
   .hc-main, .hc-two { grid-template-columns: minmax(0, 1fr); }
