@@ -159,7 +159,7 @@ export function UsageChart() {
           <svg key={`${metric}-${range}`} className="hc-draw" width={width} height={H} role="img" aria-label={`${metric === 'fuel' ? 'استهلاك السولار' : 'ساعات التشغيل'} آخر ${range} يوم: ${fmt(data.now)} ${unit}`}>
             <defs>
               <linearGradient id="hcFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stopColor="#E5485B" stopOpacity=".42" />
+                <stop offset="0" stopColor="#E5485B" stopOpacity=".48" />
                 <stop offset="1" stopColor="#E5485B" stopOpacity="0" />
               </linearGradient>
             </defs>
