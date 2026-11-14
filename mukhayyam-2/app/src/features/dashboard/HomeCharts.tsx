@@ -205,44 +205,60 @@ export function UsageChart() {
   )
 }
 
-/** How loaded the generators were in the newest sent report, as a needle. */
+/** A number that runs from 0 to its value (and moves again when the value changes), for the gauge. */
+function useRunUp(target: number | null, key: string): number {
+  const [v, setV] = useState(0)
+  useEffect(() => {
+    if (target === null) { setV(0); return }
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) { setV(target); return }
+    let frame = 0
+    const start = performance.now() + 120
+    const from = 0
+    const tick = (now: number) => {
+      const t = Math.max(0, Math.min(1, (now - start) / 1500))
+      setV(from + (target - from) * (1 - Math.pow(1 - t, 3)))
+      if (t < 1) frame = requestAnimationFrame(tick)
+    }
+    setV(0)
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [target, key])
+  return v
+}
+
+interface GenLoad { id: number; name: string; pct: number | null; kva: number | null; cap: number | null; peak: { v: number; unit: string } | null; temp: number | null; oil: number | null }
+
+/** How loaded each generator was in the newest sent report: one needle per generator, picked by a chip. */
 export function LoadGauge() {
   const reports = useSentReports()
   const generators = useGenerators()
   const settings = useAlertSettings()
-  const shown = useShown()
   const latest = reports?.[0]
-  const figures = useMemo(() => {
+  const loads = useMemo<GenLoad[] | null>(() => {
     if (!latest || !generators) return null
     const gens = new Map(generators.map((g) => [g.id, g]))
-    let kva = 0
-    let cap = 0
-    let peak: { v: number; unit: string } | null = null
-    let temp: number | null = null
-    let oil: number | null = null
-    const ran: string[] = []
-    for (const log of latest.generators.filter((g) => g.didRun)) {
+    return latest.generators.filter((g) => g.didRun).map((log) => {
       const g = gens.get(log.generatorId)
-      if (g) ran.push(g.name)
       const l = logLoads(log)
-      if (l) {
-        const k = loadKva(l.loads, log.loadUnit, settings.phaseVoltage)
-        if (k !== null && g?.capacityKva) { kva += k; cap += g.capacityKva }
-        const top = Math.max(...l.loads.map((v) => v ?? 0))
-        if (!peak || top > peak.v) peak = { v: top, unit: log.loadUnit }
+      const kva = l ? loadKva(l.loads, log.loadUnit, settings.phaseVoltage) : null
+      const cap = g?.capacityKva ?? null
+      return {
+        id: log.generatorId,
+        name: g?.name ?? 'مولد',
+        kva,
+        cap,
+        pct: kva !== null && cap ? Math.round((kva / cap) * 100) : null,
+        peak: l ? { v: Math.max(...l.loads.map((v) => v ?? 0)), unit: log.loadUnit } : null,
+        temp: log.temperatureC,
+        oil: log.oilPressure !== null ? toBar(log.oilPressure, log.oilPressureUnit) : null,
       }
-      if (log.temperatureC !== null) temp = Math.max(temp ?? -Infinity, log.temperatureC)
-      if (log.oilPressure !== null) {
-        const bar = toBar(log.oilPressure, log.oilPressureUnit)
-        oil = oil === null ? bar : Math.min(oil, bar)
-      }
-    }
-    return { pct: cap ? Math.round((kva / cap) * 100) : null, peak, temp, oil, ran }
+    })
   }, [latest, generators, settings.phaseVoltage])
-
-  const pct = figures?.pct ?? null
+  const [picked, setPicked] = useState<number | null>(null)
+  const gen = loads?.find((g) => g.id === picked) ?? loads?.find((g) => g.pct !== null) ?? loads?.[0] ?? null
+  const pct = gen?.pct ?? null
+  const run = useRunUp(pct === null ? null : Math.min(100, Math.max(0, pct)), `${latest?.reportDate}-${gen?.id}`)
   const tone = pct === null ? 'muted' : pct >= 90 ? 'danger' : pct >= 75 ? 'warn' : 'ok'
-  const p = Math.min(100, Math.max(0, pct ?? 0))
   // right to left like the design: 0% on the right, the needle turns left
   const cx = 140
   const cy = 140
@@ -261,8 +277,17 @@ export function LoadGauge() {
         <span className="grow" />
         {pct !== null && <span className={`hc-pill ${tone}`}>{tone === 'ok' ? 'ضمن الحدود' : tone === 'warn' ? 'قريب من الحد' : 'فوق الحد'}</span>}
       </div>
+      {loads && loads.length > 1 && (
+        <div className="hc-gens" role="group" aria-label="المولد">
+          {loads.map((g) => (
+            <button key={g.id} type="button" className={g.id === gen?.id ? 'on' : ''} onClick={() => setPicked(g.id)}>
+              {g.name}{g.pct !== null && <span className="num">{g.pct}%</span>}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="hc-gauge-svg">
-        <svg viewBox="0 0 280 160" role="img" aria-label={pct === null ? 'ما في قراءات حمل' : `الحمل ${pct}% من قدرة المولدات الشغالة`}>
+        <svg viewBox="0 0 280 160" role="img" aria-label={pct === null ? 'ما في قراءات حمل' : `حمل ${gen?.name ?? ''} ${pct}% من قدرته`}>
           <defs>
             <linearGradient id="hcGauge" x1="1" y1="0" x2="0" y2="0">
               <stop offset="0" stopColor="#8E1B2B" />
@@ -278,11 +303,11 @@ export function LoadGauge() {
             return <line key={i} className={`hc-tick${big ? ' big' : ''}`} x1={cx + r1 * Math.cos(a)} y1={cy - r1 * Math.sin(a)} x2={cx + r2 * Math.cos(a)} y2={cy - r2 * Math.sin(a)} />
           })}
           <path className="hc-g-track" d={half} />
-          {pct !== null && <path className="hc-g-val" d={half} strokeDasharray={len} strokeDashoffset={shown ? len * (1 - p / 100) : len} />}
+          {pct !== null && <path className="hc-g-val" d={half} strokeDasharray={len} strokeDashoffset={len * (1 - run / 100)} />}
           <circle cx={cx + R * Math.cos(da)} cy={cy - R * Math.sin(da)} r={5} className="hc-g-limit"><title>حد الخطر 90%</title></circle>
           {pct !== null && (
-            <g className="hc-needle" style={{ transform: `rotate(${shown ? (-180 * p) / 100 : 0}deg)` }}>
-              <path d={`M${cx},${cy - 5}L${cx + R - 24},${cy}L${cx},${cy + 5}Z`} />
+            <g transform={`rotate(${(-180 * run) / 100} ${cx} ${cy})`}>
+              <path className="hc-needle-p" d={`M${cx},${cy - 5}L${cx + R - 24},${cy}L${cx},${cy + 5}Z`} />
             </g>
           )}
           <circle cx={cx} cy={cy} r={10} className="hc-g-hub" />
@@ -290,13 +315,13 @@ export function LoadGauge() {
         </svg>
       </div>
       <div className="hc-g-center">
-        <b className="num">{pct === null ? '—' : `${pct}%`}</b>
-        <small>{figures?.ran.length ? `${figures.ran.join(' و')} ${figures.ran.length > 1 ? 'اشتغلوا' : 'اشتغل'}` : pct === null ? 'ما في قراءات حمل أو قدرة مولد' : ''}</small>
+        <b className="num">{pct === null ? '—' : `${Math.round(run)}%`}</b>
+        <small>{gen ? (pct === null ? `${gen.name}: ما في قراءات حمل أو قدرة للمولد` : `${gen.name} · ${fmt(gen.kva!)} من ${fmt(gen.cap!)} kVA`) : 'ما اشتغل ولا مولد'}</small>
       </div>
       <div className="hc-trio">
-        <div><b className="num">{figures?.peak ? `${fmt(figures.peak.v)} ${figures.peak.unit === 'A' ? 'A' : 'kW'}` : '—'}</b><small>أعلى حمل</small></div>
-        <div><b className="num">{figures?.temp != null ? `${fmt(figures.temp)}°` : '—'}</b><small>أعلى حرارة</small></div>
-        <div><b className="num">{figures?.oil != null ? figures.oil.toFixed(1) : '—'}</b><small>ضغط الزيت (بار)</small></div>
+        <div><b className="num">{gen?.peak ? `${fmt(gen.peak.v)} ${gen.peak.unit === 'A' ? 'A' : 'kW'}` : '—'}</b><small>أعلى حمل</small></div>
+        <div><b className="num">{gen?.temp != null ? `${fmt(gen.temp)}°` : '—'}</b><small>الحرارة</small></div>
+        <div><b className="num">{gen?.oil != null ? gen.oil.toFixed(1) : '—'}</b><small>ضغط الزيت (بار)</small></div>
       </div>
     </article>
   )
@@ -436,19 +461,27 @@ export function FuelCard() {
     const lastIn = reports!.find((r) => reportTotals(r).received > 0)
     const month = todayISO().slice(0, 7)
     const monthIn = reports!.filter((r) => r.reportDate.startsWith(month)).reduce((a, r) => a + reportTotals(r).received, 0)
-    return { latest, outlook, forecast, lastIn, monthIn }
+    // «full» = the most diesel held on one day in the last 60 reports (opening + received)
+    const held = reports!.slice(0, 60).map((r) => r.fuel.reduce((a, l) => a + (l.totalQty ?? (l.openingBalance ?? 0) + (l.receivedQty ?? 0)), 0))
+    const full = Math.max(1, ...held)
+    return { latest, outlook, forecast, lastIn, monthIn, full }
   }, [reports])
   if (!reports) return null
   if (!f || f.outlook.days === null) return null
   const days = f.outlook.days
   const tone = days < 3 ? 'danger' : days < 7 ? 'warn' : 'ok'
-  const fill = Math.max(4, Math.min(100, (days / 30) * 100))
+  const level = Math.max(0, Math.min(100, Math.round((f.outlook.remaining / f.full) * 100)))
+  const fill = Math.max(5, level)
   const today = todayISO()
   const span = f.forecast ? Math.max(1, (Date.parse(f.forecast.runOutDate) - Date.parse(today)) / 86_400_000) : null
   const orderAt = f.forecast && span ? Math.max(0, Math.min(100, ((Date.parse(f.forecast.orderBy) - Date.parse(today)) / 86_400_000 / span) * 100)) : null
   return (
     <article className="hc-card hc-fuel">
-      <div className="hc-tank" aria-hidden="true" data-tone={tone}><i style={{ height: shown ? `${fill}%` : 0 }} /></div>
+      <div className="hc-tank" data-tone={tone} title="من أكثر كمية كانت بالخزان آخر شهرين">
+        <i style={{ height: shown ? `${fill}%` : 0 }} />
+        <span className="hc-tank-marks" aria-hidden="true"><s /><s /><s /></span>
+        <b className="num">{level}%</b>
+      </div>
       <div className="hc-lead">
         <small>السولار · الرصيد المتبقي {f.latest.reportDate !== today && <>({dayName(f.latest.reportDate)})</>}</small>
         <b className="num">{fmt(f.outlook.remaining)}<em>لتر</em></b>

@@ -10,7 +10,7 @@ import { StatusBadge, SyncNotice, ThemeToggle } from '../ui/status'
 import { ManagerActivityProvider } from '../features/dashboard/ActivityLive'
 import { navFor, type NavItem } from './nav'
 import { GlobalSearch, openSearch, SearchButton } from './GlobalSearch'
-import { NotificationsBell } from './Notifications'
+import { ActivityButton, NotificationsBell } from './Notifications'
 import { Sidebar, useSidebarMini } from './Sidebar'
 
 const MAX_TABS = 5
@@ -72,6 +72,7 @@ export function AppShell() {
                 </NavLink>
               )}
               <ThemeToggle />
+              {compact && <ActivityButton />}
               {compact && <NotificationsBell />}
               <NavLink to="/account" className="me" aria-label={`حسابي: ${employee.fullName}`}>
                 <span className="me-avatar">

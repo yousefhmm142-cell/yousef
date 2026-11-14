@@ -69,12 +69,12 @@ function ManagerHome() {
     <div className="home">
       <HomeHeader name={firstName(employee.fullName)} />
 
+      <KpiBoxes />
+      <DayStrip />
       <div className="hc-main">
         <UsageChart />
         <LoadGauge />
       </div>
-      <KpiBoxes />
-      <DayStrip />
 
       <div className="hc-two">
         <DailyBars />
