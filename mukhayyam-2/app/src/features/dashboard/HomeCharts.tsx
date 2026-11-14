@@ -579,7 +579,7 @@ export function KpiBoxes() {
   return (
     <section className={`hc-kbs${shown ? ' go' : ''}`} aria-label="أرقام اليوم">
       <article className="hc-kb dark">
-        <div className="hc-kb-lab">بانتظار اعتمادك <Info size={13} aria-hidden="true" /></div>
+        <div className="hc-kb-lab">بانتظار اعتمادك <Info size={15} aria-hidden="true" /></div>
         <div className="hc-kb-v num"><CountUp value={data.approvals} /></div>
         <div className="hc-kb-d">{data.approvals ? <span className="hc-pill warn">من {dayName(data.oldestWaiting!)}</span> : <span className="hc-pill ok">ما في اشي ينتظر</span>}</div>
         <svg className="hc-kb-pic" viewBox="0 0 96 64" aria-hidden="true">
@@ -592,14 +592,14 @@ export function KpiBoxes() {
         {more(data.reportsWaiting ? '/generation' : '/distribution', data.approvals ? 'افتحها' : 'التوليد')}
       </article>
       <article className="hc-kb">
-        <div className="hc-kb-lab">مهام مفتوحة <Info size={13} aria-hidden="true" /></div>
+        <div className="hc-kb-lab">مهام مفتوحة <Info size={15} aria-hidden="true" /></div>
         <div className="hc-kb-v num"><CountUp value={data.open.length} /></div>
         <div className="hc-kb-d">{late ? <span className="hc-pill danger">{late} متأخرة</span> : <span className="hc-pill ok">ما في تأخير</span>}<span className="num">خلص {data.done[6]}</span></div>
         <KbLine values={data.done} />
         {more('/tasks', 'شوف المهام')}
       </article>
       <article className="hc-kb">
-        <div className="hc-kb-lab">حضور اليوم <Info size={13} aria-hidden="true" /></div>
+        <div className="hc-kb-lab">حضور اليوم <Info size={15} aria-hidden="true" /></div>
         <div className="hc-kb-v num"><CountUp value={data.here} /><small>من {data.total}</small></div>
         <div className="hc-kb-d">{vsYesterday === 0 ? <span className="hc-pill">زي أمس</span> : <span className={`hc-pill ${vsYesterday > 0 ? 'ok' : 'warn'}`}>{vsYesterday > 0 ? '↑' : '↓'} {Math.abs(vsYesterday)} عن أمس</span>}</div>
         <svg className="hc-kb-pic" viewBox="0 0 96 64" aria-hidden="true">
@@ -610,7 +610,7 @@ export function KpiBoxes() {
         {more('/attendance', 'شوف الحضور')}
       </article>
       <article className="hc-kb">
-        <div className="hc-kb-lab">متصلون الآن <Info size={13} aria-hidden="true" /></div>
+        <div className="hc-kb-lab">متصلون الآن <Info size={15} aria-hidden="true" /></div>
         <div className="hc-kb-v num"><CountUp value={present.length} /></div>
         <div className="hc-kb-d"><span className="hc-pill ok">على الموقع هلأ</span></div>
         <svg className="hc-kb-pic" viewBox="0 0 96 64" aria-hidden="true">
