@@ -465,3 +465,30 @@ function ExpectedHint({ typeId }: { typeId: number }) {
   const m = typicalMinutes(tasks ?? [], typeId)
   return m ? <span className="expected-hint">المعتاد لهالنوع (من آخر المهام المنجزة): <b className="num">{durationText(m)}</b></span> : null
 }
+
+/** Reuses the existing assignment operation; transferring does not send a paid message. */
+export function ReassignTaskDialog({task,technicians,onClose}:{task:Task;technicians:Employee[];onClose():void}) {
+  const [selected,setSelected]=useState('')
+  const [busy,setBusy]=useState(false)
+  const [error,setError]=useState<string|null>(null)
+  const toast=useToast()
+  const current=task.assigneeIds?.length ? task.assigneeIds : task.assigneeId ? [task.assigneeId] : []
+  const choices=technicians.filter(t=>current.length>1 || !current.includes(t.id))
+  async function transfer() {
+    if(busy || !selected)return
+    const tech=choices.find(t=>t.id===selected)
+    if(!tech)return
+    setBusy(true);setError(null)
+    try {
+      await assignTask(task,tech.id,task.priority,task.expectedMinutes,[tech.id])
+      toast(`تحوّلت المهمة ${task.number} إلى ${tech.fullName}`)
+      onClose()
+    } catch(e) {setError(errText(e));setBusy(false)}
+  }
+  return <Dialog open onClose={()=>{if(!busy)onClose()}} title={`تحويل المهمة ${task.number} لفني آخر`} footer={<><Button variant="ghost" disabled={busy} onClick={onClose}>إلغاء</Button><Button variant="primary" busy={busy} disabled={!selected || busy} onClick={()=>void transfer()}>حفظ التحويل</Button></>}>
+    <label className="field"><span className="label">الفني الجديد</span><select className="select" value={selected} disabled={busy} onChange={e=>setSelected(e.target.value)}><option value="">اختر الفني</option>{choices.map(t=><option key={t.id} value={t.id}>{t.fullName}</option>)}</select></label>
+    {isSharedTask(task) && <p className="field-hint">المهمة المشتركة رح تصير عند الفني الجديد لحاله.</p>}
+    <p className="field-hint">بتبقى نفس المهمة وتفاصيلها. ما بنرسل رسالة تلقائيًا عند التحويل.</p>
+    {error && <p className="field-error" role="alert">{error}</p>}
+  </Dialog>
+}

@@ -162,7 +162,7 @@
 
 /* «تم»: the office marks a task done for a technician without a smartphone. */
 .task-li { display: flex; align-items: stretch; gap: 8px; }
-.task-li > .task-row { flex: 1; min-width: 0; }
+.task-li .task-row { flex: 1; min-width: 0; }
 .done-btn { flex: none; width: 74px; border-radius: var(--r-in, 16px); border: 1.5px solid color-mix(in srgb, var(--ok) 45%, transparent); background: var(--ok-soft); color: var(--ok);
   display: grid; place-items: center; align-content: center; gap: 2px; font: inherit; font-weight: 800; font-size: 0.875rem; cursor: pointer; }
 .done-btn:hover, .done-btn:focus-visible { background: var(--ok); color: #fff; outline: none; }
@@ -183,7 +183,7 @@
   .prep-row .task-no { align-self: flex-start; }
   .prep-row .btn { width: 100%; justify-content: center; }
   .task-li { flex-direction: column; gap: 0; }
-  .task-li > .task-row { border-end-start-radius: 0; border-end-end-radius: 0; }
+  .task-li .task-row { border-end-start-radius: 0; border-end-end-radius: 0; }
   .task-li > .done-btn { width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; padding: 12px; font-size: var(--fs-md);
     border-start-start-radius: 0; border-start-end-radius: 0; border-top: 0; }
   .done-more { display: inline; font-weight: 700; font-size: 0.8125rem; opacity: .85; }
@@ -226,7 +226,7 @@
   .tasks .task-actions .btn { min-height: 52px; }
   /* One row per task, «تم» beside it (not under it). */
   .task-li { flex-direction: row; gap: 6px; }
-  .task-li > .task-row { border-end-start-radius: var(--r-lg); border-end-end-radius: var(--r-lg); }
+  .task-li .task-row { border-end-start-radius: var(--r-lg); border-end-end-radius: var(--r-lg); }
   .task-li > .done-btn { width: 64px; flex-direction: column; padding: 8px 4px; gap: 2px; font-size: 0.875rem; border-radius: var(--r-lg); border-top: 1.5px solid color-mix(in srgb, var(--ok) 45%, transparent); }
   .task-li > .done-btn .done-more { display: none; }
   .task-row { padding: 10px 12px; }
@@ -285,3 +285,8 @@
 .sh-open small { display: block; color: var(--muted); }
 .sh-st.warn { color: var(--warn); } .sh-st.ok { color: var(--ok); } .sh-st.info { color: var(--info); } .sh-st.brand { color: var(--brand-text); }
 .expected-hint { font-size: var(--fs-xs); color: var(--muted); }
+
+.task-card { position: relative; flex: 1; min-width: 0; display: flex; }
+.task-card.can-reassign > .task-row { padding-bottom: 48px; }
+.task-transfer { position: absolute; inset-inline-start: 16px; bottom: 10px; display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 3px 9px; border: 1px solid var(--line); border-radius: var(--r-in); background: var(--surface); color: var(--brand); font: inherit; font-size: 12px; cursor: pointer; }
+.task-transfer:hover, .task-transfer:focus-visible { border-color: var(--brand); background: var(--brand-soft); }

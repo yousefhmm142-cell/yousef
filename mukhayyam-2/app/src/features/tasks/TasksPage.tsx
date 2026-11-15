@@ -4,7 +4,7 @@ import { EmptyArt } from '../../ui/fx/EmptyArt'
 import { CountUp } from '../../ui/fx/CountUp'
 import { Skeleton } from '../../ui/fx/Skeleton'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Search,X,AlarmClock,CalendarDays,CheckCheck,ChevronLeft,ChevronRight,ListChecks,MapPin,Phone,PhoneIncoming,Plus,Printer,ScrollText,UserRound } from 'lucide-react'
+import { ArrowRightLeft,Search,X,AlarmClock,CalendarDays,CheckCheck,ChevronLeft,ChevronRight,ListChecks,MapPin,Phone,PhoneIncoming,Plus,Printer,ScrollText,UserRound } from 'lucide-react'
 import { taskMatrix } from '../reports/build'
 import { TaskPrintSheet } from './TaskPrintSheet'
 import { sealWorkAsTasks,useSealWork } from './sealWork'
@@ -35,7 +35,7 @@ isOverdue,
 priorityInfo,taskStatusInfo,type Task
 } from './model'
 import { markDone,refreshTasks,useTasks,useTaskTypes } from './repo'
-import { errText, useTechnicians, GiveDialog, NewTaskDialog, TaskDialog } from './TaskDialogs'
+import { errText, useTechnicians, GiveDialog, ReassignTaskDialog, NewTaskDialog, TaskDialog } from './TaskDialogs'
 import { PrepareDialog,SubscribersButton } from './PrepareDialog'
 import { buzz } from '../../lib/appearance'
 
@@ -65,6 +65,7 @@ export function TasksPage() {
   const [creating, setCreating] = useState(() => new URLSearchParams(location.search).get('new') === '1')
   const [preparing, setPreparing] = useState(false)
   const [giving, setGiving] = useState<string | null>(null)
+  const [reassigning, setReassigning] = useState<string | null>(null)
   const [openId, setOpenId] = useState<string | null>(() => new URLSearchParams(location.search).get('open'))
 
   // Fresh from the server while this screen is open: a finished task shows up within seconds.
@@ -106,6 +107,7 @@ export function TasksPage() {
   const zoneName = (id: number | null) => (id ? zones?.find((z) => z.id === id)?.name ?? null : null)
   const person = (id:string|null) => id ? people?.find(e=>e.id===id) ?? technicians.find(e=>e.id===id) : undefined
   const participants=(task:Task)=>taskAssignees(task).map(id=>person(id)).filter((p):p is Employee=>!!p)
+  const reassigningTask = all.find(t=>t.id===reassigning) ?? taskSearch.rows.find(t=>t.id===reassigning) ?? null
   const givingTask = all.find((t) => t.id === giving) ?? taskSearch.rows.find(t=>t.id===giving) ?? null
   const confirmDone = useConfirm()
   const toastDone = useToast()
@@ -241,8 +243,10 @@ export function TasksPage() {
             const tech = person(t.assigneeId)
             const mins = elapsedMinutes(t, now)
             const overdue = isOverdue(t, now)
+            const canReassign = !!t.assigneeId && ['new', 'sent', 'seen'].includes(t.status)
             return (
               <li key={t.id} className="task-li">
+                <div className={`task-card${canReassign ? ' can-reassign' : ''}`}>
                 <button type="button" className="task-row card" data-late={overdue || undefined} onClick={() => setOpenId(t.id)}>
                   <span className="task-no num">{t.number || '…'}</span>
                   <span className="task-main">
@@ -265,6 +269,8 @@ export function TasksPage() {
                     </span>
                   </span>
                 </button>
+                {canReassign && <button type="button" className="task-transfer" aria-label={`تحويل المهمة ${t.number} لفني آخر`} onClick={()=>setReassigning(t.id)}><ArrowRightLeft size={14} />تحويل لفني آخر</button>}
+                </div>
                 {searching && !t.assigneeId && isOpen(t) && <Button onClick={()=>setGiving(t.id)}>أعطيها لفني</Button>}
                 {t.assigneeId && isOpen(t) && (
                   <button type="button" className="done-btn" aria-label={`تم إنجاز المهمة ${t.number || ''}`} title="الفني خلّصها: علّمها منجزة" onClick={() => void doneFor(t)}>
@@ -284,6 +290,7 @@ export function TasksPage() {
       <DailySheet day={day} busy={dayTasksState.busy} tasks={[...dayTasksState.rows.filter((t) => t.status !== 'cancelled' && toISODate(new Date(t.createdAt)) === day), ...sealDone.tasks]} types={sealDone.types} />
 
       {preparing && <PrepareDialog onClose={() => setPreparing(false)} />}
+      {reassigningTask && <ReassignTaskDialog key={reassigningTask.id} task={reassigningTask} technicians={technicians} onClose={()=>setReassigning(null)} />}
       {givingTask && <GiveDialog task={givingTask} technicians={technicians} typeName={typeName} zoneName={zoneName} onClose={() => setGiving(null)} />}
       {creating && (
         <NewTaskDialog
