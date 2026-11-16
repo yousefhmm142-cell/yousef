@@ -150,7 +150,7 @@ export function TasksPage() {
       </div>}
 
       <div className="ph-actions task-actions">
-        {employee.role==='manager' && <Button variant="secondary" size="lg" icon={<Printer size={18} />} onClick={() => navigate('/tasks/daily')}>كشف إنجاز الفنيين</Button>}
+        {employee.role==='manager' && <Button className="tasks-daily-entry" variant="secondary" size="lg" icon={<Printer size={18} />} onClick={() => navigate('/tasks/daily')}>كشف إنجاز الفنيين</Button>}
         <Button variant="secondary" size="lg" icon={<ListChecks size={18} />} onClick={() => setParams({ view: 'archive' })}>أرشيف الفنيين</Button>
         <Button variant="secondary" size="lg" icon={<UserRound size={18} />} onClick={() => navigate('/subscriber')}>ملف مشترك</Button>
         {hasPage(employee, 'seal-work') && <Button variant="secondary" size="lg" icon={<ScrollText size={18} />} onClick={() => navigate('/tasks/seal-work')} className={isManagerRole(employee.role) ? undefined : 'desk-only'}>

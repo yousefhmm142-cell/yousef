@@ -1,7 +1,7 @@
 import { useEmployee } from '../../auth/AuthProvider'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { ArrowLeft, Droplet, Gauge, Info, Plus, Printer, Timer, TrendingUp } from 'lucide-react'
-import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { db } from '../../data/db'
 import { addDays, dayName, todayISO, type ISODate } from '../../lib/dates'
@@ -19,6 +19,8 @@ import { useAlertSettings, useAllReports, useGenerators } from '../generation/re
 
 // The new home charts (2026-11 redesign): drawn by hand from the reports already on the device, so they
 // work offline and add no chart library. Right-to-left: the oldest day is on the right.
+
+const DailyWorkDialog=lazy(()=>import('../tasks/DailyWorkDialog').then(m=>({default:m.DailyWorkDialog})))
 
 const fmt = (n: number) => formatNumber(Math.round(n))
 const short = (d: ISODate) => `${Number(d.slice(8, 10))}/${Number(d.slice(5, 7))}`
@@ -571,6 +573,7 @@ export function Insights() {
 /** The four boxes under the charts (like the design): what waits, open tasks, attendance, who is online. */
 export function KpiBoxes() {
   const me=useEmployee()
+  const [dailyOpen,setDailyOpen]=useState(false)
   const present = usePresent()
   const now = useNow(60_000)
   const shown = useShown()
@@ -613,13 +616,14 @@ export function KpiBoxes() {
   )
   return (
     <section className={`hc-kbs${shown ? ' go' : ''}${me.role==='manager'?' has-daily':''}`} aria-label="أرقام اليوم">
-      {me.role==='manager' && <Link to="/tasks/daily" className="hc-kb daily-entry-card">
+      {me.role==='manager' && <button type="button" onClick={()=>setDailyOpen(true)} className="hc-kb daily-entry-card">
         <span className="daily-entry-icon"><Printer size={25} aria-hidden="true"/></span>
         <b>كشف إنجاز الفنيين</b>
         <span>اختار اليوم، راجع الشغل واطبع الكشف.</span>
         <span className="daily-entry-foot">افتح الكشف <ArrowLeft size={18} aria-hidden="true"/></span>
-      </Link>}
-      <article className="hc-kb dark">
+      </button>}
+      {dailyOpen && me.role==='manager' && <Suspense fallback={null}><DailyWorkDialog onClose={()=>setDailyOpen(false)}/></Suspense>}
+      <article className="hc-kb">
         <div className="hc-kb-lab">بانتظار اعتمادك <Info size={15} aria-hidden="true" /></div>
         <div className="hc-kb-v num"><CountUp value={data.approvals} /></div>
         <div className="hc-kb-d">{data.approvals ? <span className="hc-pill warn">من {dayName(data.oldestWaiting!)}</span> : <span className="hc-pill ok">ما في اشي ينتظر</span>}</div>

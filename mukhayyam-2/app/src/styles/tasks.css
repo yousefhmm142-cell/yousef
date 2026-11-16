@@ -330,3 +330,23 @@
  .daily-daynav { grid-template-columns: 44px minmax(0,1fr) 44px; }
  .daily-day-actions>.btn { flex: 1; }
 }
+
+.daily-work-dialog { width: min(1100px,calc(100% - 24px)); max-width: none; }
+@media print {
+ body.printing-daily-modal { min-height: 0; }
+ body.printing-daily-modal > :not(.tasks-print) { display: none !important; }
+ body.printing-daily-modal dialog, body.printing-daily-modal dialog::backdrop { display: none !important; }
+ body.printing-daily-modal > .tasks-print { display: block !important; width: auto; margin: 0; }
+}
+
+.tasks .btn.tasks-daily-entry { background: #4a4543; border-color: #6b625d; color: #fff; box-shadow: 0 6px 14px -10px #211b1a80; }
+.tasks .btn.tasks-daily-entry:not(:disabled):hover { background: #5b5350; color: #fff; border-color: #83756f; }
+.daily-total { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin: 16px 0; padding: 18px 22px; border: 1px solid var(--line); border-radius: 18px; background: var(--brand-soft); }
+.daily-total>div { display: flex; align-items: center; gap: 18px; }
+.daily-total span { font-weight: 800; color: var(--ink); }
+.daily-total strong { font-size: 2.25rem; font-weight: 800; color: var(--brand-text); line-height: 1.2; }
+.daily-total p { margin: 0; color: var(--muted); font-size: var(--fs-sm); }
+.daily-total small { display: block; }
+.daily-work-panel .report-table tfoot th, .daily-work-panel .report-table tfoot td { background: var(--surface-2); border-top: 2px solid var(--line); font-weight: 800; }
+.daily-work-panel .report-table tfoot td:last-child { font-size: 1.375rem; color: var(--brand-text); background: var(--brand-soft); }
+@media print { .tasks-print .task-form tfoot td:last-child { font-size: 16pt; border: 2px solid #000; background: #e8e8e8; } }
