@@ -153,16 +153,16 @@
 .tw { overflow-x: auto; }
 .tbl { width: 100%; border-collapse: collapse; font-size: 0.90625rem; }
 .tbl th {
-  font-size: 0.78125rem; font-weight: 700; color: var(--muted); text-align: start; padding: 10px 18px;
+  font-size: 0.78125rem; font-weight: 700; color: var(--muted); text-align: center; padding: 10px 18px;
   background: var(--surface-2); border-bottom: 1px solid var(--line-2); white-space: nowrap;
 }
-.tbl td { padding: 14px 18px; border-bottom: 1px solid var(--line-2); white-space: nowrap; vertical-align: middle; }
+.tbl td { text-align: center; padding: 14px 18px; border-bottom: 1px solid var(--line-2); white-space: nowrap; vertical-align: middle; }
 .tbl tr:last-child td { border-bottom: 0; }
 .tbl tbody tr:hover { background: color-mix(in srgb, var(--brand) 3%, transparent); }
 .tbl .n { font-variant-numeric: tabular-nums; }
 .tbl .n.em { font-weight: 800; }
 .tbl tr[data-off] td { color: var(--faint); }
-.fuel-name { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+.fuel-name { display: flex; justify-content: center; align-items: center; gap: 10px; font-weight: 700; }
 .gen b { display: block; font-weight: 800; }
 .gen small { display: block; font-size: 0.78125rem; color: var(--faint); }
 .runs { display: flex; flex-direction: column; gap: 6px; }

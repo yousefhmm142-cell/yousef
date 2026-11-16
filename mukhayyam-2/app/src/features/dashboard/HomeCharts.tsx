@@ -570,6 +570,7 @@ export function Insights() {
 
 /** The four boxes under the charts (like the design): what waits, open tasks, attendance, who is online. */
 export function KpiBoxes() {
+  const me=useEmployee()
   const present = usePresent()
   const now = useNow(60_000)
   const shown = useShown()
@@ -611,7 +612,13 @@ export function KpiBoxes() {
     <Link className="hc-kb-more" to={to}>{label}<ArrowLeft size={14} aria-hidden="true" /></Link>
   )
   return (
-    <section className={`hc-kbs${shown ? ' go' : ''}`} aria-label="أرقام اليوم">
+    <section className={`hc-kbs${shown ? ' go' : ''}${me.role==='manager'?' has-daily':''}`} aria-label="أرقام اليوم">
+      {me.role==='manager' && <Link to="/tasks/daily" className="hc-kb daily-entry-card">
+        <span className="daily-entry-icon"><Printer size={25} aria-hidden="true"/></span>
+        <b>كشف إنجاز الفنيين</b>
+        <span>اختار اليوم، راجع الشغل واطبع الكشف.</span>
+        <span className="daily-entry-foot">افتح الكشف <ArrowLeft size={18} aria-hidden="true"/></span>
+      </Link>}
       <article className="hc-kb dark">
         <div className="hc-kb-lab">بانتظار اعتمادك <Info size={15} aria-hidden="true" /></div>
         <div className="hc-kb-v num"><CountUp value={data.approvals} /></div>
@@ -699,11 +706,8 @@ export function HomeHeader({ name }: { name: string }) {
       </div>
       <span className="grow" />
       <div className="hc-head-b">
-        <DailyTasksLink />
         <Link className="hc-btn primary" to="/tasks?new=1"><Plus size={17} aria-hidden="true" />مهمة جديدة</Link>
       </div>
     </header>
   )
 }
-
-function DailyTasksLink(){const me=useEmployee();return me.role==='manager'?<Link className="hc-btn desk-only" to="/tasks/daily"><Printer size={17} aria-hidden="true" />كشف إنجاز الفنيين</Link>:null}

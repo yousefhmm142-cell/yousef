@@ -1,3 +1,4 @@
+import { OFFICE_MANAGER_NAME } from '../sheets/signers'
 import { describeDay } from '../../lib/dates'
 import { ordinalWord, type SealBatch, type SealData } from './model'
 
@@ -27,6 +28,7 @@ export function SealSlips({ data, batches }: { data: SealData; batches: SealBatc
                   </tr>
                 ))}
               </tbody>
+              <tfoot><tr><td colSpan={3} className="slip-approval">اعتماد مدير المكتب: {OFFICE_MANAGER_NAME}</td></tr></tfoot>
             </table>
           )
         })}

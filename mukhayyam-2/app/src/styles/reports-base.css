@@ -51,8 +51,8 @@
 /* A soft edge after the fixed first column (the page is right-to-left: the edge is on its left). */
 .tbl th:first-child::after, .tbl td:first-child::after { content: ''; position: absolute; top: 0; bottom: 0; inset-inline-end: -8px; width: 8px; pointer-events: none; background: linear-gradient(to right, transparent, color-mix(in srgb, var(--ink) 6%, transparent)); }
 .tbl tbody tr:hover, .tbl tbody tr:hover td:first-child { background: var(--surface-2); }
-.tbl td.num, .tbl td.n { text-align: end; }
-.reports .tbl th:not(.l):not(:first-child) { text-align: end; }
+.tbl td.num, .tbl td.n { text-align: center; }
+.reports .tbl th:not(.l) { text-align: center; }
 .tbl tfoot td { font-weight: 800; background: var(--sunken); border-top: 2px solid var(--line); }
 .tbl tfoot td:first-child { background: var(--sunken); }
 @media print { .tw, .table-wrap { max-height: none; overflow: visible; } .tbl th, .tbl td { position: static !important; } .tbl th::after, .tbl td::after { display: none !important; } }

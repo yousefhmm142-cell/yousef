@@ -102,3 +102,5 @@
   .print-sheet h2, .print-sheet .ps-sub, .print-sheet .rp-block > h2 { break-after: avoid; page-break-after: avoid; }
   .print-sheet .ps-head { break-after: avoid; }
 }
+
+.print-sheet table.slip td.slip-approval { height: auto; padding: 3px 4px; font-size: 8.5pt; font-weight: 700; }

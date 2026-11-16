@@ -1,3 +1,4 @@
+import {CalendarDays,ChevronRight,ChevronLeft,Printer,RotateCcw} from 'lucide-react'
 import {TaskPrintSheet} from './TaskPrintSheet'
 import {useMemo,useState} from 'react'
 import {useLiveQuery} from 'dexie-react-hooks'
@@ -20,12 +21,16 @@ export function DailyWorkPanel({initialDay=todayISO()}:{initialDay?:ISODate}) {
  const techs=(people??[]).filter(p=>p.role==='technician' && (p.isActive || result.tasks.some(t=>isAssignedTo(t,p.id)))).sort((a,b)=>a.fullName.localeCompare(b.fullName,'ar'))
  const columns=result.types.filter(ty=>result.tasks.some(t=>t.typeId===ty.id))
  return <div className="daily-work-panel">
-  <div className="ph-actions" style={{flexWrap:'wrap'}}>
-   <Button variant="secondary" onClick={()=>setDay(addDays(day,-1))}>اليوم السابق</Button>
-   <label className="field"><span className="label">يوم الإنجاز · {describeDay(day).weekday}</span><input className="input" type="date" value={day} max={todayISO()} onChange={e=>{if(e.target.value)setDay(e.target.value)}} /></label>
-   <Button variant="secondary" disabled={day>=todayISO()} onClick={()=>setDay(addDays(day,1))}>اليوم التالي</Button>
-   <Button variant="ghost" disabled={day===todayISO()} onClick={()=>setDay(todayISO())}>اليوم</Button>
-   <Button variant="primary" disabled={rows.busy || !rows.ready || !!rows.error || sealState.busy || !!sealState.error} onClick={()=>window.print()}>طباعة الكشف</Button>
+  <div className="daily-tools">
+   <nav className="daily-daynav" aria-label="التنقّل بين أيام الإنجاز">
+    <button type="button" className="daily-step" aria-label="اليوم السابق" title="اليوم السابق" onClick={()=>setDay(addDays(day,-1))}><ChevronRight size={22}/></button>
+    <label className="daily-picked"><span><CalendarDays size={17} aria-hidden="true"/>{day===todayISO()?'اليوم':describeDay(day).weekday}</span><b className="num">{describeDay(day).date}</b><input aria-label="اختار يوم الإنجاز" onClick={e=>{try{e.currentTarget.showPicker?.()}catch{/* Native picker may be unavailable in older browsers. */}}} type="date" value={day} max={todayISO()} onChange={e=>{if(e.target.value)setDay(e.target.value)}} /></label>
+    <button type="button" className="daily-step" aria-label="اليوم التالي" title="اليوم التالي" disabled={day>=todayISO()} onClick={()=>setDay(addDays(day,1))}><ChevronLeft size={22}/></button>
+   </nav>
+   <div className="daily-day-actions">
+    <Button variant="ghost" icon={<RotateCcw size={16}/>} disabled={day===todayISO()} onClick={()=>setDay(todayISO())}>اليوم</Button>
+    <Button variant="primary" icon={<Printer size={17}/>} disabled={rows.busy || !rows.ready || !!rows.error || sealState.busy || !!sealState.error} onClick={()=>window.print()}>طباعة الكشف</Button>
+   </div>
   </div>
   <p className="muted">الشغل المنجز بهاليوم فقط؛ الختم المربوط بمهمة ما بينحسب مرة ثانية. اضغط العدد لتشوف التفاصيل.</p>
   {sealState.error && <p className="banner warn">{sealState.error}</p>}

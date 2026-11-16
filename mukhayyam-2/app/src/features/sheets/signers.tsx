@@ -2,9 +2,11 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../data/db'
 import { stamp } from './ui'
 
+export const OFFICE_MANAGER_NAME = 'رامي أبو عجوة'
+
 /**
  * The names used on printed sheets, whoever typed the figures: the site manager (the one with the
- * job title «مدير الموقع») and the office manager (job title «مدير المكتب», else the account with the manager role).
+ * job title «مدير الموقع») and the office manager (fixed by the office owner, independent of the signed-in account).
  */
 export function useSigners(): { siteManager: string; officeManager: string } {
   return (
@@ -12,9 +14,8 @@ export function useSigners(): { siteManager: string; officeManager: string } {
       const all = (await db.employees.toArray()).filter((e) => e.isActive)
       const byTitle = (re: RegExp) => all.find((e) => e.jobTitle && re.test(e.jobTitle))
       const site = byTitle(/مدير\s*(ال)?موقع/) ?? all.find((e) => e.role === 'generation_operator')
-      const office = byTitle(/مدير\s*(ال)?مكتب/) ?? all.find((e) => e.role === 'manager')
-      return { siteManager: site?.fullName ?? '', officeManager: office?.fullName ?? '' }
-    }, []) ?? { siteManager: '', officeManager: '' }
+      return { siteManager: site?.fullName ?? '', officeManager: OFFICE_MANAGER_NAME }
+    }, []) ?? { siteManager: '', officeManager: OFFICE_MANAGER_NAME }
   )
 }
 
@@ -35,7 +36,7 @@ export function SignFooter({ approval }: { approval?: { submittedAt: string | nu
       )}
       <div>
         <b>اعتماد مدير المكتب</b>
-        <span>{!approval || approval.approvedAt ? officeManager || '—' : '—'}{approval?.approvedAt ? ` · ${stamp(approval.approvedAt)}` : ''}</span>
+        <span>{officeManager}{approval?.approvedAt ? ` · ${stamp(approval.approvedAt)}` : ''}</span>
       </div>
     </footer>
   )

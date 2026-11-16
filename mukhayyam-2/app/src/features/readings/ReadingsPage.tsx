@@ -1,3 +1,4 @@
+import { SignFooter } from '../sheets/signers'
 import { buzz } from '../../lib/appearance'
 import { BoardMoveDialog } from './BoardMoveDialog'
 import { EmptyArt } from '../../ui/fx/EmptyArt'
@@ -334,6 +335,7 @@ function AdminReadings() {
               </table>
             </Fragment>
           ))}
+          <SignFooter />
         </div>
       )}
 

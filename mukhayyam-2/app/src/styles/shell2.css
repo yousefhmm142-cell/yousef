@@ -247,3 +247,9 @@ body { background: var(--bg); background-image: none; }
   .shell .topbar { column-gap: 4px; padding-inline: 8px; }
   .shell .topbar-end { gap: 2px; }
 }
+
+/* A quiet grey hover; the active route keeps its burgundy marker. */
+.sb-item:is(:hover,:focus-visible), .sb-subitem:is(:hover,:focus-visible) { background: #2c2b2f; color: var(--ink); }
+.sb-item.active:is(:hover,:focus-visible) { background: #36343a; border-color: #625d63; }
+:root[data-theme='light'] .sb-item:is(:hover,:focus-visible), :root[data-theme='light'] .sb-subitem:is(:hover,:focus-visible) { background: #e5e0de; color: var(--ink); }
+:root[data-theme='light'] .sb-item.active:is(:hover,:focus-visible) { background: #e2dcda; border-color: #c9bfbc; box-shadow: 0 5px 14px -10px #322a2940; }

@@ -1,3 +1,4 @@
+import { WorkMap } from '../features/guide/WorkMap'
 import { BookOpen, ClipboardList, FileBarChart, Gauge, LayoutGrid, ListChecks, LogIn, MessageSquareText, ScanLine, Settings, Stamp, UserRound, Wifi, Zap, type LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router'
@@ -67,6 +68,8 @@ const TOPICS: Topic[] = [
       'لما يتصل مشترك: «تجهيز مهمة» واكتب اسمه (بيطلعلك من دليل المشتركين) وطلبه.',
       'من «مهام مجهّزة بانتظار فني» اختار المهمة وأعطيها لفني أو أكتر، والأولوية والمدة المتوقعة، وابعتها SMS أو واتساب.',
       'تابع من البطاقات فوق: عند الفنيين، تجاوزت وقتها، خلصت اليوم. وبتقدر ترجع لأيام قبل بالأسهم.',
+      'عند الإنجاز اضغط «تم»، وسجّل الشغل الفعلي. الأختام اختيارية؛ الشغل بدون ختم بينحسب عادي.',
+      'للمدير رامي: «كشف إنجاز الفنيين» بأعلى المهام، واختار اليوم واطبع كشفه.',
       '«ملف مشترك» بيوريك كل اللي صار لمشترك: مهامه وأختامه وقراءاته.',
     ],
   },
@@ -101,6 +104,8 @@ const TOPICS: Topic[] = [
     steps: [
       '«صرف الأختام»: اختار الرول والفني وعدد الأختام واطبع ورقة الصرف.',
       '«تسجيل الأختام والبحث»: سجّل كل ختم انستخدم (التاريخ والتفاصيل ورقم الطبلون)، أو تالف أو ضائع.',
+      'الختم المطابق لمهمة منجزة بنفس يوم الإنجاز والفني والمشترك ونوع العمل بيرتبط تلقائيًا، وما بينحسب شغل إضافي. إذا فيه أكثر من مهمة مطابقة اختاري رقمها.',
+      'الختم اللي تسجّل من إنجاز المهمة بيظهر عند المحاسبة جاهز؛ ما تعيدي تسجيل استخدامه.',
       '«غير المسجّلة»: الأختام اللي عند الفنيين وما انسجّلت، الأقدم أول. اطبعها وتابع معهم.',
     ],
   },
@@ -146,8 +151,10 @@ export function Guide() {
         <Segmented<'mine' | 'all'> label="شو بدك تشوف" value={scope} options={[{ value: 'mine', label: 'شغلي أنا' }, { value: 'all', label: 'كل الأقسام' }]} onChange={setScope} />
       </header>
       <nav className="guide-toc card" aria-label="المحتويات">
+        <a href="#g-work-map"><Stamp size={15}/>خريطة المهام والأختام</a>
         {shown.map((t) => <a key={t.key} href={`#g-${t.key}`}><t.icon size={15} />{t.title}</a>)}
       </nav>
+      <WorkMap />
       {shown.map((t) => (
         <section key={t.key} id={`g-${t.key}`} className="card guide-topic">
           <div className="card-h"><span className="ico-round brand"><t.icon size={16} /></span><h2>{t.title}</h2>{t.to && <Link to={t.to} className="link-btn card-h-action">افتح الصفحة</Link>}</div>

@@ -1,3 +1,4 @@
+import { SignFooter } from '../sheets/signers'
 import { MapPin,Wifi,X,Printer,QrCode,RefreshCw,Smartphone } from 'lucide-react'
 import qrcode from 'qrcode-generator'
 import { useEffect,useMemo,useState } from 'react'
@@ -220,6 +221,7 @@ export function SheetAndPhones({ people }: { people: Employee[] }) {
             <li>أول مرة فقط: اختر اسمك واكتب رمز الحضور من المدير.</li>
             <li>بعدها: صوّر عند الوصول وعند المغادرة. الوقت من الخادم.</li>
           </ol>
+          <SignFooter />
         </div>
       )}
     </>
