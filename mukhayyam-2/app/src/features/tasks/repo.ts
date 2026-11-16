@@ -4,6 +4,8 @@ import { ensureDemoData } from '../../data/demo'
 import { db } from '../../data/db'
 import { flushActions, getActions, onActionsSent, runOrQueue } from '../../data/actions'
 import { getSupabase } from '../../data/supabase'
+import { todayISO } from '../../lib/dates'
+import { composeDetails } from '../seals/model'
 import { serverNow } from '../../lib/clock'
 import { bySortOrder } from '../generation/repo'
 import { SheetStateError } from '../sheets/workflow'
@@ -33,6 +35,8 @@ interface TaskRow {
   started_at: string | null
   completed_at: string | null
   cancelled_at: string | null
+  completed_work?: string
+  used_seals?: number[]
   completion_notes: string | null
   cancel_reason: string | null
   link_token: string
@@ -60,6 +64,8 @@ export const taskFromRow = (r: TaskRow): Task => ({
   completedAt: r.completed_at,
   cancelledAt: r.cancelled_at,
   completionNotes: r.completion_notes ?? '',
+  usedSeals: r.used_seals ?? [],
+  completedWork:r.completed_work ?? '',
   cancelReason: r.cancel_reason ?? '',
   linkToken: r.link_token,
   createdAt: r.created_at,
@@ -93,7 +99,7 @@ export async function refreshTasks(): Promise<boolean> {
   if (!sb || !navigator.onLine) return false
   // What was written without internet goes up first; anything still waiting stays on screen.
   await flushActions()
-  const waiting = new Set((await getActions()).filter((a) => a.table === 'tasks').map((a) => String(a.row?.id ?? a.rowId)))
+  const waiting = new Set((await getActions()).filter((a) => (a.table === 'tasks' || a.table === 'task_complete_seals')).map((a) => String(a.row?.id ?? a.rowId)))
   const since = new Date(Date.now() - 120 * 86_400_000).toISOString()
   const raw:TaskRow[]=[]
   for(let offset=0;;offset+=1000) {
@@ -337,4 +343,12 @@ export async function sendSharedTaskSms(task: Task, request: string): Promise<{s
   check(error,status)
   await refreshTasks().catch(()=>false)
   return data
+}
+
+export async function completeTaskWithSeals(task:Task,seals:number[],notes:string,work:string,board:string,operation:string) {
+ const now=serverNow().toISOString()
+ const local=async()=>{await db.tasks.update(task.id,{status:'done',completedAt:now,completionNotes:notes,completedWork:work,usedSeals:seals});for(const no of seals)await db.seals.update(no,{status:'used',usedOn:todayISO(),details:composeDetails({board,work,subscriber:task.subscriberName}),boardNo:board,taskId:task.id})}
+ if(isDemo){await local();return}
+ const outcome=await runOrQueue({table:'task_complete_seals',op:'rpc',rowId:task.id,row:{p_task:task.id,p_seals:seals,p_notes:notes,p_work:work,p_board:board,p_operation:operation,p_time:now,p_offline:!navigator.onLine},label:`إنجاز المهمة ${task.number} وربط الأختام`},local)
+ if(outcome==='sent'){await local();await refreshTasks()}
 }

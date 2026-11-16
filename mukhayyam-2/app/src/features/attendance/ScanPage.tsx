@@ -1,7 +1,7 @@
 import { Skeleton } from '../../ui/fx/Skeleton'
 import { CheckCircle2, CircleAlert, LogIn, LogOut, MapPinOff, UserRound, WifiOff } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
-import { useParams } from 'react-router'
+import { useParams, useSearchParams } from 'react-router'
 import { formatTime } from '../../lib/format'
 import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import { Button, Logo } from '../../ui/primitives'
@@ -9,7 +9,7 @@ import { PinInput } from '../../ui/PinInput'
 import { SheetStateError } from '../sheets/workflow'
 import { durationText } from '../tasks/model'
 import { useNow } from '../../lib/useNow'
-import { getPlace, scanPeople, scanPunch, scanRegister, type PhonePlace, type ScanResult } from './repo'
+import { getPlace, scanPeople, scanPunch, scanButtonPunch, scanRegister, type PhonePlace, type ScanResult } from './repo'
 
 // What a phone camera opens from the printed sheet in the office. No app, no sign-in.
 // The first time on a phone: pick your name, type the 4-digit code from the admin. After that every
@@ -53,6 +53,8 @@ const problems: Record<string, { title: string; text: string; retry?: boolean }>
 
 export function AttendanceScanPage() {
   const { code: point = '' } = useParams()
+  const [params]=useSearchParams()
+  const manual=params.get('manual')==='1'
   const [state, setState] = useState<State>({ kind: 'working' })
   const [pin, setPin] = useState('')
   const [wrong, setWrong] = useState(false)
@@ -112,8 +114,16 @@ export function AttendanceScanPage() {
   }, [point, chooseName])
 
   useEffect(() => {
-    void punch(reloaded)
-  }, [punch, reloaded])
+    void punch(reloaded || manual)
+  }, [punch, reloaded, manual])
+
+  async function recordButton() {
+    const device=savedDevice()
+    if(!device || state.kind!=='done' || !state.result.next)return
+    const next=state.result.next
+    setState({kind:'working'})
+    try {await scanButtonPunch(point,device.token,next);await punch(true)} catch(e){fail(e)}
+  }
 
   async function register(person: { id: string; name: string }, code: string) {
     setWrong(false)
@@ -125,7 +135,7 @@ export function AttendanceScanPage() {
         return
       }
       saveDevice({ token, name: person.name })
-      await punch()
+      await punch(manual)
     } catch (e) {
       fail(e)
     }
@@ -140,7 +150,7 @@ export function AttendanceScanPage() {
 
       {state.kind === 'working' && <Skeleton kind="list" />}
 
-      {state.kind === 'done' && <Done result={state.result} onRecord={() => void punch(false)} onNotMe={() => { saveDevice(null); void chooseName() }} />}
+      {state.kind === 'done' && <Done result={state.result} onRecord={() => {if(manual)void recordButton();else void punch(false)}} onNotMe={() => { saveDevice(null); void chooseName() }} />}
 
       {state.kind === 'choose' && (
         <section className="card scan-step">

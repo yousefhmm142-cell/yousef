@@ -26,6 +26,8 @@ export function useTaskSearch(
             t.assigneeId,
             t.assigneeIds?.join(','),
             t.completedAt,
+            t.completedWork,
+            t.usedSeals?.join(','),
             t.details,
             t.completionNotes,
           ].join(':'),
@@ -114,7 +116,7 @@ export function useTaskSearch(
     }
   }, [term, load, refreshVersion])
   const ready = remote.term === term && remote.ready
-  const pending = new Set((actions ?? []).filter((a) => a.table === 'tasks').map((a) => String(a.row?.id ?? a.rowId)))
+  const pending = new Set((actions ?? []).filter((a) => (a.table === 'tasks' || a.table === 'task_complete_seals')).map((a) => String(a.row?.id ?? a.rowId)))
   const rows = ready
     ? [...local.filter((t) => pending.has(t.id)), ...remote.rows.filter((t) => !pending.has(t.id))].sort(
         (a, b) => b.number - a.number,

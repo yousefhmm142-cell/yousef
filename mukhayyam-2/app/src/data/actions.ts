@@ -9,7 +9,7 @@ import { getSupabase } from './supabase'
 export interface Action {
   id: string
   table: string
-  op: 'insert' | 'update' | 'delete'
+  op: 'insert' | 'update' | 'delete' | 'rpc'
   /** insert/update: the columns */
   row?: Record<string, unknown>
   /** update/delete: which row */
@@ -39,6 +39,11 @@ type Outcome = 'done' | 'offline' | 'refused'
 async function send(a: Action, ms = LIMIT_MS): Promise<Outcome> {
   const sb = getSupabase()
   if (!sb) return 'offline'
+  if(a.op==='rpc') {
+    if(a.table!=='task_complete_seals')return 'refused'
+    const res=await sb.rpc('task_complete_seals',a.row).abortSignal(AbortSignal.timeout(ms))
+    return !res.error ? 'done' : res.status===0 || !res.error.code ? 'offline' : 'refused'
+  }
   const t = sb.from(a.table)
   const q = a.op === 'insert' ? t.insert(a.row!) : a.op === 'update' ? t.update(a.row!).eq('id', a.rowId!) : t.delete().eq('id', a.rowId!)
   const res = await q.select('id').abortSignal(AbortSignal.timeout(ms))

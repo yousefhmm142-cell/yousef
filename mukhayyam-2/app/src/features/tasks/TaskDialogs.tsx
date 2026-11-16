@@ -422,6 +422,8 @@ export function TaskDialog({ task, tech, participants, typeName, zoneName, now, 
             <div><dt>المشترك</dt><dd>{task.subscriberName}{task.subscriberPhone && <>{task.subscriberName ? ' · ' : ''}<span className="num ltr">{formatPhone(task.subscriberPhone)}</span></>}</dd></div>
           )}
           {(zoneName || task.location) && <div><dt>المكان</dt><dd>{[zoneName, task.location].filter(Boolean).join(' · ')}</dd></div>}
+          {!!task.usedSeals?.length && <div><dt>الأختام المستخدمة</dt><dd className="num">{task.usedSeals.join('، ')}</dd></div>}
+          {task.completedWork && <div><dt>العمل المنجز</dt><dd>{task.completedWork}</dd></div>}
           {task.completionNotes && <div><dt>ملاحظة الفني</dt><dd>{task.completionNotes}</dd></div>}
           {task.cancelReason && <div><dt>سبب الإلغاء</dt><dd>{task.cancelReason}</dd></div>}
         </dl>

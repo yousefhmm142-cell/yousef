@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { db } from '../../data/db'
 import { isDemo } from '../../config'
 import { getSupabase } from '../../data/supabase'
 import type { ISODate } from '../../lib/dates'
@@ -8,7 +10,7 @@ import type { Task, TaskType } from './model'
 /** The words a job starts with; whatever follows is the subscriber (longest first, so «فك ساعة فحص» wins over «فك ساعة»). */
 const WORK_STARTS = [
   'فك ساعة فحص', 'تركيب ساعة فحص', 'فك ساعة', 'تركيب ساعة', 'تبديل ساعة', 'فصل خدمة', 'فصل خط', 'فصل', 'إعادة خدمة', 'إعادة شبك', 'إعادة', 'اعادة',
-  'إضافة مشترك', 'اضافة مشترك', 'تركيب اشتراك', 'نقل مشترك', 'رفع قدرة', 'تنزيل قدرة', 'تغذية طبلون', 'شد كابل', 'تفتيش', 'صيانة',
+  'إضافة مشترك', 'اضافة مشترك', 'تركيب اشتراك', 'نقل مشترك', 'رفع قدرة', 'تنزيل قدرة', 'تغذية طبلون', 'شد كابل', 'تفتيش', 'صيانة كابل', 'شبك غاطس', 'فصل غاطس', 'صيانة',
 ].sort((a, b) => b.length - a.length)
 
 /** «فك ساعة نوح كلاب» written without brackets: the job, and the subscriber who follows it. */
@@ -24,6 +26,7 @@ export function splitWorkSubscriber(work: string, subscriber: string): { work: s
 
 /** A seal as the server returns it for the statement. */
 export interface SealWorkRow {
+  task_id?: string | null
   seal_no: number
   technician_id: string
   used_on: string | null
@@ -34,6 +37,7 @@ export interface SealWorkRow {
 
 /** One line of the statement: who, which day, which seals, and what he did with them. */
 export interface SealWorkLine {
+  taskId?: string | null
   date: ISODate
   techId: string
   tech: string
@@ -62,7 +66,7 @@ export function buildSealWork(rows: SealWorkRow[], names: Map<string, string>): 
   for (const r of rows) {
     const date = (r.used_on ?? r.issued_on) as ISODate | null
     if (!date) continue
-    const key = `${date}|${r.technician_id}|${r.details.trim()}`
+    const key = `${date}|${r.technician_id}|${r.task_id ?? ""}|${r.details.trim()}`
     const hit = lines.get(key)
     if (hit) {
       hit.seals.push(r.seal_no)
@@ -70,7 +74,7 @@ export function buildSealWork(rows: SealWorkRow[], names: Map<string, string>): 
     }
     const d = splitDetails(r.details, r.board_no)
     const ws = splitWorkSubscriber(d.work, d.subscriber)
-    lines.set(key, { date, techId: r.technician_id, tech: names.get(r.technician_id) ?? '—', seals: [r.seal_no], board: d.board, work: ws.work, subscriber: ws.subscriber })
+    lines.set(key, { taskId:r.task_id, date, techId: r.technician_id, tech: names.get(r.technician_id) ?? '—', seals: [r.seal_no], board: d.board, work: ws.work, subscriber: ws.subscriber })
   }
   const out = [...lines.values()]
   for (const l of out) l.seals.sort((a, b) => a - b)
@@ -98,27 +102,38 @@ const norm = (t: string) => t.replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').re
  * Every line of the statement is one finished task for its technician on its day, of the type whose
  * name matches the work («تفتيش», «فك ساعة»…), or of «أعمال الأختام» when none does.
  */
+/** An explicit type for each recorded work; unknown names remain visible instead of a generic seals bucket. */
+function workTypes(types:TaskType[]) {
+ const all=[...types]
+ const resolve=(name:string)=>{const label=name.trim() || 'عمل غير محدد';const hit=all.find(t=>norm(t.name)===norm(label));if(hit)return hit.id
+  let id=-2;while(all.some(t=>t.id===id))id--
+  all.push({id,name:label,isActive:true,sortOrder:9999});return id}
+ return {all,resolve}
+}
 export function sealWorkAsTasks(lines: SealWorkLine[], types: TaskType[]): { tasks: Task[]; types: TaskType[] } {
-  const tasks: Task[] = []
-  let used = false
-  for (const l of lines) {
-    const parts = (l.work.split(/\s*\+\s*/).map((p) => p.trim()).filter(Boolean))
-    for (const part of parts.length ? parts : ['']) {
-      const p = norm(part)
-      const hit = p ? types.find((t) => norm(t.name) === p) ?? types.find((t) => p.includes(norm(t.name)) || norm(t.name).includes(p)) : undefined
-      if (!hit) used = true
-      tasks.push({
-        id: `seal-${l.date}-${l.techId}-${l.seals[0]}-${tasks.length}`, number: 0, typeId: hit?.id ?? SEAL_TYPE_ID, assigneeId: l.techId, createdBy: null,
-        details: part, subscriberName: l.subscriber, subscriberPhone: null, zoneId: null, location: '', priority: 'normal', expectedMinutes: 0, status: 'done',
-        sentAt: null, seenAt: null, startedAt: null, completedAt: `${l.date}T12:00:00+02:00`, cancelledAt: null, completionNotes: '', cancelReason: '', linkToken: '', createdAt: `${l.date}T12:00:00+02:00`,
-      })
-    }
+ const catalog=workTypes(types),tasks:Task[]=[]
+ for(const l of lines){if(l.taskId)continue
+  const parts=[...new Set(l.work.split(/\s*\+\s*/).map(w=>w.trim()).filter(Boolean))]
+  for(const part of parts.length ? parts : ['عمل غير محدد']){
+   tasks.push({id:`seal-${l.date}-${l.techId}-${l.seals[0]}-${tasks.length}`,number:0,typeId:catalog.resolve(part),assigneeId:l.techId,createdBy:null,usedSeals:l.seals,details:part,subscriberName:l.subscriber,subscriberPhone:null,zoneId:null,location:l.board,priority:'normal',expectedMinutes:0,status:'done',sentAt:null,seenAt:null,startedAt:null,completedAt:`${l.date}T12:00:00+02:00`,cancelledAt:null,completionNotes:'',cancelReason:'',linkToken:'',createdAt:`${l.date}T12:00:00+02:00`})
   }
-  return { tasks, types: used ? [...types, { id: SEAL_TYPE_ID, name: 'أعمال الأختام', isActive: true, sortOrder: 9999 }] : types }
+ }
+ return {tasks,types:catalog.all}
+}
+export function dailyWork(tasks:Task[],lines:SealWorkLine[],types:TaskType[]) {
+ const known=new Set(tasks.flatMap(t=>t.usedSeals??[]))
+ const independent=lines.map(l=>({...l,seals:l.seals.filter(n=>!known.has(n))})).filter(l=>l.seals.length>0)
+ const sw=sealWorkAsTasks(independent,types),catalog=workTypes(sw.types)
+ const expanded=tasks.flatMap(t=>{
+  if(!t.completedWork?.trim())return [t]
+  return [...new Set(t.completedWork.split(/\s*\+\s*/).filter(Boolean))].map((work,i)=>({...t,id:`${t.id}:work:${i}`,typeId:catalog.resolve(work),details:work}))
+ })
+ return {tasks:[...expanded,...sw.tasks],types:catalog.all}
 }
 
 /** The seal work of a period (or of everything), refreshed while the page is open. Empty when the server cannot be reached. */
 export function useSealWork(from: ISODate | null, to: ISODate | null, names: Map<string, string> | undefined): SealWorkLine[] {
+  const links=useLiveQuery(async()=>(await db.tasks.toArray()).filter(t=>t.usedSeals?.length).map(t=>`${t.id}:${t.usedSeals!.join(',')}`).sort().join('|'),[])
   const [rows, setRows] = useState<SealWorkRow[]>([])
   useEffect(() => {
     const sb = getSupabase()
@@ -138,6 +153,6 @@ export function useSealWork(from: ISODate | null, to: ISODate | null, names: Map
       window.clearInterval(id)
       window.removeEventListener('online', load)
     }
-  }, [from, to])
+  }, [from, to, links])
   return useMemo(() => (names ? buildSealWork(rows, names) : []), [rows, names])
 }

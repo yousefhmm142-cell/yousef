@@ -18,7 +18,7 @@ import { refreshAttendance } from '../attendance/repo'
 import { gazaTime, toMinutes, weekStart } from '../attendance/rules'
 import { stamp } from '../sheets/ui'
 import { refreshTasks } from '../tasks/repo'
-import { sealWorkAsTasks, useSealWork } from '../tasks/sealWork'
+import { dailyWork, useSealWork } from '../tasks/sealWork'
 import { buildReport, compareSection, dailySeries, daysOf, periodMetrics, type Cell, type Section } from './build'
 import { TrendChart } from './TrendChart'
 import { downloadExcel } from './excel'
@@ -69,11 +69,12 @@ export function ReportsPage() {
 
   // Seal work counts as finished tasks of the technician.
   const sealNames = useMemo(() => (data ? new Map(data.employees.map((e) => [e.id, e.fullName] as [string, string])) : undefined), [data])
-  const sealLines = useSealWork(from, to, sealNames)
+  const sealFrom=period==='week'?addDays(from,-7):monthStart(addDays(from,-1))
+  const sealLines = useSealWork(sealFrom, to, sealNames)
   const sections = useMemo(() => {
     if (!data) return null
-    const sw = sealWorkAsTasks(sealLines, data.taskTypes)
-    const main = buildReport({ ...data, tasks: [...data.tasks, ...sw.tasks], taskTypes: sw.types, from, to, today, nowMin: toMinutes(gazaTime(now.toISOString())) })
+    const sw = dailyWork(data.tasks,sealLines, data.taskTypes)
+    const main = buildReport({ ...data, tasks: sw.tasks, taskTypes: sw.types, from, to, today, nowMin: toMinutes(gazaTime(now.toISOString())) })
     // The same figures for the period just before, set side by side.
     // A period still running is set against the same number of days at the start of the one before.
     const prevFrom = period === 'week' ? addDays(from, -7) : monthStart(addDays(from, -1))
@@ -82,13 +83,13 @@ export function ReportsPage() {
     const elapsed = daysOf(from, upTo).length
     const prevTo = running ? (addDays(prevFrom, elapsed - 1) < from ? addDays(prevFrom, elapsed - 1) : addDays(from, -1)) : addDays(from, -1)
     const first = running ? ` (أول ${elapsed} ${elapsed === 1 ? 'يوم' : elapsed <= 10 ? 'أيام' : 'يوم'})` : ''
-    const cmp = compareSection(periodMetrics({ ...data, from, to: upTo }), periodMetrics({ ...data, from: prevFrom, to: prevTo }), {
+    const cmp = compareSection(periodMetrics({ ...data, tasks:sw.tasks, from, to: upTo }), periodMetrics({ ...data, tasks:sw.tasks, from: prevFrom, to: prevTo }), {
       now: (period === 'week' ? 'هالأسبوع' : 'هالشهر') + (running ? ' لهلأ' : ''),
       before: (period === 'week' ? 'الأسبوع اللي قبله' : `شهر ${monthName(prevFrom)}`) + first,
     })
     return [cmp, ...main]
   }, [data, sealLines, from, to, today, now, period])
-  const trends = useMemo(() => (data ? dailySeries({ from, to, today, reports: data.reports, tasks: data.tasks }) : null), [data, from, to, today])
+  const trends = useMemo(() => (data ? dailySeries({ from, to, today, reports: data.reports, tasks: dailyWork(data.tasks,sealLines,data.taskTypes).tasks }) : null), [data, sealLines, from, to, today])
 
   async function excel() {
     if (!sections) return

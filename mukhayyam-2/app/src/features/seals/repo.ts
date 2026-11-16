@@ -19,6 +19,7 @@ export class SealError extends Error {
 const isoDate = (d: string | null) => d ?? null
 
 interface SealRow {
+  task_id?: string | null
   seal_no: number
   roll_id: string
   status: SealStatus
@@ -36,6 +37,7 @@ interface BatchRow { id: string; roll_id: string; batch_no: number; technician_i
 
 const sealFromRow = (r: SealRow): Seal => ({
   sealNo: r.seal_no,
+  taskId: r.task_id,
   rollId: r.roll_id,
   status: r.status,
   batchId: r.batch_id,
@@ -54,7 +56,7 @@ function client() {
   return sb
 }
 
-const SEAL_COLS = 'seal_no,roll_id,status,batch_id,batch_pos,technician_id,issued_on,used_on,details,board_no,updated_at'
+const SEAL_COLS = 'seal_no,roll_id,status,batch_id,batch_pos,technician_id,issued_on,used_on,details,board_no,task_id,updated_at'
 const CURSOR = 'pull:seals'
 const READY = 'seals:ready'
 const PAGE = 1000
@@ -292,11 +294,13 @@ async function applyLocal(fn: string, args: Record<string, unknown>, opId: strin
     }
   }
   switch (fn) {
+    case 'seal_record_task':
     case 'seal_record': {
       const no = args.p_seal as number
       const st = args.p_status as SealStatus
       const line = String(args.p_details ?? '')
       await db.seals.update(no, st === 'issued' ? { status: st, usedOn: null, details: '', boardNo: '' } : { status: st, usedOn: (args.p_date as string | null) ?? today(), details: line })
+      if(fn==='seal_record_task')await db.seals.update(no,{taskId:st==='used' ? args.p_task as string|null : null})
       return { result: null }
     }
     case 'seal_issue': {
@@ -442,8 +446,8 @@ export const assignBatch = (batchId: string, technicianId: string) => call<void>
 
 export const unissue = (seals: number[]) => call<number>('seal_unissue', { p_seals: seals })
 
-export const recordSeal = (sealNo: number, status: 'used' | 'damaged' | 'lost' | 'issued', usedOn: string | null, details: string) =>
-  call<void>('seal_record', { p_seal: sealNo, p_status: status, p_date: usedOn, p_details: details })
+export const recordSeal = (sealNo: number, status: 'used' | 'damaged' | 'lost' | 'issued', usedOn: string | null, details: string, taskId?: string|null) =>
+  taskId===undefined ? call<void>('seal_record', { p_seal: sealNo, p_status: status, p_date: usedOn, p_details: details }) : call<void>('seal_record_task',{p_seal:sealNo,p_status:status,p_date:usedOn,p_details:details,p_task:taskId})
 
 export const deleteRoll = (rollId: string) => call<void>('seal_delete_roll', { p_roll: rollId })
 

@@ -37,7 +37,7 @@ export function SealPill({ seal, hit, dim, skipped, onClick }: { seal: Seal; hit
   const content = (
     <>
       <i aria-hidden="true" />
-      <span className="num">{seal.sealNo}</span>
+      <span className="num">{seal.sealNo}</span>{seal.taskId && <small>مهمة</small>}
     </>
   )
   const title = `${seal.sealNo} · ${info.label}${skipped ? ' · قفز عنه: انسجّل اللي قبله واللي بعده' : ''}${seal.details ? ` · ${seal.details}` : ''}`

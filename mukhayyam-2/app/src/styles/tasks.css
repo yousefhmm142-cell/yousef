@@ -290,3 +290,13 @@
 .task-card.can-reassign > .task-row { padding-bottom: 48px; }
 .task-transfer { position: absolute; inset-inline-start: 16px; bottom: 10px; display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 3px 9px; border: 1px solid var(--line); border-radius: var(--r-in); background: var(--surface); color: var(--brand); font: inherit; font-size: 12px; cursor: pointer; }
 .task-transfer:hover, .task-transfer:focus-visible { border-color: var(--brand); background: var(--brand-soft); }
+@media (max-width: 560px) {
+  .task-side { min-width: 0; max-width: 100%; padding-inline-start: 0; grid-auto-flow: row; justify-content: stretch; justify-items: start; }
+  .task-clock { white-space: normal; overflow-wrap: anywhere; }
+}
+.daily-work-panel table { width: 100%; min-width: 420px; border-collapse: collapse; font-size: var(--fs-sm); }
+.daily-work-panel th, .daily-work-panel td { padding: 10px 12px; text-align: center; border-bottom: 1px solid var(--line); }
+.daily-work-panel thead th { background: var(--surface-2); font-weight: 800; white-space: nowrap; }
+.daily-work-panel tbody th { text-align: start; background: var(--surface); }
+.daily-work-panel tr > :first-child { position: sticky; inset-inline-start: 0; z-index: 1; }
+.daily-work-panel .link-btn { min-width: 36px; min-height: 36px; color: var(--brand-text); font: inherit; font-weight: 800; }

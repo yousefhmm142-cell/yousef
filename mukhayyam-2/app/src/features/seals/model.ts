@@ -45,6 +45,7 @@ export interface SealBatch {
 }
 
 export interface Seal {
+  taskId?: string | null
   sealNo: number
   rollId: string
   status: SealStatus
@@ -171,7 +172,7 @@ export function splitDetails(details: string, boardNo: string): UseDetails {
 
 export const WORK_CHOICES = [
   'تفتيش', 'تركيب اشتراك', 'إضافة مشترك', 'إعادة شبك', 'فك ساعة فحص', 'تركيب ساعة فحص',
-  'فصل خط', 'نقل مشترك', 'تبديل ساعة', 'رفع قدرة', 'تنزيل قدرة', 'صيانة', 'تغذية طبلون', 'شد كابل',
+  'فصل خط', 'نقل مشترك', 'تبديل ساعة', 'رفع قدرة', 'تنزيل قدرة', 'صيانة', 'تغذية طبلون', 'شد كابل', 'صيانة كابل', 'شبك غاطس', 'فصل غاطس',
 ]
 
 // ---------- Searching ----------

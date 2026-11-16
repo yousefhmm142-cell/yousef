@@ -17,7 +17,8 @@ export function TaskPrintSheet({ day, tasks, employees, types }: {
   employees: Employee[]
   types: TaskType[]
 }) {
-  const columns = types.filter((t) => t.isActive || tasks.some((x) => x.typeId === t.id)).sort((a, b) => a.sortOrder - b.sortOrder)
+  const used = types.filter((t) => tasks.some((x) => x.typeId === t.id)).sort((a, b) => a.sortOrder - b.sortOrder)
+  const columns=used.length?used:[{id:0,name:'لا يوجد شغل منجز',isActive:true,sortOrder:0}]
   const techs = employees
     .filter((e) => e.role === 'technician' && (e.isActive || tasks.some((t) => isAssignedTo(t, e.id))))
     .sort((a, b) => a.fullName.localeCompare(b.fullName, 'ar'))
@@ -52,7 +53,7 @@ export function TaskPrintSheet({ day, tasks, employees, types }: {
           <tr>
             <th rowSpan={2}>م</th>
             <th rowSpan={2}>اسم الكهربائي</th>
-            <th colSpan={columns.length}>المهمة المنفذة</th>
+            <th colSpan={columns.length}>العمل المنجز</th>
             <th rowSpan={2}>المجموع</th>
           </tr>
           <tr>

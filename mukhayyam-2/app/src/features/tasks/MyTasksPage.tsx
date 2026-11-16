@@ -1,3 +1,4 @@
+import { CompleteTaskDialog } from './CompleteTaskDialog'
 import { EmptyArt } from '../../ui/fx/EmptyArt'
 import { useEffect, useState } from 'react'
 import { useEmployee } from '../../auth/AuthProvider'
@@ -8,10 +9,8 @@ import { serverNow } from '../../lib/clock'
 import { useDocumentTitle } from '../../lib/useDocumentTitle'
 import { Button, Pill } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
-import { useConfirm } from '../../ui/Confirm'
 import { refreshTasks, useTasks, useTaskTypes } from './repo'
 import { isAssignedTo, isSharedTask, isOpen, taskStatusInfo, type Task } from './model'
-import { buzz } from '../../lib/appearance'
 
 export async function actOwnTask(task: Task, employeeId: string, action: 'start' | 'done', notes = '') {
   if (!isAssignedTo(task,employeeId) || isSharedTask(task) || !isOpen(task) || (action === 'done' && task.status !== 'in_progress'))
@@ -48,8 +47,8 @@ export function MyTasksPage() {
   const me = useEmployee(),
     tasks = useTasks(),
     types = useTaskTypes(),
-    toast = useToast(),
-    confirm = useConfirm()
+    toast = useToast()
+  const [completing,setCompleting]=useState<Task|null>(null)
   const [busy, setBusy] = useState<string | null>(null),
     [past, setPast] = useState(false),
     [notes, setNotes] = useState<Record<string, string>>({}),
@@ -81,11 +80,10 @@ export function MyTasksPage() {
   async function act(t: Task) {
     if (busy) return
     const action = t.status === 'in_progress' ? 'done' : 'start'
-    if (action === 'done' && !(await confirm({ title: `خلّصت المهمة ${t.number}؟`, confirmLabel: 'خلصت' }))) return
+    if(action==='done'){setCompleting(t);return}
     setBusy(t.id)
     try {
       await actOwnTask(t, me.id, action, notes[t.id] ?? '')
-      if (action === 'done') buzz()
       toast(navigator.onLine ? 'انحفظت المهمة' : 'انحفظت على جهازك، بتتزامن لما يرجع النت')
     } catch {
       toast('تعذّر حفظ المهمة. حاول مرة ثانية.', 'danger')
@@ -101,6 +99,7 @@ export function MyTasksPage() {
           <p className="muted">مهامك من المكتب. ابدأ الشغل، ولما تخلص علّمها منجزة.</p>
         </div>
       </header>
+      {completing && <CompleteTaskDialog task={completing} workName={types?.find(t=>t.id===completing.typeId)?.name ?? 'مهمة'} onClose={()=>setCompleting(null)} />}
       <div className="chips">
         <Button variant={!past ? 'primary' : 'secondary'} onClick={() => setPast(false)}>
           المفتوحة

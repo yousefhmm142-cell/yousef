@@ -56,7 +56,7 @@ export async function refreshAttendance(): Promise<void> {
     sb.from('attendance_punches').select('id, employee_id, kind, at, method, reason, recorded_by').gte('at', since).order('at').limit(5000),
     sb.from('leaves').select('id, employee_id, from_date, to_date, type, notes').gte('to_date', since.slice(0, 10)),
     sb.from('holidays').select('holiday_date, name'),
-    sb.from('attendance_points').select('id, name, code, is_active, revoked_at, lat, lng, radius_m, allowed_ips'),
+    sb.from('attendance_points').select('id, name, code, is_active, revoked_at, lat, lng, radius_m, allowed_ips, network_required, free_punch'),
     sb.from('attendance_devices').select('id, employee_id, label, created_at, last_used_at, revoked_at'),
   ])
   if (punches.error || leaves.error || holidays.error || points.error || devices.error) return
@@ -67,7 +67,7 @@ export async function refreshAttendance(): Promise<void> {
     await db.holidays.bulkPut((holidays.data as Array<{ holiday_date: string; name: string }>).map((h) => ({ date: h.holiday_date, name: h.name })))
     await replace<AttendancePoint>(
       db.attendancePoints,
-      (points.data as Array<{ id: number; name: string; code: string; is_active: boolean; revoked_at: string | null; lat: number | null; lng: number | null; radius_m: number; allowed_ips: string[] | null }>).map((p) => ({
+      (points.data as Array<{ id: number; name: string; code: string; is_active: boolean; revoked_at: string | null; lat: number | null; lng: number | null; radius_m: number; network_required: boolean; free_punch: boolean; allowed_ips: string[] | null }>).map((p) => ({
         id: p.id,
         name: p.name,
         code: p.code,
@@ -76,6 +76,7 @@ export async function refreshAttendance(): Promise<void> {
         lng: p.lng,
         radiusM: p.radius_m,
         allowedIps: p.allowed_ips ?? [],
+        networkRequired: p.network_required, freePunch: p.free_punch,
       })),
     )
     await replace<AttendanceDevice>(
@@ -336,3 +337,15 @@ export async function scanPunch(point: string, token: string, opts: { peek?: boo
 
 /** Days shown in the weekly sheets: from 60 days back. */
 export const firstKeptDay = () => addDays(todayISO(), -60)
+
+export async function setAttendanceOptions(point: AttendancePoint,network: boolean,free: boolean) {
+ const res=await online().rpc('attendance_options_set',{p_point:point.id,p_network:network,p_free:free});check(res.error,res.status);await refreshAttendance()
+}
+export async function fillAttendanceWeek(start:ISODate,employees:string[]) {
+ const res=await online().rpc('attendance_fill_week',{p_start:start,p_employees:employees});check(res.error,res.status);await refreshAttendance();return res.data as number
+}
+export async function scanButtonPunch(point:string,token:string,kind:PunchKind) {
+ let res=await online().rpc('attendance_button_punch',{p_point:point,p_token:token,p_kind:kind})
+ if(res.error?.message==='need_location'){const place=await getPlace();res=await online().rpc('attendance_button_punch',{p_point:point,p_token:token,p_kind:kind,p_lat:place.lat,p_lng:place.lng,p_acc:place.acc})}
+ check(res.error,res.status);return res.data as ScanResult
+}

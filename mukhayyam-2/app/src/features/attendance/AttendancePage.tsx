@@ -11,10 +11,13 @@ import { sendSheetOnWhatsApp } from '../../lib/sheetPdf'
 import type { Employee } from '../../types'
 import { Segmented } from '../../ui/form'
 import { Avatar,Button,Pill } from '../../ui/primitives'
+import { useEmployee } from '../../auth/AuthProvider'
+import { isManagerRole } from '../../types'
+import { useConfirm } from '../../ui/Confirm'
 import { useToast } from '../../ui/Toast'
 import { stamp } from '../sheets/ui'
 import {
-refreshAttendance
+refreshAttendance,fillAttendanceWeek
 } from './repo'
 import {
 leaveLabel,
@@ -153,6 +156,8 @@ function InOut({ inAt, outAt }: { inAt: string; outAt: string | null }) {
 }
 
 function WeekSheet({ data, onOpen }: { data: Data; onOpen(e: Employee, date: ISODate): void }) {
+  const me=useEmployee(), confirmFill=useConfirm()
+  const [filling,setFilling]=useState(false)
   const [anchor, setAnchor] = useState(data.today)
   const [sharing, setSharing] = useState(false)
   const toast = useToast()
@@ -169,6 +174,12 @@ function WeekSheet({ data, onOpen }: { data: Data; onOpen(e: Employee, date: ISO
   const label = `${describeDay(all[0]!).date} ← ${describeDay(all[5]!).date}`
   const sheetTitle = group === 'idle' ? 'كشف حضور وانصراف البطالة الأسبوعي · مخيم (2)' : 'كشف الحضور والانصراف الأسبوعي للموظفين · مخيم (2)'
   const thisWeek = all.includes(data.today)
+
+  async function fillWeek() {
+    if(!await confirmFill({title:'تعبئة الفراغات في هالأسبوع؟',message:'تسجيل يدوي تقديري: الحضور بين 7:30 و8:30، والانصراف بين 4 و5. لحد اليوم فقط، بدون الجمعة والإجازات والعطل، والسجلات الموجودة بتبقى زي ما هي. الكشف المعروض فقط.',confirmLabel:'تأكيد التعبئة'}))return
+    setFilling(true)
+    try {const n=await fillAttendanceWeek(all[0]!,rows.map(r=>r.e.id));toast(`انضاف ${n} تسجيل يدوي`)}catch{toast('تعذّرت التعبئة؛ ما غيّرنا السجلات الموجودة','danger')}finally{setFilling(false)}
+  }
 
   async function whatsapp() {
     const el = document.querySelector<HTMLElement>('.print-sheet')
@@ -196,6 +207,7 @@ function WeekSheet({ data, onOpen }: { data: Data; onOpen(e: Employee, date: ISO
         <button type="button" className="icon-btn" aria-label="الأسبوع التالي" disabled={thisWeek} onClick={() => setAnchor(addDays(all[0]!, 7))}><ChevronLeft size={18} /></button>
         <Segmented<'staff' | 'idle'> label="الكشف" value={group} options={[{ value: 'staff', label: 'الموظفون' }, { value: 'idle', label: 'البطالة' }]} onChange={setGroup} />
         <Button variant="secondary" icon={<Printer size={17} />} onClick={() => window.print()} className="week-print">{group === 'idle' ? 'طباعة كشف البطالة' : 'طباعة كشف الموظفين'}</Button>
+        {isManagerRole(me.role) && <Button variant="primary" busy={filling} disabled={!data.ready || !rows.length} onClick={()=>void fillWeek()}>تعبئة فراغات الأسبوع</Button>}
         <Button variant="secondary" busy={sharing} icon={<MessageCircle size={17} />} onClick={() => void whatsapp()}>إرسال واتساب (PDF)</Button>
       </div>
 

@@ -44,6 +44,8 @@ export interface AttendancePoint {
   lng?: number | null
   radiusM?: number
   /** Public addresses of the office internet: a scan from any other address is refused (empty = anywhere). */
+  networkRequired?: boolean
+  freePunch?: boolean
   allowedIps?: string[]
 }
 

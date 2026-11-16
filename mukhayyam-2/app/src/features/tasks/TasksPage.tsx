@@ -1,3 +1,4 @@
+import { CompleteTaskDialog } from './CompleteTaskDialog'
 import { useTaskSearch } from './useTaskSearch'
 import { useDayTasks } from './useDayTasks'
 import { EmptyArt } from '../../ui/fx/EmptyArt'
@@ -7,7 +8,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { ArrowRightLeft,Search,X,AlarmClock,CalendarDays,CheckCheck,ChevronLeft,ChevronRight,ListChecks,MapPin,Phone,PhoneIncoming,Plus,Printer,ScrollText,UserRound } from 'lucide-react'
 import { taskMatrix } from '../reports/build'
 import { TaskPrintSheet } from './TaskPrintSheet'
-import { sealWorkAsTasks,useSealWork } from './sealWork'
+import { dailyWork,useSealWork } from './sealWork'
 import { fold } from './subscribers'
 import type { TaskType } from './model'
 import { ReportTable } from '../reports/ReportsPage'
@@ -24,9 +25,7 @@ import type { Employee } from '../../types'
 import { hasPage,isManagerRole } from '../../types'
 import { Chip } from '../../ui/form'
 import { Avatar,Button,Pill } from '../../ui/primitives'
-import { useToast } from '../../ui/Toast'
 import { useZones } from '../distribution/repo'
-import { useConfirm } from '../../ui/Confirm'
 import {
 isSharedTask,taskAssignees,isAssignedTo,
 durationText,
@@ -34,10 +33,9 @@ elapsedMinutes,isOpen,
 isOverdue,
 priorityInfo,taskStatusInfo,type Task
 } from './model'
-import { markDone,refreshTasks,useTasks,useTaskTypes } from './repo'
-import { errText, useTechnicians, GiveDialog, ReassignTaskDialog, NewTaskDialog, TaskDialog } from './TaskDialogs'
+import { refreshTasks,useTasks,useTaskTypes } from './repo'
+import { useTechnicians, GiveDialog, ReassignTaskDialog, NewTaskDialog, TaskDialog } from './TaskDialogs'
 import { PrepareDialog,SubscribersButton } from './PrepareDialog'
-import { buzz } from '../../lib/appearance'
 
 type View = 'waiting' | 'open' | 'late' | 'today' | 'all'
 
@@ -109,25 +107,13 @@ export function TasksPage() {
   const participants=(task:Task)=>taskAssignees(task).map(id=>person(id)).filter((p):p is Employee=>!!p)
   const reassigningTask = all.find(t=>t.id===reassigning) ?? taskSearch.rows.find(t=>t.id===reassigning) ?? null
   const givingTask = all.find((t) => t.id === giving) ?? taskSearch.rows.find(t=>t.id===giving) ?? null
-  const confirmDone = useConfirm()
-  const toastDone = useToast()
-  async function doneFor(t: Task) {
-    const who = participants(t).map(p=>p.fullName).join('، ') || 'الفني'
-    const yes = await confirmDone({ title: isSharedTask(t) ? `خلصوا المهمة المشتركة؟` : `${who} خلّص المهمة؟`, message: `${typeName(t.typeId)}${t.subscriberName ? ` · ${t.subscriberName}` : ''}. ${isSharedTask(t) ? 'بتنحسب منجزة بأسمائهم' : 'بتنحسب منجزة باسمه'} بوقت هلأ.`, confirmLabel: 'تم الإنجاز ✓' })
-    if (!yes) return
-    try {
-      await markDone(t)
-      buzz()
-      toastDone(`انحسبت منجزة لـ ${who}`)
-    } catch (e) {
-      toastDone(errText(e), 'danger')
-    }
-  }
+  const [completing,setCompleting]=useState<Task|null>(null)
   const openTask = all.find((t) => t.id === openId) ?? taskSearch.rows.find(t=>t.id===openId) ?? null
   // What the technicians did with seals today counts as their finished tasks too.
   const sealNames = useMemo(() => (people ? new Map(people.map((e) => [e.id, e.fullName] as [string, string])) : undefined), [people])
   const sealToday = useSealWork(day, day, sealNames)
-  const sealDone = useMemo(() => sealWorkAsTasks(sealToday.filter(l=>l.date===day), types ?? []), [sealToday, types, day])
+
+  const daily=useMemo(()=>dailyWork(doneOnDay,sealToday.filter(l=>l.date===day),types??[]),[doneOnDay,sealToday,types,day])
 
   if (params.get('view') === 'archive') return <div className="tasks"><TaskArchive onClose={() => setParams({})} /></div>
 
@@ -158,7 +144,7 @@ export function TasksPage() {
           ['waiting', 'بانتظار فني', prepared.length, PhoneIncoming, prepared.length ? 'brand' : ''],
           ['open', 'عند الفنيين', open.length, ListChecks, ''],
           ['late', 'تجاوزت وقتها', late.length, AlarmClock, late.length ? 'danger' : ''],
-          ['today', 'خلصت اليوم', doneOnDay.length + sealDone.tasks.length, CheckCheck, 'ok'],
+          ['today', 'خلصت اليوم', daily.tasks.length, CheckCheck, 'ok'],
         ] as const).map(([k, label, n, Icon, tone]) => (
           <button key={k} type="button" role="tab" aria-selected={view === k} className="tb-tile" data-tone={tone || undefined} onClick={() => setView(k)}>
             <span className="tb-top"><Icon size={17} />{label}</span>
@@ -254,6 +240,7 @@ export function TasksPage() {
                       <b>{typeName(t.typeId)}</b>{isSharedTask(t) && <Pill tone="brand">مهمة مشتركة</Pill>}
                       {t.priority !== 'normal' && <Pill tone={priorityInfo[t.priority].tone}>{priorityInfo[t.priority].label}</Pill>}
                     </span>
+                    {!!t.usedSeals?.length && <span className="task-details num">الأختام: {t.usedSeals.join('، ')}</span>}
                     {t.details && <span className="task-details">{t.details}</span>}
                     <span className="task-meta">
                       {tech && <><Avatar name={tech.fullName} size={20} />{participants(t).map(p=>p.fullName).join('، ')}</>}
@@ -273,7 +260,7 @@ export function TasksPage() {
                 </div>
                 {searching && !t.assigneeId && isOpen(t) && <Button onClick={()=>setGiving(t.id)}>أعطيها لفني</Button>}
                 {t.assigneeId && isOpen(t) && (
-                  <button type="button" className="done-btn" aria-label={`تم إنجاز المهمة ${t.number || ''}`} title="الفني خلّصها: علّمها منجزة" onClick={() => void doneFor(t)}>
+                  <button type="button" className="done-btn" aria-label={`تم إنجاز المهمة ${t.number || ''}`} title="الفني خلّصها: علّمها منجزة" onClick={() => setCompleting(t)}>
                     <CheckCheck size={20} /><span>تم</span><small className="done-more">الفني خلّصها</small>
                   </button>
                 )}
@@ -285,10 +272,11 @@ export function TasksPage() {
 
       {searching && taskSearch.more && <Button variant="secondary" busy={taskSearch.busy} onClick={taskSearch.loadMore}>عرض المزيد من النتائج</Button>}
       {dayTasksState.error && <p className="banner warn" role="status">{dayTasksState.error}</p>}
-      {types && <TaskPrintSheet day={day} tasks={[...doneOnDay, ...sealDone.tasks]} employees={people ?? []} types={sealDone.types} />}
+      {types && <TaskPrintSheet day={day} tasks={daily.tasks} employees={people ?? []} types={daily.types} />}
 
-      <DailySheet day={day} busy={dayTasksState.busy} tasks={[...dayTasksState.rows.filter((t) => t.status !== 'cancelled' && toISODate(new Date(t.createdAt)) === day), ...sealDone.tasks]} types={sealDone.types} />
+      <DailySheet day={day} busy={dayTasksState.busy} tasks={daily.tasks} types={daily.types} />
 
+      {completing && <CompleteTaskDialog task={completing} workName={typeName(completing.typeId)} onClose={()=>setCompleting(null)} />}
       {preparing && <PrepareDialog onClose={() => setPreparing(false)} />}
       {reassigningTask && <ReassignTaskDialog key={reassigningTask.id} task={reassigningTask} technicians={technicians} onClose={()=>setReassigning(null)} />}
       {givingTask && <GiveDialog task={givingTask} technicians={technicians} typeName={typeName} zoneName={zoneName} onClose={() => setGiving(null)} />}
@@ -320,13 +308,13 @@ function DailySheet({ day,busy,tasks, types: withSeals }: { day:ISODate;busy:boo
   const own = useTaskTypes()
   const types = own ? withSeals : undefined
   if (!employees || !types) return null
-  const title=day===todayISO() ? 'كشف مهام اليوم' : `كشف مهام ${describeDay(day).weekday} ${describeDay(day).date}`
+  const title=day===todayISO() ? 'كشف إنجاز الفنيين اليوم' : `كشف إنجاز الفنيين ${describeDay(day).weekday} ${describeDay(day).date}`
   const section = taskMatrix(tasks, employees, types,day,title)
   return (
     <section className="card">
       <div className="card-h">
         <h2>{title}</h2>
-        <span className="meta">كل فني حسب نوع المهمة · <span className="num">{tasks.length}</span> مهمة</span>
+        <span className="meta">الأعمال المنجزة لكل فني · <span className="num">{tasks.length}</span> عمل منجز</span>
       </div>
       <small className="card-empty">المهمة المشتركة بتنحسب لكل فني شارك فيها.</small>{busy ? <Skeleton kind="table" /> : <div className="table-wrap"><ReportTable section={section} /></div>}
     </section>

@@ -14,6 +14,7 @@ getPlace,
 setPointPlace,
 addOfficeNetwork,
 setOfficeNetworks,
+setAttendanceOptions,
 loadPunchAnywhere,
 setPunchAnywhere,
 revokeDevice,
@@ -45,6 +46,14 @@ export function SheetAndPhones({ people }: { people: Employee[] }) {
   const [networking, setNetworking] = useState(false)
   const [anywhere, setAnywhere] = useState<Set<string>>(new Set())
   useEffect(() => { void loadPunchAnywhere().then(setAnywhere) }, [])
+  const [options,setOptions]=useState({network:true,free:false})
+  const [savingOptions,setSavingOptions]=useState(false)
+  useEffect(()=>{setOptions({network:point?.networkRequired!==false,free:!!point?.freePunch})},[point?.id,point?.networkRequired,point?.freePunch])
+  async function changeOptions(network:boolean,free:boolean) {
+    if(!point || savingOptions)return
+    const old=options;setOptions({network,free});setSavingOptions(true)
+    try{await setAttendanceOptions(point,network,free);toast('انحفظت خيارات التسجيل')}catch{setOptions(old);toast('تعذّر حفظ الخيار','danger')}finally{setSavingOptions(false)}
+  }
   const ips = point?.allowedIps ?? []
 
   /** On the office internet: the address the server sees becomes the one scans must come from. */
@@ -123,12 +132,20 @@ export function SheetAndPhones({ people }: { people: Employee[] }) {
                   ورقة جديدة بدل القديمة
                 </Button>
               </div>
+              <div className="att-place">
+                <b>خيارات التسجيل</b>
+                <label className="field"><span><input type="checkbox" checked={options.network} disabled={savingOptions} onChange={e=>void changeOptions(e.target.checked,e.target.checked ? false : options.free)} /> التسجيل من إنترنت المكتب فقط</span></label>
+                <label className="field"><span><input type="checkbox" checked={options.free} disabled={savingOptions} onChange={e=>void changeOptions(e.target.checked ? false : options.network,e.target.checked)} /> السماح بالتسجيل من أي مكان، والانصراف بدون انتظار</span></label>
+                <p className="muted">رابط الأزرار: فتحه ما بيسجّل لحاله. الموظف بيضغط حضور أو انصراف بنفسه.</p>
+                <a className="btn secondary" href={`${url}?manual=1`} target="_blank" rel="noreferrer">فتح رابط تسجيل الحضور والانصراف</a>
+                <Button variant="ghost" onClick={()=>void navigator.clipboard.writeText(`${url}?manual=1`).then(()=>toast('نُسخ الرابط'),()=>toast('تعذّر النسخ؛ افتح الرابط وانسخه','danger'))}>نسخ الرابط</Button>
+              </div>
               <div className="att-place att-net">
                 <b>شبكة المكتب (الإنترنت)</b>
-                {ips.length > 0 ? (
+                {ips.length > 0 && point.networkRequired !== false ? (
                   <p className="muted">محدّد: التسجيل ما بينقبل إلا من إنترنت المكتب. لو حدا صوّر من بيانات الجوال أو من البيت بيطلعله «سجّل من واي فاي المكتب».</p>
                 ) : (
-                  <p className="muted">لسا ما حدّدتها: التسجيل بينقبل من أي إنترنت. وإنت جالس بالمكتب على واي فاي المكتب (مش بيانات الجوال) اضغط الزر.</p>
+                  <p className="muted">{point.networkRequired===false ? 'قيد شبكة المكتب موقوف؛ التسجيل مسموح من أي إنترنت.' : 'لسا ما حدّدتها: التسجيل بينقبل من أي إنترنت. إذا بدك تقيّده بالمكتب، اعتمد الشبكة الحالية.'}</p>
                 )}
                 {ips.length > 0 && (
                   <ul className="att-ips">

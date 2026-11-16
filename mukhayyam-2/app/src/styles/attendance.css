@@ -139,3 +139,9 @@ table.week { width: 100%; border-collapse: collapse; min-width: 900px; }
   .att-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .att-row { height: 100%; }
 }
+/* Long attendance options and the explicit link fit the smallest phones. */
+.att-sheet-grid > *, .att-qr > *, .att-place { min-width: 0; }
+.att-place .btn { max-width: 100%; white-space: normal; text-align: center; }
+@media (max-width: 900px) { .att-sheet-grid { grid-template-columns: minmax(0, 1fr); } }
+.att-qr > .task-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.att-qr > .task-actions .btn { max-width: 100%; white-space: normal; flex: 1 1 auto; }

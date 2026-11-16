@@ -16,6 +16,8 @@ export interface ArchiveLine {
 }
 /** Completion day, rather than the day the order was created. Seal work is included once. */
 export function buildArchive(tasks: Task[], seals: SealWorkLine[], types: TaskType[]): ArchiveLine[] {
+  const linked=new Set(tasks.flatMap(t=>t.usedSeals??[]))
+  const independent=seals.map(s=>({...s,seals:s.seals.filter(n=>!linked.has(n))})).filter(s=>!s.taskId && s.seals.length>0)
   return [
     ...tasks
       .filter((t) => t.status === 'done' && t.completedAt && t.assigneeId)
@@ -24,12 +26,12 @@ export function buildArchive(tasks: Task[], seals: SealWorkLine[], types: TaskTy
         date: toISODate(new Date(t.completedAt!)),
         techId,
         reference: `مهمة${isSharedTask(t) ? ' مشتركة' : ''} #${t.number}`,
-        work: [types.find((x) => x.id === t.typeId)?.name ?? 'مهمة', t.details].filter(Boolean).join(' · '),
+        work: [t.completedWork || types.find((x) => x.id === t.typeId)?.name || 'مهمة', t.details].filter(Boolean).join(' · '),
         subscriber: t.subscriberName,
         notes: t.completionNotes,
-        seals: [] as number[],
+        seals: t.usedSeals ?? [],
       }))),
-    ...seals.map((s) => ({
+    ...independent.map((s) => ({
       id: `seal-${s.date}-${s.techId}-${s.seals.join('-')}`,
       date: s.date,
       techId: s.techId,

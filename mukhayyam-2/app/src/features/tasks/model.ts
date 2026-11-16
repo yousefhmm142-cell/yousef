@@ -36,6 +36,8 @@ export interface Task {
   startedAt: string | null
   completedAt: string | null
   cancelledAt: string | null
+  completedWork?: string
+  usedSeals?: number[]
   completionNotes: string
   cancelReason: string
   linkToken: string

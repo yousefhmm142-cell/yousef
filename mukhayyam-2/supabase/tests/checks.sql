@@ -62,7 +62,7 @@ from (values ('مسؤول النظام', 'admin', '0590000001', true),
              ('موظف إداري', 'staff', '0590000007', true)) v (n, r, p, t);
 
 select test.ok((select count(*) from public.employees where auth_user_id is not null) = 7, 'seven test logins exist');
-select test.ok((select count(*) from public.zones) = 6 and (select count(*) from public.task_types) = 16, 'seed: 6 zones and 16 task types');
+select test.ok((select count(*) from public.zones) = 6 and (select count(*) from public.task_types) = 19, 'seed: 6 zones and 19 task types including the three new jobs');
 
 -- ---------- Generation report ----------
 select test.login('مشغّل الموقع'); set role authenticated;
@@ -899,5 +899,95 @@ set session_replication_role=replica;
 delete from public.site_reports where id=(select v from test.ids where k='fuel_rep');
 set session_replication_role=origin;
 do $$ declare original text;begin select definition into original from shared_sms_original;execute original;end $$;
+
+-- ---------- Optional attendance and explicit buttons ----------
+reset role;select test.login('رامي أبو عجوة');set role authenticated;
+select test.ok((select count(*)=3 from task_types where name in ('صيانة كابل','شبك غاطس','فصل غاطس')),'all three new work types are available');
+reset role;
+create table test.flex_point as select id,code from attendance_points where is_active and revoked_at is null order by id limit 1;
+grant select on test.flex_point to authenticated,anon;
+insert into employees(full_name,role,tracks_attendance,schedule_id) values('موظف تعبئة تجريبي','staff',true,(select min(id) from work_schedules));
+create table test.flex_employee as select id from employees where full_name='موظف تعبئة تجريبي';grant select on test.flex_employee to authenticated,anon;
+select test.login('رامي أبو عجوة');set role authenticated;
+select public.admin_set_attendance((select id from test.flex_employee),null,'7942');
+select public.attendance_options_set((select id from test.flex_point),false,true);
+select test.ok((select not network_required and free_punch from attendance_points where id=(select id from test.flex_point)),'manager can disable network restriction and waiting');
+reset role;
+create table test.flex_device(token text);grant all on test.flex_device to anon,authenticated;
+select set_config('request.jwt.claims','',false);set role anon;
+insert into test.flex_device select public.attendance_register((select code from test.flex_point),(select id from test.flex_employee),'7942','test-link');
+select test.ok(public.attendance_punch((select code from test.flex_point),(select token from test.flex_device),null,null,null,true)->>'status'='ready','opening a manual link is a read without a punch');
+select test.ok(public.attendance_button_punch((select code from test.flex_point),(select token from test.flex_device),'in')->>'status'='recorded','manual arrival button works from any network');
+select test.ok(jsonb_array_length(public.attendance_button_punch((select code from test.flex_point),(select token from test.flex_device),'in')->'punches')=1,'double arrival click does not record departure');
+select test.ok(public.attendance_button_punch((select code from test.flex_point),(select token from test.flex_device),'out')->>'status'='recorded','free mode allows departure without an hour wait');
+select test.ok(jsonb_array_length(public.attendance_button_punch((select code from test.flex_point),(select token from test.flex_device),'out')->'punches')=2,'departure retry is idempotent');
+select test.fails($$select public.attendance_options_set((select id from test.flex_point),true,false)$$,'%permission denied%','anonymous callers cannot change attendance options');
+reset role;select test.login('مشغّل الموقع');set role authenticated;
+select test.fails($$select public.attendance_fill_week(current_date,array[(select id from test.flex_employee)])$$,'%not_allowed%','a non-manager cannot bulk fill attendance');
+reset role;
+create table test.flex_week as select ((now() at time zone 'Asia/Gaza')::date-((extract(dow from now() at time zone 'Asia/Gaza')::int+1)%7)-7) first;
+grant select on test.flex_week to authenticated;
+insert into attendance_punches(employee_id,kind,at,method,recorded_by,reason) select e.id,'in',(w.first+time '08:03') at time zone 'Asia/Gaza','manual',(select id from employees where role='admin' limit 1),'قيمة أصلية لا تتغير' from test.flex_employee e,test.flex_week w;
+insert into leaves(employee_id,from_date,to_date,type,notes) select e.id,w.first+1,w.first+1,'annual','إجازة فحص' from test.flex_employee e,test.flex_week w;
+select test.login('رامي أبو عجوة');set role authenticated;
+select test.ok(public.attendance_fill_week((select first from test.flex_week),array[(select id from test.flex_employee)])>0,'explicit weekly fill adds missing punches');
+select test.ok(public.attendance_fill_week((select first from test.flex_week),array[(select id from test.flex_employee)])=0,'repeating weekly fill never duplicates existing punches');
+select test.ok(exists(select 1 from attendance_punches where employee_id=(select id from test.flex_employee) and reason='قيمة أصلية لا تتغير' and (at at time zone 'Asia/Gaza')::time=time '08:03'),'weekly fill preserves an existing arrival exactly');
+select test.ok(not exists(select 1 from attendance_punches where employee_id=(select id from test.flex_employee) and reason='تعبئة أسبوعية تقديرية باعتماد المدير' and (extract(dow from at at time zone 'Asia/Gaza')=5 or (at at time zone 'Asia/Gaza')::date=(select first+1 from test.flex_week) or at>now())),'fill skips Friday, leave and future times');
+select test.ok(not exists(select 1 from attendance_punches where employee_id=(select id from test.flex_employee) and reason='تعبئة أسبوعية تقديرية باعتماد المدير' and (method<>'manual' or recorded_by is null or (kind='in' and (at at time zone 'Asia/Gaza')::time not between time '07:30' and time '08:30') or (kind='out' and (at at time zone 'Asia/Gaza')::time not between time '16:00' and time '17:00'))),'fill uses requested ranges and marks every new record as a manager estimate');
+-- ---------- Atomic completion with optional seals ----------
+select public.seal_add_roll(8765001,8765100,public.seal_today(),'رول فحص الربط');
+select public.seal_issue((select v from test.ids where k='joint_a'),public.seal_today(),array[8765001,8765002,8765003,8765004],null);
+select public.seal_issue((select v from test.ids where k='joint_b'),public.seal_today(),array[8765005],null);
+with x as(insert into tasks(task_type_id,assignee_id,expected_minutes,subscriber_name) values((select id from task_types where name='صيانة كابل'),(select v from test.ids where k='joint_a'),30,'مشترك ربط تجريبي') returning id) insert into test.ids select 'linked_complete',id from x;
+select public.task_complete_seals((select v from test.ids where k='linked_complete'),array[8765001],'تم من المكتب','صيانة كابل','55','00000000-0000-0000-0000-000000004601');
+select test.ok((select status='done' and used_seals=array[8765001] and completed_work='صيانة كابل' from tasks where id=(select v from test.ids where k='linked_complete')),'office completion stores actual work and seal on one task');
+select test.ok((select status='used' and task_id=(select v from test.ids where k='linked_complete') and board_no='55' from seals where seal_no=8765001),'completion immediately records the seal for accountants');
+select public.task_complete_seals((select v from test.ids where k='linked_complete'),array[8765001],'تم من المكتب','صيانة كابل','55','00000000-0000-0000-0000-000000004601');
+select test.ok((select count(*)=1 from task_events where task_id=(select v from test.ids where k='linked_complete') and event='completed'),'retry after lost response does not duplicate completion');
+select test.ok(exists(select 1 from public.seal_work_statement(null,null) where seal_no=8765001 and task_id=(select v from test.ids where k='linked_complete')),'seal statement exposes task reference for de-duplication');
+select test.fails($$update tasks set used_seals=array[8765005] where id=(select v from test.ids where k='linked_complete')$$,'%seal_references_owned%','direct clients cannot forge seal references');
+with x as(insert into tasks(task_type_id,assignee_id,expected_minutes) values(2,(select v from test.ids where k='joint_a'),30) returning id) insert into test.ids select 'linked_wrong',id from x;
+select test.fails($$select public.task_complete_seals((select v from test.ids where k='linked_wrong'),array[8765005],'','شبك غاطس','','00000000-0000-0000-0000-000000004602')$$,'%seal_wrong_technician%','another technicians seal is refused');
+select test.ok((select status='new' from tasks where id=(select v from test.ids where k='linked_wrong')),'bad seal rolls back the whole completion');
+select public.task_complete_seals((select v from test.ids where k='linked_wrong'),'{}','','شد كابل','','00000000-0000-0000-0000-000000004603');
+select test.ok((select status='done' and used_seals='{}' from tasks where id=(select v from test.ids where k='linked_wrong')),'work without a seal completes normally');
+-- A normal assigned technician can finish his own task and a seal without office/seals permission.
+with x as(insert into tasks(task_type_id,assignee_id,expected_minutes) values(2,(select v from test.ids where k='joint_a'),30) returning id) insert into test.ids select 'linked_tech',id from x;
+reset role;update employees set pages='{}',can_seals=false where id=(select v from test.ids where k='joint_a');
+select test.login((select full_name from employees where id=(select v from test.ids where k='joint_a')));set role authenticated;
+select public.task_complete_seals((select v from test.ids where k='linked_tech'),array[8765002],'إنجاز الفني','فصل غاطس','56','00000000-0000-0000-0000-000000004604');
+select test.ok((select status='done' and used_seals=array[8765002] from tasks where id=(select v from test.ids where k='linked_tech')),'assigned technician can finish and record his own issued seal');
+select test.fails($$select public.seal_task_candidates(8765001)$$,'%not_allowed%','technician does not gain accountant task search');
+select test.fails($$select public.task_complete_seals((select v from test.ids where k='linked_wrong'),'{}','','x','','00000000-0000-0000-0000-000000004605')$$,'%task_closed%','closed task cannot be re-recorded under a fresh operation');
+reset role;select test.login('رامي أبو عجوة');set role authenticated;
+select public.seal_record_task(8765003,'used',public.seal_today(),'صيانة كابل (مشترك ربط تجريبي)',(select v from test.ids where k='linked_wrong'));
+select test.ok((select used_seals=array[8765003] from tasks where id=(select v from test.ids where k='linked_wrong')),'accountant can attach a later seal to an already completed task');
+select public.seal_record(8765003,'issued',null,'');
+select test.ok((select used_seals='{}' from tasks where id=(select v from test.ids where k='linked_wrong')) and (select task_id is null from seals where seal_no=8765003),'undoing a seal clears its link and the displayed reference');
+reset role;
+
+-- Accountants link completed work without being granted the tasks management page.
+reset role;update employees set pages='{}',can_seals=true where full_name='موظف إداري';
+select test.login('موظف إداري');set role authenticated;
+select test.ok(exists(select 1 from public.seal_task_candidates(8765004) where id=(select v from test.ids where k='linked_wrong')),'accountant sees a safe projection of completed work for the seal holder');
+select public.seal_record_task(8765004,'used',public.seal_today(),'صيانة كابل',(select v from test.ids where k='linked_wrong'));
+select test.ok(not exists(select 1 from tasks where id=(select v from test.ids where k='linked_wrong')),'linking a seal does not grant general task reading to the accountant');
+reset role;
+select test.ok((select used_seals=array[8765004] from tasks where id=(select v from test.ids where k='linked_wrong')),'accountant link updates the task reference without a tasks page');
+select test.login('رامي أبو عجوة');set role authenticated;
+with x as(insert into tasks(task_type_id,assignee_id,expected_minutes,created_at) values(2,(select v from test.ids where k='joint_a'),30,now()-interval '2 days') returning id) insert into test.ids select 'linked_offline',id from x;
+select public.task_complete_seals((select v from test.ids where k='linked_offline'),'{}','','شد كابل','','00000000-0000-0000-0000-000000004607',(((now() at time zone 'Asia/Gaza')::date-1)+time '12:00') at time zone 'Asia/Gaza',true);
+select test.ok((select recorded_offline and (completed_at at time zone 'Asia/Gaza')::date=(now() at time zone 'Asia/Gaza')::date-1 from tasks where id=(select v from test.ids where k='linked_offline')),'offline completion keeps the original Gaza day instead of the synchronization day');
+reset role;select test.login((select full_name from employees where id=(select v from test.ids where k='joint_a')));set role authenticated;
+select test.fails($$select public.task_complete_seals((select v from test.ids where k='joint_task'),'{}','','صيانة','','00000000-0000-0000-0000-000000004608')$$,'%not_allowed%','shared task completion remains office-only');
+select test.fails($$select * from public.task_completion_receipts$$,'%permission denied%','private completion receipts are not enumerable');
+reset role;
+
+reset role;select test.login('رامي أبو عجوة');set role authenticated;
+select public.seal_issue(null,public.seal_today(),array[8765006],null);
+with x as(insert into tasks(task_type_id,assignee_id,expected_minutes) values(2,(select v from test.ids where k='joint_a'),30) returning id) insert into test.ids select 'linked_unnamed',id from x;
+select test.fails($$select public.task_complete_seals((select v from test.ids where k='linked_unnamed'),array[8765006],'','فصل غاطس','','00000000-0000-0000-0000-000000004609')$$,'%seal_wrong_technician%','an unnamed batch is not treated as a technicians own seals');
+reset role;
 
 \echo 'ALL CHECKS PASSED'

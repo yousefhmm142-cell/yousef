@@ -1,3 +1,4 @@
+import { getSupabase } from '../../data/supabase'
 import { Check, Plus, Stamp, X } from 'lucide-react'
 import { FootHint,SummaryAside,saveOnCtrlEnter } from '../../ui/SummaryAside'
 import { useEffect,useRef,useState } from 'react'
@@ -24,6 +25,10 @@ const outcomes: Array<{ value: Outcome; label: string }> = [
 
 export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal; onClose(): void }) {
   const toast = useToast()
+  const [taskQuery,setTaskQuery]=useState('')
+  const [taskId,setTaskId]=useState(seal?.taskId ?? '')
+  const [candidates,setCandidates]=useState<Array<{id:string;number:number;subscriber:string;work:string}>>([])
+  const [linkError,setLinkError]=useState(false)
   const [no, setNo] = useState(seal ? String(seal.sealNo) : '')
   const [status, setStatus] = useState<Outcome>(seal && (seal.status === 'damaged' || seal.status === 'lost') ? seal.status : 'used')
   const [date, setDate] = useState(seal?.usedOn ?? todayISO())
@@ -38,6 +43,13 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
 
   const n = parseSealNumbers(no).numbers[0]
   const found = n ? data.seals.find((s) => s.sealNo === n) : undefined
+  useEffect(()=>{let live=true;setCandidates([]);setLinkError(false)
+    if(!found?.technicianId)return
+    const sb=getSupabase();if(!sb)return
+    void sb.rpc('seal_task_candidates',{p_seal:found.sealNo}).then(res=>{if(live){if(res.error)setLinkError(true);else setCandidates(res.data ?? [])}})
+    return ()=>{live=false}
+  },[found?.sealNo,found?.technicianId])
+  useEffect(()=>{if(!seal)setTaskId(found?.taskId ?? '')},[found?.sealNo,found?.taskId,seal])
   const typed = no.replace(/\D/g, '').length >= 6
   const bad = typed && !found ? 'هذا الرقم غير موجود في أي رول مسجّل.' : found && !found.technicianId && status === 'used' ? (found.status === 'issued' ? 'دفعة هذا الختم بدون اسم بعد: اختر اسمها من «آخر ما صُرف» أولاً.' : 'هذا الختم لم يُصرف لفني بعد.') : null
   const batch = found?.batchId ? data.batches.find((b) => b.id === found.batchId) : null
@@ -57,6 +69,7 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
     if (seal || !found) return
     if (found.status === 'used' || found.status === 'damaged' || found.status === 'lost') {
       const d = splitDetails(found.details, found.boardNo)
+      setTaskId(found.taskId ?? '')
       setBoard(d.board)
       setWork(d.work)
       setSubscriber(d.subscriber)
@@ -73,11 +86,11 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
       // A seal that was out and is now recorded can be taken back at once («تراجع»): it goes back to «غير مستخدم».
       const wasOut = found.status === 'issued'
       const no = found.sealNo
-      await recordSeal(no, status, date, line)
+      await recordSeal(no, status, date, line, status==='used' ? taskId || null : null)
       buzz()
       toast(`سُجّل الختم ${no}`, 'ok', wasOut ? { label: 'تراجع', run: async () => { try { await recordSeal(no, 'issued', null, ''); toast(`رجع الختم ${no} «غير مستخدم»`) } catch { toast('ما قدرنا نتراجع. افتح الختم وألغِ تسجيله.', 'danger') } } } : undefined)
       if (next && !seal) {
-        setNo('')
+        setNo('');setTaskId('')
         setBoard('')
         setWork('')
         setSubscriber('')
@@ -171,6 +184,8 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
           <div className="seal-found" data-bad>{bad}</div>
         ) : null}
 
+        {status==='used' && found && <label className="field"><span className="label">بحث بالمهمات المنجزة لهالفني</span><input className="input" value={taskQuery} onChange={e=>setTaskQuery(e.target.value)} placeholder="رقم المهمة أو اسم المشترك" /></label>}
+        {status==='used' && found && <label className="field"><span className="label">ربط بمهمة منجزة (اختياري)</span><select className="select" aria-label="ربط بمهمة منجزة (اختياري)" value={taskId} onChange={e=>{setTaskId(e.target.value);const t=candidates.find(t=>t.id===e.target.value);if(t){setWork(w=>w.trim()?w:t.work);setSubscriber(s=>s.trim()?s:t.subscriber)}}}><option value="">عمل مستقل، بدون مهمة سابقة</option>{taskId && !candidates.some(t=>t.id===taskId) && <option value={taskId}>المهمة المرتبطة المحفوظة</option>}{candidates.filter(t=>!taskQuery.trim() || `${t.number} ${t.subscriber} ${t.work}`.includes(taskQuery.trim())).map(t=><option key={t.id} value={t.id}>#{t.number} · {t.work} · {t.subscriber}</option>)}</select><small className="field-hint">إذا هاد شغل مهمة مهند، اختاري رقمها حتى ينحسب مرة وحدة.</small>{linkError && <small className="field-error">تعذّر جلب المهام. الربط المحفوظ ما بتغير.</small>}</label>}
         <div className="chips" role="radiogroup" aria-label="ما صار للختم">
           {outcomes.map((o) => (
             <Chip key={o.value} pressed={status === o.value} onClick={() => setStatus(o.value)}>{o.label}</Chip>

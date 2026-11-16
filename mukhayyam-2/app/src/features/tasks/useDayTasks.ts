@@ -23,6 +23,8 @@ export function useDayTasks(day: string, cached: Task[] | undefined) {
             t.assigneeId,
             t.assigneeIds?.join(','),
             t.completedAt,
+            t.completedWork,
+            t.usedSeals?.join(','),
             t.cancelledAt,
           ].join(':'),
         )
@@ -94,7 +96,7 @@ export function useDayTasks(day: string, cached: Task[] | undefined) {
     }
   }, [day, me.id, refreshVersion])
   const pending = useMemo(
-    () => new Set((actions ?? []).filter((a) => a.table === 'tasks').map((a) => String(a.row?.id ?? a.rowId))),
+    () => new Set((actions ?? []).filter((a) => (a.table === 'tasks' || a.table === 'task_complete_seals')).map((a) => String(a.row?.id ?? a.rowId))),
     [actions],
   )
   const local = (cached ?? []).filter((t) => onDay(t, day)),

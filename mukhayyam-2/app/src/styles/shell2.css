@@ -242,3 +242,8 @@ body { background: var(--bg); background-image: none; }
   .stage .card, .stage .glass { background: #fff; box-shadow: none; }
 }
 @media (prefers-reduced-motion: reduce) { .shell, .sb-collapse, .sb-chev, .sb-sub { transition: none; } .notif { animation: none; } }
+/* Keep all manager controls reachable on 320px phones without shrinking touch targets. */
+@media (max-width: 360px) {
+  .shell .topbar { column-gap: 4px; padding-inline: 8px; }
+  .shell .topbar-end { gap: 2px; }
+}
