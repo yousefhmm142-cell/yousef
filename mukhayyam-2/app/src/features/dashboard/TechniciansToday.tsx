@@ -1,17 +1,14 @@
-import { DailyWorkPanel } from '../tasks/DailyWorkPanel'
-import { Dialog } from '../../ui/Dialog'
 import { isAssignedTo } from '../tasks/model'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useMemo,useState } from 'react'
+import { useMemo } from 'react'
 import { Link } from 'react-router'
 import { db } from '../../data/db'
 import { todayISO } from '../../lib/dates'
-import { Avatar,Button } from '../../ui/primitives'
+import { Avatar } from '../../ui/primitives'
 import { gazaDate } from '../attendance/rules'
 import { isOpen } from '../tasks/model'
 import { dailyWork, useSealWork } from '../tasks/sealWork'
 export function TechniciansToday() {
-  const [show,setShow]=useState(false)
   const today = todayISO()
   const data = useLiveQuery(async () => ({ people: await db.employees.toArray(), tasks: await db.tasks.toArray(), types: await db.taskTypes.toArray() }), [])
   const names = useMemo(() => data ? new Map(data.people.map(p => [p.id,p.fullName])) : undefined, [data])
@@ -19,7 +16,7 @@ export function TechniciansToday() {
   if (!data) return null
   const completed=dailyWork(data.tasks.filter(t=>t.status==='done' && !!t.completedAt && gazaDate(t.completedAt)===today),lines.filter(l=>l.date===today),data.types).tasks
   const people = data.people.filter(p => p.role === 'technician' && p.isActive && !p.deletedAt).sort((a,b) => a.fullName.localeCompare(b.fullName,'ar'))
-  return <section className="card fx-techs fx-decoration"><header className="card-h"><h2>الفنيين اليوم</h2><Button variant="secondary" onClick={()=>setShow(true)}>فتح كشف إنجاز الفنيين</Button></header>
+  return <section className="card fx-techs fx-decoration"><header className="card-h"><h2>الفنيين اليوم</h2><Link className="btn secondary" to="/tasks/daily">فتح كشف إنجاز الفنيين</Link></header>
     {!people.length ? <p className="card-empty">ما في فنيين فعّالين بعد.</p> : <div className="fx-tech-grid">{people.map(p => {
       const own = data.tasks.filter(t => isAssignedTo(t, p.id))
       const done = completed.filter(t=>isAssignedTo(t,p.id)).length
@@ -30,7 +27,5 @@ export function TechniciansToday() {
         <b>{p.fullName}</b><small>خلص {done} · معه {open}</small>
       </Link>
     })}</div>}
-    <DailyWorkPanel />
-    {show && <Dialog open onClose={()=>setShow(false)} title="كشف إنجاز الفنيين"><DailyWorkPanel /></Dialog>}
   </section>
 }

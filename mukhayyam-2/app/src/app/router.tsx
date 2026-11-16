@@ -23,6 +23,7 @@ const page = <T,>(load: () => Promise<T>, name: keyof T) =>
   lazy(() => load().then((m) => ({ default: m[name] as unknown as ComponentType })))
 const SettingsPage = page(() => import('../features/settings/SettingsPage'), 'SettingsPage')
 const TaskLinkPage = page(() => import('../features/tasks/LinkPage'), 'TaskLinkPage')
+const DailyTasksPage = page(() => import('../features/tasks/DailyTasksPage'), 'DailyTasksPage')
 const TasksPage = page(() => import('../features/tasks/TasksPage'), 'TasksPage')
 const Guide = page(() => import('../pages/Guide'), 'Guide')
 const SubscriberPage = page(() => import('../features/tasks/SubscriberPage'), 'SubscriberPage')
@@ -85,6 +86,7 @@ export const router = createBrowserRouter([
           // Older links.
           { path: 'distribution/entry/:date', element: <FillGate page="distribution"><DistributionEntryPage /></FillGate> },
           { path: 'history', element: <RoleGate roles={site}><SiteHistoryPage /></RoleGate> },
+          { path: 'tasks/daily', element: <RoleGate roles={['manager']}><Lazy><DailyTasksPage /></Lazy></RoleGate> },
           { path: 'tasks', element: <PageGate page="tasks"><Lazy><TasksPage /></Lazy></PageGate> },
           { path: 'subscriber', element: <PageGate page="tasks"><Lazy><SubscriberPage /></Lazy></PageGate> },
           { path: 'tasks/seal-work', element: <PageGate page="seal-work"><Lazy><SealWorkPage /></Lazy></PageGate> },

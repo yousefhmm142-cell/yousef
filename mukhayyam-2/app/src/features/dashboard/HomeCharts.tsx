@@ -1,3 +1,4 @@
+import { useEmployee } from '../../auth/AuthProvider'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { ArrowLeft, Droplet, Gauge, Info, Plus, Printer, Timer, TrendingUp } from 'lucide-react'
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
@@ -698,9 +699,11 @@ export function HomeHeader({ name }: { name: string }) {
       </div>
       <span className="grow" />
       <div className="hc-head-b">
-        <Link className="hc-btn desk-only" to="/tasks?print=1"><Printer size={17} aria-hidden="true" />طباعة كشف اليوم</Link>
+        <DailyTasksLink />
         <Link className="hc-btn primary" to="/tasks?new=1"><Plus size={17} aria-hidden="true" />مهمة جديدة</Link>
       </div>
     </header>
   )
 }
+
+function DailyTasksLink(){const me=useEmployee();return me.role==='manager'?<Link className="hc-btn desk-only" to="/tasks/daily"><Printer size={17} aria-hidden="true" />كشف إنجاز الفنيين</Link>:null}

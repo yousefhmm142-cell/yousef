@@ -294,9 +294,20 @@
   .task-side { min-width: 0; max-width: 100%; padding-inline-start: 0; grid-auto-flow: row; justify-content: stretch; justify-items: start; }
   .task-clock { white-space: normal; overflow-wrap: anywhere; }
 }
-.daily-work-panel table { width: 100%; min-width: 420px; border-collapse: collapse; font-size: var(--fs-sm); }
-.daily-work-panel th, .daily-work-panel td { padding: 10px 12px; text-align: center; border-bottom: 1px solid var(--line); }
-.daily-work-panel thead th { background: var(--surface-2); font-weight: 800; white-space: nowrap; }
-.daily-work-panel tbody th { text-align: start; background: var(--surface); }
-.daily-work-panel tr > :first-child { position: sticky; inset-inline-start: 0; z-index: 1; }
+.daily-work-panel table.report-table { width: 100%; min-width: 420px; border-collapse: collapse; font-size: var(--fs-sm); }
+.daily-work-panel .report-table th, .daily-work-panel .report-table td { padding: 10px 12px; text-align: center; border-bottom: 1px solid var(--line); }
+.daily-work-panel .report-table thead th { background: var(--surface-2); font-weight: 800; white-space: nowrap; }
+.daily-work-panel .report-table tbody th { text-align: start; background: var(--surface); }
+.daily-work-panel .report-table tr > :first-child { position: sticky; inset-inline-start: 0; z-index: 1; }
 .daily-work-panel .link-btn { min-width: 36px; min-height: 36px; color: var(--brand-text); font: inherit; font-weight: 800; }
+
+@media print {
+ .tasks.daily-tasks-page > section { display: block !important; padding: 0; margin: 0; border: 0; box-shadow: none; background: white; }
+ .daily-tasks-page .daily-work-panel > :not(.print-sheet) { display: none !important; }
+ .daily-tasks-page .daily-work-panel { display: block; }
+ :root { color-scheme: light !important; }
+ :root body { background: #fff !important; transition: none !important; }
+ .tasks.daily-tasks-page { display: block; width: auto; max-width: none; margin: 0; }
+ .daily-tasks-page .daily-work-panel, .daily-tasks-page .print-sheet { width: auto; min-width: 0; max-width: none; margin: 0; }
+ .daily-tasks-page .print-sheet { background: #fff; padding-inline: 4px; }
+}

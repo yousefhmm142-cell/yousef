@@ -77,3 +77,18 @@ it('stale seal statements do not temporarily duplicate a seal already present on
  expect(dailyWork([job],lines,types).tasks).toHaveLength(1)
  expect(buildArchive([job],lines,types)).toHaveLength(1)
 })
+
+it('keeps free text, seal numbers and subscriber details out of matrix columns',()=>{
+ const lines=buildSealWork([{seal_no:998001,technician_id:'tech-a',used_on:'2026-11-09',issued_on:null,details:'رفع قدرة 6 امبير (أحمد)',board_no:''},{seal_no:998002,technician_id:'tech-a',used_on:'2026-11-09',issued_on:null,details:'رفع قدرة 10 امبير (سارة)',board_no:''}],new Map())
+ const r=dailyWork([task({completedWork:'شد كابل 202996 عند المشترك',usedSeals:[]})],lines,types)
+ expect(r.tasks).toHaveLength(3)
+ expect(r.types.filter(t=>r.tasks.some(x=>x.typeId===t.id)).map(t=>t.name)).toEqual(expect.arrayContaining(['رفع قدرة','شد كابل']))
+ expect(r.types.some(t=>/202996|امبير/.test(t.name))).toBe(false)
+ expect(r.tasks.some(t=>t.details.includes('202996'))).toBe(true)
+})
+it('collects unknown work under one short column without dropping work without seals',()=>{
+ const r=dailyWork([task({completedWork:'شغل خاص 1',usedSeals:[]}),task({id:'other',completedWork:'شغل مختلف 2',usedSeals:[]})],[],types)
+ expect(r.tasks).toHaveLength(2)
+ expect(r.tasks.every(t=>t.usedSeals?.length===0)).toBe(true)
+ expect(r.types.filter(t=>r.tasks.some(x=>x.typeId===t.id)).map(t=>t.name)).toEqual(['أعمال أخرى'])
+})

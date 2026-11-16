@@ -990,4 +990,60 @@ with x as(insert into tasks(task_type_id,assignee_id,expected_minutes) values(2,
 select test.fails($$select public.task_complete_seals((select v from test.ids where k='linked_unnamed'),array[8765006],'','فصل غاطس','','00000000-0000-0000-0000-000000004609')$$,'%seal_wrong_technician%','an unnamed batch is not treated as a technicians own seals');
 reset role;
 
+-- ---------- Automatic matching, including old work and work without seals ----------
+reset role;select test.login('رامي أبو عجوة');set role authenticated;
+select public.seal_add_roll(8750001,8750100,public.seal_today(),'رول التطابق التجريبي');
+select public.seal_issue((select v from test.ids where k='joint_a'),public.seal_today(),array[8750001,8750002,8750003,8750004,8750005,8750006,8750007,8750008,8750010,8750011],null);
+select public.seal_issue((select v from test.ids where k='joint_b'),public.seal_today(),array[8750009],null);
+with x as(insert into tasks(task_type_id,assignee_id,subscriber_name,expected_minutes) values((select id from task_types where name='صيانة كابل'),(select v from test.ids where k='joint_a'),'مشترك تطابق أول',30) returning id) insert into test.ids select 'auto_first',id from x;
+select public.task_complete_seals((select v from test.ids where k='auto_first'),'{}','','صيانة كابل','','00000000-0000-0000-0000-000000004701');
+select test.ok((select status='done' and used_seals='{}' from tasks where id=(select v from test.ids where k='auto_first')),'completion without any seal remains a valid completed job');
+select public.seal_record_task(8750001,'used',public.seal_today(),'طبلون 55 صيانة كابل (مشترك تطابق أول)',null);
+select test.ok((select task_id=(select v from test.ids where k='auto_first') from seals where seal_no=8750001),'later seal automatically links to same-day completed task');
+select test.ok((select used_seals=array[8750001] from tasks where id=(select v from test.ids where k='auto_first')),'automatic link appears on the original numbered task');
+select public.seal_record_task(8750002,'used',public.seal_today(),'صيانة كابل (مشترك تطابق أول)',null);
+select test.ok((select used_seals=array[8750001,8750002] from tasks where id=(select v from test.ids where k='auto_first')),'multiple seals attach to one original job');
+select public.seal_record_task(8750003,'used',public.seal_today()-1,'صيانة كابل (مشترك تطابق أول)',null);
+select test.ok((select task_id is null from seals where seal_no=8750003),'same person and work on a different day do not merge');
+select public.seal_record_task(8750009,'used',public.seal_today(),'صيانة كابل (مشترك تطابق أول)',null);
+select test.ok((select task_id is null from seals where seal_no=8750009),'different technician does not merge');
+select public.seal_record_task(8750004,'used',public.seal_today(),'صيانة كابل (مشترك مختلف)',null);
+select test.ok((select task_id is null from seals where seal_no=8750004),'different subscriber does not merge');
+select public.seal_record_task(8750005,'used',public.seal_today(),'شبك غاطس (مشترك تطابق أول)',null);
+select test.ok((select task_id is null from seals where seal_no=8750005),'different work does not merge');
+-- Reverse ordering: accountant records the work before office presses Done.
+select public.seal_record_task(8750006,'used',public.seal_today(),'تفتيش (مشترك تطابق لاحق)',null);
+with x as(insert into tasks(task_type_id,assignee_id,subscriber_name,expected_minutes) values((select id from task_types where name='تفتيش'),(select v from test.ids where k='joint_a'),'مشترك تطابق لاحق',30) returning id) insert into test.ids select 'auto_after',id from x;
+select test.ok((select task_id is null from seals where seal_no=8750006),'a seal does not silently complete an open task');
+select public.task_complete_seals((select v from test.ids where k='auto_after'),'{}','','تفتيش','','00000000-0000-0000-0000-000000004702');
+select test.ok((select task_id=(select v from test.ids where k='auto_after') from seals where seal_no=8750006),'finishing the task automatically links an already recorded seal');
+select test.ok((select used_seals=array[8750006] from tasks where id=(select v from test.ids where k='auto_after')),'completion does not overwrite automatically found seals with an empty input');
+-- Two orders on the same day must not be guessed.
+with x as(insert into tasks(task_type_id,assignee_id,subscriber_name,expected_minutes) values((select id from task_types where name='تفتيش'),(select v from test.ids where k='joint_a'),'مشترك غموض',30) returning id) insert into test.ids select 'auto_ambig1',id from x;
+with x as(insert into tasks(task_type_id,assignee_id,subscriber_name,expected_minutes) values((select id from task_types where name='تفتيش'),(select v from test.ids where k='joint_a'),'مشترك غموض',30) returning id) insert into test.ids select 'auto_ambig2',id from x;
+select public.task_complete_seals((select v from test.ids where k='auto_ambig1'),'{}','','تفتيش','','00000000-0000-0000-0000-000000004703');
+select public.task_complete_seals((select v from test.ids where k='auto_ambig2'),'{}','','تفتيش','','00000000-0000-0000-0000-000000004704');
+select public.seal_record_task(8750007,'used',public.seal_today(),'تفتيش (مشترك غموض)',null);
+select test.ok((select task_id is null from seals where seal_no=8750007),'two identical same-day orders require an explicit choice');
+select public.seal_record_task(8750007,'used',public.seal_today(),'تفتيش (مشترك غموض)',(select v from test.ids where k='auto_ambig2'));
+select test.ok((select task_id=(select v from test.ids where k='auto_ambig2') from seals where seal_no=8750007),'manual choice still resolves an ambiguous match');
+select public.seal_record(8750001,'issued',null,'');
+select test.ok((select task_id is null from seals where seal_no=8750001) and (select used_seals=array[8750002] from tasks where id=(select v from test.ids where k='auto_first')),'undoing an automatically matched seal clears its references');
+select public.seal_record_task(8750010,'used',public.seal_today(),'صيانة كابل اسم أطول مشترك تطابق أول',null);
+select test.ok((select task_id is null from seals where seal_no=8750010),'a subscriber suffix is not a full subscriber name match');
+select public.seal_record_task(8750011,'used',public.seal_today(),'صيانة كابل 30 متر (مشترك تطابق أول)',null);
+select test.ok((select task_id=(select v from test.ids where k='auto_first') from seals where seal_no=8750011),'structured subscriber with work measurements matches its work category');
+-- Old unlinked records, inserted with original dates and no trigger side effects.
+reset role;set session_replication_role=replica;
+with x as(insert into tasks(task_type_id,assignee_id,subscriber_name,status,created_at,started_at,completed_at,completed_work,expected_minutes) values((select id from task_types where name='صيانة كابل'),(select v from test.ids where k='joint_a'),'مشترك أرشيف تجريبي','done','2026-09-01 08:00+03','2026-09-01 09:00+03','2026-09-01 13:00+03','صيانة كابل',30) returning id) insert into test.ids select 'auto_old',id from x;
+update seals set status='used',used_on='2026-09-01',details='صيانة كابل مشترك أرشيف تجريبي' where seal_no=8750008;
+set session_replication_role=origin;
+select m2_ops.link_matching_work();
+select test.ok((select task_id=(select v from test.ids where k='auto_old') and used_on=date '2026-09-01' from seals where seal_no=8750008),'historical unbracketed work links without changing its day');
+select test.ok((select completed_at=timestamptz '2026-09-01 13:00+03' and used_seals=array[8750008] from tasks where id=(select v from test.ids where k='auto_old')),'historical task keeps original completion time and receives seal reference');
+select test.ok(m2_ops.link_matching_work()=0,'repeating historical reconciliation creates no duplicate links');
+select test.login('موظف إداري');set role authenticated;
+select test.fails($$select m2_ops.link_matching_work()$$,'%permission denied%','private automatic matcher is not exposed to staff');
+reset role;
+
 \echo 'ALL CHECKS PASSED'

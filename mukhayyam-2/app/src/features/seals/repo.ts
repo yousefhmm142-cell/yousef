@@ -267,7 +267,7 @@ interface QueuedOp {
 }
 const QUEUE = 'seals:queue'
 const TMP = 'tmp-'
-const OFFLINE_OK = new Set(['seal_issue', 'seal_record', 'seal_add_to_batch', 'seal_assign_batch', 'seal_update_batch', 'seal_return_to_stock', 'seal_unissue', 'seal_delete_batch'])
+const OFFLINE_OK = new Set(['seal_issue', 'seal_record_task', 'seal_record', 'seal_add_to_batch', 'seal_assign_batch', 'seal_update_batch', 'seal_return_to_stock', 'seal_unissue', 'seal_delete_batch'])
 const SEND_LIMIT_MS = 12_000
 
 export const getSealQueue = async () => (await getMeta<QueuedOp[]>(QUEUE)) ?? []

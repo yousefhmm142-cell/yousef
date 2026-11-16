@@ -107,7 +107,7 @@ function ManagerHome() {
 
       <div id="presence"><PresenceCard /></div>
 
-      <TechniciansToday />
+      {employee.role==='manager' && <TechniciansToday />}
       <div className="home-row">
         <TeamCard />
         <SystemCard />

@@ -4,7 +4,7 @@ import { db } from '../../data/db'
 import { isDemo } from '../../config'
 import { getSupabase } from '../../data/supabase'
 import type { ISODate } from '../../lib/dates'
-import { splitDetails } from '../seals/model'
+import { WORK_CHOICES, splitDetails } from '../seals/model'
 import type { Task, TaskType } from './model'
 
 /** The words a job starts with; whatever follows is the subscriber (longest first, so «فك ساعة فحص» wins over «فك ساعة»). */
@@ -105,9 +105,15 @@ const norm = (t: string) => t.replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').re
 /** An explicit type for each recorded work; unknown names remain visible instead of a generic seals bucket. */
 function workTypes(types:TaskType[]) {
  const all=[...types]
- const resolve=(name:string)=>{const label=name.trim() || 'عمل غير محدد';const hit=all.find(t=>norm(t.name)===norm(label));if(hit)return hit.id
+ // Only short, known work names become columns. Numbers, subscribers and notes stay in details.
+ const resolve=(name:string)=>{
+  const label=name.trim()
+  const known=[...all.map(t=>t.name),...WORK_CHOICES].sort((a,b)=>b.length-a.length)
+  const canonical=known.find(w=>norm(label)===norm(w) || norm(label).startsWith(norm(w)+' ')) ?? 'أعمال أخرى'
+  const hit=all.find(t=>norm(t.name)===norm(canonical));if(hit)return hit.id
   let id=-2;while(all.some(t=>t.id===id))id--
-  all.push({id,name:label,isActive:true,sortOrder:9999});return id}
+  all.push({id,name:canonical,isActive:true,sortOrder:9999});return id
+ }
  return {all,resolve}
 }
 export function sealWorkAsTasks(lines: SealWorkLine[], types: TaskType[]): { tasks: Task[]; types: TaskType[] } {
@@ -132,27 +138,32 @@ export function dailyWork(tasks:Task[],lines:SealWorkLine[],types:TaskType[]) {
 }
 
 /** The seal work of a period (or of everything), refreshed while the page is open. Empty when the server cannot be reached. */
-export function useSealWork(from: ISODate | null, to: ISODate | null, names: Map<string, string> | undefined): SealWorkLine[] {
-  const links=useLiveQuery(async()=>(await db.tasks.toArray()).filter(t=>t.usedSeals?.length).map(t=>`${t.id}:${t.usedSeals!.join(',')}`).sort().join('|'),[])
-  const [rows, setRows] = useState<SealWorkRow[]>([])
-  useEffect(() => {
-    const sb = getSupabase()
-    if (isDemo || !sb) return
-    let live = true
-    const load = () => {
-      if (!navigator.onLine) return
-      void sb.rpc('seal_work_statement', { p_from: from, p_to: to }).then((res) => {
-        if (live && !res.error) setRows((res.data ?? []) as SealWorkRow[])
-      })
-    }
-    load()
-    const id = window.setInterval(load, 60_000)
-    window.addEventListener('online', load)
-    return () => {
-      live = false
-      window.clearInterval(id)
-      window.removeEventListener('online', load)
-    }
-  }, [from, to, links])
-  return useMemo(() => (names ? buildSealWork(rows, names) : []), [rows, names])
+export function useSealWorkState(from: ISODate | null, to: ISODate | null, names: Map<string, string> | undefined) {
+ const links=useLiveQuery(async()=>(await db.tasks.toArray()).filter(t=>t.usedSeals?.length).map(t=>`${t.id}:${t.usedSeals!.join(',')}`).sort().join('|'),[])
+ const [data,setData]=useState<{from:ISODate|null;to:ISODate|null;rows:SealWorkRow[];busy:boolean;error:string}>({from:null,to:null,rows:[],busy:true,error:''})
+ useEffect(()=>{
+  let live=true
+  setData({from,to,rows:[],busy:true,error:''})
+  const load=async()=>{
+   const sb=getSupabase()
+   if(isDemo){if(live)setData({from,to,rows:[],busy:false,error:''});return}
+   if(!sb || !navigator.onLine){if(live)setData(d=>({...d,busy:false,error:'تعذّر تحديث أعمال الأختام. اتصل بالإنترنت قبل الطباعة.'}));return}
+   try{
+    const res=await sb.rpc('seal_work_statement',{p_from:from,p_to:to})
+    if(!live)return
+    if(res.error)throw res.error
+    setData({from,to,rows:(res.data??[]) as SealWorkRow[],busy:false,error:''})
+   }catch{if(live)setData(d=>({...d,busy:false,error:'تعذّر تحديث أعمال الأختام. حاول مرة ثانية.'}))}
+  }
+  void load()
+  const timer=window.setInterval(()=>{if(document.visibilityState==='visible')void load()},60_000)
+  window.addEventListener('online',load)
+  return ()=>{live=false;window.clearInterval(timer);window.removeEventListener('online',load)}
+ },[from,to,links])
+ const current=data.from===from && data.to===to
+ const lines=useMemo(()=>(current && names ? buildSealWork(data.rows,names):[]),[current,data.rows,names])
+ return {lines,busy:!current || data.busy,error:current?data.error:''}
+}
+export function useSealWork(from:ISODate|null,to:ISODate|null,names:Map<string,string>|undefined):SealWorkLine[]{
+ return useSealWorkState(from,to,names).lines
 }

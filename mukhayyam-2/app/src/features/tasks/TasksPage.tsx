@@ -6,12 +6,8 @@ import { CountUp } from '../../ui/fx/CountUp'
 import { Skeleton } from '../../ui/fx/Skeleton'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { ArrowRightLeft,Search,X,AlarmClock,CalendarDays,CheckCheck,ChevronLeft,ChevronRight,ListChecks,MapPin,Phone,PhoneIncoming,Plus,Printer,ScrollText,UserRound } from 'lucide-react'
-import { taskMatrix } from '../reports/build'
-import { TaskPrintSheet } from './TaskPrintSheet'
 import { dailyWork,useSealWork } from './sealWork'
 import { fold } from './subscribers'
-import type { TaskType } from './model'
-import { ReportTable } from '../reports/ReportsPage'
 import { useEffect,useMemo,useState } from 'react'
 import { useNavigate,useSearchParams } from 'react-router'
 import { TaskArchive } from './TaskArchive'
@@ -78,10 +74,10 @@ export function TasksPage() {
   const dayTasksState=useDayTasks(day,tasks)
   const printAsked = params.get('print') === '1'
   useEffect(() => {
-    if (!printAsked || dayTasksState.busy || !dayTasksState.ready) return
-    setParams({}, { replace: true })
-    window.setTimeout(() => window.print(), 400)
-  }, [printAsked, dayTasksState.busy, dayTasksState.ready, setParams])
+    if (!printAsked) return
+    if(employee.role==='manager') navigate('/tasks/daily')
+    else setParams({}, { replace: true })
+  }, [printAsked, employee.role, navigate, setParams])
   const all = tasks ?? []
   // A call written down, waiting for a technician: shown on its own, above everything.
   const prepared = all.filter((t) => !t.assigneeId && isOpen(t)).sort((a, b) => a.createdAt.localeCompare(b.createdAt))
@@ -156,9 +152,7 @@ export function TasksPage() {
       <div className="ph-actions task-actions">
         <Button variant="secondary" size="lg" icon={<ListChecks size={18} />} onClick={() => setParams({ view: 'archive' })}>أرشيف الفنيين</Button>
         <Button variant="secondary" size="lg" icon={<UserRound size={18} />} onClick={() => navigate('/subscriber')}>ملف مشترك</Button>
-        <Button variant="secondary" size="lg" icon={<Printer size={18} />} onClick={() => window.print()} disabled={dayTasksState.busy || !dayTasksState.ready} className="desk-only">
-          {pastDay ? 'طباعة كشف اليوم المختار' : 'طباعة كشف اليوم'}
-        </Button>
+        {employee.role==='manager' && <Button variant="secondary" size="lg" icon={<Printer size={18} />} onClick={() => navigate('/tasks/daily')}>كشف إنجاز الفنيين</Button>}
         {hasPage(employee, 'seal-work') && <Button variant="secondary" size="lg" icon={<ScrollText size={18} />} onClick={() => navigate('/tasks/seal-work')} className={isManagerRole(employee.role) ? undefined : 'desk-only'}>
           كشف أعمال الأختام
         </Button>}
@@ -272,9 +266,6 @@ export function TasksPage() {
 
       {searching && taskSearch.more && <Button variant="secondary" busy={taskSearch.busy} onClick={taskSearch.loadMore}>عرض المزيد من النتائج</Button>}
       {dayTasksState.error && <p className="banner warn" role="status">{dayTasksState.error}</p>}
-      {types && <TaskPrintSheet day={day} tasks={daily.tasks} employees={people ?? []} types={daily.types} />}
-
-      <DailySheet day={day} busy={dayTasksState.busy} tasks={daily.tasks} types={daily.types} />
 
       {completing && <CompleteTaskDialog task={completing} workName={typeName(completing.typeId)} onClose={()=>setCompleting(null)} />}
       {preparing && <PrepareDialog onClose={() => setPreparing(false)} />}
@@ -299,24 +290,5 @@ export function TasksPage() {
         />
       )}
     </div>
-  )
-}
-
-/** The paper "daily electricians' tasks" sheet: each technician against each task type, with totals. */
-function DailySheet({ day,busy,tasks, types: withSeals }: { day:ISODate;busy:boolean;tasks: Task[]; types: TaskType[] }) {
-  const employees = useLiveQuery(() => db.employees.toArray(), [])
-  const own = useTaskTypes()
-  const types = own ? withSeals : undefined
-  if (!employees || !types) return null
-  const title=day===todayISO() ? 'كشف إنجاز الفنيين اليوم' : `كشف إنجاز الفنيين ${describeDay(day).weekday} ${describeDay(day).date}`
-  const section = taskMatrix(tasks, employees, types,day,title)
-  return (
-    <section className="card">
-      <div className="card-h">
-        <h2>{title}</h2>
-        <span className="meta">الأعمال المنجزة لكل فني · <span className="num">{tasks.length}</span> عمل منجز</span>
-      </div>
-      <small className="card-empty">المهمة المشتركة بتنحسب لكل فني شارك فيها.</small>{busy ? <Skeleton kind="table" /> : <div className="table-wrap"><ReportTable section={section} /></div>}
-    </section>
   )
 }
