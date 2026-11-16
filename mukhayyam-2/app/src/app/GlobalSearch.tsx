@@ -80,9 +80,9 @@ function SearchWindow({ onClose }: { onClose(): void }) {
   }, [term, textual, online])
 
   const hits = useMemo(() => {
-    if (!local) return []
-    const tasks = remote.q === term ? [...local.tasks, ...remote.rows.filter((r) => !local.tasks.some((t) => t.id === r.id))] : local.tasks
-    return searchAll(query, { nav: navFor(me), subscribers: access.tasks ? subscribers : [], tasks, people: local.people, typeName }, access)
+    const cached=local?.tasks ?? []
+    const tasks = remote.q === term ? [...cached, ...remote.rows.filter((r) => !cached.some((t) => t.id === r.id))] : cached
+    return searchAll(query, { nav: navFor(me), subscribers: access.tasks ? subscribers : [], tasks, people: local?.people ?? [], typeName }, access)
     // typeName reads local; access is derived from me.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, local, remote, subscribers, me])
@@ -96,9 +96,9 @@ function SearchWindow({ onClose }: { onClose(): void }) {
     navigate(h.to)
   }
   function onKeyDown(e: React.KeyboardEvent) {
-    if (e.key === 'ArrowDown') { e.preventDefault(); setActive((i) => Math.min(hits.length - 1, i + 1)) }
+    if (e.key === 'ArrowDown') { e.preventDefault(); setActive((i) => Math.max(0, Math.min(hits.length - 1, i + 1))) }
     else if (e.key === 'ArrowUp') { e.preventDefault(); setActive((i) => Math.max(0, i - 1)) }
-    else if (e.key === 'Enter') { e.preventDefault(); go(hits[active]) }
+    else if (e.key === 'Enter') { e.preventDefault(); go(hits[active] ?? hits[0]) }
   }
   useEffect(() => { document.getElementById(`gs-${active}`)?.scrollIntoView({ block: 'nearest' }) }, [active])
 
