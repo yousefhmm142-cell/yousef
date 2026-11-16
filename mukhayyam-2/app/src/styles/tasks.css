@@ -339,8 +339,8 @@
  body.printing-daily-modal > .tasks-print { display: block !important; width: auto; margin: 0; }
 }
 
-.tasks .btn.tasks-daily-entry { background: #4a4543; border-color: #6b625d; color: #fff; box-shadow: 0 6px 14px -10px #211b1a80; }
-.tasks .btn.tasks-daily-entry:not(:disabled):hover { background: #5b5350; color: #fff; border-color: #83756f; }
+.tasks .btn.tasks-daily-entry { background: var(--daily-entry-bg); border-color: #6b625d; color: #fff; box-shadow: 0 6px 14px -10px #211b1a80; }
+.tasks .btn.tasks-daily-entry:not(:disabled):hover { background: var(--daily-entry-hover); color: #fff; border-color: #83756f; }
 .daily-total { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin: 16px 0; padding: 18px 22px; border: 1px solid var(--line); border-radius: 18px; background: var(--brand-soft); }
 .daily-total>div { display: flex; align-items: center; gap: 18px; }
 .daily-total span { font-weight: 800; color: var(--ink); }

@@ -259,18 +259,22 @@ g:hover > .hc-bar { filter: brightness(1.18); }
 :root[data-theme='light'] .stage .fx-day-future { background: #ffffff8c; }
 .stage .fx-day-dot { border-color: var(--bg); }
 
-/* Manager's daily work: first of the top cards, with a quiet grey hover. */
+/* Manager's daily work: first of the top cards, with the same charcoal identity as the tasks button. */
 .daily-entry-card { display: grid; grid-template-columns: minmax(0,1fr); gap: 10px; text-decoration: none; text-align: start; transition: background .18s,color .18s,border-color .18s; }
 .daily-entry-icon { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 14px; background: var(--brand-soft); color: var(--brand-text); }
 .daily-entry-card>b { font-size: var(--fs-md); line-height: 1.6; }
 .daily-entry-card>span:not(.daily-entry-icon) { font-size: var(--fs-sm); color: var(--muted); }
 .daily-entry-card .daily-entry-foot { display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid var(--line); font-weight: 800; }
-.daily-entry-card:hover, .daily-entry-card:focus-visible { background: #36343a; color: var(--ink); border-color: #625d63; }
-.daily-entry-card:is(:hover,:focus-visible)>span { color: var(--ink-2); }
-.daily-entry-card:is(:hover,:focus-visible) .daily-entry-icon { color: var(--brand-text); background: var(--brand-soft); }
-.daily-entry-card:is(:hover,:focus-visible) .daily-entry-foot { border-color: var(--line); }
 @media (min-width: 1101px) { .hc-kbs.has-daily { grid-template-columns: repeat(5,minmax(0,1fr)); } }
 @media (max-width: 1100px) { .hc-kbs.has-daily .daily-entry-card { grid-column: 1 / -1; } }
 @media (prefers-reduced-motion: reduce) { .daily-entry-card { transition: none; } }
 
-:root[data-theme='light'] .daily-entry-card:is(:hover,:focus-visible) { background: #eae5e2; color: var(--ink); border-color: #c9bfba; }
+
+/* One charcoal identity for the daily-work entry on the home and tasks pages. */
+:root { --daily-entry-bg: #4a4543; --daily-entry-hover: #5b5350; }
+.hc-kb.daily-entry-card { background: var(--daily-entry-bg); color: #fff; border-color: #6b625d; }
+.hc-kb.daily-entry-card>span { color: #eee9e7; }
+.hc-kb.daily-entry-card .daily-entry-icon { color: #fff; background: #ffffff18; }
+.hc-kb.daily-entry-card .daily-entry-foot { border-color: #ffffff30; }
+:root .hc-kb.daily-entry-card:is(:hover,:focus-visible) { background: var(--daily-entry-hover); color: #fff; border-color: #83756f; }
+:root .hc-kb.daily-entry-card:is(:hover,:focus-visible)>span { color: #fff; }
