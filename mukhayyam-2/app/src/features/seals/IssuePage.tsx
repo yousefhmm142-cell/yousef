@@ -146,6 +146,7 @@ function RollActions({ rollId, canDelete, disabled, onIssue, onEdit }: { rollId:
         <Button
           variant="ghost"
          
+          className="danger"
           icon={<Trash2 size={15} />}
           onClick={async () => {
             const yes = await confirm({ title: 'حذف الرول؟', message: 'يُحذف الرول وأختامه (ما انصرف منه شي).', confirmLabel: 'حذف الرول', danger: true })

@@ -19,6 +19,7 @@ import './styles/print.css'
 import './styles/fx.css'
 import './styles/shell2.css'
 import './styles/home2.css'
+import './styles/seals-night.css'
 
 import { AppErrorBoundary } from './ui/AppErrorBoundary'
 import { startErrorCapture } from './lib/clientErrors'

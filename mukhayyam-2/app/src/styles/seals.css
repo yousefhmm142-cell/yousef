@@ -74,7 +74,7 @@ button.seal-pill:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--bran
 /* the four buttons of a batch: one tidy group, on one line when there is room */
 .batch-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .batch-actions .btn { height: 36px; min-height: 36px; padding: 0 14px; font-size: 0.8125rem; border-radius: 999px; border: 1px solid var(--line); }
-.batch-actions .btn:last-child { color: var(--danger); }
+.batch-actions .btn.danger { color: var(--danger); }
 .batch-strip { display: flex; flex-wrap: wrap; gap: 7px; }
 
 /* ----- Dialogs ----- */
@@ -288,3 +288,29 @@ table.seal-table tbody tr:hover { background: color-mix(in srgb, var(--brand) 5%
 .seal-sub-btn:hover { border-color: var(--brand-hi); }
 .seal-sub-btn.drop { background: none; color: var(--muted); border-color: var(--line); }
 .seal-sub-btn.drop:hover { color: var(--danger); border-color: var(--danger); }
+
+/* Keep the batch identity together and actions aligned, with proper phone touch targets. */
+@media screen {
+  .batch-head { align-items: flex-start; justify-content: space-between; gap: 12px 16px; }
+  .batch-ident { flex: 1 1 300px; min-width: 0; display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; }
+  .batch-ident > .muted { overflow-wrap: anywhere; }
+  .batch-actions { flex: 0 1 auto; gap: 8px; }
+  .batch-actions .btn { min-height: 40px; height: auto; padding: 9px 13px; }
+  .roll-actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+  .roll-actions > .btn { width: 100%; min-width: 0; padding-inline: 10px; }
+  .roll-actions > .btn:nth-child(3):last-child { grid-column: 1 / -1; }
+  .roll-grid { grid-template-columns: repeat(auto-fill,minmax(min(100%,280px),1fr)); }
+  @media (max-width: 900px) {
+    .batch-actions { width: 100%; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); }
+    .batch-actions .btn { min-width: 0; min-height: 44px; white-space: normal; padding: 10px 8px; gap: 6px; }
+  }
+  @media (max-width: 700px) {
+    .seals-tabs { border-radius: 22px; }
+    .seals-tabs > .btn { grid-column: 1 / -1; }
+  }
+  @media (max-width: 560px) {
+    .batch-actions { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .batch-ident { flex-basis: 100%; }
+    .batch-card { padding: 16px 14px; gap: 14px; }
+  }
+}

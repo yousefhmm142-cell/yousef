@@ -106,6 +106,7 @@ function BatchCard({ data, batch, onPrint, onEdit, onAssign, onDeleted }: { data
   return (
     <article className="batch-card card">
       <div className="batch-head">
+        <div className="batch-ident">
         <b>الدفعة {batch.label?.trim() || ordinalWord(batch.batchNo)}</b>
         {batch.technicianId ? (
           <span className="tech">{data.names.get(batch.technicianId) ?? '—'}</span>
@@ -116,13 +117,14 @@ function BatchCard({ data, batch, onPrint, onEdit, onAssign, onDeleted }: { data
           </>
         )}
         <span className="muted num">{roll ? `${roll.fromNo}–${roll.toNo}` : ''} · {used}/{seals.length} مستخدم</span>
-        <span className="grow" />
+        </div>
         <div className="batch-actions">
         <Button variant="ghost" icon={<Printer size={15} />} onClick={onPrint}>ورقة الصرف</Button>
         <Button variant="ghost" icon={<Pencil size={15} />} onClick={onEdit}>تعديل</Button>
         <SealHistoryButton table="seal_batches" record={batch.id} label="السجل" />
         <Button
           variant="ghost"
+          className="danger"
           icon={<Trash2 size={15} />}
           onClick={async () => {
             const yes = await confirm({

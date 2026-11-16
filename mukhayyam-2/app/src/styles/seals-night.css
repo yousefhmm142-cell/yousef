@@ -1,0 +1,81 @@
+/* A quieter night palette for seals only. Print keeps the existing paper styles. */
+@media screen {
+  :root[data-theme='dark'] :is(.seals, .seal-dialog) {
+    --surface: #191c22;
+    --surface-2: #20242c;
+    --sunken: #14171c;
+    --ink: #e8ebf0;
+    --ink-2: #d0d5dd;
+    --muted: #a6aebc;
+    --faint: #969faf;
+    --line: #353b46;
+    --line-2: #2a303a;
+    --brand-text: #efa9b5;
+    --brand-soft: #bd62751c;
+    --warn: #d6b576;
+    --warn-soft: #d6b57618;
+    --t-in: #77bea3;
+    --ok: #77bea3;
+    --ok-soft: #77bea318;
+    --t-out: #cba5c2;
+    --danger: #eb9a90;
+    --danger-soft: #eb9a9014;
+    --seal-edge: color-mix(in srgb, #b76475 25%, var(--line));
+  }
+  :root[data-theme='dark'] .stage .seals :is(.roll-card, .batch-card, .group-card, .kpi, .unnamed, .tech-nav, .uq-stat),
+  :root[data-theme='dark'] .seal-dialog .dialog-panel {
+    background: var(--surface);
+    border: 1px solid var(--seal-edge);
+    box-shadow: 0 8px 24px -18px #0009;
+  }
+  :root[data-theme='dark'] .stage .seals :is(.roll-card, .batch-card, .group-card):hover {
+    border-color: color-mix(in srgb, #b76475 48%, var(--line));
+    box-shadow: 0 10px 26px -18px #000b;
+  }
+  :root[data-theme='dark'] .stage .seals .kpi.hero {
+    background: linear-gradient(135deg, #32212a, #231c24);
+    border-color: var(--seal-edge);
+    color: var(--ink);
+  }
+  :root[data-theme='dark'] .seals .btn,
+  :root[data-theme='dark'] .seal-dialog .btn {
+    color: var(--ink-2);
+    background: var(--surface-2);
+    border: 1px solid #424a58;
+    box-shadow: none;
+  }
+  :root[data-theme='dark'] :is(.seals, .seal-dialog) .btn:not(:disabled):hover {
+    filter: none;
+    color: var(--ink);
+    border-color: #77707d;
+    background: #2b303a;
+  }
+  :root[data-theme='dark'] :is(.seals, .seal-dialog) .btn.primary,
+  :root[data-theme='dark'] .seals .seals-tabs a.active {
+    color: #fff;
+    background: linear-gradient(160deg, #ac3e53, #8e3044);
+    box-shadow: inset 0 1px 0 #ffffff12;
+    border-color: #b75e70;
+  }
+  :root[data-theme='dark'] :is(.seals, .seal-dialog) .btn.primary:not(:disabled):hover { background: #b3475c; color: #fff; }
+  :root[data-theme='dark'] .seals .btn.assign-btn { background: #355d8c; border-color: #557aa6; color: #fff; box-shadow: none; }
+  :root[data-theme='dark'] :is(.seals, .seal-dialog) .btn.danger { color: var(--danger); background: var(--danger-soft); border-color: #74504f; }
+  :root[data-theme='dark'] :is(.seals, .seal-dialog) .btn.danger:not(:disabled):hover { color: var(--danger); background: #3a272b; border-color: #a56c6a; }
+  :root[data-theme='dark'] :is(.seals, .seal-dialog) .btn:disabled { opacity: .5; cursor: not-allowed; }
+  :root[data-theme='dark'] :is(.seals, .seal-dialog) .btn:focus-visible {
+    outline: 2px solid var(--brand-text);
+    outline-offset: 3px;
+  }
+  :root[data-theme='dark'] .seals .seals-tabs { background: var(--sunken); border-color: var(--line); }
+  :root[data-theme='dark'] .seals .seal-pill:not([data-bad]) { border-color: var(--line); background: var(--sunken); }
+  :root[data-theme='dark'] .seals .seal-pill[data-status='used'] { border-color: color-mix(in srgb, var(--t-in) 24%, var(--line)); }
+  :root[data-theme='dark'] .seals .seal-pill[data-status='issued'] { border-color: color-mix(in srgb, var(--warn) 24%, var(--line)); }
+  :root[data-theme='dark'] .seals .seal-pill[data-hit],
+  :root[data-theme='dark'] .seals button.seal-pill:focus-visible { border-color: var(--brand-text); background: var(--brand-soft); }
+  :root[data-theme='dark'] .seals .seal-pill i { box-shadow: none; }
+  :root[data-theme='dark'] .seals .stackbar { height: 8px; }
+  :root[data-theme='dark'] .seals .stackbar [data-status='in_stock'] { background: #929ba9; }
+  :root[data-theme='dark'] .seals .tech-item[aria-current='true'] { border-color: #825263; background: var(--brand-soft); }
+  :root[data-theme='dark'] .seal-dialog :is(.aside-box, .seal-input, .input, .select):not([aria-invalid='true']) { border-color: var(--line); }
+  :root[data-theme='dark'] .seal-dialog :is(.seal-input, .input, .select):not([aria-invalid='true']):focus { border-color: var(--brand-text); box-shadow: 0 0 0 3px var(--brand-soft); }
+}
