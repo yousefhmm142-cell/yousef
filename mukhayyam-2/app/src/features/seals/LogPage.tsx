@@ -156,14 +156,6 @@ export function SealLogPage() {
         )}
       </div>
 
-      {!active && (
-        <div className="search-hints">
-          <span>جرّب:</span>
-          {['1813', 'طبلون 361', 'WK206022', 'تالف'].map((h) => <button key={h} type="button" onClick={() => setQuery(h)}>{h}</button>)}
-          <span className="muted">أول رقمين أو ثلاثة من الختم يعرضون الرول كله.</span>
-        </div>
-      )}
-
       <div className="seals-layout">
         <TechNav data={data} value={filters.technicianId} onChange={(id) => set({ technicianId: id })} />
         <div className="seals-main">
