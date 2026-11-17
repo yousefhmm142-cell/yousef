@@ -109,7 +109,6 @@ function Login() {
     <div className="login entry-page">
       <div className="entry-content">
       <section className="login-brand">
-        <span className="entry-eyebrow">أبناء فارس أبو زايد</span>
         <div className="entry-logo" role="img" aria-label="شعار أبناء فارس أبو زايد"><LogoDrawing /></div>
         <h1>نظام إدارة مكتب مخيم 2</h1>
         <p>شركة أبناء فارس أبو زايد للتجارة والاستيراد</p>
