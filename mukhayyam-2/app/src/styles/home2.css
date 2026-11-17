@@ -300,3 +300,13 @@ g:hover > .hc-bar { filter: brightness(1.18); }
 
 .hc-usage .hc-titles { flex-basis: 100%; }
 @media (min-width:900px) { .distribution-kpis { grid-template-columns: repeat(3,minmax(0,1fr)); } }
+
+/* Stack all generator readings in the space previously reserved for one selector. */
+.hc-generator-load { display: grid; gap: 10px; min-width: 0; }
+.hc-generator-load+.hc-generator-load { border-top: 1px solid var(--line); padding-top: 18px; margin-top: 4px; }
+.hc-generator-title { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+.hc-generator-title h3 { margin: 0; font-size: var(--fs-md); font-weight: 800; overflow-wrap: anywhere; }
+.hc-generator-load .hc-gauge-svg svg { max-width: 220px; }
+.hc-generator-load .hc-g-center b { font-size: 1.8rem; }
+.hc-generator-load .hc-trio small { font-size: var(--fs-xs); }
+.hc-daily-label.num { font-size: 11px; }

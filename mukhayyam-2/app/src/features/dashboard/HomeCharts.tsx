@@ -5,7 +5,7 @@ import {describeDay} from '../../lib/dates'
 import { useEmployee } from '../../auth/AuthProvider'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { ArrowLeft, Droplet, Gauge, Info, Plus, Printer, Timer, TrendingUp } from 'lucide-react'
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useId, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { db } from '../../data/db'
 import { addDays, dayName, todayISO, type ISODate } from '../../lib/dates'
@@ -87,9 +87,9 @@ function useRunUp(target: number | null, key: string): number {
   return v
 }
 
-interface GenLoad { id: number; name: string; pct: number | null; kva: number | null; cap: number | null; peak: { v: number; unit: string } | null; temp: number | null; oil: number | null }
+interface GenLoad { ran: boolean; id: number; name: string; pct: number | null; kva: number | null; cap: number | null; peak: { v: number; unit: string } | null; temp: number | null; oil: number | null }
 
-/** How loaded each generator was in the newest sent report: one needle per generator, picked by a chip. */
+/** Every generator is visible together, Caterpillar first, in the latest report. */
 export function LoadGauge() {
   const reports = useSentReports()
   const generators = useGenerators()
@@ -98,12 +98,13 @@ export function LoadGauge() {
   const loads = useMemo<GenLoad[] | null>(() => {
     if (!latest || !generators) return null
     const gens = new Map(generators.map((g) => [g.id, g]))
-    return latest.generators.filter((g) => g.didRun).map((log) => {
+    return latest.generators.map((log) => {
       const g = gens.get(log.generatorId)
-      const l = logLoads(log)
+      const l = log.didRun ? logLoads(log) : null
       const kva = l ? loadKva(l.loads, log.loadUnit, settings.phaseVoltage) : null
       const cap = g?.capacityKva ?? null
       return {
+        ran: log.didRun,
         id: log.generatorId,
         name: g?.name ?? 'مولد',
         kva,
@@ -113,12 +114,21 @@ export function LoadGauge() {
         temp: log.temperatureC,
         oil: log.oilPressure !== null ? toBar(log.oilPressure, log.oilPressureUnit) : null,
       }
+    }).sort((a,b)=>{
+      const rank=(x:GenLoad)=>/caterpillar|cat\b|كترب|كتبل|كاترب|كاتر/i.test(`${x.name} ${gens.get(x.id)?.brand ?? ''}`)?0:1
+      return rank(a)-rank(b) || a.id-b.id
     })
   }, [latest, generators, settings.phaseVoltage])
-  const [picked, setPicked] = useState<number | null>(null)
-  const gen = loads?.find((g) => g.id === picked) ?? loads?.find((g) => g.pct !== null) ?? loads?.[0] ?? null
+  return <article className="hc-card hc-gauge">
+    <div className="hc-h"><div className="hc-titles"><h2>حمل المولدات</h2><small>{latest ? `من تقرير ${dayName(latest.reportDate)} ${short(latest.reportDate)}` : 'ما وصل تقرير بعد'}</small></div></div>
+    {loads?.length ? loads.map(gen=><GeneratorGauge key={gen.id} gen={gen} date={latest?.reportDate ?? ''}/>) : <p className="hc-daily-note">ما وصلت قراءات مولدات بهذا التقرير.</p>}
+  </article>
+}
+
+function GeneratorGauge({gen,date}:{gen:GenLoad;date:string}){
+  const gradient=useId()
   const pct = gen?.pct ?? null
-  const run = useRunUp(pct === null ? null : Math.min(100, Math.max(0, pct)), `${latest?.reportDate}-${gen?.id}`)
+  const run = useRunUp(pct === null ? null : Math.min(100, Math.max(0, pct)), `${date}-${gen.id}`)
   const tone = pct === null ? 'muted' : pct >= 90 ? 'danger' : pct >= 75 ? 'warn' : 'ok'
   // right to left like the design: 0% on the right, the needle turns left
   const cx = 140
@@ -129,28 +139,12 @@ export function LoadGauge() {
   const da = Math.PI * 0.9
 
   return (
-    <article className="hc-card hc-gauge">
-      <div className="hc-h">
-        <div className="hc-titles">
-          <h2>حمل المولدات</h2>
-          <small>{latest ? `من تقرير ${dayName(latest.reportDate)} ${short(latest.reportDate)}` : 'ما وصل تقرير بعد'}</small>
-        </div>
-        <span className="grow" />
-        {pct !== null && <span className={`hc-pill ${tone}`}>{tone === 'ok' ? 'ضمن الحدود' : tone === 'warn' ? 'قريب من الحد' : 'فوق الحد'}</span>}
-      </div>
-      {loads && loads.length > 1 && (
-        <div className="hc-gens" role="group" aria-label="المولد">
-          {loads.map((g) => (
-            <button key={g.id} type="button" className={g.id === gen?.id ? 'on' : ''} onClick={() => setPicked(g.id)}>
-              {g.name}{g.pct !== null && <span className="num">{g.pct}%</span>}
-            </button>
-          ))}
-        </div>
-      )}
+    <section className="hc-generator-load" aria-label={`حمل ${gen.name}`}>
+      <div className="hc-generator-title"><h3>{gen.name}</h3>{pct!==null && <span className={`hc-pill ${tone}`}>{tone==='ok'?'ضمن الحدود':tone==='warn'?'قريب من الحد':'فوق الحد'}</span>}</div>
       <div className="hc-gauge-svg">
         <svg viewBox="0 0 280 160" role="img" aria-label={pct === null ? 'ما في قراءات حمل' : `حمل ${gen?.name ?? ''} ${pct}% من قدرته`}>
           <defs>
-            <linearGradient id="hcGauge" x1="1" y1="0" x2="0" y2="0">
+            <linearGradient id={gradient} x1="1" y1="0" x2="0" y2="0">
               <stop offset="0" stopColor="#8E1B2B" />
               <stop offset=".6" stopColor="#E5485B" />
               <stop offset="1" stopColor="#FFB8C3" />
@@ -164,7 +158,7 @@ export function LoadGauge() {
             return <line key={i} className={`hc-tick${big ? ' big' : ''}`} x1={cx + r1 * Math.cos(a)} y1={cy - r1 * Math.sin(a)} x2={cx + r2 * Math.cos(a)} y2={cy - r2 * Math.sin(a)} />
           })}
           <path className="hc-g-track" d={half} />
-          {pct !== null && <path className="hc-g-val" d={half} strokeDasharray={len} strokeDashoffset={len * (1 - run / 100)} />}
+          {pct !== null && <path className="hc-g-val" style={{stroke:`url(#${gradient})`}} d={half} strokeDasharray={len} strokeDashoffset={len * (1 - run / 100)} />}
           <circle cx={cx + R * Math.cos(da)} cy={cy - R * Math.sin(da)} r={5} className="hc-g-limit"><title>حد الخطر 90%</title></circle>
           {pct !== null && (
             <g transform={`rotate(${(-180 * run) / 100} ${cx} ${cy})`}>
@@ -177,14 +171,14 @@ export function LoadGauge() {
       </div>
       <div className="hc-g-center">
         <b className="num">{pct === null ? '—' : `${Math.round(run)}%`}</b>
-        <small>{gen ? (pct === null ? `${gen.name}: ما في قراءات حمل أو قدرة للمولد` : `${gen.name} · ${fmt(gen.kva!)} من ${fmt(gen.cap!)} kVA`) : 'ما اشتغل ولا مولد'}</small>
+        <small>{gen ? (pct === null ? `${gen.name}: ${gen.ran ? 'ما في قراءات حمل أو قدرة للمولد' : 'لم يعمل في هذا التقرير'}` : `${gen.name} · ${fmt(gen.kva!)} من ${fmt(gen.cap!)} kVA`) : 'ما اشتغل ولا مولد'}</small>
       </div>
       <div className="hc-trio">
         <div><b className="num">{gen?.peak ? `${fmt(gen.peak.v)} ${gen.peak.unit === 'A' ? 'A' : 'kW'}` : '—'}</b><small>أعلى حمل</small></div>
         <div><b className="num">{gen?.temp != null ? `${fmt(gen.temp)}°` : '—'}</b><small>الحرارة</small></div>
         <div><b className="num">{gen?.oil != null ? gen.oil.toFixed(1) : '—'}</b><small>ضغط الزيت (بار)</small></div>
       </div>
-    </article>
+    </section>
   )
 }
 
