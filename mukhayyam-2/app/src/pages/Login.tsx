@@ -1,3 +1,5 @@
+import {LogoDrawing} from '../features/login/LogoDrawing'
+import '../styles/login-entry.css'
 import { CircleAlert, ClipboardList, LayoutGrid, ListChecks, ScanLine, WifiOff } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router'
@@ -9,7 +11,7 @@ import { DEMO_PIN, demoEmployees } from '../data/demo'
 import { useDocumentTitle } from '../lib/useDocumentTitle'
 import { formatPhone, isValidPhone, normalizePhone } from '../lib/phone'
 import { titleOf } from '../types'
-import { Button, Logo } from '../ui/primitives'
+import { Button } from '../ui/primitives'
 import { PinInput } from '../ui/PinInput'
 import { FirstSetup } from './FirstSetup'
 import { InstallAppLink } from '../ui/InstallApp'
@@ -57,11 +59,14 @@ function Login() {
     }
   }, [])
 
-  // Returning people only type the PIN.
-  useEffect(() => {
-    if (isValidPhone(phone)) pinRef.current?.focus()
-    else phoneRef.current?.focus()
-  }, []) // Only on first paint.
+  // Fields are available immediately while the logo draws in its own place.
+  useEffect(()=>{
+    const frame=requestAnimationFrame(()=>{
+      if(isValidPhone(lastPhone()))pinRef.current?.focus()
+      else phoneRef.current?.focus()
+    })
+    return ()=>cancelAnimationFrame(frame)
+  },[])
 
   const phoneInvalid = phoneTouched && phone.length > 0 && !isValidPhone(phone)
 
@@ -101,16 +106,18 @@ function Login() {
   }
 
   return (
-    <div className="login">
-      <section className="login-brand" aria-hidden="true">
-        <Logo height={190} className="login-logo-lg" />
-        <h1>مخيم 2</h1>
-        <p>أبناء فارس أبو زايد للتجارة والاستيراد</p>
-        <ul className="login-modules">
-          <li><ClipboardList size={18} />تقارير موقع التوليد</li>
-          <li><LayoutGrid size={18} />التوزيع والأحمال</li>
-          <li><ListChecks size={18} />المهام الميدانية</li>
-          <li><ScanLine size={18} />الحضور والانصراف</li>
+    <div className="login entry-page">
+      <div className="entry-content">
+      <section className="login-brand">
+        <span className="entry-eyebrow">أبناء فارس أبو زايد</span>
+        <div className="entry-logo" role="img" aria-label="شعار أبناء فارس أبو زايد"><LogoDrawing /></div>
+        <h1>نظام إدارة مكتب مخيم 2</h1>
+        <p>شركة أبناء فارس أبو زايد للتجارة والاستيراد</p>
+        <ul className="login-modules" aria-label="أقسام النظام">
+          <li><ClipboardList size={17} />التوليد</li>
+          <li><LayoutGrid size={17} />التوزيع</li>
+          <li><ListChecks size={17} />المهام</li>
+          <li><ScanLine size={17} />الحضور</li>
         </ul>
       </section>
 
@@ -132,7 +139,6 @@ function Login() {
           </div>
         )}
         <div className="login-card-head">
-          <Logo height={88} className="login-logo-sm" />
           <h2 aria-live="polite">{verified ? 'أهلاً وسهلاً' : 'تسجيل الدخول'}</h2>
           <p>{verified ? 'تم التحقق من الرمز' : 'برقم جوالك والرمز السري'}</p>
         </div>
@@ -239,6 +245,8 @@ function Login() {
         )}
         <InstallAppLink />
       </section>
+      </div>
+      <footer className="entry-footer">© {new Date().getFullYear()} أبناء فارس أبو زايد · نظام إدارة مكتب مخيم 2</footer>
     </div>
   )
 }
