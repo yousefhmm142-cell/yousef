@@ -1,6 +1,9 @@
 /* Login only: the approved palette, font and logo, with an inline SVG reveal that never blocks sign-in. */
 .login.entry-page { display: flex; flex-direction: column; justify-content: center; gap: 24px; width: 100%; max-width: 1240px; min-height: 100dvh; padding: 48px 36px 22px; }
-.entry-content { display: grid; grid-template-columns: minmax(0,1.1fr) minmax(350px,440px); gap: 64px; align-items: center; width: 100%; flex: 1; }
+.entry-content { display: grid; grid-template-columns: minmax(0,1.1fr) 1px minmax(350px,440px); gap: 40px; align-items: center; width: 100%; flex: 1; }
+/* Decorative seam between branding and sign-in; never intercepts input. */
+.entry-divider { position: relative; display: block; width: 1px; height: 360px; justify-self: center; pointer-events: none; background: linear-gradient(to bottom,transparent,var(--line) 22%,var(--brand-soft) 50%,var(--line) 78%,transparent); }
+.entry-divider::after { content: ''; position: absolute; top: 50%; left: 50%; width: 7px; height: 7px; background: var(--bg); border: 1px solid var(--brand-text); opacity: .45; transform: translate(-50%,-50%) rotate(45deg); }
 .entry-page .login-brand { display: grid; justify-items: center; gap: 16px; text-align: center; animation: none; min-width: 0; }
 .entry-page .entry-logo { width: min(100%,280px); height: auto; margin: 0 0 12px; filter: drop-shadow(0 14px 18px #1b151710); }
 .entry-page .login-brand h1 { font-size: clamp(1.75rem,2.8vw,2.125rem); line-height: 1.5; margin: 0; max-width: 520px; text-wrap: balance; }
@@ -27,6 +30,7 @@
 @media (max-width: 850px) {
  .login.entry-page { padding: 28px 20px 18px; gap: 20px; }
  .entry-content { grid-template-columns: minmax(0,1fr); max-width: 460px; margin: 0 auto; gap: 28px; flex: none; }
+ .entry-divider { width: min(60%,220px); height: 1px; background: linear-gradient(to right,transparent,var(--line) 22%,var(--brand-soft) 50%,var(--line) 78%,transparent); }
  .entry-page .login-brand { gap: 5px; }
  .entry-page .entry-logo { width: 150px; margin: 0 0 4px; }
  .entry-page .login-brand h1 { font-size: 1.5rem; }

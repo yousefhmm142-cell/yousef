@@ -120,6 +120,8 @@ function Login() {
         </ul>
       </section>
 
+      <span className="entry-divider" aria-hidden="true" />
+
       <section className="login-card glass" data-verified={verified || undefined}>
         {db === 'setup' ? (
           <FirstSetup onDone={() => setDb('ready')} />
