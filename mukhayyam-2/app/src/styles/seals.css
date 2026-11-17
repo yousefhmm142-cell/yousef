@@ -342,3 +342,37 @@ table.seal-table tbody tr:hover { background: color-mix(in srgb, var(--brand) 5%
 .seal-task-title { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .seal-task-state { display: inline-block; width: fit-content; padding: 3px 8px; border: 1px solid var(--line); border-radius: 99px; background: var(--surface); font-weight: 700; }
 .seal-task-state[data-done] { color: var(--ok); }
+
+/* Consistent columns across every group and the tabular seal view. */
+.seals .group-card { gap: 0; padding: 0 16px 8px; overflow: hidden; }
+.seals .log-batch-head { display: grid; grid-template-columns: auto minmax(0,1fr) auto auto; padding: 16px 0; gap: 8px 12px; border-bottom: 1px solid var(--line); }
+.seals .log-batch-head .grow { display: none; }
+.seals .log-batch-head .tech { justify-self: start; max-width: 100%; overflow-wrap: anywhere; }
+.seals .seal-row,.seals .seal-row-head { grid-template-columns: 110px 110px 100px minmax(0,1fr); gap: 12px; }
+.seal-row-head { display: grid; padding: 12px 4px; color: var(--muted); font-size: var(--fs-xs); font-weight: 800; border-bottom: 1px solid var(--line); text-align: center; }
+.seal-row-head>span:last-child { text-align: start; }
+.seals .seal-row { min-height: 58px; padding: 10px 4px; line-height: 1.7; }
+.seals .seal-row>.seal-pill,.seals .seal-row>.pill { justify-self: center; }
+.seals .seal-row .when { text-align: center; white-space: nowrap; }
+.seals .seal-row .what { min-width: 0; }
+.seals table.seal-table { min-width: 820px; }
+.seals table.seal-table :is(th,td) { padding: 12px; vertical-align: middle; text-align: center; }
+.seals table.seal-table :is(th,td):last-child { text-align: start; min-width: 240px; line-height: 1.8; }
+.seals table.seal-table :is(th,td):nth-child(4) { white-space: nowrap; }
+@media (min-width:901px) { .seals-layout { grid-template-columns: 230px minmax(0,1fr); } }
+@media (max-width:700px) {
+ .seals .log-batch-head { grid-template-columns: minmax(0,1fr) minmax(0,1fr); align-items: center; }
+ .seals .log-batch-head>.muted { font-size: var(--fs-xs); overflow-wrap: anywhere; }
+ .seals .group-card { padding-inline: 12px; }
+ .seals .seal-row-head { display: none; }
+ .seals .seal-row { grid-template-columns: 100px minmax(0,1fr); gap: 8px 10px; padding-block: 12px; }
+ .seals .seal-row .when { grid-column: 1; grid-row: 2; }
+ .seals .seal-row .what { grid-column: 2; grid-row: 2; }
+}
+.seals .seal-row>.seal-pill { display: grid; grid-template-columns: 9px auto; justify-content: center; gap: 4px 7px; max-width: 100%; }
+.seals .seal-row>.seal-pill small { grid-column: 1 / -1; text-align: center; font-size: var(--fs-xs); color: var(--muted); }
+.seals-main>.card,.seals .table-wrap { min-width: 0; max-width: 100%; }
+.seals .table-wrap { overflow: auto; overscroll-behavior: contain; }
+.seals-main { grid-template-columns: minmax(0,1fr); }
+.seals .filters { min-width: 0; max-width: 100%; }
+.seals .filters>.segmented { flex-wrap: wrap; max-width: 100%; }

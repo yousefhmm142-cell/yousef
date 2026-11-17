@@ -92,7 +92,7 @@ export function AppShell() {
         <SyncNotice />
         <RejectedNotice />
 
-        <PullToRefresh><main className="page stage glass" id="main">
+        <PullToRefresh><main className="page stage glass" id="main" data-section={pathname.startsWith('/seals') ? 'seals' : undefined}>
           <div key={pathname} className="page-enter"><Outlet /></div>
         </main></PullToRefresh>
       </div>

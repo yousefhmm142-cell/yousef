@@ -79,3 +79,22 @@
   :root[data-theme='dark'] .seal-dialog :is(.aside-box, .seal-input, .input, .select):not([aria-invalid='true']) { border-color: var(--line); }
   :root[data-theme='dark'] .seal-dialog :is(.seal-input, .input, .select):not([aria-invalid='true']):focus { border-color: var(--brand-text); box-shadow: 0 0 0 3px var(--brand-soft); }
 }
+
+/* A calm, solid work surface for seals. Scoped by route; paper output is untouched. */
+@media screen {
+ :root[data-theme='dark'] .page.stage.glass[data-section='seals'] {
+  background: #14171c; backdrop-filter: none; -webkit-backdrop-filter: none;
+  border-color: #30343d; box-shadow: 0 8px 24px -20px #0008;
+ }
+ :root[data-theme='dark'] .stage .seals :is(.card,.glass,.search-bar,.tech-nav),
+ :root[data-theme='dark'] .seal-dialog .dialog-panel {
+  background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none;
+  box-shadow: none;
+ }
+ :root[data-theme='dark'] .seals .log-batch-head { background: var(--surface); }
+ :root[data-theme='dark'] .seals .seal-row-head { background: var(--surface-2); }
+ :root[data-theme='dark'] .seals .group-rows>.seal-row:nth-child(even) { background: #ffffff03; }
+ :root[data-theme='dark'] .seals button.seal-row:hover { background: var(--surface-2); }
+ :root[data-theme='dark'] .seals .search-bar:focus-within { border-color: var(--brand-text); box-shadow: 0 0 0 3px var(--brand-soft); }
+ :root[data-theme='dark'] .seals .tech-dot { background: var(--surface-2); color: var(--ink-2); }
+}

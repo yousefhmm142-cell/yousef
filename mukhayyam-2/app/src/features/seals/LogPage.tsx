@@ -1,3 +1,4 @@
+import {ScrollTable} from '../../ui/ScrollTable'
 import { ArrowDownUp, FileSpreadsheet, Search, Stamp, X } from 'lucide-react'
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { isDemo } from '../../config'
@@ -213,13 +214,14 @@ export function SealLogPage() {
             <div className="group-list">
               {result.groups.slice(0, limit).map((g) => (
                 <article key={g.key} className="group-card card">
-                  <div className="batch-head">
+                  <div className="batch-head log-batch-head">
                     <b>{g.batch ? `الدفعة ${g.batch.label?.trim() || ordinalWord(g.batch.batchNo)}` : 'في المخزن / تالف قبل الصرف'}</b>
                     {g.technicianId && <span className="tech">{data.names.get(g.technicianId) ?? '—'}</span>}
                     <span className="muted num">{g.roll.fromNo}–{g.roll.toNo}</span>
                     <span className="grow" />
                     <span className="muted">{g.batch ? `صُرفت ${dayLabel(g.batch.issuedOn)}` : `رول استُلم ${dayLabel(g.roll.receivedOn)}`}</span>
                   </div>
+                  <div className="seal-row-head" aria-hidden="true"><span>رقم الختم</span><span>الحالة</span><span>التاريخ</span><span>المشترك والعمل / التفاصيل</span></div>
                   <div className="group-rows">
                     {g.seals.filter((s) => s.status !== 'in_stock').map((s) => (
                       <SealRow key={s.sealNo} seal={s} hit={active && g.matched.has(s.sealNo)} dim={active && !g.matched.has(s.sealNo)} onOpen={() => setDialog({ seal: s })} />
@@ -238,8 +240,8 @@ export function SealLogPage() {
               {result.groups.length > limit && <Button variant="secondary" onClick={() => setLimit(limit + GROUP_LIMIT)}>عرض المزيد ({result.groups.length - limit})</Button>}
             </div>
           ) : (
-            <section className="card" style={{ padding: 10, overflowX: 'auto' }}>
-              <table className="seal-table">
+            <section className="card" style={{ padding: 10 }}>
+              <ScrollTable label="سجل الأختام"><table className="seal-table">
                 <thead>
                   <tr>{sortHead('no', 'الختم')}{sortHead('tech', 'الفني')}{sortHead('status', 'الحالة')}{sortHead('date', 'التاريخ')}{sortHead('board', 'الطبلون')}<th>التفاصيل</th></tr>
                 </thead>
@@ -255,7 +257,7 @@ export function SealLogPage() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </table></ScrollTable>
               {rows.length > limit && <Button variant="secondary" onClick={() => setLimit(limit + TABLE_LIMIT)}>عرض المزيد ({rows.length - limit})</Button>}
             </section>
           )}
