@@ -1,3 +1,4 @@
+import {TaskPicker,type SealTaskChoice} from './TaskPicker'
 import { getSupabase } from '../../data/supabase'
 import { Check, Plus, Stamp, X } from 'lucide-react'
 import { FootHint,SummaryAside,saveOnCtrlEnter } from '../../ui/SummaryAside'
@@ -25,10 +26,10 @@ const outcomes: Array<{ value: Outcome; label: string }> = [
 
 export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal; onClose(): void }) {
   const toast = useToast()
-  const [taskQuery,setTaskQuery]=useState('')
   const [taskId,setTaskId]=useState(seal?.taskId ?? '')
-  const [candidates,setCandidates]=useState<Array<{id:string;number:number;subscriber:string;work:string}>>([])
+  const [candidates,setCandidates]=useState<SealTaskChoice[]>([])
   const [linkError,setLinkError]=useState(false)
+  const [tasksLoading,setTasksLoading]=useState(false)
   const [no, setNo] = useState(seal ? String(seal.sealNo) : '')
   const [status, setStatus] = useState<Outcome>(seal && (seal.status === 'damaged' || seal.status === 'lost') ? seal.status : 'used')
   const [date, setDate] = useState(seal?.usedOn ?? todayISO())
@@ -40,14 +41,21 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
   const [error, setError] = useState<string | null>(null)
   const first = useRef<HTMLInputElement>(null)
   const boardBox = useRef<HTMLInputElement>(null)
+  const formBox = useRef<HTMLDivElement>(null)
 
   const n = parseSealNumbers(no).numbers[0]
   const found = n ? data.seals.find((s) => s.sealNo === n) : undefined
-  useEffect(()=>{let live=true;setCandidates([]);setLinkError(false)
+  useEffect(()=>{let live=true;setCandidates([]);setLinkError(false);setTasksLoading(false)
     if(!found?.technicianId)return
-    const sb=getSupabase();if(!sb)return
-    void sb.rpc('seal_task_candidates',{p_seal:found.sealNo}).then(res=>{if(live){if(res.error)setLinkError(true);else setCandidates(res.data ?? [])}})
-    return ()=>{live=false}
+    const holder=found.technicianId,sealNo=found.sealNo
+    const load=async()=>{
+      const sb=getSupabase();if(!sb || !navigator.onLine){if(live){setLinkError(true);setTasksLoading(false)}return}
+      if(live)setTasksLoading(true)
+      try{const res=await sb.rpc('seal_task_candidates',{p_seal:sealNo});if(live){setTasksLoading(false);setLinkError(!!res.error);if(!res.error)setCandidates((res.data ?? []).filter((t:SealTaskChoice)=>t.technician_id===holder))}}
+      catch{if(live){setTasksLoading(false);setLinkError(true)}}
+    }
+    void load();window.addEventListener('online',load)
+    return ()=>{live=false;window.removeEventListener('online',load)}
   },[found?.sealNo,found?.technicianId])
   useEffect(()=>{if(!seal)setTaskId(found?.taskId ?? '')},[found?.sealNo,found?.taskId,seal])
   const typed = no.replace(/\D/g, '').length >= 6
@@ -62,7 +70,8 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
   const line = status === 'used' ? composeDetails({ board, work, subscriber: subscriberLine }) : work.trim() || (status === 'damaged' ? 'تالف' : 'ضائع')
 
   useEffect(() => {
-    ;(seal ? boardBox : first).current?.focus()
+    if(seal)formBox.current?.querySelector<HTMLElement>('.seal-task-trigger, input')?.focus({preventScroll:true})
+    else first.current?.focus()
   }, [seal])
   // When the number typed reaches a seal that already has details, show them for editing.
   useEffect(() => {
@@ -160,7 +169,7 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
         </>
       }
     >
-      <div className="issue-form" onKeyDown={saveOnCtrlEnter(() => { if (ready && !busy) void save(false) })}>
+      <div className="issue-form" ref={formBox} onKeyDown={saveOnCtrlEnter(() => { if (ready && !busy) void save(false) })}>
         {!seal && (
           <label className="seal-field">
             <span className="label">رقم الختم (يكفي الرقم، وحروف WK تُتجاهل)</span>
@@ -184,8 +193,10 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
           <div className="seal-found" data-bad>{bad}</div>
         ) : null}
 
-        {status==='used' && found && <label className="field"><span className="label">بحث بالمهمات المنجزة لهالفني</span><input className="input" value={taskQuery} onChange={e=>setTaskQuery(e.target.value)} placeholder="رقم المهمة أو اسم المشترك" /></label>}
-        {status==='used' && found && <label className="field"><span className="label">ربط بمهمة منجزة (اختياري)</span><select className="select" aria-label="ربط بمهمة منجزة (اختياري)" value={taskId} onChange={e=>{setTaskId(e.target.value);const t=candidates.find(t=>t.id===e.target.value);if(t){setWork(w=>w.trim()?w:t.work);setSubscriber(s=>s.trim()?s:t.subscriber)}}}><option value="">ربط تلقائي عند تطابق المهمة</option>{taskId && !candidates.some(t=>t.id===taskId) && <option value={taskId}>المهمة المرتبطة المحفوظة</option>}{candidates.filter(t=>!taskQuery.trim() || `${t.number} ${t.subscriber} ${t.work}`.includes(taskQuery.trim())).map(t=><option key={t.id} value={t.id}>#{t.number} · {t.work} · {t.subscriber}</option>)}</select><small className="field-hint">بيرتبط تلقائيًا عند تطابق يوم الإنجاز والفني والمشترك والعمل. ممكن تختاري المهمة بنفسك.</small>{linkError && <small className="field-error">تعذّر جلب المهام. الربط المحفوظ ما بتغير.</small>}</label>}
+        {status==='used' && found?.technicianId && <TaskPicker key={found.sealNo} technician={data.names.get(found.technicianId) ?? 'الفني'} value={taskId} choices={candidates} loading={tasksLoading} error={linkError} onChange={t=>{
+          setTaskId(t?.id ?? '')
+          if(t){setWork(t.work ?? '');setSubscriber(t.subscriber ?? '');setBoard(t.board ?? '');setDate(t.completed_on || todayISO())}
+        }}/>}
         <div className="chips" role="radiogroup" aria-label="ما صار للختم">
           {outcomes.map((o) => (
             <Chip key={o.value} pressed={status === o.value} onClick={() => setStatus(o.value)}>{o.label}</Chip>

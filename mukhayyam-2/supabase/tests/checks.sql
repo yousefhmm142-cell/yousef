@@ -1046,4 +1046,27 @@ select test.login('موظف إداري');set role authenticated;
 select test.fails($$select m2_ops.link_matching_work()$$,'%permission denied%','private automatic matcher is not exposed to staff');
 reset role;
 
+-- ---------- Holder-scoped task picker and complete form projection ----------
+reset role;select test.login('رامي أبو عجوة');set role authenticated;
+with x as(insert into tasks(task_type_id,assignee_id,subscriber_name,location_text,expected_minutes) values((select id from task_types where name='صيانة كابل'),(select v from test.ids where k='joint_a'),'مشترك اختيار مهمات','طبلون الفحص 55',30) returning id) insert into test.ids select 'picker_own',id from x;
+select public.task_complete_seals((select v from test.ids where k='picker_own'),'{}','','صيانة كابل','','00000000-0000-0000-0000-000000004801');
+select test.ok(exists(select 1 from seal_task_candidates(8750002) where id=(select v from test.ids where k='picker_own') and board='الفحص 55' and subscriber='مشترك اختيار مهمات' and work='صيانة كابل' and completed_on=public.seal_today() and technician_id=(select v from test.ids where k='joint_a')),'picker projects holder, board, subscriber, actual work and Gaza completion day');
+select test.ok(not exists(select 1 from seal_task_candidates(8750009) where id=(select v from test.ids where k='picker_own')),'same task is not exposed for a different technicians seal');
+with x as(insert into tasks(task_type_id,assignee_id,subscriber_name,expected_minutes) values((select id from task_types where name='تفتيش'),(select v from test.ids where k='joint_a'),'مشترك دليل محدد',30) returning id) insert into test.ids select 'picker_directory',id from x;
+select public.task_complete_seals((select v from test.ids where k='picker_directory'),'{}','','تفتيش','','00000000-0000-0000-0000-000000004802');
+reset role;insert into subscribers(full_name,board,area) values('مشترك دليل محدد','17','منطقة تجريبية');
+select test.login('موظف إداري');set role authenticated;
+select test.ok(exists(select 1 from seal_task_candidates(8750002) where id=(select v from test.ids where k='picker_directory') and board='17'),'seals-only accountant can receive the unique subscriber board without tasks permission');
+select test.ok(not exists(select 1 from tasks where id=(select v from test.ids where k='picker_directory')),'picker does not grant accountant general tasks access');
+select test.ok(not exists(select 1 from seal_task_candidates(8750002) c join tasks t on t.id=c.id where not((select v from test.ids where k='joint_a')=any(task_member_ids(t.assignee_id,t.assignee_ids)))),'picker cannot expose tasks of a different holder');
+reset role;insert into subscribers(full_name,board,area) values('مشترك دليل محدد','18','منطقة تجريبية');
+select test.login('موظف إداري');set role authenticated;
+select test.ok(exists(select 1 from seal_task_candidates(8750002) where id=(select v from test.ids where k='picker_directory') and board=''),'different boards under the same name are not guessed');
+select test.ok(not exists(select 1 from seal_task_candidates(8765006)),'an unnamed seal batch has no task suggestions');
+reset role;select test.login('رامي أبو عجوة');set role authenticated;
+select test.ok(not exists(select 1 from seal_task_candidates(8750002) c join tasks t on t.id=c.id where not((select v from test.ids where k='joint_a')=any(task_member_ids(t.assignee_id,t.assignee_ids)))),'manager confirms every projected task belongs to the holder, without RLS hiding mismatches');
+reset role;set role anon;
+select test.fails($$select * from seal_task_candidates(8750002)$$,'%permission denied%','anonymous callers cannot request technicians tasks');
+reset role;
+
 \echo 'ALL CHECKS PASSED'
