@@ -95,7 +95,10 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
       // A seal that was out and is now recorded can be taken back at once («تراجع»): it goes back to «غير مستخدم».
       const wasOut = found.status === 'issued'
       const no = found.sealNo
-      await recordSeal(no, status, date, line, status==='used' ? taskId || null : null)
+      // An unfinished suggestion prefills the form without bypassing office completion.
+      const choice=candidates.find(t=>t.id===taskId)
+      const pending=choice?.task_status && choice.task_status!=='done'
+      await recordSeal(no, status, date, line, status==='used' && !pending ? taskId || null : null)
       buzz()
       toast(`سُجّل الختم ${no}`, 'ok', wasOut ? { label: 'تراجع', run: async () => { try { await recordSeal(no, 'issued', null, ''); toast(`رجع الختم ${no} «غير مستخدم»`) } catch { toast('ما قدرنا نتراجع. افتح الختم وألغِ تسجيله.', 'danger') } } } : undefined)
       if (next && !seal) {

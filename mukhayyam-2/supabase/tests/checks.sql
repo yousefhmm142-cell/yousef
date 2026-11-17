@@ -1069,4 +1069,33 @@ reset role;set role anon;
 select test.fails($$select * from seal_task_candidates(8750002)$$,'%permission denied%','anonymous callers cannot request technicians tasks');
 reset role;
 
+
+-- ---------- Recent completed and pending holder suggestions ----------
+reset role;select test.login('رامي أبو عجوة');set role authenticated;
+with x as(insert into tasks(task_type_id,assignee_id,subscriber_name,location_text,expected_minutes) values((select id from task_types where name='صيانة كابل'),(select v from test.ids where k='joint_a'),'مهمة حديثة بانتظار تم','طبلون 92',30) returning id) insert into test.ids select 'picker_pending',id from x;
+select test.ok(exists(select 1 from seal_task_candidates(8750002) where id=(select v from test.ids where k='picker_pending') and task_status='new' and completed_on is null and task_on=seal_today() and board='92'),'recent unfinished task is offered without claiming completion');
+update tasks set status='sent' where id=(select v from test.ids where k='picker_pending');
+select test.ok(exists(select 1 from seal_task_candidates(8750002) where id=(select v from test.ids where k='picker_pending') and task_status='sent'),'office-sent task appears before office marks done');
+select test.ok(exists(select 1 from seal_task_candidates(8750002) where id=(select v from test.ids where k='picker_own') and task_status='done'),'recent finished tasks remain available beside pending tasks');
+select test.ok(not exists(select 1 from seal_task_candidates(8750009) where id=(select v from test.ids where k='picker_pending')),'pending tasks stay scoped to the actual holder');
+select test.fails($$select seal_record_task(8750002,'used',seal_today(),'صيانة كابل (مهمة حديثة بانتظار تم)',(select v from test.ids where k='picker_pending'))$$,'%task_not_completed%','suggestions do not grant permission to finish or link unfinished tasks');
+reset role;
+with x as(insert into tasks(task_type_id,assignee_id,subscriber_name,expected_minutes) values((select id from task_types where name='تفتيش'),(select v from test.ids where k='joint_a'),'مهمة اقتراح قديمة',30) returning id) insert into test.ids select 'picker_stale',id from x;
+set session_replication_role=replica;
+update tasks set created_at=now()-interval '15 days',status='done',started_at=now()-interval '14 days 1 hour',completed_at=now()-interval '14 days' where id=(select v from test.ids where k='picker_stale');
+set session_replication_role=origin;
+select test.login('موظف إداري');set role authenticated;
+select test.ok(not exists(select 1 from seal_task_candidates(8750002) where id=(select v from test.ids where k='picker_stale')),'completed tasks older than the recent seven days are excluded');
+select test.ok(exists(select 1 from seal_task_candidates(8750002) where id=(select v from test.ids where k='picker_pending')),'seals accountant can prefill pending holder tasks without general tasks access');
+reset role;
+set session_replication_role=replica;
+update seals set task_id=(select v from test.ids where k='picker_stale') where seal_no=8750002;
+set session_replication_role=origin;
+select test.login('موظف إداري');set role authenticated;
+select test.ok(exists(select 1 from seal_task_candidates(8750002) where id=(select v from test.ids where k='picker_stale')),'saved older link remains visible when editing that seal');
+reset role;select test.login('رامي أبو عجوة');set role authenticated;
+update tasks set status='cancelled' where id=(select v from test.ids where k='picker_pending');
+select test.ok(not exists(select 1 from seal_task_candidates(8750002) where id=(select v from test.ids where k='picker_pending')),'cancelled tasks never appear as suggestions');
+reset role;
+
 \echo 'ALL CHECKS PASSED'

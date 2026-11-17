@@ -334,3 +334,11 @@ table.seal-table tbody tr:hover { background: color-mix(in srgb, var(--brand) 5%
 .seal-task-option:hover, .seal-task-option:focus-visible { background: var(--surface-2); border-color: var(--line); }
 .seal-task-option[aria-pressed='true'] { background: var(--brand-soft); border-color: var(--brand-text); }
 .seal-task-number { align-self: start; padding: 5px 8px; border-radius: 8px; background: var(--surface-2); color: var(--brand-text); font-size: var(--fs-sm); font-weight: 800; }
+
+/* Clear berry-tinted affordance for the seal task chooser, in both themes. */
+.seal-dialog .seal-task-trigger { background: var(--brand-soft); border-color: var(--brand-text); box-shadow: inset 0 0 0 1px var(--glass-edge); }
+.seal-dialog .seal-task-trigger[aria-expanded='true'] { box-shadow: 0 0 0 3px var(--brand-soft); }
+.seal-dialog .seal-task-options { background: linear-gradient(var(--brand-soft),var(--brand-soft)),var(--surface); border-color: var(--brand-text); }
+.seal-task-title { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.seal-task-state { display: inline-block; width: fit-content; padding: 3px 8px; border: 1px solid var(--line); border-radius: 99px; background: var(--surface); font-weight: 700; }
+.seal-task-state[data-done] { color: var(--ok); }
