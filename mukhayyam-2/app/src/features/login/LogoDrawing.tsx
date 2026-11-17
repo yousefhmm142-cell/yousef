@@ -1,4 +1,5 @@
 import {useId,type CSSProperties} from 'react'
+import {usePageVisible} from '../../lib/motion'
 
 // Contours traced from the approved logo.webp; the final image is the original, unchanged asset.
 const contours = [
@@ -8,14 +9,18 @@ const contours = [
 ]
 export function LogoDrawing(){
  const id=useId()
- return <svg className="entry-logo-drawing" viewBox="-12 -12 584 350" aria-hidden="true" focusable="false">
+ const visible=usePageVisible()
+ return <div className="af-logo animate-logo-float" data-paused={!visible || undefined}>
+  <span className="af-logo-glow animate-glow-breathe" aria-hidden="true"/>
+  <svg className="entry-logo-drawing" viewBox="-12 -12 584 350" aria-hidden="true" focusable="false">
   <defs><linearGradient id={id} x1="0" y1="0" x2="1" y2="1"><stop stopColor="#fff"/><stop offset=".45" stopColor="#E8EAED"/><stop offset=".7" stopColor="#C5CBD2"/><stop offset="1" stopColor="#fff"/></linearGradient></defs>
   <g className="entry-draw-lines" fill="none" strokeLinecap="round" strokeLinejoin="round">
    {contours.map((d,i)=><g key={i} style={{'--trace-delay':`${i*.18}s`} as CSSProperties}>
-    <path d={d} className="entry-draw-edge" pathLength="1"/>
-    <path d={d} className={`entry-draw-ink${i===2?' accent':''}`} stroke={i===2?'var(--brand-text)':`url(#${id})`} pathLength="1"/>
+    <path d={d} className="st entry-draw-edge" pathLength="1"/>
+    <path d={d} className={`st entry-draw-ink${i===2?' accent':''}`} stroke={i===2?'var(--brand-text)':`url(#${id})`} pathLength="1"/>
    </g>)}
   </g>
   <image href="/logo.webp" x="0" y="0" width="560" height="326" className="entry-logo-reveal"/>
  </svg>
+ </div>
 }
