@@ -278,3 +278,25 @@ g:hover > .hc-bar { filter: brightness(1.18); }
 .hc-kb.daily-entry-card .daily-entry-foot { border-color: #ffffff30; }
 :root .hc-kb.daily-entry-card:is(:hover,:focus-visible) { background: var(--daily-entry-hover); color: #fff; border-color: #83756f; }
 :root .hc-kb.daily-entry-card:is(:hover,:focus-visible)>span { color: #fff; }
+
+/* Readable daily charts: a dedicated horizontal viewport, every date labelled. */
+.hc-daily-scroll { width: 100%; min-width: 0; overflow-x: auto; overscroll-behavior-x: contain; border: 1px solid var(--line); border-radius: 14px; background: var(--hc-inset); scrollbar-width: thin; }
+.hc-daily-scroll svg { display: block; max-width: none; }
+.hc-daily-guide { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: var(--fs-sm); }
+.hc-daily-explain,.hc-daily-note { margin: 0; color: var(--muted); font-size: var(--fs-sm); line-height: 1.9; }
+.hc-daily-explain { padding: 12px 14px; background: var(--brand-soft); border-radius: 12px; color: var(--ink-2); }
+.hc-daily-label,.hc-daily-axis,.hc-daily-missing { fill: var(--muted); font: 700 12px var(--font); }
+.hc-daily-axis { font-size: 11px; }
+.hc-daily-value { fill: var(--ink); font: 800 13px var(--font); }
+.hc-daily-line { fill: none; stroke: var(--brand-text); stroke-width: 2.5; stroke-linejoin: round; }
+.hc-daily-point { fill: var(--brand-text); stroke: var(--surface); stroke-width: 2; }
+.hc-daily-bar { fill: var(--brand-text); opacity: .75; }
+.hc-daily-day:hover .hc-daily-bar { opacity: 1; }
+.hc-daily-data summary { cursor: pointer; color: var(--ink); padding: 12px 0; font-weight: 800; }
+.hc-daily-data .table-wrap { max-height: 420px; overflow: auto; }
+.hc-daily-data .tbl th,.hc-daily-data .tbl td { white-space: nowrap; }
+.hc-usage,.hc-daily-history { min-width: 0; }
+@media (max-width:600px) { .hc-usage .hc-minis { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+
+.hc-usage .hc-titles { flex-basis: 100%; }
+@media (min-width:900px) { .distribution-kpis { grid-template-columns: repeat(3,minmax(0,1fr)); } }

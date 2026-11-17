@@ -1,12 +1,11 @@
 import { EmptyArt } from '../../ui/fx/EmptyArt'
 import { HeatLegend, heatStyle, Peak } from '../../ui/fx/HeatLegend'
 import { CountUp } from '../../ui/fx/CountUp'
-import { ArrowLeft, Clock, LayoutGrid, NotebookPen, Sun, TriangleAlert, Zap } from 'lucide-react'
+import { ArrowLeft, Clock, LayoutGrid, NotebookPen, Sun, Zap } from 'lucide-react'
 import { formatAmount } from '../../lib/numbers'
 import { useAlertSettings, useEmployeeNames } from '../generation/repo'
 import { BANDS, bandAverage, bandsDayAverage, hasBandReadings, phaseImbalancePct } from '../sheets/loads'
-import { AlertsCard, Signatures } from '../sheets/ui'
-import { computeZoneAlerts } from './alerts'
+import { Signatures } from '../sheets/ui'
 import { RUN_NAMES, runLoad, runSegments, sheetTotals, type DistributionSheet, type ZoneEntry, type ZoneRun } from './model'
 import { useZones } from './repo'
 import { clock12 } from '../../lib/format'
@@ -46,30 +45,28 @@ function windowSegments(r: Pick<ZoneRun, 'start' | 'end'>): Array<[number, numbe
   return out.reduce<Array<[number, number]>>((m, seg) => { const last = m[m.length - 1]; if (last && seg[0] <= last[1]) last[1] = Math.max(last[1], seg[1]); else m.push([...seg]); return m }, [])
 }
 
-export function useSheetContext(sheet: DistributionSheet | null | undefined) {
+export function useSheetContext(_sheet: DistributionSheet | null | undefined) {
   const zones = useZones()
   const settings = useAlertSettings()
   const names = useEmployeeNames()
   const zoneNames = new Map((zones ?? []).map((z) => [z.id, z.name]))
-  const alerts = sheet && zones ? computeZoneAlerts(sheet, zoneNames, settings) : []
-  return { ready: !!zones, zoneNames, names, alerts, settings }
+  return { ready: !!zones, zoneNames, names, settings }
 }
 
 type Ctx = ReturnType<typeof useSheetContext>
 
 export function SheetView({ sheet, ctx }: { sheet: DistributionSheet; ctx: Ctx }) {
-  const { zoneNames, names, alerts } = ctx
+  const { zoneNames, names } = ctx
   const totals = sheetTotals(sheet)
   const withHours = sheet.zones.filter((z) => z.supplied && z.supplyHours !== null)
   const byHours = [...withHours].sort((a, b) => (b.supplyHours ?? 0) - (a.supplyHours ?? 0))
   const longest = byHours[0]
   const shortest = byHours[byHours.length - 1]
   const average = withHours.length ? totals.totalHours / withHours.length : null
-  const warn = alerts.filter((a) => a.level === 'warn').length
 
   return (
     <div className="report">
-      <div className="kpis">
+      <div className="kpis distribution-kpis">
         <div className="kpi hero">
           <div className="kpi-label"><span className="kpi-ico"><Zap size={16} /></span>مجموع ساعات التغذية</div>
           <div className="kpi-value num"><CountUp value={totals.totalHours} /><small>ساعة</small></div>
@@ -88,16 +85,8 @@ export function SheetView({ sheet, ctx }: { sheet: DistributionSheet; ctx: Ctx }
           <div className="kpi-value num">{totals.runs}</div>
           <div className="kpi-sub num">في {totals.suppliedZones} من {sheet.zones.length} مناطق</div>
         </div>
-        <div className="kpi glass">
-          <div className="kpi-label"><span className="kpi-ico"><TriangleAlert size={16} /></span>التنبيهات</div>
-          <div className="kpi-value num"><CountUp value={alerts.length} /></div>
-          <div className="kpi-sub">
-            {alerts.length === 0 ? 'كل الأحمال متوازنة' : [alerts.length - warn && `${alerts.length - warn} خطر`, warn && `${warn} تحذير`].filter(Boolean).join(' · ')}
-          </div>
-        </div>
       </div>
 
-      <AlertsCard alerts={alerts} />
       <Timeline sheet={sheet} zoneNames={zoneNames} imbalanceWarn={ctx.settings.imbalanceWarnPct} />
       <Matrix sheet={sheet} zoneNames={zoneNames} imbalanceWarn={ctx.settings.imbalanceWarnPct} />
       <HourlyLoads sheet={sheet} zoneNames={zoneNames} imbalanceWarn={ctx.settings.imbalanceWarnPct} />

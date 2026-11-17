@@ -72,15 +72,6 @@ export function buildAttention(a: AttentionInput): Attention[] {
       detail: waitingReports.map((r) => dayName(r.reportDate)).join('، '),
       lines: waitingReports.map((r) => ({ text: `تقرير ${dayName(r.reportDate)}`, to: `/generation/${r.reportDate}` })),
     })
-  const waitingSheets = a.sheets.filter((s) => s.status === 'submitted').sort((x, y) => x.sheetDate.localeCompare(y.sheetDate))
-  if (waitingSheets.length)
-    out.push({
-      key: 'sheets', tone: 'warn', to: '/distribution', toLabel: 'صفحة التوزيع',
-      title: `${waitingSheets.length} ${waitingSheets.length === 1 ? 'كشف توزيع' : 'كشوف توزيع'} بانتظار اعتمادك`,
-      detail: waitingSheets.map((s) => dayName(s.sheetDate)).join('، '),
-      lines: waitingSheets.map((s) => ({ text: `كشف ${dayName(s.sheetDate)}`, to: `/distribution/${s.sheetDate}` })),
-    })
-
   // Yesterday's papers, once the late time has passed.
   const yday = addDays(a.today, -1)
   if (a.gazaHour >= 10) {
@@ -91,13 +82,7 @@ export function buildAttention(a: AttentionInput): Attention[] {
         title: 'تقرير التوليد لأمس ما وصل', detail: rep ? 'لسا قيد التعبئة' : 'ما انبدأ',
         lines: [{ text: rep ? 'المشغّل بلّش يعبّيه وما بعته.' : 'ما في تقرير لأمس أبداً. تواصل مع موقع التوليد.' }],
       })
-    const sh = a.sheets.find((s) => s.sheetDate === yday)
-    if (!sh || sh.status === 'draft' || sh.status === 'returned')
-      out.push({
-        key: 'late-sheet', tone: 'danger', to: `/distribution/${yday}`, toLabel: 'كشف أمس',
-        title: 'كشف التوزيع لأمس ما وصل', detail: sh ? 'لسا قيد التعبئة' : 'ما انبدأ',
-        lines: [{ text: sh ? 'المشرف بلّش يعبّيه وما بعته.' : 'ما في كشف لأمس أبداً. تواصل مع مشرف التوزيع.' }],
-      })
+
   }
 
   // Late tasks.

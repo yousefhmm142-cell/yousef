@@ -44,13 +44,13 @@ describe('attention', () => {
     const r = a.find((x) => x.key === 'reports')!
     expect(r.title).toContain('2 تقارير توليد')
     expect(r.lines.map((l) => l.to)).toEqual(['/generation/2026-11-10', '/generation/2026-11-11'])
-    expect(a.find((x) => x.key === 'sheets')!.lines[0]!.to).toBe('/distribution/2026-11-11')
+    expect(a.some((x) => x.to.startsWith('/distribution'))).toBe(false)
   })
 
   it('flags yesterday missing only after ten', () => {
     const missing = { reports: [], sheets: [] }
     expect(buildAttention(base({ ...missing, gazaHour: 9 })).map((x) => x.key)).toEqual([])
-    expect(buildAttention(base({ ...missing, gazaHour: 10 })).map((x) => x.key)).toEqual(['late-report', 'late-sheet'])
+    expect(buildAttention(base({ ...missing, gazaHour: 10 })).map((x) => x.key)).toEqual(['late-report'])
   })
 
   it('lists tasks past their time', () => {

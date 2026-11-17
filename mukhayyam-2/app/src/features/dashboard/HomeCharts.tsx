@@ -1,7 +1,11 @@
+import {DailyUsagePlot,usageDate} from './DailyUsagePlot'
+import {usageDays,type UsageRange} from './dailyUsage'
+import {ScrollTable} from '../../ui/ScrollTable'
+import {describeDay} from '../../lib/dates'
 import { useEmployee } from '../../auth/AuthProvider'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { ArrowLeft, Droplet, Gauge, Info, Plus, Printer, Timer, TrendingUp } from 'lucide-react'
-import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { db } from '../../data/db'
 import { addDays, dayName, todayISO, type ISODate } from '../../lib/dates'
@@ -31,20 +35,6 @@ function useSentReports(): SiteReport[] | undefined {
   return useMemo(() => all?.filter((r) => r.status !== 'draft'), [all])
 }
 
-function useWidth(): [(el: HTMLDivElement | null) => void, number] {
-  // a callback ref: the box appears only once the data is in, so watch it whenever it mounts
-  const [el, setEl] = useState<HTMLDivElement | null>(null)
-  const [w, setW] = useState(0)
-  useLayoutEffect(() => {
-    if (!el) return
-    setW(el.clientWidth)
-    const ro = new ResizeObserver(() => setW((old) => (Math.abs(old - el.clientWidth) > 1 ? el.clientWidth : old)))
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [el])
-  return [setEl, w]
-}
-
 /** True once, a moment after mounting: lets bars and rings grow in (the CSS skips it for reduced motion). */
 function useShown() {
   const [on, setOn] = useState(false)
@@ -55,157 +45,25 @@ function useShown() {
   return on
 }
 
-type Metric = 'fuel' | 'hours'
-const RANGES = [7, 30, 90] as const
-
-/** Diesel used (or running hours) day by day, against the period before. */
+/** Daily figures from the actual reports. Missing days remain visibly missing. */
 export function UsageChart() {
-  const reports = useSentReports()
-  const [metric, setMetric] = useState<Metric>('fuel')
-  const [range, setRange] = useState<(typeof RANGES)[number]>(30)
-  const [ref, width] = useWidth()
-  const [hover, setHover] = useState<number | null>(null)
-
-  const data = useMemo(() => {
-    if (!reports) return null
-    const byDate = new Map(reports.map((r) => [r.reportDate, reportTotals(r)]))
-    const today = todayISO()
-    const pick = (d: ISODate) => {
-      const t = byDate.get(d)
-      return t ? (metric === 'fuel' ? t.consumption : t.runHours) : null
-    }
-    const days = Array.from({ length: range }, (_, i) => addDays(today, i - range + 1))
-    const cur = days.map((d) => ({ date: d, v: pick(d) }))
-    const prev = days.map((d) => pick(addDays(d, -range)))
-    const sumOf = (xs: Array<number | null>) => xs.reduce<number>((a, b) => a + (b ?? 0), 0)
-    const totals = days.reduce(
-      (a, d) => {
-        const t = byDate.get(d)
-        if (!t) return a
-        return { used: a.used + t.consumption, received: a.received + t.received, hours: a.hours + t.runHours }
-      },
-      { used: 0, received: 0, hours: 0 },
-    )
-    const now = sumOf(cur.map((c) => c.v))
-    const before = sumOf(prev)
-    return { cur, prev, now, before, totals, any: cur.some((c) => c.v !== null) }
-  }, [reports, metric, range])
-
-  if (!data) return <article className="hc-card hc-usage" aria-busy="true" />
-  const unit = metric === 'fuel' ? 'لتر' : 'س'
-  const change = data.before > 0 && data.now > 0 ? ((data.now - data.before) / data.before) * 100 : null
-  const H = 250
-  const pad = { t: 10, b: 24 }
-  const n = data.cur.length
-  const vals = [...data.cur.map((c) => c.v), ...data.prev].filter((v): v is number => v !== null && v > 0)
-  const top = vals.length ? Math.max(...vals) * 1.04 : 1
-  const bottom = vals.length ? Math.min(...vals) * 0.9 : 0
-  const span = Math.max(1, top - bottom)
-  const x = (i: number) => (width ? width - (i * width) / Math.max(1, n - 1) : 0)
-  const y = (v: number) => pad.t + (H - pad.b - pad.t) * (1 - (v - bottom) / span)
-  // a smooth line through the days that have a report (a day without one is skipped, not dropped to zero)
-  const curve = (series: Array<number | null>) => {
-    const p = series.map((v, i) => (v === null || v <= 0 ? null : ([x(i), y(v)] as const))).filter((q): q is readonly [number, number] => !!q)
-    return {
-      d: p.map(([px, py], i) => {
-        if (!i) return `M${px.toFixed(1)},${py.toFixed(1)}`
-        const [x0, y0] = p[i - 1]!
-        const m = ((x0 + px) / 2).toFixed(1)
-        return `C${m},${y0.toFixed(1)} ${m},${py.toFixed(1)} ${px.toFixed(1)},${py.toFixed(1)}`
-      }).join(''),
-      first: p[0],
-      last: p[p.length - 1],
-    }
-  }
-  const now = curve(data.cur.map((c) => c.v))
-  const prev = curve(data.prev)
-  const area = now.first && now.last && now.first !== now.last ? `${now.d}L${now.last[0]},${H - pad.b}L${now.first[0]},${H - pad.b}Z` : ''
-  const step = Math.ceil(n / 6)
-  const h = hover !== null ? data.cur[hover] : null
-  const hp = hover !== null ? data.prev[hover] : null
-  const diff = h?.v && hp ? Math.round(((h.v - hp) / hp) * 100) : null
-
-  function onMove(e: React.PointerEvent) {
-    if (!width) return
-    const box = (e.currentTarget as HTMLElement).getBoundingClientRect()
-    setHover(Math.max(0, Math.min(n - 1, Math.round(((width - (e.clientX - box.left)) / width) * (n - 1)))))
-  }
-
-  return (
-    <article className="hc-card hc-usage">
-      <div className="hc-h">
-        <div className="hc-titles">
-          <h2>{metric === 'fuel' ? 'استهلاك السولار' : 'ساعات التشغيل'}</h2>
-          <small className="num">
-            آخر {range} يوم <b>{fmt(data.now)} {unit}</b>
-            {change !== null && (
-              <span className={`hc-pill ${change > 0 ? 'warn' : 'ok'}`}>{change > 0 ? '↗' : '↘'} {Math.abs(Math.round(change))}% {change > 0 ? 'أكثر' : 'أقل'} من اللي قبلها</span>
-            )}
-          </small>
-        </div>
-        <span className="grow" />
-        <div className="hc-seg" role="group" aria-label="شو نعرض">
-          <button type="button" className={metric === 'fuel' ? 'on' : ''} onClick={() => setMetric('fuel')}>السولار</button>
-          <button type="button" className={metric === 'hours' ? 'on' : ''} onClick={() => setMetric('hours')}>ساعات التشغيل</button>
-        </div>
-        <div className="hc-seg" role="group" aria-label="المدة">
-          {RANGES.map((r) => (
-            <button key={r} type="button" className={range === r ? 'on' : ''} onClick={() => setRange(r)}>{r === 90 ? '3 شهور' : `${r} ${r === 7 ? 'أيام' : 'يوم'}`}</button>
-          ))}
-        </div>
-      </div>
-      <div className="hc-legend-line"><span><i />هالفترة</span><span><i className="d" />الفترة اللي قبلها</span></div>
-      <div className="hc-area" ref={ref} onPointerMove={onMove} onPointerLeave={() => setHover(null)}>
-        {!data.any ? (
-          <p className="hc-empty">ما وصلت تقارير توليد بهالمدة.</p>
-        ) : width > 0 && (
-          <svg key={`${metric}-${range}`} className="hc-draw" width={width} height={H} role="img" aria-label={`${metric === 'fuel' ? 'استهلاك السولار' : 'ساعات التشغيل'} آخر ${range} يوم: ${fmt(data.now)} ${unit}`}>
-            <defs>
-              <linearGradient id="hcFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stopColor="#E5485B" stopOpacity=".48" />
-                <stop offset="1" stopColor="#E5485B" stopOpacity="0" />
-              </linearGradient>
-            </defs>
-            {[0, 1, 2, 3].map((g) => {
-              const gy = pad.t + ((H - pad.b - pad.t) * g) / 3
-              return (
-                <g key={g}>
-                  <line className="hc-grid" x1={0} x2={width} y1={gy} y2={gy} />
-                  <text className="hc-ax num" x={width - 2} y={gy - 4} textAnchor="start">{fmt(top - (span * g) / 3)}</text>
-                </g>
-              )
-            })}
-            {Array.from({ length: n }, (_, i) => i).filter((i) => i % step === 0).map((i) => (
-              <text key={i} className="hc-ax num" x={Math.min(Math.max(x(i), 18), width - 18)} y={H - 4} textAnchor="middle">{short(data.cur[i]!.date)}</text>
-            ))}
-            {area && <path className="hc-fill" d={area} fill="url(#hcFill)" />}
-            <path className="hc-prev" d={prev.d} />
-            <path className="hc-line" d={now.d} />
-            {hover !== null && (
-              <>
-                <line className="hc-cursor" x1={x(hover)} x2={x(hover)} y1={pad.t} y2={H - pad.b} />
-                {h?.v ? <circle className="hc-dot" cx={x(hover)} cy={y(h.v)} r={6} /> : null}
-              </>
-            )}
-          </svg>
-        )}
-        {h && (
-          <div className="hc-tip num" style={{ left: Math.min(Math.max(x(hover!), 90), width - 90) }}>
-            <b>{dayName(h.date)} {short(h.date)}</b>
-            <span className="r"><span>هالفترة</span><span>{h.v ? `${fmt(h.v)} ${unit}` : 'ما في تقرير'}</span></span>
-            <span className="r"><span>اللي قبلها</span><span>{hp ? `${fmt(hp)} ${unit}` : '—'}</span></span>
-            {diff !== null && <span className="r"><span>الفرق</span><span style={{ color: diff > 0 ? '#ff9a8a' : '#6ee7b7' }}>{diff > 0 ? '+' : ''}{diff}%</span></span>}
-          </div>
-        )}
-      </div>
-      <div className="hc-minis">
-        <div><small>الاستهلاك</small><b className="num">{fmt(data.totals.used)} لتر</b></div>
-        <div><small>الوارد</small><b className="num">{fmt(data.totals.received)} لتر</b></div>
-        <div><small>ساعات التشغيل</small><b className="num">{fmt(data.totals.hours)} س</b></div>
-        <div><small>لتر لكل ساعة</small><b className="num">{data.totals.hours ? (data.totals.used / data.totals.hours).toFixed(1) : '—'}</b></div>
-      </div>
-    </article>
-  )
+ const reports=useSentReports(),[metric,setMetric]=useState<'fuel'|'hours'>('fuel'),[range,setRange]=useState<UsageRange>('all')
+ const days=useMemo(()=>reports?usageDays(reports,todayISO(),range):null,[reports,range])
+ if(!days)return <article className="hc-card hc-usage" aria-busy="true"/>
+ const totals=days.reduce((a,d)=>({used:a.used+(d.fuel??0),hours:a.hours+(d.hours??0),received:a.received+(d.received??0)}),{used:0,hours:0,received:0})
+ const known=days.filter(d=>d.fuel!==null).length
+ return <article className="hc-card hc-usage">
+  <div className="hc-h">
+   <div className="hc-titles"><h2>{metric==='fuel'?'استهلاك السولار يومًا بيوم':'مجموع ساعات تشغيل المولدات يومًا بيوم'}</h2><small>{range==='all'?'كل الأيام':`آخر ${range} يوم`} · {known} تقرير مسجّل من {days.length} يوم</small></div>
+   <span className="grow"/>
+   <div className="hc-seg" role="group" aria-label="شو نعرض"><button type="button" className={metric==='fuel'?'on':''} aria-pressed={metric==='fuel'} onClick={()=>setMetric('fuel')}>السولار</button><button type="button" className={metric==='hours'?'on':''} aria-pressed={metric==='hours'} onClick={()=>setMetric('hours')}>ساعات التشغيل</button></div>
+   <div className="hc-seg" role="group" aria-label="المدة">{([7,30,90,'all'] as const).map(r=><button key={r} type="button" aria-pressed={range===r} className={range===r?'on':''} onClick={()=>setRange(r)}>{r==='all'?'كل الأيام':r===90?'3 شهور':`${r} يوم`}</button>)}</div>
+  </div>
+  <p className="hc-daily-explain">{metric==='fuel'?'كل نقطة هي السولار المستهلك في يوم واحد باللتر، وليست رصيد الخزان.':'كل نقطة تجمع ساعات المولدات التي اشتغلت في اليوم. مثال: مولّدان × 5 ساعات = 10 ساعات تشغيل.'} الفراغ يعني لا يوجد تقرير، والصفر يعني قيمة صفرية مسجّلة.</p>
+  <DailyUsagePlot days={days} metric={metric}/>{!known && <p className="hc-daily-note">ما وصلت تقارير توليد بهالمدة؛ الأيام معروضة بدون قيم.</p>}
+  <div className="hc-minis"><div><small>إجمالي الاستهلاك</small><b className="num">{formatNumber(totals.used)} لتر</b></div><div><small>إجمالي الوارد</small><b className="num">{formatNumber(totals.received)} لتر</b></div><div><small>إجمالي ساعات المولدات</small><b className="num">{formatNumber(totals.hours)} ساعة</b></div><div><small>الاستهلاك لكل ساعة تشغيل</small><b className="num">{totals.hours?formatNumber(totals.used/totals.hours):'—'} لتر/ساعة</b></div></div>
+  <details className="hc-daily-data"><summary>عرض جدول الأرقام لكل يوم</summary><ScrollTable label="استهلاك السولار وساعات التشغيل"><table className="tbl"><thead><tr><th>اليوم</th><th>التاريخ</th><th>السولار المستهلك (لتر)</th><th>الوارد (لتر)</th><th>مجموع ساعات المولدات</th></tr></thead><tbody>{[...days].reverse().map(d=><tr key={d.date}><td>{describeDay(d.date).weekday}</td><td><bdi className="num">{usageDate(d.date)}</bdi></td><td>{d.fuel===null?'لا تقرير':formatNumber(d.fuel)}</td><td>{d.received===null?'—':formatNumber(d.received)}</td><td>{d.hours===null?'—':formatNumber(d.hours)}</td></tr>)}</tbody></table></ScrollTable></details>
+ </article>
 }
 
 /** A number that runs from 0 to its value (and moves again when the value changes), for the gauge. */
@@ -330,81 +188,13 @@ export function LoadGauge() {
   )
 }
 
-/** The last 14 days of diesel, the highest day marked and the average dashed. */
-export function DailyBars() {
-  const reports = useSentReports()
-  const [ref, width] = useWidth()
-  const shown = useShown()
-  const [hover, setHover] = useState<number | null>(null)
-  const days = useMemo(() => {
-    if (!reports) return null
-    const byDate = new Map(reports.map((r) => [r.reportDate, reportTotals(r).consumption]))
-    const today = todayISO()
-    return Array.from({ length: 14 }, (_, i) => {
-      const date = addDays(today, i - 13)
-      return { date, v: byDate.get(date) ?? null }
-    })
-  }, [reports])
-  if (!days) return <article className="hc-card" aria-busy="true" />
-  const vals = days.map((d) => d.v ?? 0)
-  const withData = days.filter((d) => d.v)
-  const max = Math.max(1, ...vals)
-  const avg = withData.length ? withData.reduce((a, d) => a + d.v!, 0) / withData.length : 0
-  const top = withData.length ? days.reduce((a, d, i) => ((d.v ?? 0) > (days[a]!.v ?? 0) ? i : a), 0) : -1
-  const H = 220
-  const base = H - 26
-  const n = days.length
-  const slot = width / n
-  const bw = Math.min(30, slot * 0.56)
-  const xc = (i: number) => width - slot * (i + 0.5)
-  const y = (v: number) => base - (v / (max * 1.1)) * (base - 14)
-
-  return (
-    <article className="hc-card">
-      <div className="hc-h">
-        <div className="hc-titles"><h2>السولار باليوم</h2><small>آخر 14 يوم · الخط المتقطّع المعدّل</small></div>
-        <span className="grow" />
-        {top >= 0 && <span className="hc-pill brand num">أعلى يوم {fmt(days[top]!.v!)} لتر</span>}
-      </div>
-      <div className="hc-bars" ref={ref} onPointerLeave={() => setHover(null)}>
-        {!withData.length ? (
-          <p className="hc-empty">ما وصلت تقارير بآخر أسبوعين.</p>
-        ) : width > 0 && (
-          <svg width={width} height={H} role="img" aria-label={`السولار آخر 14 يوم، المعدل ${fmt(avg)} لتر`}>
-            <defs>
-              <linearGradient id="hcBar" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stopColor="var(--brand-hi)" />
-                <stop offset="1" stopColor="var(--brand)" stopOpacity=".55" />
-              </linearGradient>
-            </defs>
-            {days.map((d, i) => (
-              <g key={d.date} onPointerEnter={() => setHover(i)}>
-                <rect x={xc(i) - slot / 2} y={0} width={slot} height={base} fill="transparent" />
-                {d.v ? (
-                  <rect className={`hc-bar${i === top ? ' top' : ''}`} x={xc(i) - bw / 2} y={y(d.v)} width={bw} height={base - y(d.v)} rx={Math.min(8, bw / 2)} fill={i === top ? 'url(#hcBar)' : undefined} style={{ transform: shown ? 'scaleY(1)' : 'scaleY(0)', transitionDelay: `${i * 30}ms` }} />
-                ) : (
-                  <rect className="hc-bar-none" x={xc(i) - bw / 2} y={base - 4} width={bw} height={4} rx={2} />
-                )}
-                {(i % 2 === 0 || n <= 7) && <text className="hc-ax num" x={xc(i)} y={H - 6} textAnchor="middle">{short(d.date)}</text>}
-              </g>
-            ))}
-            {avg > 0 && (
-              <>
-                <line className="hc-avg" x1={0} x2={width} y1={y(avg)} y2={y(avg)} />
-                <text className="hc-avg-t num" x={width - 2} y={y(avg) - 6} textAnchor="start">المعدّل {fmt(avg)}</text>
-              </>
-            )}
-          </svg>
-        )}
-        {hover !== null && days[hover] && (
-          <div className="hc-tip num" style={{ left: Math.min(Math.max(xc(hover), 80), width - 80) }}>
-            <b>{dayName(days[hover]!.date)} {short(days[hover]!.date)}</b>
-            <span>{days[hover]!.v ? `${fmt(days[hover]!.v!)} لتر` : 'ما في تقرير'}</span>
-          </div>
-        )}
-      </div>
-    </article>
-  )
+/** Every calendar day from the first stored report, with actual daily quantities. */
+export function DailyBars(){
+ const reports=useSentReports()
+ const days=useMemo(()=>reports?usageDays(reports,todayISO(),'all'):null,[reports])
+ if(!days)return <article className="hc-card" aria-busy="true"/>
+ const known=days.filter(d=>d.fuel!==null)
+ return <article className="hc-card hc-daily-history"><div className="hc-h"><div className="hc-titles"><h2>السولار باليوم — كل الأيام</h2><small>كل عمود يمثل استهلاك يوم واحد باللتر · {known.length} تقرير</small></div></div>{known.length?<DailyUsagePlot days={days} metric="fuel" bars/>:<p className="hc-empty">ما وصلت تقارير توليد بعد.</p>}</article>
 }
 
 /** This month's generation reports and distribution sheets: approved, waiting, not in. */
