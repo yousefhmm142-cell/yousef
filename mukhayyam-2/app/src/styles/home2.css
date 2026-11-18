@@ -259,7 +259,7 @@ g:hover > .hc-bar { filter: brightness(1.18); }
 :root[data-theme='light'] .stage .fx-day-future { background: #ffffff8c; }
 .stage .fx-day-dot { border-color: var(--bg); }
 
-/* Manager's daily work: first of the top cards, with the same charcoal identity as the tasks button. */
+/* Manager's daily work: first of the top cards. */
 .daily-entry-card { display: grid; grid-template-columns: minmax(0,1fr); gap: 10px; text-decoration: none; text-align: start; transition: background .18s,color .18s,border-color .18s; }
 .daily-entry-icon { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 14px; background: var(--brand-soft); color: var(--brand-text); }
 .daily-entry-card>b { font-size: var(--fs-md); line-height: 1.6; }
@@ -270,13 +270,13 @@ g:hover > .hc-bar { filter: brightness(1.18); }
 @media (prefers-reduced-motion: reduce) { .daily-entry-card { transition: none; } }
 
 
-/* One charcoal identity for the daily-work entry on the home and tasks pages. */
+/* Tasks entry colors; the home card uses the requested burgundy dot pattern. */
 :root { --daily-entry-bg: #4a4543; --daily-entry-hover: #5b5350; }
-.hc-kb.daily-entry-card { background: var(--daily-entry-bg); color: #fff; border-color: #6b625d; }
-.hc-kb.daily-entry-card>span { color: #eee9e7; }
+.hc-kb.daily-entry-card { background: radial-gradient(circle,#ffffff1f 1.6px,transparent 2.2px),linear-gradient(150deg,#b12638,#5f0f1b 75%); background-size: 14px 14px,100% 100%; color: #fff; border-color: #b84a5a; }
+.hc-kb.daily-entry-card>span { color: #fff; }
 .hc-kb.daily-entry-card .daily-entry-icon { color: #fff; background: #ffffff18; }
 .hc-kb.daily-entry-card .daily-entry-foot { border-color: #ffffff30; }
-:root .hc-kb.daily-entry-card:is(:hover,:focus-visible) { background: var(--daily-entry-hover); color: #fff; border-color: #83756f; }
+:root .hc-kb.daily-entry-card:is(:hover,:focus-visible) { background: radial-gradient(circle,#ffffff1f 1.6px,transparent 2.2px),linear-gradient(150deg,#bd2e42,#701322 75%); background-size: 14px 14px,100% 100%; color: #fff; border-color: #d27b89; }
 :root .hc-kb.daily-entry-card:is(:hover,:focus-visible)>span { color: #fff; }
 
 /* Readable daily charts: a dedicated horizontal viewport, every date labelled. */
