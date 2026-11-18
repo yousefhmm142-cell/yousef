@@ -1,3 +1,4 @@
+import {CountUp} from '../../ui/fx/CountUp'
 import { AlarmClock, Printer, Search, UserX, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { isDemo } from '../../config'
@@ -126,9 +127,9 @@ export function SealUnrecordedPage() {
       <SealsTabs />
 
       <div className="uq-stats">
-        <div className="card uq-stat"><b className="num">{total}</b><span>ختم لم يُسجَّل</span></div>
-        <div className="card uq-stat"><b className="num">{named.length}</b><span>{named.length === 1 ? 'فني عنده' : 'فنيين عندهم'}</span></div>
-        <div className="card uq-stat" data-tone={oldest >= 15 ? 'danger' : oldest >= 8 ? 'warn' : undefined}><b className="num">{oldest}</b><span>يوم أقدم صرف</span></div>
+        <div className="card uq-stat"><b className="num"><CountUp value={total} decimals={0}/></b><span>ختم لم يُسجَّل</span></div>
+        <div className="card uq-stat"><b className="num"><CountUp value={named.length} decimals={0}/></b><span>{named.length === 1 ? 'فني عنده' : 'فنيين عندهم'}</span></div>
+        <div className="card uq-stat" data-tone={oldest >= 15 ? 'danger' : oldest >= 8 ? 'warn' : undefined}><b className="num"><CountUp value={oldest} decimals={0}/></b><span>يوم أقدم صرف</span></div>
       </div>
 
       {unnamed && (

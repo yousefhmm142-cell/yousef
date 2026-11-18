@@ -1,3 +1,4 @@
+import {Skeleton} from '../../ui/fx/Skeleton'
 import {Check,ChevronDown,ClipboardList,Link2} from 'lucide-react'
 import {useEffect,useId,useRef,useState} from 'react'
 import {dayLabel} from './parts'
@@ -19,7 +20,7 @@ export function TaskPicker({technician,value,choices,loading,error,onChange}:{te
   }}>
    <div className="seal-task-list-head"><b>{technician}</b><small>آخر 7 أيام · {choices.length}</small></div>
    <button type="button" className="seal-task-option automatic" aria-pressed={!value} onClick={()=>pick(null)}><Link2 size={17}/><span><b>بدون اختيار مهمة</b><small>بتقدر تكتب الشغل بنفسك؛ الربط التلقائي بظل شغّال عند التطابق.</small></span>{!value && <Check size={17}/>}</button>
-   {loading?<p role="status">جاري تحميل مهام الفني…</p>:error?<p role="status">تعذّر تحميل مهام الفني. جرّب لما يرجع النت.</p>:!choices.length?<p>ما في مهام حديثة لهالفني حاليًا.</p>:choices.map(t=><button key={t.id} type="button" className="seal-task-option" aria-pressed={value===t.id} onClick={()=>pick(t)}>
+   {loading?<div className="seal-task-skeleton"><Skeleton kind="list" rows={3}/></div>:error?<p role="status">تعذّر تحميل مهام الفني. جرّب لما يرجع النت.</p>:!choices.length?<p>ما في مهام حديثة لهالفني حاليًا.</p>:choices.map(t=><button key={t.id} type="button" className="seal-task-option" aria-pressed={value===t.id} onClick={()=>pick(t)}>
     <span className="seal-task-number num">#{t.number}</span><span><span className="seal-task-title"><b>{t.work}</b><small className="seal-task-state" data-done={!t.task_status || t.task_status==='done' || undefined}>{!t.task_status || t.task_status==='done'?'منجزة':'بانتظار تم'}</small></span><span>{t.subscriber || 'بدون اسم مشترك'}</span><small>{dayLabel(t.task_on || t.completed_on || '')}{t.board?` · طبلون ${t.board}`:''}</small></span>{value===t.id && <Check size={17}/>}</button>)}
   </div>}
   <small className="field-hint">اختيار المهمة بيعبّي المشترك والشغل والطبلون والتاريخ المتوفّرين فيها.</small>

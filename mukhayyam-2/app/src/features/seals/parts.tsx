@@ -1,30 +1,18 @@
-import { SealHistoryButton } from './SealHistory'
-import { NavLink } from 'react-router'
+import {Skeleton} from '../../ui/fx/Skeleton'
+import {usePageVisible} from '../../lib/motion'
 import { clock12 } from '../../lib/format'
 import { Pill } from '../../ui/primitives'
 import { Avatar } from '../../ui/primitives'
 import { sealStatusInfo, type Seal, type SealData, type SealGroup, type SealStatus } from './model'
 
-/** The two seals pages, one switch. */
-export function SealsTabs({ canIssue = true }: { canIssue?: boolean }) {
-  if (!canIssue) return null
-  return (
-    <nav className="seals-tabs" aria-label="صفحات الأختام">
-      <NavLink to="/seals" end>صرف الأختام</NavLink>
-      <NavLink to="/seals/recent">آخر ما صُرف</NavLink>
-      <NavLink to="/seals/unrecorded">غير المسجّلة</NavLink>
-      <NavLink to="/seals/log">تسجيل الأختام والبحث</NavLink>
-      <SealHistoryButton />
-    </nav>
-  )
-}
+export {SealsTabs} from './SealsTabs'
 
 /** Shown while the seals are being read from the server for the first time on this device. */
 export function SealsLoading() {
   return (
-    <div className="seals-loading card" role="status" aria-live="polite">
-      <span className="spinner" aria-hidden="true" />
-      <b>جاري تحميل الأختام…</b>
+    <div className="seals seals-loading" aria-busy="true">
+      <b role="status">جاري تحميل الأختام…</b>
+      <Skeleton kind="cards"/>
       <span className="muted">أول مرة على هذا الجهاز فقط، وبعدها تفتح الصفحة فوراً.</span>
       {!navigator.onLine && <span className="muted">لا يوجد اتصال بالإنترنت الآن.</span>}
     </div>
@@ -50,9 +38,10 @@ export function SealPill({ seal, hit, dim, skipped, onClick }: { seal: Seal; hit
 
 /** Seals left in stock, used, handed out... as one stacked bar. */
 export function StackBar({ parts }: { parts: Array<{ status: SealStatus | 'bad'; n: number }> }) {
+  const visible=usePageVisible()
   const total = parts.reduce((s, p) => s + p.n, 0) || 1
   return (
-    <div className="stackbar" role="img" aria-label={parts.map((p) => `${p.n}`).join(' / ')}>
+    <div className="stackbar" data-paused={!visible || undefined} role="img" aria-label={parts.map((p) => `${p.n}`).join(' / ')}>
       {parts.filter((p) => p.n > 0).map((p) => (
         <span key={p.status} data-status={p.status} style={{ flexGrow: p.n / total }} />
       ))}

@@ -376,3 +376,36 @@ table.seal-table tbody tr:hover { background: color-mix(in srgb, var(--brand) 5%
 .seals-main { grid-template-columns: minmax(0,1fr); }
 .seals .filters { min-width: 0; max-width: 100%; }
 .seals .filters>.segmented { flex-wrap: wrap; max-width: 100%; }
+
+/* Finite micro-interactions, using the existing brand palette and motion preference. */
+@media screen {
+ .seals-tabs { position: relative; isolation: isolate; }
+ .seals-tab-pill { position: absolute; top: 0; left: 0; border: 1px solid var(--brand-hi); border-radius: 999px; background: linear-gradient(160deg,var(--brand-hi),var(--brand)); pointer-events: none; z-index: 0; transition: transform 240ms var(--ease); }
+ .seals-tabs>a,.seals-tabs>.btn { position: relative; z-index: 1; }
+ .seals-tabs[data-pill] a.active { background: transparent; box-shadow: none; }
+ .seals .roll-card { padding: 20px; gap: 14px; }
+ .seals .batch-card { padding: 18px; gap: 12px; }
+ .seals .tech-item { padding: 11px 12px; }
+ .seals .tech-text { line-height: 1.5; }
+ .seals .tech-text b { white-space: normal; overflow-wrap: anywhere; }
+ .seals :is(.kpi-value,.uq-stat>b,.roll-nums b) { font-weight: 800; }
+ .seals :is(.kpi-label,.kpi-sub,.roll-nums span) { font-weight: 700; }
+ .seals :is(.roll-card,.batch-card,.tech-item) { animation-fill-mode: backwards; transition: transform 180ms var(--ease),border-color 180ms var(--ease); }
+ .seals .stackbar { height: 12px; transform-origin: right center; animation: seal-stock-fill 500ms var(--ease) both; }
+ .seals .stackbar[data-paused] { animation-play-state: paused; }
+ .seals .btn,.seal-dialog .btn { transition: transform 120ms var(--ease),background 150ms ease,border-color 150ms ease; }
+ .seals .btn:not(:disabled):active,.seal-dialog .btn:not(:disabled):active { transform: scale(.97); }
+ .seals-loading { justify-items: stretch; text-align: start; padding: 24px 0; }
+ .seal-task-skeleton { padding: 4px 8px; }
+ @keyframes seal-stock-fill { from { transform: scaleX(0); opacity: .5; } to { transform: scaleX(1); opacity: 1; } }
+}
+@media screen and (hover:hover) and (pointer:fine) {
+ .seals :is(.roll-card,.batch-card):hover { transform: translateY(-2px); }
+ .seals .tech-item:hover { transform: translateX(-2px); }
+}
+@media (prefers-reduced-motion:reduce) {
+ .seals-tab-pill,.seals :is(.roll-card,.batch-card,.tech-item,.btn),.seal-dialog .btn { transition: none !important; }
+ .seals .stackbar { animation: none; transform: none; opacity: 1; }
+ .seals :is(.roll-card,.batch-card,.tech-item):hover,.seals .btn:not(:disabled):active,.seal-dialog .btn:not(:disabled):active { transform: none; }
+}
+@media print { .seals-tab-pill { display: none; } .seals .stackbar { animation: none; transform: none; opacity: 1; } }

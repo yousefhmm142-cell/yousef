@@ -1,3 +1,4 @@
+import {CountUp} from '../../ui/fx/CountUp'
 import { SealHistoryButton } from './SealHistory'
 import { FileSpreadsheet, Pencil, Plus, Stamp, Trash2, Upload } from 'lucide-react'
 import { useMemo, useState } from 'react'
@@ -66,10 +67,10 @@ export function SealIssuePage() {
       <SealsTabs />
 
       <div className="kpis">
-        <div className="kpi hero"><div className="kpi-label">في المخزن</div><div className="kpi-value num">{sum.inStock}<small>ختم</small></div><div className="kpi-sub">جاهزة للصرف</div></div>
-        <div className="kpi glass"><div className="kpi-label">غير مستخدم</div><div className="kpi-value num">{sum.issued}</div><div className="kpi-sub">لم تُستخدم بعد</div></div>
-        <div className="kpi glass"><div className="kpi-label">مستخدمة</div><div className="kpi-value num">{sum.used}</div><div className="kpi-sub">مسجّلة بتفاصيلها</div></div>
-        <div className="kpi glass"><div className="kpi-label">تالفة أو ضائعة</div><div className="kpi-value num">{sum.damaged + sum.lost}</div><div className="kpi-sub">{sum.lost ? `${sum.lost} ضائع` : 'خارج المخزن'}</div></div>
+        <div className="kpi hero"><div className="kpi-label">في المخزن</div><div className="kpi-value num"><CountUp value={sum.inStock} decimals={0}/><small>ختم</small></div><div className="kpi-sub">جاهزة للصرف</div></div>
+        <div className="kpi glass"><div className="kpi-label">غير مستخدم</div><div className="kpi-value num"><CountUp value={sum.issued} decimals={0}/></div><div className="kpi-sub">لم تُستخدم بعد</div></div>
+        <div className="kpi glass"><div className="kpi-label">مستخدمة</div><div className="kpi-value num"><CountUp value={sum.used} decimals={0}/></div><div className="kpi-sub">مسجّلة بتفاصيلها</div></div>
+        <div className="kpi glass"><div className="kpi-label">تالفة أو ضائعة</div><div className="kpi-value num"><CountUp value={sum.damaged + sum.lost} decimals={0}/></div><div className="kpi-sub">{sum.lost ? `${sum.lost} ضائع` : 'خارج المخزن'}</div></div>
       </div>
 
       {data.batches.some((b) => !b.technicianId) && (
