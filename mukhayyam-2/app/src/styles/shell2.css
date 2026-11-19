@@ -99,7 +99,7 @@ body { background: var(--bg); background-image: none; }
 .sb-collapse { position: absolute; top: 46px; left: -13px; width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--g-border); background: var(--bg); display: grid; place-items: center; cursor: pointer; color: var(--ink-2); box-shadow: 0 6px 16px -6px #0008; transition: transform .45s var(--ease); z-index: 2; padding: 0; }
 .shell.mini .sb-collapse { transform: rotate(180deg); }
 .sb-top { display: grid; justify-items: center; gap: 12px; padding: 14px 8px 20px; border-bottom: 1px solid var(--line-2); margin-bottom: 6px; text-align: center; text-decoration: none; color: var(--ink); }
-.sb-logo { width: 118px; max-width: none; height: auto !important; padding-top: 4px; filter: drop-shadow(0 8px 16px #00000073); }
+.sb-logo { clip-path: inset(0 0.7% 0 0); width: 118px; max-width: none; height: auto !important; padding-top: 4px; filter: drop-shadow(0 8px 16px #00000073); }
 :root[data-theme='light'] .sb-logo { filter: none; }
 .sb-name { display: grid; justify-items: center; line-height: 1.15; min-width: 0; gap: 4px; }
 .sb-kicker { font-size: 12px; font-weight: 700; letter-spacing: .12em; color: var(--muted); }

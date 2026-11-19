@@ -5256,6 +5256,8 @@ drop trigger if exists tasks_seal_references on public.tasks;
 create trigger tasks_seal_references before update on public.tasks for each row execute function public.task_seals_guard();
 
 -- Candidate projection for accountants: no task tokens or coworkers' phone numbers.
+-- Later updates changed what this returns: drop it first so running this file again never fails.
+drop function if exists public.seal_task_candidates(integer);
 create or replace function public.seal_task_candidates(p_seal integer) returns table(id uuid,number bigint,subscriber text,work text,completed_at timestamptz)
 language plpgsql stable security definer set search_path=public as $$ begin
  if not public.has_seals() then raise exception 'not_allowed' using errcode='42501';end if;

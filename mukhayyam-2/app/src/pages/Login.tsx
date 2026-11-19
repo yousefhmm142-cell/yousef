@@ -1,7 +1,7 @@
-import {LogoDrawing} from '../features/login/LogoDrawing'
+import { LoginLogo } from '../features/login/LoginLogo'
 import '../styles/login-entry.css'
-import { CircleAlert, ClipboardList, LayoutGrid, ListChecks, ScanLine, WifiOff } from 'lucide-react'
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { CircleAlert, ClipboardList, LayoutGrid, ListChecks, LockKeyhole, ScanLine, WifiOff } from 'lucide-react'
+import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router'
 import { lastPhone, useAuth } from '../auth/AuthProvider'
 import { AuthError, authErrorText, type AuthErrorCode } from '../auth/backends'
@@ -15,6 +15,7 @@ import { Button } from '../ui/primitives'
 import { PinInput } from '../ui/PinInput'
 import { FirstSetup } from './FirstSetup'
 import { InstallAppLink } from '../ui/InstallApp'
+import { ThemeToggle } from '../ui/status'
 import { Splash } from './Splash'
 
 const PIN_LENGTH = 6
@@ -107,21 +108,27 @@ function Login() {
 
   return (
     <div className="login entry-page">
-      <div className="entry-content">
-      <section className="login-brand">
-        <div className="entry-logo" role="img" aria-label="شعار أبناء فارس أبو زايد"><LogoDrawing /></div>
-        <h1>نظام إدارة مكتب مخيم 2</h1>
-        <p>شركة أبناء فارس أبو زايد للتجارة والاستيراد</p>
-        <ul className="login-modules" aria-label="أقسام النظام">
-          <li><ClipboardList size={17} />التوليد</li>
-          <li><LayoutGrid size={17} />التوزيع</li>
-          <li><ListChecks size={17} />المهام</li>
-          <li><ScanLine size={17} />الحضور</li>
-        </ul>
+      <section className="login-brand entry-side">
+        <div className="entry-side-bg" aria-hidden="true"><i className="b1" /><i className="b2" /><i className="grain" /></div>
+        <div className="entry-side-in">
+          <div className="entry-logo"><LoginLogo /></div>
+          <h1>نظام إدارة مكتب مخيم <span className="entry-two num">2</span></h1>
+          <p>شركة أبناء فارس أبو زايد للتجارة والاستيراد</p>
+          <ul className="login-modules" aria-label="أقسام النظام">
+            <li style={{ '--d': '.5s' } as CSSProperties}><span className="em-ico"><ClipboardList size={19} /></span><span><b>التوليد</b><small>تقرير الموقع اليومي والسولار</small></span></li>
+            <li style={{ '--d': '.58s' } as CSSProperties}><span className="em-ico"><LayoutGrid size={19} /></span><span><b>التوزيع</b><small>كشف المناطق والأحمال</small></span></li>
+            <li style={{ '--d': '.66s' } as CSSProperties}><span className="em-ico"><ListChecks size={19} /></span><span><b>المهام</b><small>أوامر الفنيين وإنجازها</small></span></li>
+            <li style={{ '--d': '.74s' } as CSSProperties}><span className="em-ico"><ScanLine size={19} /></span><span><b>الحضور</b><small>بمسح ورقة الـQR</small></span></li>
+          </ul>
+        </div>
+        <footer className="entry-footer"><span>© {new Date().getFullYear()} أبناء فارس أبو زايد</span><i className="dot" aria-hidden="true" /><span>نظام إدارة مكتب مخيم 2</span></footer>
       </section>
 
-      <span className="entry-divider" aria-hidden="true" />
+      <span className="entry-divider" aria-hidden="true"><i /></span>
 
+      <div className="entry-main">
+        <div className="entry-main-bg" aria-hidden="true" />
+        <div className="entry-theme"><ThemeToggle /></div>
       <section className="login-card glass" data-verified={verified || undefined}>
         {db === 'setup' ? (
           <FirstSetup onDone={() => setDb('ready')} />
@@ -140,6 +147,7 @@ function Login() {
           </div>
         )}
         <div className="login-card-head">
+          <span className="entry-badge" aria-hidden="true"><LockKeyhole size={22} /></span>
           <h2 aria-live="polite">{verified ? 'أهلاً وسهلاً' : 'تسجيل الدخول'}</h2>
           <p>{verified ? 'تم التحقق من الرمز' : 'برقم جوالك والرمز السري'}</p>
         </div>
@@ -247,7 +255,6 @@ function Login() {
         <InstallAppLink />
       </section>
       </div>
-      <footer className="entry-footer">© {new Date().getFullYear()} أبناء فارس أبو زايد · نظام إدارة مكتب مخيم 2</footer>
     </div>
   )
 }
