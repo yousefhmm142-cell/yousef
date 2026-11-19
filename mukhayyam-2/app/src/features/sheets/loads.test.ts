@@ -17,11 +17,17 @@ describe('loads by hour', () => {
     expect(readBandReadings(null)).toHaveLength(6)
     expect(readBandReadings([[1, '2', null]])[0]).toEqual([1, 2, null])
     expect(readBandReadings([[1, '2', null]])[5]).toEqual([null, null, null])
-    expect(readBandValues([180, null, '200'])).toEqual([180, null, 200, null, null, null])
+    expect(readBandValues([180, null, '200'])).toEqual([180, null, 200, null, null, null, null])
   })
   it('a generator day average skips the empty hours', () => {
     expect(valuesDayAverage([180, null, 200, null, null, 190])).toBe(190)
     expect(valuesDayAverage(undefined)).toBeNull()
+  })
+  it('retains all legacy generation readings and the optional midnight reading',()=>{
+    expect(readBandValues([1,2,3,4,5,6])).toEqual([1,2,3,4,5,6,null])
+    expect(readBandValues([1,2,3,4,5,6,0])).toEqual([1,2,3,4,5,6,0])
+    expect(valuesDayAverage([100,null,null,null,null,null,200])).toBe(150)
+    expect(readBandReadings(null)).toHaveLength(6)
   })
   it('a run touches the bands it overlaps', () => {
     expect(bandsInSpan(8 * 60, 13 * 60)).toEqual([0, 1, 2])

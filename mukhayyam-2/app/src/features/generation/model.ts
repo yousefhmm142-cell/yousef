@@ -1,6 +1,6 @@
 import type { ISODate } from '../../lib/dates'
 import { sum } from '../../lib/numbers'
-import { emptyBandValues, hasBandValues, type BandValues, type LoadUnit, type Loads } from '../sheets/loads'
+import { GENERATION_BANDS, emptyBandValues, readBandValues, hasBandValues, type BandValues, type LoadUnit, type Loads } from '../sheets/loads'
 import { blankMeta, newId, type SheetMeta } from '../sheets/workflow'
 
 export { isEditableStatus, newId, statusInfo, type SheetStatus } from '../sheets/workflow'
@@ -242,10 +242,10 @@ export function reconcileReport(r: SiteReport, fuelTypes: FuelType[], generators
   const missingFuel = fuelTypes.filter((f) => f.isActive && !r.fuel.some((l) => l.fuelTypeId === f.id))
   const missingGen = generators.filter((g) => g.isActive && !r.generators.some((l) => l.generatorId === g.id))
   // A draft started before the hourly table existed gets an empty one.
-  const old = r.generators.some((l) => !l.bandLoads)
+  const old = r.generators.some((l) => !l.bandLoads || l.bandLoads.length < GENERATION_BANDS.length)
   if (!missingFuel.length && !missingGen.length && !old) return r
   const blank = newReport(r.reportDate, missingFuel, missingGen, r.createdBy, null, r.updatedAt)
-  const kept = old ? r.generators.map((l) => (l.bandLoads ? l : { ...l, bandLoads: emptyBandValues() })) : r.generators
+  const kept = old ? r.generators.map((l) => (l.bandLoads?.length === GENERATION_BANDS.length ? l : { ...l, bandLoads: readBandValues(l.bandLoads) })) : r.generators
   return { ...r, fuel: [...r.fuel, ...blank.fuel], generators: [...kept, ...blank.generators] }
 }
 

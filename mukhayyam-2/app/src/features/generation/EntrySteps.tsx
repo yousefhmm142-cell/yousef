@@ -5,7 +5,7 @@ import { formatAmount } from '../../lib/numbers'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../data/db'
 import { BandGrid } from '../sheets/BandGrid'
-import { valuesDayAverage } from '../sheets/loads'
+import { GENERATION_BANDS, readBandValues, valuesDayAverage } from '../sheets/loads'
 import { CalcField, Chip, NumberField, Segmented, TextField, TimeField } from '../../ui/form'
 import {
   crossesMidnight,
@@ -321,11 +321,12 @@ export function LoadsStep({ report, generators, update }: { report: SiteReport; 
               <Segmented label="وحدة الأحمال" value={log.loadUnit} options={loadUnits} onChange={(v) => set((l) => (l.loadUnit = v))} />
             </header>
             <BandGrid
+              bands={GENERATION_BANDS}
               name={gen?.name ?? 'مولد'}
               rows={1}
               max={log.loadUnit === 'A' ? 5000 : 2000}
-              values={log.bandLoads.map((v) => [v])}
-              onChange={(b, _r, v) => set((l) => void (l.bandLoads[b] = v))}
+              values={readBandValues(log.bandLoads).map((v) => [v])}
+              onChange={(b, _r, v) => set((l) => {l.bandLoads=readBandValues(l.bandLoads);l.bandLoads[b]=v})}
             />
             <div className="avg-line" aria-live="polite">
               <span>متوسط الساعات المكتوبة</span>

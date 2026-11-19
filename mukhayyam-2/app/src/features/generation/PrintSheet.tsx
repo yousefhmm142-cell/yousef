@@ -2,7 +2,7 @@ import { describeDay } from '../../lib/dates'
 import { SignFooter } from '../sheets/signers'
 import { formatAmount } from '../../lib/numbers'
 import { maintenanceLabel, type FuelType, type Generator, type SiteReport } from './model'
-import { BANDS, hasBandValues, loadAverage, valuesDayAverage } from '../sheets/loads'
+import { GENERATION_BANDS as BANDS, readBandValues, hasBandValues, loadAverage, valuesDayAverage } from '../sheets/loads'
 import { clock12 } from '../../lib/format'
 
 const runHeaders = ['التشغيلة الأولى', 'التشغيلة الثانية', 'التشغيلة الثالثة']
@@ -89,7 +89,7 @@ export function PrintSheet({ report, generators, fuelTypes }: {
               {report.generators.filter((l) => l.didRun).map((l) => (
                 <tr key={l.id}>
                   <td>{gen(l.generatorId)?.name}<small>{l.loadUnit === 'A' ? 'أمبير' : 'كيلوواط'}</small></td>
-                  {l.bandLoads.map((v, i) => <td key={i} className="num">{v === null ? '—' : formatAmount(v)}</td>)}
+                  {readBandValues(l.bandLoads).map((v, i) => <td key={i} className="num">{v === null ? '—' : formatAmount(v)}</td>)}
                 </tr>
               ))}
             </tbody>

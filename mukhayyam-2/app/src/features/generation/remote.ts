@@ -2,7 +2,7 @@ import type { ISODate } from '../../lib/dates'
 import type { SheetStatus } from '../sheets/workflow'
 import { fromTime, num, text, toTime, type ChildRows } from '../sheets/remote'
 import type { MaintenanceType, PressureUnit, SiteReport } from './model'
-import { hasBandValues, readBandValues, type LoadUnit } from '../sheets/loads'
+import { readBandValues, type LoadUnit } from '../sheets/loads'
 
 // The device keeps a report as one document; the server keeps it in five tables
 // (supabase/migrations). These two functions translate between the shapes, nothing else.
@@ -117,7 +117,7 @@ export function reportToRows(r: SiteReport): { header: Record<string, unknown>; 
           load_l1: g.loads[0],
           load_l2: g.loads[1],
           load_l3: g.loads[2],
-          band_loads: hasBandValues(g.bandLoads) ? g.bandLoads : null,
+          band_loads: readBandValues(g.bandLoads),
           temperature_c: g.temperatureC,
           oil_pressure: g.oilPressure,
           oil_pressure_unit: g.oilPressureUnit,

@@ -10,6 +10,7 @@ import { BANDS } from './loads'
 
 interface BandGridProps {
   /** How many readings in every band (3 for a zone, 1 for a generator). */
+  bands?: ReadonlyArray<{label:string;range:string}>
   rows: number
   /** [band][row] */
   values: ReadonlyArray<ReadonlyArray<number | null>>
@@ -22,7 +23,7 @@ interface BandGridProps {
   name: string
 }
 
-export function BandGrid({ rows, values, onChange, max, average, unit, name }: BandGridProps) {
+export function BandGrid({ bands=BANDS, rows, values, onChange, max, average, unit, name }: BandGridProps) {
   function onKeyDown(e: KeyboardEvent<HTMLDivElement>) {
     const t = e.target as HTMLInputElement
     if (!t.matches?.('input[data-bg-b]')) return
@@ -39,15 +40,15 @@ export function BandGrid({ rows, values, onChange, max, average, unit, name }: B
   }
 
   return (
-    <div className="bg" onKeyDown={onKeyDown} role="group" aria-label={`الأحمال حسب الساعة: ${name}`}>
+    <div className="bg-wrap" data-extended={bands.length>6 || undefined}><div className="bg" style={{gridTemplateColumns:`repeat(${bands.length},minmax(0,1fr))`}} onKeyDown={onKeyDown} role="group" aria-label={`الأحمال حسب الساعة: ${name}`}>
       {/* Heads first, then the boxes hour by hour (this is the order Enter and Tab follow). */}
-      {BANDS.map((band, b) => (
+      {bands.map((band, b) => (
         <div key={`h${b}`} className="bg-h" style={{ gridColumn: b + 1, gridRow: 1 }}>
           <b className="num">{band.label}</b>
           <small className="num" dir="ltr">{band.range}</small>
         </div>
       ))}
-      {BANDS.flatMap((band, b) =>
+      {bands.flatMap((band, b) =>
         Array.from({ length: rows }, (_, r) => (
           <BandCell
             key={`${b}-${r}`}
@@ -63,13 +64,13 @@ export function BandGrid({ rows, values, onChange, max, average, unit, name }: B
         )),
       )}
       {average &&
-        BANDS.map((band, b) => (
+        bands.map((band, b) => (
           <div key={`a${b}`} className="bg-avg" style={{ gridColumn: b + 1, gridRow: rows + 2 }} aria-label={`متوسط الساعة ${band.range}`}>
             {average[b] === null || average[b] === undefined ? <span className="bg-dash">—</span> : <b className="num">{formatAmount(average[b]!)}</b>}
           </div>
         ))}
       {average && <p className="bg-cap" style={{ gridColumn: '1 / -1', gridRow: rows + 3 }}>الصف الأخير: المتوسط الحسابي للقراءات الثلاثة{unit ? ` (${unit})` : ''}</p>}
-    </div>
+    </div></div>
   )
 }
 

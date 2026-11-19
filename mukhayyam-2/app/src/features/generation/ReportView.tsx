@@ -3,7 +3,7 @@ import { Gauge as LoadGauge } from '../../ui/fx/Gauge'
 import { FuelTank } from '../../ui/fx/FuelTank'
 import { HeatLegend, heatStyle, Peak } from '../../ui/fx/HeatLegend'
 import { CountUp } from '../../ui/fx/CountUp'
-import { BANDS, hasBandValues, loadAverage, valuesDayAverage } from '../sheets/loads'
+import { GENERATION_BANDS as BANDS, readBandValues, hasBandValues, loadAverage, valuesDayAverage } from '../sheets/loads'
 import { ArrowLeft, Clock, Droplet, Gauge, NotebookPen, TriangleAlert, Wrench, Zap } from 'lucide-react'
 import { formatAmount } from '../../lib/numbers'
 import { Pill, type Tone } from '../../ui/primitives'
@@ -293,7 +293,7 @@ function HourlyLoads({ report, generators }: { report: SiteReport; generators: G
             {rows.map((log) => (
               <tr key={log.id}>
                 <td><b>{generators.find((g) => g.id === log.generatorId)?.name ?? 'مولد'}</b><small className="muted"> {log.loadUnit === 'A' ? 'أمبير' : 'كيلوواط'}</small></td>
-                {log.bandLoads.map((v, i) => <td key={i} className="n fx-heat" style={heatStyle(v, maxima(log.loadUnit))} data-peak={v !== null && v > 0 && v === maxima(log.loadUnit) || undefined} data-high={v !== null && v > maxima(log.loadUnit) * .6 || undefined}><Peak peak={v !== null && v > 0 && v === maxima(log.loadUnit)} />{v === null ? <span className="muted">—</span> : formatAmount(v)}</td>)}
+                {readBandValues(log.bandLoads).map((v, i) => <td key={i} className="n fx-heat" style={heatStyle(v, maxima(log.loadUnit))} data-peak={v !== null && v > 0 && v === maxima(log.loadUnit) || undefined} data-high={v !== null && v > maxima(log.loadUnit) * .6 || undefined}><Peak peak={v !== null && v > 0 && v === maxima(log.loadUnit)} />{v === null ? <span className="muted">—</span> : formatAmount(v)}</td>)}
                 <td className="n em">{formatAmount(valuesDayAverage(log.bandLoads))}</td>
               </tr>
             ))}

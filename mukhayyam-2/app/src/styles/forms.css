@@ -361,3 +361,8 @@
 .toast-time { position: absolute; inset-inline: 0; bottom: 0; height: 3px; background: currentColor; opacity: .35; transform-origin: right; animation: toast-time var(--toast-ms, 3200ms) linear forwards; }
 @keyframes toast-time { to { transform: scaleX(0); } }
 @media (prefers-reduced-motion: reduce) { .toast-time { animation: none; display: none; } }
+
+/* Seven generator bands stay readable; scroll the inputs, never the whole page. */
+.bg-wrap { min-width: 0; max-width: 100%; overflow-x: auto; padding: 4px; margin: -4px; }
+.bg-wrap[data-extended] .bg { min-width: 380px; }
+.gloads { min-width: 0; }

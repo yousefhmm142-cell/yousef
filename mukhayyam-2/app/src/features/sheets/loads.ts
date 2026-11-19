@@ -47,13 +47,16 @@ export const BANDS = [
   { label: '12', range: '9–12', from: 21 * 60, to: 24 * 60 },
 ] as const
 
+/** Generators add a seventh reading for midnight to 03:00 the following morning. */
+export const GENERATION_BANDS = [...BANDS, { label: '3', range: '12–3 ص', from: 24 * 60, to: 27 * 60 }] as const
+
 /** Distribution: three readings in every band (a zone). */
 export type BandReadings = Loads[]
 /** Generation: one reading in every band (a generator). */
 export type BandValues = Array<number | null>
 
 export const emptyBandReadings = (): BandReadings => BANDS.map(() => emptyLoads())
-export const emptyBandValues = (): BandValues => BANDS.map(() => null)
+export const emptyBandValues = (): BandValues => GENERATION_BANDS.map(() => null)
 
 const toNum = (v: unknown): number | null => {
   if (v === null || v === undefined || v === '') return null
@@ -66,7 +69,7 @@ export const readBandReadings = (raw: unknown): BandReadings =>
     const row = Array.isArray(raw) && Array.isArray(raw[i]) ? (raw[i] as unknown[]) : []
     return [toNum(row[0]), toNum(row[1]), toNum(row[2])]
   })
-export const readBandValues = (raw: unknown): BandValues => BANDS.map((_, i) => (Array.isArray(raw) ? toNum(raw[i]) : null))
+export const readBandValues = (raw: unknown): BandValues => GENERATION_BANDS.map((_, i) => (Array.isArray(raw) ? toNum(raw[i]) : null))
 
 export const hasBandReadings = (b: BandReadings | undefined): boolean => !!b && b.some((l) => l.some((x) => x !== null))
 export const hasBandValues = (b: BandValues | undefined): boolean => !!b && b.some((x) => x !== null)

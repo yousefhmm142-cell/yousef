@@ -86,7 +86,7 @@ describe('generation report <-> server rows', () => {
       runHours: 8.5,
       loadUnit: 'kW',
       loads: [120, 118.5, 122],
-      bandLoads: [180, 180, null, 200.5, 200, 190],
+      bandLoads: [180, 180, null, 200.5, 200, 190, 160],
       temperatureC: 88,
       oilPressure: 45,
       oilPressureUnit: 'psi',

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { computeAlerts } from './alerts'
-import { applyAutoFigures, defaultAlertSettings, expectedConsumption, hoursFromRuns, newReport, type Generator } from './model'
+import { applyAutoFigures, defaultAlertSettings, expectedConsumption, hoursFromRuns, newReport, reconcileReport, type Generator } from './model'
 
 const fuelTypes = [{ id: 1, name: 'سولار صناعي', isActive: true, sortOrder: 1 }]
 const gens: Generator[] = [
@@ -10,6 +10,17 @@ const gens: Generator[] = [
 const blank = (date: string) => newReport(date, fuelTypes, gens, 'op', null, `${date}T08:00:00Z`)
 
 describe('worked-out report figures', () => {
+  it('upgrades a legacy local draft without shifting readings or losing other fields',()=>{
+    const r=blank('2026-10-30')
+    r.generators[0]!.bandLoads=[10,20,30,40,50,60]
+    r.generators[0]!.notes='ملاحظة محفوظة'
+    const next=reconcileReport(r,fuelTypes,gens)
+    expect(next.generators[0]!.bandLoads).toEqual([10,20,30,40,50,60,null])
+    expect(next.generators[0]!.notes).toBe('ملاحظة محفوظة')
+    expect(r.generators[0]!.bandLoads).toHaveLength(6)
+    expect(reconcileReport(next,fuelTypes,gens)).toBe(next)
+  })
+
   it('opening from yesterday and total by themselves; the remaining is typed and the consumption follows', () => {
     const yesterday = blank('2026-10-29')
     yesterday.fuel[0]!.closingBalance = 3600

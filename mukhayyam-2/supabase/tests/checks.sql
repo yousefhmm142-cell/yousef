@@ -82,7 +82,18 @@ reset role; insert into public.generators (name, brand) values ('مولد الأ
 insert into public.generator_day_logs (report_id, generator_id, did_run, band_loads)
   values ((select v from test.ids where k = 'report'), (select id from public.generators where name = 'مولد الأحمال'), true, '[180,180,null,200,200,190]'::jsonb);
 select test.ok((select band_loads->>0 = '180' and band_loads->>2 is null from public.generator_day_logs), 'a generator keeps one reading per hourly band (empty = dash)');
-select test.fails($$update public.generator_day_logs set band_loads = '[1,2]'::jsonb$$, '%check constraint%', 'a generator band table must have six bands');
+select test.fails($$update public.generator_day_logs set band_loads = '[1,2]'::jsonb$$, '%check constraint%', 'a generator band table must have six legacy or seven current bands');
+-- The optional 00:00–03:00 value survives old clients, and a new client can clear it explicitly.
+update public.generator_day_logs set band_loads='[180,180,null,200,200,190,240]'::jsonb;
+select test.ok((select jsonb_array_length(band_loads)=7 and band_loads->>6='240' from public.generator_day_logs),'generator night-band reading is saved');
+update public.generator_day_logs set band_loads='[181,180,null,200,200,190]'::jsonb;
+select test.ok((select band_loads->>0='181' and band_loads->>6='240' from public.generator_day_logs),'legacy six-band update keeps the unseen seventh reading');
+update public.generator_day_logs set band_loads=null;
+select test.ok((select band_loads->>0 is null and band_loads->>6='240' from public.generator_day_logs),'legacy empty payload cannot erase the unseen night reading');
+update public.generator_day_logs set band_loads='[null,null,null,null,null,null,null]'::jsonb;
+select test.ok((select jsonb_array_length(band_loads)=7 and band_loads->>6 is null from public.generator_day_logs),'current client can explicitly clear the night reading');
+select test.fails($$update public.generator_day_logs set band_loads='[1,2,3,4,5,6,7,8]'::jsonb$$,'%check constraint%','generation rejects an eighth unsupported band');
+update public.generator_day_logs set band_loads='[180,180,null,200,200,190,null]'::jsonb;
 update public.site_reports set status = 'submitted' where report_date = '2026-10-29';
 select test.ok((select submitted_at is not null and submitted_by = public.current_employee_id() from public.site_reports where report_date = '2026-10-29'), 'sending stamps server time and sender');
 select test.ok(test.affected($$update public.site_report_fuel set notes = 'تعديل بعد الإرسال'$$) = 0, 'operator cannot edit lines after sending');
