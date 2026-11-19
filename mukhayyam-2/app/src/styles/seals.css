@@ -321,6 +321,7 @@ table.seal-table tbody tr:hover { background: color-mix(in srgb, var(--brand) 5%
 .seal-task-trigger>span { flex: 1; min-width: 0; display: grid; gap: 3px; }
 .seal-task-trigger b { font-size: var(--fs-md); overflow-wrap: anywhere; }
 .seal-task-trigger small { color: var(--muted); }
+.seal-task-picker .seal-task-subscriber { font-weight: 700; color: var(--ink); line-height: 1.7; }
 .seal-task-trigger:hover, .seal-task-trigger[aria-expanded='true'] { border-color: var(--faint); }
 .seal-task-trigger>svg:last-child { transition: transform 200ms ease; }
 .seal-task-trigger .turned { transform: rotate(180deg); }
