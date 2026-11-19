@@ -132,6 +132,8 @@ export interface GeneratorLog {
   loads: Loads
   /** The paper's loads table: one reading in every hour band (9 · 12 · 3 · 6 · 9 · 12); an empty hour is a dash. */
   bandLoads: BandValues
+  /** Original report fields retained when distribution supplies the displayed readings. */
+  storedLoads?: {loadUnit:LoadUnit;loads:Loads;bandLoads:BandValues}
   temperatureC: number | null
   oilPressure: number | null
   oilPressureUnit: PressureUnit

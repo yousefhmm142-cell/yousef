@@ -1,3 +1,4 @@
+import {GeneratorLoadsPanel} from './GeneratorLoadsPanel'
 import { Skeleton } from '../../ui/fx/Skeleton'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { ArrowLeft, ArrowRight, Check, CircleAlert, Pencil, Moon, Plus, Send, X } from 'lucide-react'
@@ -199,7 +200,7 @@ function SheetForm({ date, initial, zones, previous }: {
         <div className="zone-main">
         <div className="entry-body" onKeyDown={advanceOnEnter}>
           {entry ? (
-            <ZoneStep key={entry.id} entry={entry} index={stepIndex} count={sheet.zones.length} name={zoneName(entry.zoneId)} update={update} />
+            <><ZoneStep key={entry.id} entry={entry} index={stepIndex} count={sheet.zones.length} name={zoneName(entry.zoneId)} update={update} /><GeneratorLoadsPanel key={date} date={date}/></>
           ) : (
             <>
               <section className="fcard">

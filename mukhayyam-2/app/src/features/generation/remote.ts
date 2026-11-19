@@ -10,9 +10,10 @@ import { readBandValues, type LoadUnit } from '../sheets/loads'
 export const REPORT_SELECT =
   'id, report_date, status, general_notes, created_by, submitted_by, submitted_at, approved_by, approved_at,' +
   ' returned_reason, recorded_offline, updated_at,' +
-  ' site_report_fuel(*), generator_day_logs(*, generator_runs(*)), maintenance_logs(*)'
+  ' site_report_fuel(*), generator_day_logs(*, generator_runs(*)), maintenance_logs(*), generator_load_entries(generator_id,load_unit,band_loads)'
 
 export interface ReportRow {
+  generator_load_entries?: Array<{generator_id:number;load_unit:LoadUnit;band_loads:unknown}>
   id: string
   report_date: ISODate
   status: SheetStatus
@@ -113,11 +114,11 @@ export function reportToRows(r: SiteReport): { header: Record<string, unknown>; 
           generator_id: g.generatorId,
           did_run: g.didRun,
           run_hours: g.runHours,
-          load_unit: g.loadUnit,
-          load_l1: g.loads[0],
-          load_l2: g.loads[1],
-          load_l3: g.loads[2],
-          band_loads: readBandValues(g.bandLoads),
+          load_unit: g.storedLoads?.loadUnit ?? g.loadUnit,
+          load_l1: (g.storedLoads?.loads ?? g.loads)[0],
+          load_l2: (g.storedLoads?.loads ?? g.loads)[1],
+          load_l3: (g.storedLoads?.loads ?? g.loads)[2],
+          band_loads: readBandValues(g.storedLoads?.bandLoads ?? g.bandLoads),
           temperature_c: g.temperatureC,
           oil_pressure: g.oilPressure,
           oil_pressure_unit: g.oilPressureUnit,
@@ -182,7 +183,10 @@ export function reportFromRow(row: ReportRow): SiteReport {
       })),
     generators: [...row.generator_day_logs]
       .sort((a, b) => a.generator_id - b.generator_id)
-      .map((g) => ({
+      .map((g) => {
+        const entered=row.generator_load_entries?.find(e=>e.generator_id===g.generator_id)
+        return {
+        ...(entered?{storedLoads:{loadUnit:g.load_unit,loads:[num(g.load_l1),num(g.load_l2),num(g.load_l3)] as [number|null,number|null,number|null],bandLoads:readBandValues(g.band_loads)}}:{}),
         id: g.id,
         generatorId: g.generator_id,
         didRun: g.did_run,
@@ -190,14 +194,14 @@ export function reportFromRow(row: ReportRow): SiteReport {
           .sort((a, b) => a.run_no - b.run_no)
           .map((run) => ({ id: run.id, runNo: run.run_no, start: fromTime(run.start_time), end: fromTime(run.end_time) })),
         runHours: num(g.run_hours),
-        loadUnit: g.load_unit,
-        loads: [num(g.load_l1), num(g.load_l2), num(g.load_l3)],
-        bandLoads: readBandValues(g.band_loads),
+        loadUnit: entered?.load_unit ?? g.load_unit,
+        loads: entered ? [null,null,null] : [num(g.load_l1), num(g.load_l2), num(g.load_l3)],
+        bandLoads: readBandValues(entered?.band_loads ?? g.band_loads),
         temperatureC: num(g.temperature_c),
         oilPressure: num(g.oil_pressure),
         oilPressureUnit: g.oil_pressure_unit,
         notes: g.notes ?? '',
-      })),
+      }}),
     maintenance: [...row.maintenance_logs]
       .sort((a, b) => a.line_no - b.line_no)
       .map((m) => ({

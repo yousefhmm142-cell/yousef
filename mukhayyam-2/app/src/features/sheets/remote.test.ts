@@ -77,6 +77,20 @@ const generators = [1, 2, 3].map((id) => ({
 }))
 
 describe('generation report <-> server rows', () => {
+  it('shows canonical distribution loads but preserves original report fields when saving other edits',()=>{
+    const r=newReport('2026-10-30',fuelTypes,generators,'op',null,'2026-10-30T08:00:00.000Z')
+    r.generators[0]!.loads=[100,110,120]
+    const raw=serverReport(r)
+    raw.generator_load_entries=[{generator_id:r.generators[0]!.generatorId,load_unit:'kW',band_loads:[10,null,null,null,null,null,70]}]
+    const shown=reportFromRow(raw)
+    expect(shown.generators[0]!.loadUnit).toBe('kW')
+    expect(shown.generators[0]!.bandLoads[6]).toBe(70)
+    expect(shown.generators[0]!.loads).toEqual([null,null,null])
+    const rows=reportToRows(shown).children.find(c=>c.table==='generator_day_logs')!.rows[0] as unknown as Record<string,unknown>
+    expect(rows.load_unit).toBe('A')
+    expect([rows.load_l1,rows.load_l2,rows.load_l3]).toEqual([100,110,120])
+  })
+
   it('comes back exactly as typed', () => {
     const r = newReport('2026-10-30', fuelTypes, generators, 'op', null, '2026-10-30T08:00:00.000Z')
     r.fuel[0] = { ...r.fuel[0]!, openingBalance: 2600, receivedQty: 2000.25, totalQty: 4600.25, closingBalance: 3600, consumption: 1000.25, shipmentNo: '14520', notes: 'وصلت 10:15' }

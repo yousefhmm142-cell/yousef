@@ -18,7 +18,7 @@ import { useDraft } from '../sheets/useDraft'
 import { useConfirm } from '../../ui/Confirm'
 import { statusInfo } from '../sheets/workflow'
 import { isManagerRole } from '../../types'
-import { FuelStep, LoadsStep, MaintenanceStep, MissingList, NotesField, RunsStep } from './EntrySteps'
+import { FuelStep, MaintenanceStep, MissingList, NotesField, RunsStep } from './EntrySteps'
 import { applyAutoFigures, isEditableStatus, missingItems, newReport, reconcileReport, reportTotals, type FuelType, type Generator, type SiteReport } from './model'
 import { lastReportBefore, saveDraft, submitReport, useFuelTypes, useGenerators, useMissingBefore, useReport, useUnsentBefore } from './repo'
 import { ReportView, useReportContext } from './ReportView'
@@ -28,7 +28,6 @@ const STEPS = [
   { key: 'fuel', label: 'المحروقات', icon: Droplet },
   { key: 'runs', label: 'التشغيل', icon: Zap },
   { key: 'maintenance', label: 'الصيانات', icon: Wrench },
-  { key: 'loads', label: 'الأحمال', icon: Gauge },
   { key: 'send', label: 'الإرسال', icon: Send },
 ] as const
 
@@ -89,7 +88,7 @@ function EntryForm({ date, initial, fuelTypes, generators, previous }: {
   const toast = useToast()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
-  const stepIndex = Math.max(0, STEPS.findIndex((s) => s.key === params.get('step')))
+  const stepIndex = params.get('step')==='loads' ? STEPS.length-1 : Math.max(0, STEPS.findIndex((s) => s.key === params.get('step')))
   const editingSent = !!initial && !isEditableStatus(initial.status)
   const { doc: report, update: rawUpdate, flush, saveState, latest } = useDraft<SiteReport>(
     () =>
@@ -195,21 +194,20 @@ function EntryForm({ date, initial, fuelTypes, generators, previous }: {
         label="خطوات التقرير"
         current={stepIndex}
         onSelect={goTo}
-        items={STEPS.map((s, i) => ({ ...s, done: i < 4 && !missing.some((m) => m.step === i) }))}
+        items={STEPS.map((s, i) => ({ ...s, done: i < STEPS.length-1 && !missing.some((m) => m.step === i) }))}
       />
 
       <div className="entry-body" onKeyDown={advanceOnEnter}>
         {step.key === 'fuel' && <FuelStep report={report} fuelTypes={fuelTypes} previous={previous} update={update} />}
         {step.key === 'runs' && <RunsStep report={report} generators={generators} update={update} />}
         {step.key === 'maintenance' && <MaintenanceStep report={report} generators={generators} update={update} />}
-        {step.key === 'loads' && <LoadsStep report={report} generators={generators} update={update} />}
         {step.key === 'send' && (
           <>
             <NotesField report={report} update={update} />
             <section className="card summary">
               <div className="summary-row"><Droplet size={17} /><span>المحروقات</span><b className="num">استهلاك {formatAmount(totals.consumption)} · متبقي {formatAmount(totals.remaining)} لتر</b></div>
               <div className="summary-row"><Zap size={17} /><span>التشغيل</span><b className="num">{totals.generatorsRan} مولدات · {formatAmount(totals.runHours)} ساعة</b></div>
-              <div className="summary-row"><Gauge size={17} /><span>الأحمال</span><b className="num">{report.generators.filter((g) => g.didRun && hasBandValues(g.bandLoads)).length} من {totals.generatorsRan} مولدات معبّأة</b></div>
+              <div className="summary-row"><Gauge size={17} /><span>الأحمال من كشف التوزيع</span><b className="num">{report.generators.filter((g) => g.didRun && hasBandValues(g.bandLoads)).length} من {totals.generatorsRan} مولدات معبّأة</b></div>
               <div className="summary-row"><Wrench size={17} /><span>الصيانات</span><b className="num">{report.maintenance.length ? `${report.maintenance.length} عملية` : 'لا شيء'}</b></div>
             </section>
             <MissingList items={missing} onJump={goTo} />

@@ -1109,4 +1109,40 @@ update tasks set status='cancelled' where id=(select v from test.ids where k='pi
 select test.ok(not exists(select 1 from seal_task_candidates(8750002) where id=(select v from test.ids where k='picker_pending')),'cancelled tasks never appear as suggestions');
 reset role;
 
+
+-- ---------- Generator readings entered from distribution ----------
+reset role;update employees set pages=array['distribution'] where full_name='موظف إداري';
+select test.login('موظف إداري');set role authenticated;
+select test.ok(exists(select 1 from generator_loads_for_day('2026-10-18') where name='مولد الأحمال' and jsonb_array_length(band_loads)=7),'distribution-only staff receive seven generator bands safely');
+select generator_load_patch('2026-10-18',(select generator_id from generator_loads_for_day('2026-10-18') where name='مولد الأحمال'),'{"6":210}',null,'00000000-0000-0000-0000-000000005101',current_employee_id());
+select test.ok((select band_loads->>6='210' and report_id is null from generator_load_entries where load_date='2026-10-18'),'loads save before a generation report exists');
+select generator_load_patch('2026-10-18',(select generator_id from generator_loads_for_day('2026-10-18') where name='مولد الأحمال'),'{"0":90}',null,'00000000-0000-0000-0000-000000005102',current_employee_id());
+select test.ok((select band_loads->>0='90' and band_loads->>6='210' from generator_load_entries where load_date='2026-10-18'),'patching one band preserves other bands');
+select generator_load_patch('2026-10-18',(select generator_id from generator_loads_for_day('2026-10-18') where name='مولد الأحمال'),'{"6":999}',null,'00000000-0000-0000-0000-000000005101',current_employee_id());
+select test.ok((select band_loads->>6='210' from generator_load_entries where load_date='2026-10-18'),'replaying a delivered operation never applies it twice');
+select test.fails($$update generator_load_entries set load_unit='kW'$$,'%permission denied%','direct writes cannot bypass the field-limited RPC');
+select test.ok(test.affected($$update site_report_fuel set notes='forbidden'$$)=0,'distribution-only staff do not gain generation fuel writes');
+select test.fails($$select generator_load_patch('2099-01-01',(select generator_id from generator_loads_for_day('2026-10-18') limit 1),'{}',null,gen_random_uuid(),current_employee_id())$$,'%closed%','future daily loads are refused');
+select test.fails($$select generator_load_patch('2026-10-18',(select generator_id from generator_loads_for_day('2026-10-18') limit 1),'{"7":1}',null,gen_random_uuid(),current_employee_id())$$,'%invalid_load_band%','unsupported band indices are refused');
+select test.fails($$select generator_load_patch('2026-10-18',(select generator_id from generator_loads_for_day('2026-10-18') limit 1),'{"0":-1}',null,gen_random_uuid(),current_employee_id())$$,'%invalid_load_value%','negative loads are refused');
+select test.fails($$select generator_load_patch('2026-10-18',(select generator_id from generator_loads_for_day('2026-10-18') limit 1),'{}','volts',gen_random_uuid(),current_employee_id())$$,'%invalid_load_unit%','invalid load units are refused');
+reset role;select test.login('مشغّل الموقع');set role authenticated;
+insert into site_reports(report_date) values('2026-10-18');
+select test.ok((select report_id=(select id from site_reports where report_date='2026-10-18') from generator_load_entries where load_date='2026-10-18'),'pending loads attach when generation creates the report');
+insert into generator_day_logs(report_id,generator_id,did_run) select r.id,g.id,true from site_reports r cross join generators g where r.report_date='2026-10-18' and g.name='مولد الأحمال';
+update site_reports set status='submitted' where report_date='2026-10-18';
+reset role;select test.login('موظف إداري');set role authenticated;
+select test.fails($$select generator_load_patch('2026-10-18',(select generator_id from generator_loads_for_day('2026-10-18') limit 1),'{"6":220}',null,gen_random_uuid(),current_employee_id())$$,'%closed%','site staff cannot change loads of a closed generation report');
+reset role;select test.login('رامي أبو عجوة');set role authenticated;
+select generator_load_patch('2026-10-18',(select generator_id from generator_loads_for_day('2026-10-18') where name='مولد الأحمال'),'{"6":220}',null,gen_random_uuid(),current_employee_id());
+select test.ok((select band_loads->>6='220' from generator_load_entries where load_date='2026-10-18'),'manager may correct a closed day without reopening or changing approval');
+select test.ok((select status='submitted' from site_reports where report_date='2026-10-18'),'editing loads never changes report workflow state');
+reset role;update employees set pages=array['generation'] where full_name='موظف إداري';select test.login('موظف إداري');set role authenticated;
+select test.ok(exists(select 1 from generator_loads_for_day('2026-10-18') where band_loads->>6='220'),'generation reader sees the canonical distribution readings');
+select test.fails($$select generator_load_patch('2026-10-18',(select generator_id from generator_loads_for_day('2026-10-18') limit 1),'{}',null,gen_random_uuid(),current_employee_id())$$,'%not_allowed%','generation page alone does not grant the distribution writer');
+reset role;set role anon;
+select test.fails($$select * from generator_loads_for_day('2026-10-18')$$,'%permission denied%','anonymous callers cannot read daily generator loads');
+select test.fails($$select * from generator_load_entries$$,'%permission denied%','anonymous callers cannot read raw generator loads');
+reset role;
+
 \echo 'ALL CHECKS PASSED'

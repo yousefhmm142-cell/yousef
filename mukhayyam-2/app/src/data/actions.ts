@@ -40,8 +40,8 @@ async function send(a: Action, ms = LIMIT_MS): Promise<Outcome> {
   const sb = getSupabase()
   if (!sb) return 'offline'
   if(a.op==='rpc') {
-    if(a.table!=='task_complete_seals')return 'refused'
-    const res=await sb.rpc('task_complete_seals',a.row).abortSignal(AbortSignal.timeout(ms))
+    if(a.table!=='task_complete_seals' && a.table!=='generator_load_patch')return 'refused'
+    const res=await sb.rpc(a.table,a.row).abortSignal(AbortSignal.timeout(ms))
     return !res.error ? 'done' : res.status===0 || !res.error.code ? 'offline' : 'refused'
   }
   const t = sb.from(a.table)

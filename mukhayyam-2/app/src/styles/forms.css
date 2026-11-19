@@ -366,3 +366,8 @@
 .bg-wrap { min-width: 0; max-width: 100%; overflow-x: auto; padding: 4px; margin: -4px; }
 .bg-wrap[data-extended] .bg { min-width: 380px; }
 .gloads { min-width: 0; }
+
+.distribution-generator-loads { display: grid; grid-template-columns: minmax(0,1fr); gap: 16px; min-width: 0; padding-top: 20px; margin-top: 8px; border-top: 1px solid var(--line); }
+.distribution-generator-loads>header h2 { margin: 0 0 6px; font-size: var(--fs-lg); }
+.distribution-generator-loads>header p { margin: 0 0 6px; line-height: 1.7; }
+.distribution-generator-loads fieldset { margin: 0; }
