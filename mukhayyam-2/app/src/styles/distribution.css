@@ -41,7 +41,7 @@
 .tl-track {
   position: relative; height: 64px; border-radius: 10px; overflow: hidden;
   background:
-    repeating-linear-gradient(to left, transparent 0 calc(100% / 19 - 1px), var(--line-2) calc(100% / 19 - 1px) calc(100% / 19)),
+    repeating-linear-gradient(to left, transparent 0 calc(100% / var(--tl-hours, 22) - 1px), var(--line-2) calc(100% / var(--tl-hours, 22) - 1px) calc(100% / var(--tl-hours, 22))),
     var(--sunken);
 }
 .tl-track[data-off] { background: repeating-linear-gradient(45deg, var(--sunken) 0 6px, var(--surface-2) 6px 12px); }

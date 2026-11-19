@@ -1,3 +1,4 @@
+import type {CSSProperties} from 'react'
 import { EmptyArt } from '../../ui/fx/EmptyArt'
 import { HeatLegend, heatStyle, Peak } from '../../ui/fx/HeatLegend'
 import { CountUp } from '../../ui/fx/CountUp'
@@ -10,11 +11,11 @@ import { RUN_NAMES, runLoad, runSegments, sheetTotals, type DistributionSheet, t
 import { useZones } from './repo'
 import { clock12 } from '../../lib/format'
 
-// The day on the bar runs from 7 in the morning to 2 after midnight, an hour per mark.
-const START = 7 * 60
-const END = 26 * 60
+// Display window: 06:00 through 04:00 the following morning; stored run times stay intact.
+const START = 6 * 60
+const END = 28 * 60
 const SPAN = END - START
-const TICKS = Array.from({ length: 20 }, (_, i) => 7 + i)
+const TICKS = Array.from({ length: SPAN / 60 + 1 }, (_, i) => START / 60 + i)
 const tickLabel = (h: number) => { const x = h % 24; return `${x % 12 === 0 ? 12 : x % 12}${x < 12 ? 'ص' : 'م'}` }
 /** A smooth line through the points (Catmull-Rom as curves), so the load reads as a wave, not steps. */
 function smooth(pts: Array<[number, number]>): string {
@@ -100,7 +101,7 @@ export function SheetView({ sheet, ctx }: { sheet: DistributionSheet; ctx: Ctx }
   )
 }
 
-/** One bar per zone across the 24 hours: when each zone actually had power. */
+/** One bar per zone across the display window: when each zone actually had power. */
 function Timeline({ sheet, zoneNames, imbalanceWarn }: { sheet: DistributionSheet; zoneNames: Map<number, string>; imbalanceWarn: number }) {
   // The load chart: each run's block rises with its average load (scaled to the day's highest, per unit).
   // Heights from zero to the day's highest load (per unit): the difference you see is the real one.
@@ -113,14 +114,14 @@ function Timeline({ sheet, zoneNames, imbalanceWarn }: { sheet: DistributionShee
       <div className="card-h">
         <span className="ico-round"><Clock size={16} /></span>
         <h2>التغذية والأحمال خلال اليوم</h2>
-        <span className="meta">من 7 الصبح لـ 2 بعد نص الليل · ارتفاع الشكل = متوسط الحمل من الصفر{peak && <> · الخط المتقطع = أعلى حمل اليوم <b className="num">{peak}</b></>} · <span className="tl-key-ok">● حمل طبيعي</span> · <span className="tl-key-warn">● فازات مش متوازنة</span></span>
+        <span className="meta">من 6 الصبح لـ 4 الفجر باليوم التالي · ارتفاع الشكل = متوسط الحمل من الصفر{peak && <> · الخط المتقطع = أعلى حمل اليوم <b className="num">{peak}</b></>} · <span className="tl-key-ok">● حمل طبيعي</span> · <span className="tl-key-warn">● فازات مش متوازنة</span></span>
       </div>
-      <div className="tl" role="img" aria-label="أوقات تغذية المناطق وأحمالها خلال اليوم">
+      <div className="tl" style={{'--tl-hours': SPAN / 60} as CSSProperties} role="img" aria-label="أوقات تغذية المناطق وأحمالها من 6 الصبح إلى 4 الفجر باليوم التالي">
         <div className="tl-row tl-axis" aria-hidden="true">
           <span />
           <div className="tl-ticks">
             {TICKS.map((h, k) => (
-              <i key={h} data-odd={k % 2 === 1 || undefined} data-third={k % 3 !== 0 || undefined} style={{ insetInlineStart: `${((h * 60 - START) / SPAN) * 100}%` }}>{tickLabel(h)}</i>
+              <i key={h} data-odd={k % 2 === 1 || undefined} data-third={k !== 0 && k !== TICKS.length - 1 && (k % 3 !== 0 || k > TICKS.length - 4) || undefined} style={{ insetInlineStart: `${((h * 60 - START) / SPAN) * 100}%` }}>{tickLabel(h)}</i>
             ))}
           </div>
         </div>
