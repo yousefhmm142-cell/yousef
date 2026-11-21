@@ -1,3 +1,5 @@
+import {displayGeneratorLog,generatorLoadSummary} from './loadDisplay'
+import {useDisplayGeneratorLoads} from './useDisplayGeneratorLoads'
 import { EmptyArt } from '../../ui/fx/EmptyArt'
 import { Gauge as LoadGauge } from '../../ui/fx/Gauge'
 import { FuelTank } from '../../ui/fx/FuelTank'
@@ -10,8 +12,6 @@ import { Pill, type Tone } from '../../ui/primitives'
 import { AlertsCard, Signatures } from '../sheets/ui'
 import { computeAlerts, consumptionStats, fuelOutlook } from './alerts'
 import {
-  loadKva,
-  logLoads,
   maintenanceLabel,
   reportTotals,
   toBar,
@@ -305,19 +305,22 @@ function HourlyLoads({ report, generators }: { report: SiteReport; generators: G
 }
 
 function GeneratorGauges({ report, generators, settings }: { report: SiteReport; generators: Generator[]; settings: AlertSettings }) {
-  const logs = report.generators.filter(log => log.didRun)
+  const shared=useDisplayGeneratorLoads(report.reportDate)
+  const logs = report.generators.filter(log => log.didRun).map(log=>displayGeneratorLog(log,shared.rows,shared.actions,shared.cached))
   if (!logs.length) return null
   return <section className="fx-generators fx-decoration" aria-label="المولدات الآن">
     <h2>المولدات الآن <small className="muted">قراءات هذا التقرير</small></h2>
     <div className="fx-generator-grid">{logs.map(log => {
       const gen = generators.find(g => g.id === log.generatorId)
-      const carried = logLoads(log)
-      const kva = carried ? loadKva(carried.loads, log.loadUnit, settings.phaseVoltage) : null
-      const pct = kva !== null && gen?.capacityKva ? kva / gen.capacityKva * 100 : null
+      const reading=generatorLoadSummary(log,gen?.capacityKva,settings.phaseVoltage)
+      const {kva,percent:pct,peak,average}=reading
+      const unit=log.loadUnit==='A'?'أمبير':'كيلوواط'
+      const detail=peak===null?'ما في أحمال مسجّلة لهذا اليوم':pct===null?'قدرة المولد غير مسجّلة لحساب النسبة':`نحو ${formatAmount(Math.round(kva!))} kVA من ${formatAmount(gen!.capacityKva)}`
       const oil = log.oilPressure === null ? null : toBar(log.oilPressure, log.oilPressureUnit)
       return <article className="card fx-generator" key={log.id}>
         <header><b>{gen?.name ?? 'مولد'}</b><small>{gen?.brand}</small></header>
-        <LoadGauge label="الحمل" value={pct} warn={settings.loadWarnPct} danger={settings.loadDangerPct} detail={pct === null ? 'ما في قراءة أو قدرة مسجّلة' : `نحو ${formatAmount(Math.round(kva!))} kVA من ${formatAmount(gen!.capacityKva)}`} />
+        <LoadGauge label="الحمل" value={pct} displayValue={pct===null && peak!==null?`${formatAmount(peak)} ${log.loadUnit}`:undefined} warn={settings.loadWarnPct} danger={settings.loadDangerPct} detail={detail} />
+        {peak!==null && <div className="generator-load-reading"><b>أعلى حمل: <span className="num">{formatAmount(peak)} {unit}</span></b><small className="muted">{reading.hourly?'متوسط الساعات المعبّأة':'متوسط الفازات'}: <span className="num">{formatAmount(average)} {unit}</span> · نفس يوم التقرير</small></div>}
         <div className="fx-gauge-pair"><LoadGauge size="sm" label="الحرارة °C" value={log.temperatureC} max={Math.max(120, settings.tempDangerC)} warn={settings.tempWarnC} danger={settings.tempDangerC} /><LoadGauge size="sm" label="ضغط الزيت bar" value={oil} max={Math.max(6, settings.oilWarnBar * 2)} warn={settings.oilWarnBar} danger={settings.oilDangerBar} inverse /></div>
       </article>
     })}</div>

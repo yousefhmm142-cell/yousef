@@ -401,3 +401,7 @@
 .hc-note { margin: 0; padding: 0 18px 14px; font-size: var(--fs-xs); color: var(--muted); }
 @media (max-width: 800px) { .hc-list li { grid-template-columns: 1fr 1fr; } .hc-name { grid-column: 1 / -1; } }
 @media print { .health-card { display: none; } }
+
+.generator-load-reading { display: grid; gap: 6px; text-align: center; margin: -8px 0 14px; }
+.generator-load-reading b { font-size: var(--fs-sm); }
+.generator-load-reading small { line-height: 1.7; }
