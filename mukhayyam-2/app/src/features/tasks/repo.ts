@@ -196,6 +196,18 @@ export async function assignTask(task: Task, assigneeId: string, priority: Task[
   return (await db.tasks.get(task.id))!
 }
 
+/** Move the same task back to the prepared list; preserve every job field. */
+export async function returnTaskToWaiting(task: Task): Promise<void> {
+  const patch = { assigneeId: null, assigneeIds: [] as string[], status: 'new' as const, sentAt: null, seenAt: null }
+  const local = () => db.tasks.update(task.id, patch).then(() => undefined)
+  if (isDemo) { await local(); return }
+  const how = await queued(() => runOrQueue(
+    { table: 'tasks', op: 'update', rowId: task.id, row: { assignee_id: null, assignee_ids: [] }, label: `إرجاع المهمة ${task.number} لانتظار فني` },
+    local,
+  ))
+  if (how === 'sent') await reload(task.id)
+}
+
 /** Records that the order was handed to WhatsApp or the SMS app; the task becomes "sent". */
 export async function recordSent(task: Task, channel: Channel, toPhone: string, body: string): Promise<void> {
   if (isDemo) {

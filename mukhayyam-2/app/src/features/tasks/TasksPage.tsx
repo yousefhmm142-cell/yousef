@@ -5,12 +5,14 @@ import { EmptyArt } from '../../ui/fx/EmptyArt'
 import { CountUp } from '../../ui/fx/CountUp'
 import { Skeleton } from '../../ui/fx/Skeleton'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ArrowRightLeft,Search,X,AlarmClock,CalendarDays,CheckCheck,ChevronLeft,ChevronRight,ListChecks,MapPin,Phone,PhoneIncoming,Plus,Printer,ScrollText,UserRound } from 'lucide-react'
+import { Undo2,ArrowRightLeft,Search,X,AlarmClock,CalendarDays,CheckCheck,ChevronLeft,ChevronRight,ListChecks,MapPin,Phone,PhoneIncoming,Plus,Printer,ScrollText,UserRound } from 'lucide-react'
 import { dailyWork,useSealWork } from './sealWork'
 import { fold } from './subscribers'
 import { useEffect,useMemo,useState } from 'react'
 import { useNavigate,useSearchParams } from 'react-router'
 import { TaskArchive } from './TaskArchive'
+import { useConfirm } from '../../ui/Confirm'
+import { useToast } from '../../ui/Toast'
 import { useEmployee } from '../../auth/AuthProvider'
 import { db } from '../../data/db'
 import { addDays,dayName,describeDay,toISODate,todayISO,type ISODate } from '../../lib/dates'
@@ -29,7 +31,7 @@ elapsedMinutes,isOpen,
 isOverdue,
 priorityInfo,taskStatusInfo,type Task
 } from './model'
-import { refreshTasks,useTasks,useTaskTypes } from './repo'
+import { returnTaskToWaiting,refreshTasks,useTasks,useTaskTypes } from './repo'
 import { useTechnicians, GiveDialog, ReassignTaskDialog, NewTaskDialog, TaskDialog } from './TaskDialogs'
 import { PrepareDialog,SubscribersButton } from './PrepareDialog'
 
@@ -38,6 +40,8 @@ type View = 'waiting' | 'open' | 'late' | 'today' | 'all'
 export function TasksPage() {
   useDocumentTitle('المهام الميدانية')
   const employee = useEmployee()
+  const confirm=useConfirm(),toast=useToast()
+  const [returning,setReturning]=useState<string|null>(null)
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const tasks = useTasks()
@@ -110,6 +114,18 @@ export function TasksPage() {
   const sealToday = useSealWork(day, day, sealNames)
 
   const daily=useMemo(()=>dailyWork(doneOnDay,sealToday.filter(l=>l.date===day),types??[]),[doneOnDay,sealToday,types,day])
+
+  async function returnToWaiting(task:Task){
+    if(returning)return
+    const yes=await confirm({title:`إرجاع المهمة #${task.number} لانتظار فني؟`,message:'بينشال تعيينها عن جميع الفنيين وبترجع بنفس رقمها وبياناتها لقائمة بانتظار فني.',confirmLabel:'إرجاع المهمة'})
+    if(!yes)return
+    setReturning(task.id)
+    try{
+      await returnTaskToWaiting(task)
+      toast(`رجعت المهمة #${task.number} لانتظار فني`,'ok',{label:'افتح القائمة',run:()=>{setSearch('');setWho(null);setPastDay(null);setView('waiting')}})
+    }catch{toast('تعذّر إرجاع المهمة. حدّث المهام وراجع حالتها ثم حاول مرة ثانية.','danger')}
+    finally{setReturning(null)}
+  }
 
   if (params.get('view') === 'archive') return <div className="tasks"><TaskArchive onClose={() => setParams({})} /></div>
 
@@ -250,7 +266,7 @@ export function TasksPage() {
                     </span>
                   </span>
                 </button>
-                {canReassign && <button type="button" className="task-transfer" aria-label={`تحويل المهمة ${t.number} لفني آخر`} onClick={()=>setReassigning(t.id)}><ArrowRightLeft size={14} />تحويل لفني آخر</button>}
+                {canReassign && <div className="task-card-actions"><button type="button" disabled={!!returning} className="task-transfer" aria-label={`تحويل المهمة ${t.number} لفني آخر`} onClick={()=>setReassigning(t.id)}><ArrowRightLeft size={14} />تحويل لفني آخر</button><button type="button" className="task-transfer" disabled={!!returning} aria-label={`إرجاع المهمة ${t.number} لانتظار فني`} onClick={()=>void returnToWaiting(t)}><Undo2 size={14}/>{returning===t.id?'جاري الإرجاع…':'إرجاع لانتظار فني'}</button></div>}
                 </div>
                 {searching && !t.assigneeId && isOpen(t) && <Button onClick={()=>setGiving(t.id)}>أعطيها لفني</Button>}
                 {t.assigneeId && isOpen(t) && (

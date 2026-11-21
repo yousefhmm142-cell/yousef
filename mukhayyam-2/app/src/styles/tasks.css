@@ -287,10 +287,14 @@
 .expected-hint { font-size: var(--fs-xs); color: var(--muted); }
 
 .task-card { position: relative; flex: 1; min-width: 0; display: flex; }
-.task-card.can-reassign > .task-row { padding-bottom: 48px; }
-.task-transfer { position: absolute; inset-inline-start: 16px; bottom: 10px; display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 3px 9px; border: 1px solid var(--line); border-radius: var(--r-in); background: var(--surface); color: var(--brand); font: inherit; font-size: 12px; cursor: pointer; }
+.task-card.can-reassign > .task-row { padding-bottom: 56px; }
+.task-card-actions { position: absolute; inset-inline: 16px; bottom: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+.task-transfer { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 3px 9px; border: 1px solid var(--line); border-radius: var(--r-in); background: var(--surface); color: var(--brand-text); font: inherit; font-size: 12px; cursor: pointer; }
 .task-transfer:hover, .task-transfer:focus-visible { border-color: var(--brand); background: var(--brand-soft); }
 @media (max-width: 560px) {
+  .task-card.can-reassign > .task-row { padding-bottom: 114px; }
+  .task-card-actions { flex-direction: column; align-items: flex-start; }
+  .task-card-actions .task-transfer { min-height: 44px; }
   .task-side { min-width: 0; max-width: 100%; padding-inline-start: 0; grid-auto-flow: row; justify-content: stretch; justify-items: start; }
   .task-clock { white-space: normal; overflow-wrap: anywhere; }
 }
