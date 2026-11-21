@@ -124,7 +124,7 @@ function Login() {
         <footer className="entry-footer"><span>© {new Date().getFullYear()} أبناء فارس أبو زايد</span><i className="dot" aria-hidden="true" /><span>نظام إدارة مكتب مخيم 2</span></footer>
       </section>
 
-      <span className="entry-divider" aria-hidden="true"><i /></span>
+      <span className="entry-divider" aria-hidden="true"><span className="entry-rail"><b /></span><i /></span>
 
       <div className="entry-main">
         <div className="entry-main-bg" aria-hidden="true" />
