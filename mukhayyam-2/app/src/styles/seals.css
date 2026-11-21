@@ -318,6 +318,15 @@ table.seal-table tbody tr:hover { background: color-mix(in srgb, var(--brand) 5%
 /* A neutral, bounded accordion; only the selected row carries the brand accent. */
 .seal-task-picker { position: relative; --task-surface: var(--surface-2); --task-edge: var(--line); --task-divider: var(--line-2); --task-hover: var(--surface); --task-track: var(--surface-2); --task-thumb: var(--faint); }
 .seal-task-trigger { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 12px 14px; text-align: start; font: inherit; background: var(--task-surface); border: 1px solid var(--task-edge); border-radius: var(--r-in); color: var(--ink); box-shadow: none; transition: border-color 160ms ease, background 160ms ease; }
+/* The chooser becomes an inline search field while its list is open. */
+.seal-task-search { padding: 4px 8px; gap: 8px; }
+.seal-task-search>svg { flex-shrink: 0; margin-inline-start: 6px; color: var(--muted); }
+.seal-task-search input { width: 100%; min-width: 0; flex: 1; padding: 12px 0; border: 0; border-radius: 0; background: transparent; color: var(--ink); font: inherit; outline: none; box-shadow: none; }
+.seal-task-search input::placeholder { color: var(--muted); opacity: 1; }
+.seal-task-search:focus-within { border-color: var(--brand-text); }
+.seal-task-search-action { display: grid; place-items: center; flex-shrink: 0; width: 36px; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--muted); border-radius: 8px; }
+.seal-task-search-action:hover { color: var(--ink); background: var(--task-hover); }
+.seal-task-search-action:focus-visible { outline: 2px solid var(--brand-text); outline-offset: -2px; }
 .seal-task-trigger>span { flex: 1; min-width: 0; display: grid; gap: 3px; }
 .seal-task-trigger b { font-size: var(--fs-md); overflow-wrap: anywhere; }
 .seal-task-trigger small { color: var(--muted); }

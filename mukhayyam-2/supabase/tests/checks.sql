@@ -1145,4 +1145,96 @@ select test.fails($$select * from generator_loads_for_day('2026-10-18')$$,'%perm
 select test.fails($$select * from generator_load_entries$$,'%permission denied%','anonymous callers cannot read raw generator loads');
 reset role;
 
+-- ---------- Inline seal task search, with safe prepared suggestions ----------
+reset role;select test.login('رامي أبو عجوة');set role authenticated;
+with x as(insert into tasks(task_type_id,subscriber_name,location_text,expected_minutes) values((select id from task_types where name='صيانة كابل'),'أحمد تجهيز البحث','طبلون 119',30) returning id) insert into test.ids select 'search_prepared',id from x;
+with x as(insert into tasks(task_type_id,assignee_id,subscriber_name,expected_minutes) values((select id from task_types where name='تفتيش'),(select v from test.ids where k='joint_a'),'فحص بحث معيّن',30) returning id) insert into test.ids select 'search_assigned',id from x;
+with x as(insert into tasks(task_type_id,assignee_id,subscriber_name,expected_minutes) values((select id from task_types where name='تفتيش'),(select v from test.ids where k='joint_a'),'فحص بحث قديم مستقل',30) returning id) insert into test.ids select 'search_old',id from x;
+reset role;set session_replication_role=replica;
+update tasks set created_at=now()-interval '25 days',status='done',started_at=now()-interval '24 days 1 hour',completed_at=now()-interval '24 days' where id=(select v from test.ids where k='search_old');
+set session_replication_role=origin;
+select test.login('موظف إداري');set role authenticated;
+select test.ok(exists(select 1 from seal_task_search(8750002,'') where id=(select v from test.ids where k='search_prepared') and is_prepared and technician_id is null and task_status='new' and board='119'),'search offers prepared unassigned requests with an honest state');
+select test.ok(exists(select 1 from seal_task_search(8750002,'معينة') where id=(select v from test.ids where k='search_assigned') and not is_prepared and task_status='new'),'search distinguishes assigned tasks from unassigned preparations');
+select test.ok(exists(select 1 from seal_task_search(8750002,'احمد ١١٩ صيانة') where id=(select v from test.ids where k='search_prepared')),'search matches Arabic folded names, digits and work across fields');
+select test.ok(exists(select 1 from seal_task_search(8750002,(select translate(number::text,'0123456789','٠١٢٣٤٥٦٧٨٩') from seal_task_search(8750002,'احمد') where id=(select v from test.ids where k='search_prepared'))) where id=(select v from test.ids where k='search_prepared')),'search finds the task number using Arabic digits');
+select test.ok(not exists(select 1 from seal_task_search(8750002,'') where id=(select v from test.ids where k='search_old')),'opening picker keeps the recent default list compact');
+select test.ok(exists(select 1 from seal_task_search(8750002,'قديم مستقل') where id=(select v from test.ids where k='search_old') and task_status='done'),'typed search includes older completed work beyond the default seven days');
+select test.ok(not exists(select 1 from seal_task_search(8750009,'قديم مستقل') where id=(select v from test.ids where k='search_old')),'search never leaks another assigned technicians task');
+select test.ok(not exists(select 1 from seal_task_search(8750002,'مهمة حديثة بانتظار تم') where id=(select v from test.ids where k='picker_pending')),'cancelled work remains excluded from search');
+select test.ok(not exists(select 1 from seal_task_search(8750002,'احمد') r where to_jsonb(r) ?| array['link_token','subscriber_phone','created_by']),'search returns only the safe projection, without phones or tokens');
+select test.ok(not exists(select 1 from tasks where id=(select v from test.ids where k='search_prepared')),'search does not grant seals staff raw tasks access');
+select test.fails($$select * from seal_task_search(8750002,repeat('a',161))$$,'%search_too_long%','oversized search strings are rejected');
+select test.ok(not exists(select 1 from seal_task_search(8750002,'لا نتيجة مماثلة أبدا')),'no match returns an empty set');
+reset role;
+select test.ok((select assignee_id is null and status='new' from tasks where id=(select v from test.ids where k='search_prepared')),'search never assigns or completes a prepared task');
+select test.login('رامي أبو عجوة');set role authenticated;
+update tasks set status='sent' where id=(select v from test.ids where k='search_assigned');
+select test.ok(exists(select 1 from seal_task_search(8750002,'مرسلة') where id=(select v from test.ids where k='search_assigned') and task_status='sent'),'sent tasks have a searchable delivery state');
+select test.ok(not exists(select 1 from seal_task_search(8750002,'') where not is_prepared and technician_id is distinct from (select v from test.ids where k='joint_a')),'each assigned result still belongs to the seal holder');
+reset role;set role anon;
+select test.fails($$select * from seal_task_search(8750002,'')$$,'%permission denied%','anonymous callers cannot search task suggestions');
+reset role;select test.login('مشغّل الموقع');set role authenticated;
+select test.fails($$select * from seal_task_search(8750002,'')$$,'%not_allowed%','staff without seals permission cannot search task suggestions');
+reset role;
+
+-- Result limits are applied after filtering, with a truthful total count.
+reset role;select test.login('رامي أبو عجوة');set role authenticated;
+insert into tasks(task_type_id,subscriber_name,expected_minutes) select (select id from task_types where name='تفتيش'),'search-limit-fixture-'||n,30 from generate_series(1,105) n;
+select test.ok((select count(*)=100 and bool_and(total_count=105) from seal_task_search(8750002,'search-limit-fixture-')),'search limits the visible results and reports the complete matching count');
+select test.ok(exists(select 1 from seal_task_search(8750002,(select subscriber_name from tasks where subscriber_name like 'search-limit-fixture-%' and id not in(select id from seal_task_search(8750002,'')) limit 1)) where subscriber like 'search-limit-fixture-%'),'filtering searches beyond the first visible hundred tasks');
+reset role;
+
+-- ---------- Atomic accountant completion from seal recording ----------
+reset role;
+create table test.finish_numbers(label text primary key,n integer);
+grant all on test.finish_numbers to authenticated;
+select test.login('رامي أبو عجوة');set role authenticated;
+with x as(select max(to_no)+100 as n from seal_rolls),y as(select seal_add_roll(n,n+9,seal_today(),null),n from x)
+insert into test.finish_numbers select 's'||k,n+k from y cross join generate_series(0,9) k;
+select seal_issue((select v from test.ids where k='joint_a'),seal_today(),(select array_agg(n) from test.finish_numbers where label in('s0','s1','s2','s3','s4','s6','s7','s8')),null);
+select seal_issue((select v from test.ids where k='joint_b'),seal_today(),array[(select n from test.finish_numbers where label='s5')],null);
+with x as(insert into tasks(task_type_id,subscriber_name,expected_minutes) values((select id from task_types where name='صيانة كابل'),'تجهيز إنجاز بالختم',30) returning id) insert into test.ids select 'finish_prepared',id from x;
+with x as(insert into tasks(task_type_id,assignee_id,subscriber_name,expected_minutes) values((select id from task_types where name='تفتيش'),(select v from test.ids where k='joint_a'),'مرسلة إنجاز بالختم',30) returning id) insert into test.ids select 'finish_sent',id from x;
+update tasks set status='sent' where id=(select v from test.ids where k='finish_sent');
+with x as(insert into tasks(task_type_id,subscriber_name,expected_minutes) values((select id from task_types where name='تفتيش'),'طلب تراجع ذري',30) returning id) insert into test.ids select 'finish_rollback',id from x;
+with x as(insert into tasks(task_type_id,assignee_id,subscriber_name,expected_minutes) values((select id from task_types where name='تفتيش'),(select v from test.ids where k='joint_a'),'إنجاز تاريخ قديم',30) returning id) insert into test.ids select 'finish_backdate',id from x;
+reset role;set session_replication_role=replica;
+update tasks set created_at=now()-interval '20 days',status='sent',sent_at=now()-interval '19 days' where id=(select v from test.ids where k='finish_backdate');
+set session_replication_role=origin;
+select test.login('موظف إداري');set role authenticated;
+select test.fails($$insert into m2_ops.seal_completion_context values(txid_current(),pg_backend_pid(),null,current_employee_id(),now())$$,'%permission denied%','clients cannot create a completion capability');
+select test.fails($$select seal_finish_task((select n from test.finish_numbers where label='s0'),(select v from test.ids where k='finish_prepared'),null,seal_today(),'صيانة كابل','71','تجهيز إنجاز بالختم',gen_random_uuid(),current_employee_id())$$,'%technician_required%','prepared completion requires explicit technician confirmation');
+select test.fails($$select seal_finish_task((select n from test.finish_numbers where label='s0'),(select v from test.ids where k='finish_prepared'),(select v from test.ids where k='joint_b'),seal_today(),'صيانة كابل','71','تجهيز إنجاز بالختم',gen_random_uuid(),current_employee_id())$$,'%seal_wrong_technician%','prepared completion cannot silently change seal custody');
+select test.fails($$select seal_finish_task((select n from test.finish_numbers where label='s0'),(select v from test.ids where k='finish_prepared'),(select v from test.ids where k='joint_a'),seal_today(),'صيانة كابل','71','مشترك مختلف',gen_random_uuid(),current_employee_id())$$,'%task_subscriber_mismatch%','completion checks the selected subscriber');
+select test.fails($$select seal_finish_task((select n from test.finish_numbers where label='s0'),(select v from test.ids where k='finish_prepared'),(select v from test.ids where k='joint_a'),seal_today()+1,'صيانة كابل','71','تجهيز إنجاز بالختم',gen_random_uuid(),current_employee_id())$$,'%bad_date%','future completion dates are refused');
+select seal_finish_task((select n from test.finish_numbers where label='s0'),(select v from test.ids where k='finish_prepared'),(select v from test.ids where k='joint_a'),seal_today(),'صيانة كابل','71','تجهيز إنجاز بالختم','00000000-0000-0000-0000-000000005201',current_employee_id());
+select seal_finish_task((select n from test.finish_numbers where label='s0'),(select v from test.ids where k='finish_prepared'),(select v from test.ids where k='joint_a'),seal_today(),'صيانة كابل','71','تجهيز إنجاز بالختم','00000000-0000-0000-0000-000000005201',current_employee_id());
+select test.ok((select status='used' and task_id=(select v from test.ids where k='finish_prepared') from seals where seal_no=(select n from test.finish_numbers where label='s0')),'prepared completion records and links its seal');
+select seal_finish_task((select n from test.finish_numbers where label='s1'),(select v from test.ids where k='finish_sent'),null,seal_today(),'تفتيش','72','مرسلة إنجاز بالختم','00000000-0000-0000-0000-000000005202',current_employee_id());
+select seal_finish_task((select n from test.finish_numbers where label='s4'),(select v from test.ids where k='finish_sent'),null,seal_today(),'تفتيش','72','مرسلة إنجاز بالختم','00000000-0000-0000-0000-000000005203',current_employee_id());
+select seal_finish_task((select n from test.finish_numbers where label='s3'),(select v from test.ids where k='finish_backdate'),null,seal_today()-15,'تفتيش','73','إنجاز تاريخ قديم','00000000-0000-0000-0000-000000005204',current_employee_id());
+select test.ok(test.affected($$update tasks set status='done' where id=(select v from test.ids where k='finish_rollback')$$)=0,'accountants still cannot perform general task updates');
+select test.fails($$select seal_finish_task((select n from test.finish_numbers where label='s5'),(select v from test.ids where k='finish_sent'),null,seal_today(),'تفتيش','72','مرسلة إنجاز بالختم',gen_random_uuid(),current_employee_id())$$,'%seal_wrong_technician%','another technicians seal cannot complete the task');
+select test.fails($$select seal_finish_task((select n from test.finish_numbers where label='s0'),(select v from test.ids where k='finish_prepared'),(select v from test.ids where k='joint_a'),seal_today(),'عمل مختلف','71','تجهيز إنجاز بالختم','00000000-0000-0000-0000-000000005201',current_employee_id())$$,'%operation_conflict%','reusing an operation ID with different data is refused');
+reset role;
+select test.ok((select status='done' and assignee_id=(select v from test.ids where k='joint_a') and sent_at is not null and completed_work='صيانة كابل' from tasks where id=(select v from test.ids where k='finish_prepared')),'prepared task is assigned, sent and completed in one transaction');
+select test.ok((select count(*)=1 from task_events where task_id=(select v from test.ids where k='finish_prepared') and event='completed'),'retrying completion never duplicates its completion event');
+select test.ok((select status='done' and cardinality(used_seals)=2 from tasks where id=(select v from test.ids where k='finish_sent')),'pending task completes once and can collect multiple seals');
+select test.ok((select (completed_at at time zone 'Asia/Gaza')::date=seal_today()-15 from tasks where id=(select v from test.ids where k='finish_backdate')),'historical completion uses the seal date, beyond the offline seven-day window');
+select test.ok(not exists(select 1 from m2_ops.seal_completion_context),'completion capabilities never survive the call');
+select test.ok((select actor_id=(select id from employees where full_name='موظف إداري') from task_events where task_id=(select v from test.ids where k='finish_prepared') and event='completed'),'the accountant remains the real audit actor');
+create function test.reject_finished_seal() returns trigger language plpgsql as $$begin if new.seal_no=(select n from test.finish_numbers where label='s2') and new.status='used' then raise exception 'forced_seal_failure';end if;return new;end $$;
+create trigger test_reject_finished_seal before update on seals for each row execute function test.reject_finished_seal();
+select test.login('موظف إداري');set role authenticated;
+select test.fails($$select seal_finish_task((select n from test.finish_numbers where label='s2'),(select v from test.ids where k='finish_rollback'),(select v from test.ids where k='joint_a'),seal_today(),'تفتيش','74','طلب تراجع ذري','00000000-0000-0000-0000-000000005205',current_employee_id())$$,'%forced_seal_failure%','a seal-write failure aborts the task completion too');
+reset role;drop trigger test_reject_finished_seal on seals;drop function test.reject_finished_seal();
+select test.ok((select status='new' and assignee_id is null from tasks where id=(select v from test.ids where k='finish_rollback')),'failed seal save rolls back prepared assignment and completion');
+select test.ok(not exists(select 1 from task_events where task_id=(select v from test.ids where k='finish_rollback') and event in ('completed','reassigned')) and not exists(select 1 from m2_ops.seal_completion_receipts where operation='00000000-0000-0000-0000-000000005205'),'failed completion leaves no events or receipt');
+select test.login('مشغّل الموقع');set role authenticated;
+select test.fails($$select seal_finish_task((select n from test.finish_numbers where label='s2'),(select v from test.ids where k='finish_rollback'),(select v from test.ids where k='joint_a'),seal_today(),'تفتيش','74','طلب تراجع ذري',gen_random_uuid(),current_employee_id())$$,'%not_allowed%','non-seals employees cannot finish tasks through seal recording');
+reset role;set role anon;
+select test.fails($$select seal_finish_task(1,null,null,current_date,'','','',gen_random_uuid(),null)$$,'%permission denied%','anonymous callers cannot finish tasks through seals');
+reset role;
+
 \echo 'ALL CHECKS PASSED'

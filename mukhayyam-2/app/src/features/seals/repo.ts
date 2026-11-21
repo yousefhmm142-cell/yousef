@@ -5,6 +5,7 @@ import { isDemo } from '../../config'
 import { db, getMeta, setMeta } from '../../data/db'
 import { getSupabase } from '../../data/supabase'
 import { useEmployeeNames } from '../generation/repo'
+import {composeDetails} from './model'
 import type { Seal, SealBatch, SealData, SealRoll, SealStatus } from './model'
 
 // Seals live on the server (everyone sees the same numbers); this device keeps a copy so searching
@@ -267,7 +268,7 @@ interface QueuedOp {
 }
 const QUEUE = 'seals:queue'
 const TMP = 'tmp-'
-const OFFLINE_OK = new Set(['seal_issue', 'seal_record_task', 'seal_record', 'seal_add_to_batch', 'seal_assign_batch', 'seal_update_batch', 'seal_return_to_stock', 'seal_unissue', 'seal_delete_batch'])
+const OFFLINE_OK = new Set(['seal_issue', 'seal_finish_task', 'seal_record_task', 'seal_record', 'seal_add_to_batch', 'seal_assign_batch', 'seal_update_batch', 'seal_return_to_stock', 'seal_unissue', 'seal_delete_batch'])
 const SEND_LIMIT_MS = 12_000
 
 export const getSealQueue = async () => (await getMeta<QueuedOp[]>(QUEUE)) ?? []
@@ -294,13 +295,14 @@ async function applyLocal(fn: string, args: Record<string, unknown>, opId: strin
     }
   }
   switch (fn) {
+    case 'seal_finish_task':
     case 'seal_record_task':
     case 'seal_record': {
       const no = args.p_seal as number
-      const st = args.p_status as SealStatus
-      const line = String(args.p_details ?? '')
+      const st = fn==='seal_finish_task' ? 'used' : args.p_status as SealStatus
+      const line = fn==='seal_finish_task' ? composeDetails({board:String(args.p_board ?? ''),work:String(args.p_work ?? ''),subscriber:String(args.p_subscriber ?? '')}) : String(args.p_details ?? '')
       await db.seals.update(no, st === 'issued' ? { status: st, usedOn: null, details: '', boardNo: '' } : { status: st, usedOn: (args.p_date as string | null) ?? today(), details: line })
-      if(fn==='seal_record_task')await db.seals.update(no,{taskId:st==='used' ? args.p_task as string|null : null})
+      if(fn==='seal_record_task' || fn==='seal_finish_task')await db.seals.update(no,{taskId:st==='used' ? args.p_task as string|null : null})
       return { result: null }
     }
     case 'seal_issue': {
@@ -402,7 +404,7 @@ export function flushSealQueue(): Promise<void> {
         try { fail(res.error, res.status) } catch (e) { code = e instanceof SealError ? e.code : '' }
         // No internet or the server is busy: keep it and try again later.
         if (code === 'offline' || code === 'not_installed' || code === 'unknown') break
-        if (!(await rememberRejected({ source:'seals', id:op.id, label:op.fn==='seal_issue' ? 'صرف دفعة أختام' : op.fn==='seal_record' ? 'تسجيل شغل ختم' : 'تعديل أختام', code, payload:{ fn:op.fn,args:op.args } }))) { say('سجل العمليات المرفوضة ممتلئ. راجعه من حسابي؛ العملية بعدها بالطابور.','danger'); break }
+        if (!(await rememberRejected({ source:'seals', id:op.id, label:op.fn==='seal_finish_task' ? 'تسجيل ختم وإنجاز مهمة' : op.fn==='seal_issue' ? 'صرف دفعة أختام' : op.fn==='seal_record' ? 'تسجيل شغل ختم' : 'تعديل أختام', code, payload:{ fn:op.fn,args:op.args } }))) { say('سجل العمليات المرفوضة ممتلئ. راجعه من حسابي؛ العملية بعدها بالطابور.','danger'); break }
         refused++
       } else sent++
       const real = op.tmp && !res.error ? (res.data as { batch_id?: string } | null)?.batch_id : undefined
@@ -448,6 +450,10 @@ export const unissue = (seals: number[]) => call<number>('seal_unissue', { p_sea
 
 export const recordSeal = (sealNo: number, status: 'used' | 'damaged' | 'lost' | 'issued', usedOn: string | null, details: string, taskId?: string|null) =>
   taskId===undefined ? call<void>('seal_record', { p_seal: sealNo, p_status: status, p_date: usedOn, p_details: details }) : call<void>('seal_record_task',{p_seal:sealNo,p_status:status,p_date:usedOn,p_details:details,p_task:taskId})
+
+/** One queued/atomic operation: the task and its seal always succeed together. */
+export const finishTaskWithSeal = (sealNo:number,taskId:string,technician:string|null,date:string,work:string,board:string,subscriber:string,actor:string) =>
+  call<void>('seal_finish_task',{p_seal:sealNo,p_task:taskId,p_technician:technician,p_date:date,p_work:work,p_board:board,p_subscriber:subscriber,p_operation:crypto.randomUUID(),p_actor:actor})
 
 export const deleteRoll = (rollId: string) => call<void>('seal_delete_roll', { p_roll: rollId })
 
@@ -501,6 +507,15 @@ const messages: Record<string, string> = {
   roll_in_use: 'لا يمكن حذف رول خرجت منه أختام. احذف دفعاته أولاً.',
   missing: 'لم أجده، حدّث الصفحة.',
   bad_status: 'الحالة غير صحيحة.',
+  technician_required: 'اختار الفني اللي أنجز المهمة المجهّزة.',
+  seal_wrong_technician: 'الفني المختار لازم يكون صاحب الختم أو من المشاركين بالمهمة. استخدم ختم الفني اللي نفّذ الشغل.',
+  invalid_technician: 'الفني غير مفعّل. راجع اختيار الفني.',
+  task_closed: 'المهمة أُلغيت أو أُغلقت. حدّث البحث وراجعها.',
+  task_subscriber_mismatch: 'اسم المشترك اختلف عن المهمة. راجع الاختيار والاسم قبل الحفظ.',
+  task_date_conflict: 'المهمة أُنجزت بتاريخ مختلف. افتحها من البحث من جديد لتعبئة تاريخها الصحيح.',
+  seal_not_available: 'الختم غير متاح أو مربوط بمهمة أخرى. حدّث بياناته وراجعه.',
+  work_required: 'اكتب العمل المنجز قبل حفظ الختم وإنجاز المهمة.',
+  operation_conflict: 'هذه المحاولة مسجّلة ببيانات مختلفة. افتح الختم وراجعه من جديد.',
 }
 export function sealErrorText(e: unknown): string {
   if (!(e instanceof SealError)) return 'تعذّر الحفظ. حاول مرة أخرى.'
