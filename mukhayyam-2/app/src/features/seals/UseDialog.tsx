@@ -12,7 +12,7 @@ import { Button } from '../../ui/primitives'
 import { useToast } from '../../ui/Toast'
 import { useConfirm } from '../../ui/Confirm'
 import { SubscriberField } from '../tasks/SubscriberField'
-import { recordSeal,finishTaskWithSeal,useTechnicians,returnToStock,sealErrorText } from './repo'
+import { recordSeal,finishTaskWithSeal,returnToStock,sealErrorText } from './repo'
 import { composeDetails,ordinalWord,parseSealNumbers,splitDetails,WORK_CHOICES,type Seal,type SealData, previousOnBoard } from './model'
 import { SealHistoryButton } from './SealHistory'
 import { dayLabel,SealPill } from './parts'
@@ -28,10 +28,7 @@ const outcomes: Array<{ value: Outcome; label: string }> = [
 
 export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal; onClose(): void }) {
   const toast = useToast()
-  const me=useEmployee(),technicians=useTechnicians()
-  const [preparedForm,setPreparedForm]=useState<SealTaskChoice|null>(null)
-  const [performedBy,setPerformedBy]=useState('')
-  const [preparedTechnician,setPreparedTechnician]=useState<string|null>(null)
+  const me=useEmployee()
   const [taskId,setTaskId]=useState(seal?.taskId ?? '')
   const [taskQuery,setTaskQuery]=useState('')
   const [pickedTask,setPickedTask]=useState<SealTaskChoice|null>(null)
@@ -54,7 +51,7 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
 
   const n = parseSealNumbers(no).numbers[0]
   const found = n ? data.seals.find((s) => s.sealNo === n) : undefined
-  useEffect(()=>{setTaskQuery('');setPickedTask(null);setPreparedForm(null);setPreparedTechnician(null);setCandidates([]);recentTasks.current=[]},[found?.sealNo,found?.technicianId])
+  useEffect(()=>{setTaskQuery('');setPickedTask(null);setCandidates([]);recentTasks.current=[]},[found?.sealNo,found?.technicianId])
   useEffect(()=>{let live=true;setLinkError(false);setTasksLoading(false)
     if(!found?.technicianId){setCandidates([]);return}
     const holder=found.technicianId,sealNo=found.sealNo,query=taskQuery.trim()
@@ -117,7 +114,7 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
       const choice=selectedTask
       const pending=choice?.task_status && choice.task_status!=='done'
       if(status==='used' && pending && choice){
-        await finishTaskWithSeal(no,choice.id,choice.is_prepared?preparedTechnician:null,date,work.trim(),board.trim(),subscriberLine,me.id)
+        await finishTaskWithSeal(no,choice.id,choice.is_prepared?found.technicianId:null,date,work.trim(),board.trim(),subscriberLine,me.id)
       }else await recordSeal(no, status, date, line, status==='used' ? taskId || null : null)
       buzz()
       toast(`سُجّل الختم ${no}`, 'ok', wasOut ? { label: 'تراجع', run: async () => { try { await recordSeal(no, 'issued', null, ''); toast(`رجع الختم ${no} «غير مستخدم»`) } catch { toast('ما قدرنا نتراجع. افتح الختم وألغِ تسجيله.', 'danger') } } } : undefined)
@@ -137,12 +134,11 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
   }
 
   const completingTask=status==='used' && !!selectedTask?.task_status && selectedTask.task_status!=='done'
-  const preparedReady=!selectedTask?.is_prepared || preparedTechnician===found?.technicianId
   function applyChoice(t:SealTaskChoice|null){
-    setTaskId(t?.id ?? '');setPickedTask(t);setPreparedTechnician(t?.is_prepared?performedBy:null)
+    setTaskId(t?.id ?? '');setPickedTask(t)
     if(t){setWork(t.work ?? '');setSubscriber(t.subscriber ?? '');setBoard(t.board ?? '');setDate(t.completed_on || todayISO())}
   }
-  const ready = preparedReady && (!completingTask || !!work.trim()) && !!found && !bad && (status !== 'used' || board.trim() !== '' || work.trim() !== '')
+  const ready = (!completingTask || !!work.trim()) && !!found && !bad && (status !== 'used' || board.trim() !== '' || work.trim() !== '')
   // Undo the record, or take the seal back to the stock: asks first, in a window.
   const confirm = useConfirm()
   const recorded = !!seal && seal.status !== 'in_stock' && seal.status !== 'issued'
@@ -178,7 +174,7 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
   )
 
   return (
-    <> <Dialog
+    <Dialog
       className="seal-dialog"
       open
       onClose={onClose}
@@ -222,9 +218,7 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
           <div className="seal-found" data-bad>{bad}</div>
         ) : null}
 
-        {status==='used' && found?.technicianId && <TaskPicker key={found.sealNo} technician={data.names.get(found.technicianId) ?? 'الفني'} value={taskId} choices={candidates} selectedChoice={selectedTask} query={taskQuery} onSearch={setTaskQuery} loading={tasksLoading} error={linkError} onChange={t=>{
-          if(t?.is_prepared){setPerformedBy(found.technicianId ?? '');setPreparedForm(t)}else applyChoice(t)
-        }}/>}
+        {status==='used' && found?.technicianId && <TaskPicker key={found.sealNo} technician={data.names.get(found.technicianId) ?? 'الفني'} value={taskId} choices={candidates} selectedChoice={selectedTask} query={taskQuery} onSearch={setTaskQuery} loading={tasksLoading} error={linkError} onChange={applyChoice}/>}
         <div className="chips" role="radiogroup" aria-label="ما صار للختم">
           {outcomes.map((o) => (
             <Chip key={o.value} pressed={status === o.value} onClick={() => setStatus(o.value)}>{o.label}</Chip>
@@ -291,18 +285,7 @@ export function UseDialog({ data, seal, onClose }: { data: SealData; seal?: Seal
         {error && <p className="field-error" role="alert">{error}</p>}
       </div>
     </Dialog>
-    <Dialog open={!!preparedForm} onClose={()=>setPreparedForm(null)} title="الفني الذي أنجز المهمة" className="seal-dialog" subtitle="هذا الطلب مجهّز بدون فني. حدّد المنفّذ قبل تسجيل ختمه." footer={<>
-      <Button variant="ghost" onClick={()=>setPreparedForm(null)}>إلغاء</Button>
-      <Button variant="primary" disabled={!preparedForm || performedBy!==found?.technicianId || !technicians.some(t=>t.id===performedBy)} onClick={()=>{if(preparedForm){applyChoice(preparedForm);setPreparedForm(null)}}}>اعتماد الفني</Button>
-    </>}>
-      {preparedForm && <div className="issue-form">
-        <p><b>#{preparedForm.number} · {preparedForm.work}</b><br/>{preparedForm.subscriber || 'بدون اسم مشترك'}</p>
-        <p className="field-hint">الختم بعهدة {found?.technicianId?data.names.get(found.technicianId):'—'}. اختار الفني اللي نفّذ الشغل؛ الختم لازم يكون من عهدته.</p>
-        <div className="chips" role="group" aria-label="الفني المنفذ">{technicians.map(t=><Chip key={t.id} pressed={performedBy===t.id} onClick={()=>setPerformedBy(t.id)}>{t.fullName}</Chip>)}</div>
-        {performedBy!==found?.technicianId && <p className="field-error" role="status">الختم مع فني مختلف. اختار صاحب الختم أو استخدم ختم الفني اللي نفّذ المهمة.</p>}
-        <p className="field-hint">عند «حفظ وإنجاز المهمة» تُعيّن للفني وتُنجز ويُربط الختم بها معًا. بدون نت، تُثبت العملية عند المزامنة.</p>
-      </div>}
-    </Dialog> </>
+
   )
 }
 

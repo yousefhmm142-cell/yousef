@@ -37,7 +37,7 @@ export function TaskPicker({technician,value,choices,selectedChoice,loading,erro
    {!loading && total>choices.length && <p>ظاهر أول {choices.length} من {total} نتيجة؛ اكتب تفاصيل أكثر لتلاقي المهمة المطلوبة.</p>}
   </div></div>
   <small className="field-hint">البحث يشمل كل التواريخ. الاختيار بيعبّي المشترك والشغل والطبلون والتاريخ المتوفّرين فيها.</small>
-  {selected?.task_status && selected.task_status!=='done' && <small className="field-hint">{selected.is_prepared?'عند حفظ الختم تُعيّن هذه المهمة للفني المختار وتُنجز ويُربط الختم بها معًا.':'عند حفظ الختم تُنجز هذه المهمة تلقائيًا ويُربط الختم بها. بدون نت، تُثبت العملية عند المزامنة.'}</small>}
+  {selected?.task_status && selected.task_status!=='done' && <small className="field-hint">{selected.is_prepared?'عند حفظ الختم تُعيّن هذه المهمة لصاحب الختم وتُنجز ويُربط الختم بها معًا.':'عند حفظ الختم تُنجز هذه المهمة تلقائيًا ويُربط الختم بها. بدون نت، تُثبت العملية عند المزامنة.'}</small>}
   {error && !open && <small className="field-error">تعذّر تحميل مهام الفني. بيانات الختم المحفوظة ما تغيّرت.</small>}
  </div>
 }
