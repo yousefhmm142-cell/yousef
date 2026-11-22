@@ -71,7 +71,7 @@ export function GeneratorLoadsPanel({date}:{date:string}){
   {error && <div className="banner warn" role="status"><p>{error}</p><button type="button" className="btn" onClick={()=>void load()}>تحديث الأحمال</button></div>}
   {!cached?.length ? loading?<Skeleton kind="cards"/>:<p className="muted">{navigator.onLine?'ما في مولدات مسجّلة لهذا اليوم.':'افتح هذا القسم مرة مع الإنترنت لتحميل المولدات.'}</p> : cached.map(r=><fieldset key={r.generator_id} className="fcard gloads" disabled={!r.editable}>
    <header className="gen-head zloads-head"><div><h3 className="fcard-title">{r.name}</h3><small className="muted">{r.brand}{r.capacity_kva?` · ${formatAmount(r.capacity_kva)} kVA`:''}</small></div><Segmented label={`وحدة أحمال ${r.name}`} value={r.load_unit} options={LOAD_UNIT_OPTIONS} onChange={v=>change(r.generator_id,{},v)}/></header>
-   {!r.editable && <p className="field-hint">هذا اليوم مغلق. تعديل أحماله من المدير.</p>}
+   {!r.editable && <p className="field-hint">كشف التوزيع لهذا اليوم مرسل أو معتمد؛ تعديل أحماله من المدير.</p>}
    <BandGrid bands={GENERATION_BANDS} name={r.name} rows={1} values={readBandValues(r.band_loads).map(v=>[v])} max={r.load_unit==='A'?5000:2000} onChange={(b,_row,v)=>change(r.generator_id,{[b]:v})}/>
    <div className="avg-line"><span>متوسط الساعات المكتوبة</span><b className="num">{valuesDayAverage(r.band_loads)===null?'—':`${formatAmount(valuesDayAverage(r.band_loads))} ${r.load_unit==='A'?'أمبير':'كيلوواط'}`}</b></div>
   </fieldset>)}

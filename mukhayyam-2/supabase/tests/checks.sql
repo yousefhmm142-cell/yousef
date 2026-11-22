@@ -1132,7 +1132,13 @@ select test.ok((select report_id=(select id from site_reports where report_date=
 insert into generator_day_logs(report_id,generator_id,did_run) select r.id,g.id,true from site_reports r cross join generators g where r.report_date='2026-10-18' and g.name='مولد الأحمال';
 update site_reports set status='submitted' where report_date='2026-10-18';
 reset role;select test.login('موظف إداري');set role authenticated;
-select test.fails($$select generator_load_patch('2026-10-18',(select generator_id from generator_loads_for_day('2026-10-18') limit 1),'{"6":220}',null,gen_random_uuid(),current_employee_id())$$,'%closed%','site staff cannot change loads of a closed generation report');
+select generator_load_patch('2026-10-18',(select generator_id from generator_loads_for_day('2026-10-18') where name='مولد الأحمال'),'{"6":215}',null,gen_random_uuid(),current_employee_id());
+select test.ok(generator_load_day_editable('2026-10-18'),'closing generation does not close distribution-owned generator readings');
+reset role;select test.login('رامي أبو عجوة');set role authenticated;
+insert into distribution_sheets(sheet_date) values('2026-10-18') on conflict(sheet_date) do nothing;
+update distribution_sheets set status='submitted' where sheet_date='2026-10-18';
+reset role;select test.login('موظف إداري');set role authenticated;
+select test.fails($$select generator_load_patch('2026-10-18',(select generator_id from generator_loads_for_day('2026-10-18') limit 1),'{"6":219}',null,gen_random_uuid(),current_employee_id())$$,'%closed%','closed distribution still protects its generator readings');
 reset role;select test.login('رامي أبو عجوة');set role authenticated;
 select generator_load_patch('2026-10-18',(select generator_id from generator_loads_for_day('2026-10-18') where name='مولد الأحمال'),'{"6":220}',null,gen_random_uuid(),current_employee_id());
 select test.ok((select band_loads->>6='220' from generator_load_entries where load_date='2026-10-18'),'manager may correct a closed day without reopening or changing approval');
@@ -1235,6 +1241,37 @@ select test.login('مشغّل الموقع');set role authenticated;
 select test.fails($$select seal_finish_task((select n from test.finish_numbers where label='s2'),(select v from test.ids where k='finish_rollback'),(select v from test.ids where k='joint_a'),seal_today(),'تفتيش','74','طلب تراجع ذري',gen_random_uuid(),current_employee_id())$$,'%not_allowed%','non-seals employees cannot finish tasks through seal recording');
 reset role;set role anon;
 select test.fails($$select seal_finish_task(1,null,null,current_date,'','','',gen_random_uuid(),null)$$,'%permission denied%','anonymous callers cannot finish tasks through seals');
+reset role;
+
+-- Generator entry works for distribution-only and dual-page staff after generation approval.
+reset role;select test.login('رامي أبو عجوة');set role authenticated;
+update distribution_sheets set status='returned',returned_reason='فحص تعبئة الأحمال' where sheet_date='2026-10-18';
+update site_reports set status='approved' where report_date='2026-10-18';
+reset role;
+create table test.load_header as select to_jsonb(r)-'updated_at' as snapshot from site_reports r where report_date='2026-10-18';
+grant select on test.load_header to authenticated;
+update employees set pages=array['generation','distribution'] where full_name='موظف إداري';
+select test.login('موظف إداري');set role authenticated;
+select test.ok(generator_load_day_editable('2026-10-18'),'dual-page employee can enter generator readings when generation is approved and distribution is returned');
+select generator_load_patch('2026-10-18',(select generator_id from generator_loads_for_day('2026-10-18') where name='مولد الأحمال'),'{"0":275,"6":135}','A',gen_random_uuid(),current_employee_id());
+select test.ok(exists(select 1 from generator_loads_for_day('2026-10-18') where name='مولد الأحمال' and band_loads->>0='275' and band_loads->>6='135' and editable),'dual-page save persists first and 3am readings after approval');
+select test.ok((select to_jsonb(r)-'updated_at'=(select snapshot from test.load_header) from site_reports r where report_date='2026-10-18'),'metadata sync never changes approval, submission or report data');
+select test.fails($$update site_reports set general_notes='forbidden' where report_date='2026-10-18'$$,'%can no longer be edited%','dual-page staff still cannot edit approved generation fields');
+select test.fails($$update site_reports set updated_at=clock_timestamp() where report_date='2026-10-18'$$,'%can no longer be edited%','direct writes cannot spoof the nested metadata refresh');
+reset role;update employees set pages=array['distribution'] where full_name='موظف إداري';
+select test.login('موظف إداري');set role authenticated;
+select generator_load_patch('2026-10-18',(select generator_id from generator_loads_for_day('2026-10-18') where name='مولد الأحمال'),'{"6":145}',null,gen_random_uuid(),current_employee_id());
+select test.ok(exists(select 1 from generator_loads_for_day('2026-10-18') where name='مولد الأحمال' and band_loads->>6='145'),'distribution-only employee also saves against an approved generation report');
+select test.fails($$select generator_load_patch('2099-01-01',(select generator_id from generator_loads_for_day('2026-10-18') limit 1),'{}',null,gen_random_uuid(),current_employee_id())$$,'%closed%','future dates remain protected');
+reset role;select test.login('رامي أبو عجوة');set role authenticated;
+update distribution_sheets set status='submitted' where sheet_date='2026-10-18';
+reset role;select test.login('موظف إداري');set role authenticated;
+select test.ok(not generator_load_day_editable('2026-10-18'),'submitting distribution closes its generator entry for staff');
+select test.fails($$select generator_load_patch('2026-10-18',(select generator_id from generator_loads_for_day('2026-10-18') limit 1),'{"6":155}',null,gen_random_uuid(),current_employee_id())$$,'%closed%','staff cannot bypass a submitted distribution sheet');
+reset role;select test.login('رامي أبو عجوة');set role authenticated;
+select test.ok(generator_load_day_editable('2026-10-18'),'manager correction remains available after distribution closes');
+select generator_load_patch('2026-10-18',(select generator_id from generator_loads_for_day('2026-10-18') where name='مولد الأحمال'),'{"6":160}',null,gen_random_uuid(),current_employee_id());
+select test.ok(exists(select 1 from generator_loads_for_day('2026-10-18') where name='مولد الأحمال' and band_loads->>6='160'),'manager saves without reopening either approved generation or submitted distribution');
 reset role;
 
 \echo 'ALL CHECKS PASSED'
