@@ -67,7 +67,7 @@ export function DayDialog({ employee, date, data, onClose }: { employee: Employe
           <ol className="task-steps att-punches">
             {d.punches.map((p) => (
               <li key={p.id}>
-                <span>{p.kind === 'in' ? 'حضور' : 'انصراف'}{p.method === 'manual' && <small className="muted"> · يدوي: {p.reason}</small>}</span>
+                <span>{p.kind === 'in' ? 'حضور' : 'انصراف'}{p.method === 'manual' && p.reason && <small className="muted"> · {p.reason}</small>}</span>
                 <span className="att-punch-end">
                   <span className={`punch-time ${p.kind}`}>
                     <TimeField

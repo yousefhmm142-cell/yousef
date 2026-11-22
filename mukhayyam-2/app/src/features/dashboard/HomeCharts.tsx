@@ -4,7 +4,7 @@ import {ScrollTable} from '../../ui/ScrollTable'
 import {describeDay} from '../../lib/dates'
 import { useEmployee } from '../../auth/AuthProvider'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ArrowLeft, Droplet, Gauge, Info, Plus, Printer, Timer, TrendingUp } from 'lucide-react'
+import { ChevronRight, ArrowLeft, Droplet, Gauge, Info, Plus, Printer, Timer, TrendingUp } from 'lucide-react'
 import { lazy, Suspense, useEffect, useId, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { db } from '../../data/db'
@@ -89,16 +89,20 @@ function useRunUp(target: number | null, key: string): number {
 
 interface GenLoad { ran: boolean; id: number; name: string; pct: number | null; kva: number | null; cap: number | null; peak: { v: number; unit: string } | null; temp: number | null; oil: number | null }
 
-/** Every generator is visible together, Caterpillar first, in the latest report. */
+/** Both generators share the chosen report day; initially the latest sent report. */
 export function LoadGauge() {
   const reports = useSentReports()
   const generators = useGenerators()
   const settings = useAlertSettings()
-  const latest = reports?.[0]
+  const [loadDay,setLoadDay]=useState<ISODate|null>(null)
+  const date=loadDay ?? reports?.[0]?.reportDate
+  const oldest=reports?.[reports.length-1]?.reportDate
+  const canPrevious=!!date && !!oldest && date>oldest
+  const selectedReport=reports?.find(r=>r.reportDate===date)
   const loads = useMemo<GenLoad[] | null>(() => {
-    if (!latest || !generators) return null
+    if (!selectedReport || !generators) return null
     const gens = new Map(generators.map((g) => [g.id, g]))
-    return latest.generators.map((log) => {
+    return selectedReport.generators.map((log) => {
       const g = gens.get(log.generatorId)
       const l = log.didRun ? logLoads(log) : null
       const kva = l ? loadKva(l.loads, log.loadUnit, settings.phaseVoltage) : null
@@ -118,10 +122,10 @@ export function LoadGauge() {
       const rank=(x:GenLoad)=>/caterpillar|cat\b|كترب|كتبل|كاترب|كاتر/i.test(`${x.name} ${gens.get(x.id)?.brand ?? ''}`)?0:1
       return rank(a)-rank(b) || a.id-b.id
     })
-  }, [latest, generators, settings.phaseVoltage])
+  }, [selectedReport, generators, settings.phaseVoltage])
   return <article className="hc-card hc-gauge">
-    <div className="hc-h"><div className="hc-titles"><h2>حمل المولدات</h2><small>{latest ? `من تقرير ${dayName(latest.reportDate)} ${short(latest.reportDate)}` : 'ما وصل تقرير بعد'}</small></div></div>
-    {loads?.length ? loads.map(gen=><GeneratorGauge key={gen.id} gen={gen} date={latest?.reportDate ?? ''}/>) : <p className="hc-daily-note">ما وصلت قراءات مولدات بهذا التقرير.</p>}
+    <div className="hc-h"><div className="hc-titles"><h2>حمل المولدات</h2><small className="hc-gauge-date"><span>{date ? `${selectedReport?'من تقرير':'اليوم'} ${dayName(date)} ${short(date)}` : 'ما وصل تقرير بعد'}</span><button type="button" className="hc-gauge-prev" aria-label="اليوم السابق لأحمال المولدات" title="اليوم السابق" disabled={!canPrevious} onClick={()=>{if(date)setLoadDay(addDays(date,-1))}}><ChevronRight size={14} aria-hidden="true"/></button></small></div></div>
+    {loads?.length ? loads.map(gen=><GeneratorGauge key={gen.id} gen={gen} date={date ?? ''}/>) : <p className="hc-daily-note">{selectedReport?'ما وصلت قراءات مولدات بهذا التقرير.':'ما وصل تقرير توليد لهذا اليوم.'}</p>}
   </article>
 }
 

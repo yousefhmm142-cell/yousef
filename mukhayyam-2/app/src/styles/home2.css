@@ -310,3 +310,10 @@ g:hover > .hc-bar { filter: brightness(1.18); }
 .hc-generator-load .hc-g-center b { font-size: 1.8rem; }
 .hc-generator-load .hc-trio small { font-size: var(--fs-xs); }
 .hc-daily-label.num { font-size: 11px; }
+
+.hc-gauge-date { gap: 6px; }
+.hc-gauge-prev { position: relative; display: inline-grid; place-items: center; width: 28px; min-height: 28px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: transparent; color: var(--muted); cursor: pointer; }
+.hc-gauge-prev::before { content: ''; position: absolute; inset: -8px; border-radius: 50%; }
+.hc-gauge-prev:not(:disabled):hover { color: var(--ink); background: var(--surface-2); }
+.hc-gauge-prev:focus-visible { outline: 2px solid var(--brand-text); outline-offset: 3px; }
+.hc-gauge-prev:disabled { opacity: .35; cursor: default; }

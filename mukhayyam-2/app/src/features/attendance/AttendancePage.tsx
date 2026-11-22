@@ -241,7 +241,6 @@ function WeekSheet({ data, onOpen }: { data: Data; onOpen(e: Employee, date: ISO
                           <>
                             <InOut inAt={d.inAt} outAt={d.outAt} />
                             {!d.outAt && <small className="wk-open">{d.status === 'working' ? 'في الدوام' : 'لم ينصرف'}</small>}
-                            {d.punches.some((p) => p.method === 'manual') && <i className="tag">يدوي</i>}
                           </>
                         ) : (
                           <span className={`week-mark ${d.status}`}>{d.status === 'leave' && d.leave ? leaveLabel[d.leave.type] : statusLabel[d.status]}{d.status === 'leave' && d.leave?.notes && <small className="wk-why">{d.leave.notes}</small>}</span>

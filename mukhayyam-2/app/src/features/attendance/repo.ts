@@ -94,7 +94,7 @@ export async function refreshAttendance(): Promise<void> {
 }
 
 // ---------- Manager's corrections ----------
-/** A punch the person forgot to scan, with the reason; marked "manual" everywhere. */
+/** A punch the person forgot to scan, with the reason; kept as "manual" in the stored record. */
 export async function addManualPunch(employeeId: string, date: ISODate, time: string, kind: PunchKind, reason: string, by: string) {
   // The reason is optional for the manager; the record still says it was entered by hand.
   const text = reason.trim() || 'سجّله المدير'
