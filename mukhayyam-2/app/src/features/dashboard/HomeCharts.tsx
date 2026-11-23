@@ -284,7 +284,7 @@ export function FuelCard() {
             <div className="hc-tl-h num"><span>اليوم <b>{short(today)}</b></span><span>بيخلص تقريباً <b>{dayName(f.forecast.runOutDate)} {short(f.forecast.runOutDate)}</b></span></div>
             <div className="hc-tl-track">
               <div className="hc-tl-fill" style={{ width: shown ? '100%' : 0 }} />
-              {orderAt !== null && <div className="hc-tl-mark" style={{ right: `${orderAt}%` }}><span className="num">اطلب قبل {dayName(f.forecast.orderBy)} {short(f.forecast.orderBy)}</span></div>}
+              {orderAt !== null && <div className={`hc-tl-mark${orderAt > 50 ? ' flip' : ''}`} style={{ right: `${orderAt}%` }}><span className="num">اطلب قبل {dayName(f.forecast.orderBy)} {short(f.forecast.orderBy)}</span></div>}
             </div>
             {f.forecast.rough && <small className="hc-note">تقدير تقريبي: الأيام المسجّلة قليلة.</small>}
           </>

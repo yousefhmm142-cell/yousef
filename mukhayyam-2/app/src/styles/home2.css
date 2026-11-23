@@ -122,6 +122,9 @@ g:hover > .hc-bar { filter: brightness(1.18); }
 .hc-tl-fill { position: absolute; inset: 0 0 0 auto; border-radius: 99px; background: linear-gradient(270deg, color-mix(in srgb, var(--ok) 80%, transparent), #e2a43a 75%, color-mix(in srgb, var(--danger) 80%, transparent)); transition: width 1.4s var(--ease); }
 .hc-tl-mark { position: absolute; top: -6px; width: 2px; height: 22px; border-radius: 2px; background: var(--warn); }
 .hc-tl-mark span { position: absolute; top: 26px; right: -6px; white-space: nowrap; font-size: 11.5px; font-weight: 800; color: var(--warn); }
+/* past the middle the label grows the other way, so it never runs out of the card (it made phones zoom out) */
+.hc-tl-mark.flip span { right: auto; left: -6px; }
+.hc-fuel { overflow: clip; }
 .hc-note { margin: 0; color: var(--muted); font-size: 12px; }
 .hc-facts { display: grid; gap: 8px; }
 .hc-facts > div { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; padding-bottom: 6px; border-bottom: 1px solid var(--line-2); }
