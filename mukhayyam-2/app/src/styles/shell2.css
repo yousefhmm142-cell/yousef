@@ -162,7 +162,7 @@ body { background: var(--bg); background-image: none; }
 .bell-n { position: absolute; top: -3px; left: -3px; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 99px; display: grid; place-items: center; background: var(--danger); color: #fff; font-size: 10.5px; font-weight: 800; box-shadow: 0 0 0 2px var(--surface); }
 .notif { position: absolute; top: calc(100% + 12px); left: -8px; width: 390px; border-radius: 22px; padding: 14px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-lg); display: grid; gap: 10px; z-index: 70; animation: notif-pop .22s var(--ease); }
 @keyframes notif-pop { from { opacity: 0; transform: translateY(-6px) scale(.98); } }
-.notif-h { display: flex; align-items: center; gap: 8px; }
+.notif-h { color: var(--ink); display: flex; align-items: center; gap: 8px; }
 .notif-h .grow { flex: 1; }
 .notif-tabs { display: flex; gap: 4px; }
 .notif-tabs button { height: 30px; padding: 0 12px; border-radius: 99px; border: 1px solid var(--line); background: none; color: var(--muted); font: inherit; font-weight: 800; font-size: 12px; cursor: pointer; }

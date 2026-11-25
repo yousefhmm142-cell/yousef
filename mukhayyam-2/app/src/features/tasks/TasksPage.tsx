@@ -66,6 +66,15 @@ export function TasksPage() {
   const [reassigning, setReassigning] = useState<string | null>(null)
   const [openId, setOpenId] = useState<string | null>(() => new URLSearchParams(location.search).get('open'))
 
+  // A notification can open another task while this page is already mounted.
+  useEffect(() => {
+    const linked = params.get('open')
+    if (!linked) return
+    setOpenId(linked)
+    setSearch(params.get('q') ?? '')
+    setPastDay(null)
+  }, [params])
+
   // Fresh from the server while this screen is open: a finished task shows up within seconds.
   useEffect(() => {
     void refreshTasks()

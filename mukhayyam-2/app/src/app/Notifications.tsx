@@ -40,7 +40,7 @@ function useSeen(): [string, () => void] {
 }
 
 /** A button in the top bar with its panel, closed by a click outside or Escape. */
-function TopPanel({ button, label, children }: { button: (open: boolean, toggle: () => void) => ReactNode; label: string; children: (close: () => void) => ReactNode }) {
+export function TopPanel({ button, label, children }: { button: (open: boolean, toggle: () => void) => ReactNode; label: string; children: (close: () => void) => ReactNode }) {
   const [open, setOpen] = useState(false)
   const box = useRef<HTMLDivElement>(null)
   useEffect(() => {

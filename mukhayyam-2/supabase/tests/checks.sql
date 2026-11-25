@@ -1274,4 +1274,24 @@ select generator_load_patch('2026-10-18',(select generator_id from generator_loa
 select test.ok(exists(select 1 from generator_loads_for_day('2026-10-18') where name='مولد الأحمال' and band_loads->>6='160'),'manager saves without reopening either approved generation or submitted distribution');
 reset role;
 
+-- Prepared-task bell: a narrow projection for the tasks office, not the manager feed.
+reset role;select test.login('رامي أبو عجوة');set role authenticated;
+with x as(insert into tasks(task_type_id,subscriber_name,expected_minutes) values((select id from task_types where name='تفتيش'),'إشارة تجهيز إشعارات',30) returning id) insert into test.ids select 'notif_prepared',id from x;
+with x as(insert into tasks(task_type_id,assignee_id,subscriber_name,expected_minutes) values((select id from task_types where name='تفتيش'),(select v from test.ids where k='joint_a'),'تعيين مباشر بدون إشارة',30) returning id) insert into test.ids select 'notif_assigned',id from x;
+reset role;update employees set pages=array['tasks'],can_seals=false where full_name='موظف إداري';
+select test.login('موظف إداري');set role authenticated;
+select test.ok(exists(select 1 from prepared_task_notifications() where task_id=(select v from test.ids where k='notif_prepared') and who='رامي أبو عجوة' and task_number>0),'office sees actual preparer name and task reference');
+select test.ok(not exists(select 1 from prepared_task_notifications() where task_id=(select v from test.ids where k='notif_assigned')),'directly assigned creation does not send preparation notification');
+select test.ok((select count(*)<=1 from prepared_task_notifications(1)),'notification limit is bounded');
+select test.fails($$select * from recent_activity()$$,'%not_allowed%','office does not gain the full manager feed');
+select test.ok((select count(*)=0 from audit_log),'office cannot read private audit snapshots');
+update tasks set assignee_id=(select v from test.ids where k='joint_a') where id=(select v from test.ids where k='notif_prepared');
+update tasks set details='تفاصيل معدلة' where id=(select v from test.ids where k='notif_prepared');
+select test.ok((select count(*)=1 and min(who)='رامي أبو عجوة' from prepared_task_notifications() where task_id=(select v from test.ids where k='notif_prepared')),'assignment and edits preserve one notification with original preparer');
+reset role;select test.login('مشغّل الموقع');set role authenticated;
+select test.fails($$select * from prepared_task_notifications()$$,'%not_allowed%','non-task accounts cannot read preparation notifications');
+reset role;set role anon;
+select test.fails($$select * from prepared_task_notifications()$$,'%permission denied%','anonymous preparation feed is denied');
+reset role;
+
 \echo 'ALL CHECKS PASSED'
