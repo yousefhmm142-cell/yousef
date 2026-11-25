@@ -9,7 +9,7 @@ import { Undo2,ArrowRightLeft,Search,X,AlarmClock,CalendarDays,CheckCheck,Chevro
 import { dailyWork,useSealWork } from './sealWork'
 import { fold } from './subscribers'
 import { useEffect,useMemo,useState } from 'react'
-import { useNavigate,useSearchParams } from 'react-router'
+import { useLocation,useNavigate,useSearchParams } from 'react-router'
 import { TaskArchive } from './TaskArchive'
 import { useConfirm } from '../../ui/Confirm'
 import { useToast } from '../../ui/Toast'
@@ -43,6 +43,7 @@ export function TasksPage() {
   const confirm=useConfirm(),toast=useToast()
   const [returning,setReturning]=useState<string|null>(null)
   const navigate = useNavigate()
+  const taskLocation = useLocation()
   const [params, setParams] = useSearchParams()
   const tasks = useTasks()
   const types = useTaskTypes()
@@ -73,7 +74,7 @@ export function TasksPage() {
     setOpenId(linked)
     setSearch(params.get('q') ?? '')
     setPastDay(null)
-  }, [params])
+  }, [params, taskLocation.key])
 
   // Fresh from the server while this screen is open: a finished task shows up within seconds.
   useEffect(() => {
