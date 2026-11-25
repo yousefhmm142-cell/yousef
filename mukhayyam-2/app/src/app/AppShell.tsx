@@ -11,7 +11,6 @@ import { ManagerActivityProvider } from '../features/dashboard/ActivityLive'
 import { navFor, type NavItem } from './nav'
 import { GlobalSearch, openSearch, SearchButton } from './GlobalSearch'
 import { ActivityButton, NotificationsBell } from './Notifications'
-import { PreparedTaskBell } from './PreparedTaskBell'
 import { Sidebar, useSidebarMini } from './Sidebar'
 
 const MAX_TABS = 5
@@ -75,7 +74,6 @@ export function AppShell() {
               <ThemeToggle />
               {compact && <ActivityButton />}
               {compact && <NotificationsBell />}
-              {employee.role === 'staff' && !employee.canSeals && employee.pages?.includes('tasks') && <PreparedTaskBell key={employee.id} />}
               <NavLink to="/account" className="me" aria-label={`حسابي: ${employee.fullName}`}>
                 <span className="me-avatar">
                   <Avatar name={employee.fullName} />
