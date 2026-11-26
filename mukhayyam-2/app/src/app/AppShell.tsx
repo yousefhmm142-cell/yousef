@@ -75,7 +75,7 @@ export function AppShell() {
               <ThemeToggle />
               {compact && <ActivityButton />}
               {compact && <NotificationsBell />}
-              {employee.role === 'staff' && !employee.canSeals && employee.pages?.includes('tasks') && <PreparedTaskBell key={employee.id} employeeId={employee.id} />}
+              {employee.role === 'staff' && employee.pages?.includes('tasks') && <PreparedTaskBell key={employee.id} employeeId={employee.id} />}
               <NavLink to="/account" className="me" aria-label={`حسابي: ${employee.fullName}`}>
                 <span className="me-avatar">
                   <Avatar name={employee.fullName} />
